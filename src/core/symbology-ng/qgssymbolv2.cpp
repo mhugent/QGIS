@@ -134,7 +134,7 @@ bool QgsSymbolV2::changeSymbolLayer( int index, QgsSymbolLayerV2* layer )
 }
 
 
-void QgsSymbolV2::startRender( QgsRenderContext& context )
+void QgsSymbolV2::startRender( QgsRenderContext& context, const QgsFieldMap* fields )
 {
   QgsSymbolV2RenderContext symbolContext( context, mOutputUnit, mAlpha, false, mRenderHints );
   for ( QgsSymbolLayerV2List::iterator it = mLayers.begin(); it != mLayers.end(); ++it )

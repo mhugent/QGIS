@@ -3,6 +3,7 @@
 #define QGSSYMBOLV2_H
 
 #include "qgis.h"
+#include "qgsfield.h"
 #include <QList>
 #include <QMap>
 
@@ -20,6 +21,7 @@ class QgsRenderContext;
 
 typedef QMap<QString, QString> QgsStringMap;
 typedef QList<QgsSymbolLayerV2*> QgsSymbolLayerV2List;
+typedef QMap<int, QgsField> QgsFieldMap;
 
 class CORE_EXPORT QgsSymbolV2
 {
@@ -74,7 +76,7 @@ class CORE_EXPORT QgsSymbolV2
     bool changeSymbolLayer( int index, QgsSymbolLayerV2* layer );
 
 
-    void startRender( QgsRenderContext& context );
+    void startRender( QgsRenderContext& context, const QgsFieldMap* fields = 0 );
     void stopRender( QgsRenderContext& context );
 
     void setColor( const QColor& color );

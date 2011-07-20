@@ -153,7 +153,7 @@ QString QgsEllipseSymbolLayerV2::layerType() const
   return "EllipseMarker";
 }
 
-void QgsEllipseSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsEllipseSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   if ( !context.feature() || !hasDataDefinedProperty() )
   {

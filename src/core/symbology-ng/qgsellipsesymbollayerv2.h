@@ -15,7 +15,7 @@ class CORE_EXPORT QgsEllipseSymbolLayerV2: public QgsMarkerSymbolLayerV2
 
     void renderPoint( const QPointF& point, QgsSymbolV2RenderContext& context );
     QString layerType() const;
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
     void stopRender( QgsSymbolV2RenderContext& context );
     QgsSymbolLayerV2* clone() const;
     QgsStringMap properties() const;

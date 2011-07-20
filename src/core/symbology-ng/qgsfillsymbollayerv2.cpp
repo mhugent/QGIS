@@ -50,7 +50,7 @@ QString QgsSimpleFillSymbolLayerV2::layerType() const
   return "SimpleFill";
 }
 
-void QgsSimpleFillSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsSimpleFillSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   mColor.setAlphaF( context.alpha() );
   mBrush = QBrush( mColor, mBrushStyle );
@@ -195,7 +195,7 @@ QString QgsSVGFillSymbolLayer::layerType() const
   return "SVGFill";
 }
 
-void QgsSVGFillSymbolLayer::startRender( QgsSymbolV2RenderContext& context )
+void QgsSVGFillSymbolLayer::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   if ( mSvgViewBox.isNull() )
   {
@@ -383,7 +383,7 @@ void QgsCentroidFillSymbolLayerV2::setColor( const QColor& color )
   mColor = color;
 }
 
-void QgsCentroidFillSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsCentroidFillSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   mMarker->setAlpha( context.alpha() );
   mMarker->setOutputUnit( context.outputUnit() );

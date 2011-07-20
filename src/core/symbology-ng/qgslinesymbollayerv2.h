@@ -29,7 +29,7 @@ class CORE_EXPORT QgsSimpleLineSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
@@ -102,7 +102,7 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
@@ -168,7 +168,7 @@ class CORE_EXPORT QgsLineDecorationSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 

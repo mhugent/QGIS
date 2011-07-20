@@ -56,7 +56,7 @@ QString QgsSimpleLineSymbolLayerV2::layerType() const
   return "SimpleLine";
 }
 
-void QgsSimpleLineSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsSimpleLineSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   QColor penColor = mColor;
   penColor.setAlphaF( context.alpha() );
@@ -271,7 +271,7 @@ void QgsMarkerLineSymbolLayerV2::setColor( const QColor& color )
   mColor = color;
 }
 
-void QgsMarkerLineSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsMarkerLineSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   mMarker->setAlpha( context.alpha() );
   mMarker->setOutputUnit( context.outputUnit() );
@@ -614,7 +614,7 @@ QString QgsLineDecorationSymbolLayerV2::layerType() const
   return "LineDecoration";
 }
 
-void QgsLineDecorationSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsLineDecorationSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   QColor penColor = mColor;
   penColor.setAlphaF( context.alpha() );

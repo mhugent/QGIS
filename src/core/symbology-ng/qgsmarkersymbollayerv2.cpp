@@ -73,7 +73,7 @@ QString QgsSimpleMarkerSymbolLayerV2::layerType() const
   return "SimpleMarker";
 }
 
-void QgsSimpleMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsSimpleMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   QColor brushColor = mColor;
   QColor penColor = mBorderColor;
@@ -530,7 +530,7 @@ QString QgsSvgMarkerSymbolLayerV2::layerType() const
   return "SvgMarker";
 }
 
-void QgsSvgMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsSvgMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   mOrigSize = mSize; // save in case the size would be data defined
   Q_UNUSED( context );
@@ -762,7 +762,7 @@ QString QgsFontMarkerSymbolLayerV2::layerType() const
   return "FontMarker";
 }
 
-void QgsFontMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context )
+void QgsFontMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields )
 {
   mFont = QFont( mFontFamily );
   mFont.setPixelSize( context.outputLineWidth( mSize ) );

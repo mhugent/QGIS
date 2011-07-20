@@ -32,7 +32,7 @@ class CORE_EXPORT QgsSymbolLayerV2
 
     virtual QString layerType() const = 0;
 
-    virtual void startRender( QgsSymbolV2RenderContext& context ) = 0;
+    virtual void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 ) = 0;
     virtual void stopRender( QgsSymbolV2RenderContext& context ) = 0;
 
     virtual QgsSymbolLayerV2* clone() const = 0;

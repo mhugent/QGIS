@@ -30,7 +30,7 @@ class CORE_EXPORT QgsSimpleFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
@@ -82,7 +82,7 @@ class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsFillSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
     void stopRender( QgsSymbolV2RenderContext& context );
 
     void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
@@ -137,7 +137,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 

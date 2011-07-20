@@ -169,7 +169,7 @@ void QgsRuleBasedRendererV2::startRender( QgsRenderContext& context, const QgsVe
   for ( QList<Rule*>::iterator it = mCurrentRules.begin(); it != mCurrentRules.end(); ++it )
   {
     Rule* rule = *it;
-    rule->symbol()->startRender( context );
+    rule->symbol()->startRender( context, vlayer ? &(vlayer->pendingFields()) : 0 );
   }
 }
 

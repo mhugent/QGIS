@@ -506,7 +506,7 @@ public:
 
   virtual QString layerType() const = 0;
 
-  virtual void startRender(QgsSymbolV2RenderContext& context) = 0;
+  virtual void startRender(QgsSymbolV2RenderContext& context, const QgsFieldMap* fields) = 0;
   virtual void stopRender(QgsSymbolV2RenderContext& context) = 0;
 
   virtual QgsSymbolLayerV2* clone() const = 0 /Factory/;
@@ -708,7 +708,7 @@ public:
   bool changeSymbolLayer(int index, QgsSymbolLayerV2* layer /Transfer/);
 
 
-  void startRender(QgsRenderContext& context);
+  void startRender(QgsRenderContext& context, const QgsFieldMap* fields );
   void stopRender(QgsRenderContext& context);
 
   void setColor(const QColor& color);

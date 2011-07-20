@@ -33,7 +33,7 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
@@ -101,7 +101,7 @@ class CORE_EXPORT QgsSvgMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
@@ -166,7 +166,7 @@ class CORE_EXPORT QgsFontMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
 
     QString layerType() const;
 
-    void startRender( QgsSymbolV2RenderContext& context );
+    void startRender( QgsSymbolV2RenderContext& context, const QgsFieldMap* fields = 0 );
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
