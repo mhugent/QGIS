@@ -122,15 +122,21 @@ QgsPostgresProvider::QgsPostgresProvider( QString const & uri )
     return;
   }
 
-  if ( !getGeometryDetails() ) // gets srid and geometry type
-  {
-    // the table is not a geometry table
-    featuresCounted = 0;
-    valid = false;
+  geomType = mUri.geometryType();
+  srid = mUri.srid();
 
-    QgsDebugMsg( "Invalid Postgres layer" );
-    disconnectDb();
-    return;
+  if( geomType == QGis::WKBUnknown || srid.isNull() )
+  {
+    if ( !getGeometryDetails() ) // gets srid and geometry type
+    {
+      // the table is not a geometry table
+      featuresCounted = 0;
+      valid = false;
+
+      QgsDebugMsg( "Invalid Postgres layer" );
+      disconnectDb();
+      return;
+    }
   }
 
   deduceEndian();

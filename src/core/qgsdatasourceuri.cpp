@@ -22,12 +22,12 @@
 #include <QStringList>
 #include <QRegExp>
 
-QgsDataSourceURI::QgsDataSourceURI() : mSSLmode( SSLprefer ), mKeyColumn( "" ), mUseEstimatedMetadata( false )
+QgsDataSourceURI::QgsDataSourceURI() : mSSLmode( SSLprefer ), mKeyColumn( "" ), mUseEstimatedMetadata( false ), mGeometryType( QGis::WKBUnknown )
 {
   // do nothing
 }
 
-QgsDataSourceURI::QgsDataSourceURI( QString uri ) : mSSLmode( SSLprefer ), mKeyColumn( "" ), mUseEstimatedMetadata( false )
+QgsDataSourceURI::QgsDataSourceURI( QString uri ) : mSSLmode( SSLprefer ), mKeyColumn( "" ), mUseEstimatedMetadata( false ), mGeometryType( QGis::WKBUnknown )
 {
   int i = 0;
   while ( i < uri.length() )
@@ -181,6 +181,42 @@ QgsDataSourceURI::QgsDataSourceURI( QString uri ) : mSSLmode( SSLprefer ), mKeyC
       {
         QgsDebugMsg( "gsslib ignored" );
       }
+      else if( pname == "srid" )
+      {
+        mSrid = pval;
+      }
+      else if( pname == "type" )
+      {
+        QString geomTypeUpper = pval.toUpper();
+        if( geomTypeUpper == "WKBPOINT" )
+        {
+          mGeometryType = QGis::WKBPoint;
+        }
+        else if( geomTypeUpper == "WKBMULTIPOINT" )
+        {
+          mGeometryType = QGis::WKBMultiPoint;
+        }
+        else if( geomTypeUpper == "WKBLINESTRING" )
+        {
+          mGeometryType = QGis::WKBLineString;
+        }
+        else if( geomTypeUpper == "WBKMULTILINESTRING" )
+        {
+          mGeometryType = QGis::WKBMultiLineString;
+        }
+        else if( geomTypeUpper == "WKBPOLYGON" )
+        {
+          mGeometryType = QGis::WKBPolygon;
+        }
+        else if( geomTypeUpper == "WKBMULTIPOLYGON" )
+        {
+          mGeometryType = QGis::WKBMultiPolygon;
+        }
+        else
+        {
+          mGeometryType = QGis::WKBUnknown;
+        }
+      }
       else
       {
         QgsDebugMsg( "invalid connection option \"" + pname + "\" ignored" );
@@ -307,6 +343,16 @@ void QgsDataSourceURI::setUseEstimatedMetadata( bool theFlag )
 bool QgsDataSourceURI::useEstimatedMetadata() const
 {
   return mUseEstimatedMetadata;
+}
+
+QGis::WkbType QgsDataSourceURI::geometryType() const
+{
+  return mGeometryType;
+}
+
+QString QgsDataSourceURI::srid() const
+{
+  return mSrid;
 }
 
 void QgsDataSourceURI::setSql( QString sql )
@@ -459,6 +505,16 @@ QString QgsDataSourceURI::uri() const
   if ( mUseEstimatedMetadata )
   {
     theUri += QString( " estimatedmetadata=true" );
+  }
+
+  if( !mSrid.isNull() )
+  {
+    theUri += ( " srid=" + mSrid );
+  }
+
+  if( mGeometryType != QGis::WKBUnknown )
+  {
+    theUri += ( QString(" type=") + QGis::qgisFeatureTypes[mGeometryType] );
   }
 
   theUri += QString( " table=%1%2 sql=%3" )

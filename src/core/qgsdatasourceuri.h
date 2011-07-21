@@ -19,6 +19,7 @@
 #ifndef QGSDATASOURCEURI_H
 #define QGSDATASOURCEURI_H
 
+#include "qgis.h"
 #include <QString>
 
 /** \ingroup core
@@ -114,6 +115,11 @@ class CORE_EXPORT QgsDataSourceURI
     QString keyColumn() const;
     void setKeyColumn( QString column );
 
+    //added in version 1.8
+    QGis::WkbType geometryType() const;
+    QString srid() const;
+
+
   private:
     void skipBlanks( const QString &uri, int &i );
     QString getValue( const QString &uri, int &i );
@@ -147,6 +153,11 @@ class CORE_EXPORT QgsDataSourceURI
     QString mKeyColumn;
     //Use estimated metadata flag
     bool mUseEstimatedMetadata;
+
+    //geometry type (or QGis::WKBUnknown if not specified)
+    QGis::WkbType mGeometryType;
+    //srid (or a null string if not specified)
+    QString mSrid;
 };
 
 #endif //QGSDATASOURCEURI_H
