@@ -49,6 +49,27 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
     QColor borderColor() const { return mBorderColor; }
     void setBorderColor( QColor color ) { mBorderColor = color; }
 
+    double symbolWidth() const { return mSymbolWidth; }
+    void setSymbolWidth( double w ){ mSymbolWidth = w; }
+    double symbolHeight() const { return mSymbolHeight; }
+    void setSymbolHeight( double h ){ mSymbolHeight = h; }
+
+    QString widthField() const { return mWidthField; }
+    void setWidthField( const QString& f ){ mWidthField = f; }
+    QString heightField() const { return mHeightField; }
+    void setHeightField( const QString& f ){ mHeightField = f; }
+    QString rotationField() const { return mRotationField; }
+    void setRotationField( const QString& f ){ mRotationField = f; }
+    QString outlineWidthField() const { return mOutlineWidthField; }
+    void setOutlineWidthField( const QString& f ){ mOutlineWidthField = f; }
+    QString fillColorField() const { return mFillColorField; }
+    void setFillColorField( const QString& f ){ mFillColorField = f; }
+    QString outlineColorField() const { return mOutlineColorField; }
+    void setOutlineColorField( const QString& f ){ mOutlineColorField = f; }
+    QString symbolNameField() const { return mSymbolNameField; }
+    void setSymbolNameField( const QString& f ){ mSymbolNameField = f; }
+
+
   protected:
 
     void drawMarker( QPainter* p, QgsSymbolV2RenderContext& context );
@@ -69,6 +90,28 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
     QBrush mSelBrush;
     QImage mSelCache;
     bool mUsingCache;
+
+    //simple marker symbols can be scaled differently in x- and y
+    double mSymbolWidth;
+    double mSymbolHeight;
+
+    //data defined attributes (null strings means fixed value)
+    QString mWidthField;
+    QString mHeightField;
+    QString mRotationField;
+    QString mOutlineWidthField;
+    QString mFillColorField;
+    QString mOutlineColorField;
+    QString mSymbolNameField;
+
+    //data defined field indices (resolved in startRender method, -1 if not data defined)
+    int mWidthFieldIndex;
+    int mHeightFieldIndex;
+    int mRotationFieldIndex;
+    int mOutlineWidthFieldIndex;
+    int mFillColorFieldIndex;
+    int mOutlineColorFieldIndex;
+    int mSymbolNameFieldIndex;
 };
 
 //////////

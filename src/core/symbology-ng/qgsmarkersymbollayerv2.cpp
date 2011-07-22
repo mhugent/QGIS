@@ -40,6 +40,12 @@ QgsSimpleMarkerSymbolLayerV2::QgsSimpleMarkerSymbolLayerV2( QString name, QColor
   mSize = size;
   mAngle = angle;
   mOffset = QPointF( 0, 0 );
+
+  mSymbolWidth = size;
+  mSymbolHeight = size;
+
+  mWidthFieldIndex = -1; mHeightFieldIndex = -1; mRotationFieldIndex = -1; mOutlineWidthFieldIndex = -1;
+  mFillColorFieldIndex = -1; mOutlineColorFieldIndex = -1; mSymbolNameFieldIndex = -1;
 }
 
 QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2::create( const QgsStringMap& props )
@@ -62,8 +68,30 @@ QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2::create( const QgsStringMap& prop
     angle = props["angle"].toDouble();
 
   QgsSimpleMarkerSymbolLayerV2* m = new QgsSimpleMarkerSymbolLayerV2( name, color, borderColor, size, angle );
+  m->setSymbolWidth( DEFAULT_SIMPLEMARKER_SIZE );
+  m->setSymbolHeight( DEFAULT_SIMPLEMARKER_SIZE );
+
   if ( props.contains( "offset" ) )
     m->setOffset( QgsSymbolLayerV2Utils::decodePoint( props["offset"] ) );
+  if ( props.contains( "symbol_width" ) )
+    m->setSymbolWidth( props["symbol_width"].toDouble() );
+  if ( props.contains("symbol_height") )
+    m->setSymbolHeight( props["symbol_height"].toDouble() );
+  if ( props.contains("width_field") )
+    m->setWidthField( props["width_field"] );
+  if ( props.contains( "height_field" ) )
+    m->setHeightField( props[ "height_field" ] );
+  if ( props.contains( "rotation_field" ) )
+    m->setRotationField( props["rotation_field"] );
+  if ( props.contains( "outline_width_field" ) )
+    m->setOutlineWidthField( props["outline_width_field"] );
+  if ( props.contains( "fill_color_field" ) )
+    m->setFillColorField( props["fill_color_field"] );
+  if ( props.contains( "outline_color_field" ) )
+    m->setOutlineColorField( props["outline_color_field"] );
+  if ( props.contains( "symbol_name_field" ) )
+    m->setSymbolNameField( props["symbol_name_field"]);
+
   return m;
 }
 
@@ -413,9 +441,18 @@ QgsStringMap QgsSimpleMarkerSymbolLayerV2::properties() const
   map["name"] = mName;
   map["color"] = QgsSymbolLayerV2Utils::encodeColor( mColor );
   map["color_border"] = QgsSymbolLayerV2Utils::encodeColor( mBorderColor );
-  map["size"] = QString::number( mSize );
+  //map["size"] = QString::number( mSize ); //mSymbolWidth and mSymbolHeight are now used
   map["angle"] = QString::number( mAngle );
   map["offset"] = QgsSymbolLayerV2Utils::encodePoint( mOffset );
+  map["symbol_width"] = QString::number( mSymbolWidth );
+  map["symbol_height"] = QString::number( mSymbolHeight );
+  map["width_field"] = mWidthField;
+  map["height_field"] = mHeightField;
+  map["rotation_field"] = mRotationField;
+  map["outline_width_field"] = mOutlineWidthField;
+  map["fill_color_field"] = mFillColorField;
+  map["outline_color_field"] = mOutlineColorField;
+  map["symbol_name_field"] = mSymbolNameField;
   return map;
 }
 
