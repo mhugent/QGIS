@@ -84,9 +84,10 @@ class GUI_EXPORT QgsSimpleMarkerSymbolLayerV2Widget : public QgsSymbolLayerV2Wid
     void setName();
     void setColorBorder();
     void setColorFill();
-    void setSize();
     void setAngle();
     void setOffset();
+    void on_mWidthSpinBox_valueChanged( double d );
+    void on_mHeightSpinBox_valueChanged( double d );
 
   protected:
     QgsSimpleMarkerSymbolLayerV2* mLayer;

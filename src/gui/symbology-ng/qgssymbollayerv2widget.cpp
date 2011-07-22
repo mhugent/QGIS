@@ -185,7 +185,6 @@ QgsSimpleMarkerSymbolLayerV2Widget::QgsSimpleMarkerSymbolLayerV2Widget( const Qg
   connect( lstNames, SIGNAL( currentRowChanged( int ) ), this, SLOT( setName() ) );
   connect( btnChangeColorBorder, SIGNAL( clicked() ), this, SLOT( setColorBorder() ) );
   connect( btnChangeColorFill, SIGNAL( clicked() ), this, SLOT( setColorFill() ) );
-  connect( spinSize, SIGNAL( valueChanged( double ) ), this, SLOT( setSize() ) );
   connect( spinAngle, SIGNAL( valueChanged( double ) ), this, SLOT( setAngle() ) );
   connect( spinOffsetX, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
   connect( spinOffsetY, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
@@ -211,7 +210,6 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   }
   btnChangeColorBorder->setColor( mLayer->borderColor() );
   btnChangeColorFill->setColor( mLayer->color() );
-  spinSize->setValue( mLayer->size() );
   spinAngle->setValue( mLayer->angle() );
 
   // without blocking signals the value gets changed because of slot setOffset()
@@ -221,6 +219,9 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   spinOffsetY->blockSignals( true );
   spinOffsetY->setValue( mLayer->offset().y() );
   spinOffsetY->blockSignals( false );
+
+  mWidthSpinBox->setValue( mLayer->symbolWidth() );
+  mHeightSpinBox->setValue( mLayer->symbolHeight() );
 }
 
 QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2Widget::symbolLayer()
@@ -268,12 +269,6 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setColorFill()
   emit changed();
 }
 
-void QgsSimpleMarkerSymbolLayerV2Widget::setSize()
-{
-  mLayer->setSize( spinSize->value() );
-  emit changed();
-}
-
 void QgsSimpleMarkerSymbolLayerV2Widget::setAngle()
 {
   mLayer->setAngle( spinAngle->value() );
@@ -283,6 +278,18 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setAngle()
 void QgsSimpleMarkerSymbolLayerV2Widget::setOffset()
 {
   mLayer->setOffset( QPointF( spinOffsetX->value(), spinOffsetY->value() ) );
+  emit changed();
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mWidthSpinBox_valueChanged( double d )
+{
+  mLayer->setSymbolWidth( d );
+  emit changed();
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mHeightSpinBox_valueChanged( double d )
+{
+  mLayer->setSymbolHeight( d );
   emit changed();
 }
 
