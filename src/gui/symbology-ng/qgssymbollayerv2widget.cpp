@@ -222,6 +222,7 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
 
   mWidthSpinBox->setValue( mLayer->symbolWidth() );
   mHeightSpinBox->setValue( mLayer->symbolHeight() );
+  mBorderWidthSpinBox->setValue( mLayer->borderWidth() );
 }
 
 QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2Widget::symbolLayer()
@@ -278,6 +279,12 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setAngle()
 void QgsSimpleMarkerSymbolLayerV2Widget::setOffset()
 {
   mLayer->setOffset( QPointF( spinOffsetX->value(), spinOffsetY->value() ) );
+  emit changed();
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mBorderWidthSpinBox_valueChanged( double d )
+{
+  mLayer->setBorderWidth( d );
   emit changed();
 }
 

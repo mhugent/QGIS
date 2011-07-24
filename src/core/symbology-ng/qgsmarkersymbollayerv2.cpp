@@ -37,6 +37,7 @@ QgsSimpleMarkerSymbolLayerV2::QgsSimpleMarkerSymbolLayerV2( QString name, QColor
   mName = name;
   mColor = color;
   mBorderColor = borderColor;
+  mBorderWidth = 0;
   mSize = size;
   mAngle = angle;
   mOffset = QPointF( 0, 0 );
@@ -71,6 +72,8 @@ QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2::create( const QgsStringMap& prop
   m->setSymbolWidth( DEFAULT_SIMPLEMARKER_SIZE );
   m->setSymbolHeight( DEFAULT_SIMPLEMARKER_SIZE );
 
+  if ( props.contains( "border_width" ) )
+    m->setBorderWidth( props["border_width"].toDouble() );
   if ( props.contains( "offset" ) )
     m->setOffset( QgsSymbolLayerV2Utils::decodePoint( props["offset"] ) );
   if ( props.contains( "symbol_width" ) )
@@ -112,7 +115,7 @@ void QgsSimpleMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& contex
   }
   mBrush = QBrush( brushColor );
   mPen = QPen( penColor );
-  mPen.setWidthF( context.outputLineWidth( mPen.widthF() ) );
+  mPen.setWidthF( context.outputLineWidth( mBorderWidth ) );
 
   QColor selBrushColor = context.selectionColor();
   QColor selPenColor = selBrushColor == mColor ? selBrushColor : mBorderColor;
@@ -123,7 +126,7 @@ void QgsSimpleMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& contex
   }
   mSelBrush = QBrush( selBrushColor );
   mSelPen = QPen( selPenColor );
-  mSelPen.setWidthF( context.outputLineWidth( mPen.widthF() ) );
+  mSelPen.setWidthF( context.outputLineWidth( mBorderWidth ) );
 
   bool hasDataDefinedRotation = context.renderHints() & QgsSymbolV2::DataDefinedRotation;
   bool hasDataDefinedSize = context.renderHints() & QgsSymbolV2::DataDefinedSizeScale;
@@ -157,11 +160,22 @@ void QgsSimpleMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& contex
   // scale the shape (if the size is not going to be modified)
   if ( !hasDataDefinedSize )
   {
+#if 0
     double scaledSize = context.outputLineWidth( mSize );
     if ( mUsingCache )
       scaledSize *= context.renderContext().rasterScaleFactor();
     double half = scaledSize / 2.0;
     transform.scale( half, half );
+#endif //0
+    double scaledWidth = context.outputLineWidth( mSymbolWidth );
+    double scaledHeight = context.outputLineWidth( mSymbolHeight );
+
+    if( mUsingCache )
+    {
+      scaledWidth *= context.renderContext().rasterScaleFactor();
+      scaledHeight *= context.renderContext().rasterScaleFactor();
+    }
+    transform.scale( scaledWidth / 2.0, scaledHeight / 2.0 );
   }
 
   // rotate if the rotation is not going to be changed during the rendering
@@ -189,15 +203,28 @@ void QgsSimpleMarkerSymbolLayerV2::startRender( QgsSymbolV2RenderContext& contex
 
 void QgsSimpleMarkerSymbolLayerV2::prepareCache( QgsSymbolV2RenderContext& context )
 {
-  double scaledSize = context.outputPixelSize( mSize );
+  //double scaledSize = context.outputPixelSize( mSize );
+  double scaledWidth = context.outputPixelSize( mSymbolWidth );
+  double scaledHeight = context.outputPixelSize( mSymbolHeight );
 
   // calculate necessary image size for the cache
-  double pw = (( mPen.widthF() == 0 ? 1 : mPen.widthF() ) + 1 ) / 2 * 2; // make even (round up); handle cosmetic pen
-  int imageSize = (( int ) scaledSize + pw ) / 2 * 2 + 1; //  make image width, height odd; account for pen width
+  //double pw = (( mPen.widthF() == 0 ? 1 : mPen.widthF() ) + 1 ) / 2 * 2; // make even (round up); handle cosmetic pen
+  double pw = ( context.outputPixelSize( mBorderWidth ) + 1 ) / 2 * 2 ;
+  if( pw < 1 )
+  {
+    pw = 1;
+  }
 
-  double center = (( double ) imageSize / 2 ) + 0.5; // add 1/2 pixel for proper rounding when the figure's coordinates are added
+  //int imageSize = (( int ) scaledSize + pw ) / 2 * 2 + 1; //  make image width, height odd; account for pen width
+  int imageWidth = (( int ) scaledWidth + pw ) / 2 * 2 + 1;
+  int imageHeight = (( int ) scaledHeight + pw ) / 2 * 2 + 1;
 
-  mCache = QImage( QSize( imageSize, imageSize ), QImage::Format_ARGB32_Premultiplied );
+  //double center = (( double ) imageSize / 2 ) + 0.5; // add 1/2 pixel for proper rounding when the figure's coordinates are added
+  double xCenter = (( double ) imageWidth / 2 ) + 0.5;
+  double yCenter = (( double ) imageHeight / 2 ) + 0.5;
+
+  //mCache = QImage( QSize( imageSize, imageSize ), QImage::Format_ARGB32_Premultiplied );
+  mCache = QImage( QSize( imageWidth, imageHeight ), QImage::Format_ARGB32_Premultiplied );
   mCache.fill( 0 );
 
   QPainter p;
@@ -205,7 +232,8 @@ void QgsSimpleMarkerSymbolLayerV2::prepareCache( QgsSymbolV2RenderContext& conte
   p.setRenderHint( QPainter::Antialiasing );
   p.setBrush( mBrush );
   p.setPen( mPen );
-  p.translate( QPointF( center, center ) );
+  //p.translate( QPointF( center, center ) );
+  p.translate( QPointF( xCenter, yCenter ) );
   drawMarker( &p, context );
   p.end();
 
@@ -213,14 +241,16 @@ void QgsSimpleMarkerSymbolLayerV2::prepareCache( QgsSymbolV2RenderContext& conte
 
   QColor selColor = context.selectionColor();
 
-  mSelCache = QImage( QSize( imageSize, imageSize ), QImage::Format_ARGB32_Premultiplied );
+  //mSelCache = QImage( QSize( imageSize, imageSize ), QImage::Format_ARGB32_Premultiplied );
+  mSelCache = QImage( QSize( imageWidth, imageHeight ), QImage::Format_ARGB32_Premultiplied );
   mSelCache.fill( 0 );
 
   p.begin( &mSelCache );
   p.setRenderHint( QPainter::Antialiasing );
   p.setBrush( mSelBrush );
   p.setPen( mSelPen );
-  p.translate( QPointF( center, center ) );
+  //p.translate( QPointF( center, center ) );
+  p.translate( QPointF( xCenter, yCenter ) );
   drawMarker( &p, context );
   p.end();
 
@@ -232,10 +262,12 @@ void QgsSimpleMarkerSymbolLayerV2::prepareCache( QgsSymbolV2RenderContext& conte
   {
     p.begin( &mSelCache );
     p.setRenderHint( QPainter::Antialiasing );
-    p.fillRect( 0, 0, imageSize, imageSize, selColor );
+    //p.fillRect( 0, 0, imageSize, imageSize, selColor );
+    p.fillRect( 0, 0, imageWidth, imageHeight, selColor );
     p.setBrush( mBrush );
     p.setPen( mPen );
-    p.translate( QPointF( center, center ) );
+    //p.translate( QPointF( center, center ) );
+    p.translate( QPointF( xCenter, yCenter ) );
     drawMarker( &p, context );
     p.end();
   }
@@ -395,10 +427,12 @@ void QgsSimpleMarkerSymbolLayerV2::renderPoint( const QPointF& point, QgsSymbolV
   {
     // we will use cached image
     QImage &img = context.selected() ? mSelCache : mCache;
-    double s = img.width() / context.renderContext().rasterScaleFactor();
-    p->drawImage( QRectF( point.x() - s / 2.0 + off.x(),
-                          point.y() - s / 2.0 + off.y(),
-                          s, s ), img );
+    //double s = img.width() / context.renderContext().rasterScaleFactor();
+    double sx = img.width() / context.renderContext().rasterScaleFactor();
+    double sy = img.height() / context.renderContext().rasterScaleFactor();
+    p->drawImage( QRectF( point.x() - sx / 2.0 + off.x(),
+                          point.y() - sy / 2.0 + off.y(),
+                          sx, sy ), img );
   }
   else
   {
@@ -441,6 +475,7 @@ QgsStringMap QgsSimpleMarkerSymbolLayerV2::properties() const
   map["name"] = mName;
   map["color"] = QgsSymbolLayerV2Utils::encodeColor( mColor );
   map["color_border"] = QgsSymbolLayerV2Utils::encodeColor( mBorderColor );
+  map["border_width"] = QString::number( mBorderWidth );
   //map["size"] = QString::number( mSize ); //mSymbolWidth and mSymbolHeight are now used
   map["angle"] = QString::number( mAngle );
   map["offset"] = QgsSymbolLayerV2Utils::encodePoint( mOffset );
@@ -459,7 +494,17 @@ QgsStringMap QgsSimpleMarkerSymbolLayerV2::properties() const
 QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2::clone() const
 {
   QgsSimpleMarkerSymbolLayerV2* m = new QgsSimpleMarkerSymbolLayerV2( mName, mColor, mBorderColor, mSize, mAngle );
+  m->setBorderWidth( mBorderWidth );
   m->setOffset( mOffset );
+  m->setSymbolWidth( mSymbolWidth );
+  m->setSymbolHeight( mSymbolHeight );
+  m->setWidthField( mWidthField );
+  m->setHeightField( mHeightField );
+  m->setRotationField( mRotationField );
+  m->setOutlineWidthField( mOutlineWidthField );
+  m->setFillColorField( mFillColorField );
+  m->setOutlineColorField( mOutlineColorField );
+  m->setSymbolNameField( mSymbolNameField );
   return m;
 }
 

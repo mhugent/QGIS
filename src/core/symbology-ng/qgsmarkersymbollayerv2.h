@@ -49,6 +49,9 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
     QColor borderColor() const { return mBorderColor; }
     void setBorderColor( QColor color ) { mBorderColor = color; }
 
+    double borderWidth() const { return mBorderWidth; }
+    void setBorderWidth( double w ){ mBorderWidth = w; }
+
     double symbolWidth() const { return mSymbolWidth; }
     void setSymbolWidth( double w ){ mSymbolWidth = w; }
     double symbolHeight() const { return mSymbolHeight; }
@@ -80,6 +83,7 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
     void prepareCache( QgsSymbolV2RenderContext& context );
 
     QColor mBorderColor;
+    double mBorderWidth;
     QPen mPen;
     QBrush mBrush;
     QPolygonF mPolygon;
