@@ -188,6 +188,22 @@ QgsSimpleMarkerSymbolLayerV2Widget::QgsSimpleMarkerSymbolLayerV2Widget( const Qg
   connect( spinAngle, SIGNAL( valueChanged( double ) ), this, SLOT( setAngle() ) );
   connect( spinOffsetX, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
   connect( spinOffsetY, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
+
+  //hide data defined settings by default
+  mDDSymbolWidthLabel->setVisible( false );
+  mDDSymbolWidthComboBox->setVisible( false );
+  mDDSymbolHeightLabel->setVisible( false );
+  mDDSymbolHeightComboBox->setVisible( false );
+  mDDRotationLabel->setVisible( false );
+  mDDRotationComboBox->setVisible( false );
+  mDDBorderWidthLabel->setVisible( false );
+  mDDBorderWidthComboBox->setVisible( false );
+  mDDFillColorLabel->setVisible( false );
+  mDDFillColorComboBox->setVisible( false );
+  mDDOutlineColorLabel->setVisible( false );
+  mDDOutlineColorComboBox->setVisible( false );
+  mDDShapeLabel->setVisible( false );
+  mDDShapeComboBox->setVisible( false );
 }
 
 void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )

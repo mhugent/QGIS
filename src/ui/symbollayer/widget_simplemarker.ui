@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>394</width>
-    <height>275</height>
+    <width>398</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
+  <layout class="QGridLayout" name="gridLayout_3">
+   <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
       <widget class="QLabel" name="label">
@@ -151,7 +151,7 @@
      </item>
     </layout>
    </item>
-   <item>
+   <item row="1" column="0">
     <widget class="QListWidget" name="lstNames">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -194,21 +194,90 @@
      </property>
     </widget>
    </item>
-   <item>
-    <spacer>
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="mDataDefinedSettingsGroupBox">
+     <property name="title">
+      <string>Data defined settings</string>
      </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Preferred</enum>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>376</width>
-       <height>16</height>
-      </size>
+     <property name="checked">
+      <bool>false</bool>
      </property>
-    </spacer>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="1">
+       <widget class="QComboBox" name="mDDSymbolWidthComboBox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="mDDSymbolHeightLabel">
+        <property name="text">
+         <string>Symbol height</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="mDDSymbolHeightComboBox"/>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="mDDSymbolWidthLabel">
+        <property name="text">
+         <string>Symbol width</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="mDDRotationLabel">
+        <property name="text">
+         <string>Rotation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="mDDRotationComboBox"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="mDDBorderWidthLabel">
+        <property name="text">
+         <string>Border width</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="mDDBorderWidthComboBox"/>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="mDDFillColorLabel">
+        <property name="text">
+         <string>Fill color</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QComboBox" name="mDDFillColorComboBox"/>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="mDDOutlineColorLabel">
+        <property name="text">
+         <string>Outline color</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QComboBox" name="mDDOutlineColorComboBox"/>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="mDDShapeLabel">
+        <property name="text">
+         <string>Shape</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QComboBox" name="mDDShapeComboBox"/>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -228,5 +297,230 @@
   <tabstop>spinOffsetY</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDSymbolWidthLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>165</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>69</x>
+     <y>300</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDSymbolWidthComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>186</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>263</x>
+     <y>301</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDSymbolHeightComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>213</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>240</x>
+     <y>336</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDSymbolHeightLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>148</x>
+     <y>280</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>96</x>
+     <y>333</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDRotationComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>197</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>230</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDRotationLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>174</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>107</x>
+     <y>363</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDBorderWidthLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>223</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>81</x>
+     <y>387</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDBorderWidthComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>201</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>288</x>
+     <y>391</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDFillColorLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>235</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>126</x>
+     <y>416</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDFillColorComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>216</x>
+     <y>272</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>268</x>
+     <y>418</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDOutlineColorLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>174</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>49</x>
+     <y>444</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDOutlineColorComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>249</x>
+     <y>279</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>328</x>
+     <y>444</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDShapeLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>172</x>
+     <y>280</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>109</x>
+     <y>475</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mDataDefinedSettingsGroupBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mDDShapeComboBox</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>201</x>
+     <y>274</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>314</x>
+     <y>469</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
