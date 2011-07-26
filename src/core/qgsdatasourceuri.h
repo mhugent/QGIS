@@ -117,7 +117,10 @@ class CORE_EXPORT QgsDataSourceURI
 
     //added in version 1.8
     QGis::WkbType geometryType() const;
+    void setGeometryType( QGis::WkbType type ){ mGeometryType = type; }
+
     QString srid() const;
+    void setSrid( const QString& s ){ mSrid = s; }
 
 
   private:

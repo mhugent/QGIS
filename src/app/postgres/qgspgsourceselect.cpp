@@ -335,6 +335,9 @@ QString QgsPgSourceSelect::layerURI( const QModelIndex &index )
   QString geomColumnName = mTableModel.itemFromIndex( index.sibling( index.row(), QgsDbTableModel::dbtmGeomCol ) )->text();
   QString pkColumnName = mTableModel.itemFromIndex( index.sibling( index.row(), QgsDbTableModel::dbtmPkCol ) )->text();
   QString sql = mTableModel.itemFromIndex( index.sibling( index.row(), QgsDbTableModel::dbtmSql ) )->text();
+  QString srid = mTableModel.itemFromIndex( index.sibling( index.row(), QgsDbTableModel::dbtmSrid ) )->text();
+
+  QString uri = m_connInfo;
 
   if ( geomColumnName.contains( " AS " ) )
   {
@@ -343,15 +346,15 @@ QString QgsPgSourceSelect::layerURI( const QModelIndex &index )
     geomColumnName = geomColumnName.left( a ); //only the geom column name
     QString geomFilter;
 
-    if ( typeName == "POINT" )
+    if ( typeName == "POINT" || typeName == "MULTIPOINT" )
     {
       geomFilter = QString( "upper(geometrytype(\"%1\")) IN ('POINT','MULTIPOINT')" ).arg( geomColumnName );
     }
-    else if ( typeName == "LINESTRING" )
+    else if ( typeName == "LINESTRING" || typeName == "MULTILINESTRING" )
     {
       geomFilter = QString( "upper(geometrytype(\"%1\")) IN ('LINESTRING','MULTILINESTRING')" ).arg( geomColumnName );
     }
-    else if ( typeName == "POLYGON" )
+    else if ( typeName == "POLYGON" || typeName == "MULTIPOLYGON" )
     {
       geomFilter = QString( "upper(geometrytype(\"%1\")) IN ('POLYGON','MULTIPOLYGON')" ).arg( geomColumnName );
     }
@@ -365,9 +368,13 @@ QString QgsPgSourceSelect::layerURI( const QModelIndex &index )
 
       sql += geomFilter;
     }
-  }
 
-  QString uri = m_connInfo;
+    //in case the table is empty, add type and srid to the uri
+    if( !srid.isEmpty() )
+    {
+      uri += " srid=\"" + srid + "\" type=\"" + typeName + "\"";
+    }
+  }
 
   if ( !pkColumnName.isEmpty() )
   {
@@ -675,7 +682,8 @@ bool QgsPgSourceSelect::getTableInfo( PGconn *pg, bool searchGeometryColumnsOnly
                            "f_table_schema,"
                            "%2,"
                            "upper(type),"
-                           "pg_class.relkind"
+                           "pg_class.relkind,"
+                           "srid"
                            " from "
                            "%1,"
                            "pg_class,"
@@ -714,6 +722,7 @@ bool QgsPgSourceSelect::getTableInfo( PGconn *pg, bool searchGeometryColumnsOnly
             QString column = QString::fromUtf8( PQgetvalue( result, idx, 2 ) );
             QString type = QString::fromUtf8( PQgetvalue( result, idx, 3 ) );
             QString relkind = QString::fromUtf8( PQgetvalue( result, idx, 4 ) );
+            QString srid = QString::fromUtf8( PQgetvalue( result, idx, 5 ) );
 
             QgsDebugMsg( QString( "%1 %2.%3.%4: %5 %6" )
                          .arg( gtableName )
@@ -728,7 +737,7 @@ bool QgsPgSourceSelect::getTableInfo( PGconn *pg, bool searchGeometryColumnsOnly
               as = type = "WAITING";
             }
 
-            mTableModel.addTableEntry( type, schemaName, tableName, column, relkind == "v" ? pkCandidates( pg, schemaName, tableName ) : QStringList(), "" );
+            mTableModel.addTableEntry( type, schemaName, tableName, column, relkind == "v" ? pkCandidates( pg, schemaName, tableName ) : QStringList(), "", srid );
             nColumns++;
           }
         }

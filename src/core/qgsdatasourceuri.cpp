@@ -188,27 +188,27 @@ QgsDataSourceURI::QgsDataSourceURI( QString uri ) : mSSLmode( SSLprefer ), mKeyC
       else if( pname == "type" )
       {
         QString geomTypeUpper = pval.toUpper();
-        if( geomTypeUpper == "WKBPOINT" )
+        if( geomTypeUpper == "POINT" )
         {
           mGeometryType = QGis::WKBPoint;
         }
-        else if( geomTypeUpper == "WKBMULTIPOINT" )
+        else if( geomTypeUpper == "MULTIPOINT" )
         {
           mGeometryType = QGis::WKBMultiPoint;
         }
-        else if( geomTypeUpper == "WKBLINESTRING" )
+        else if( geomTypeUpper == "LINESTRING" )
         {
           mGeometryType = QGis::WKBLineString;
         }
-        else if( geomTypeUpper == "WBKMULTILINESTRING" )
+        else if( geomTypeUpper == "MULTILINESTRING" )
         {
           mGeometryType = QGis::WKBMultiLineString;
         }
-        else if( geomTypeUpper == "WKBPOLYGON" )
+        else if( geomTypeUpper == "POLYGON" )
         {
           mGeometryType = QGis::WKBPolygon;
         }
-        else if( geomTypeUpper == "WKBMULTIPOLYGON" )
+        else if( geomTypeUpper == "MULTIPOLYGON" )
         {
           mGeometryType = QGis::WKBMultiPolygon;
         }
@@ -514,7 +514,9 @@ QString QgsDataSourceURI::uri() const
 
   if( mGeometryType != QGis::WKBUnknown )
   {
-    theUri += ( QString(" type=") + QGis::qgisFeatureTypes[mGeometryType] );
+    QString typeString = QGis::qgisFeatureTypes[mGeometryType];
+    typeString = typeString.right( typeString.size() - 3 ); //remove 'WKB'
+    theUri += ( QString(" type=") + typeString );
   }
 
   theUri += QString( " table=%1%2 sql=%3" )

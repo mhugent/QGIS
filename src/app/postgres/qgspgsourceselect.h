@@ -76,6 +76,26 @@ class QgsPgSourceSelectDelegate : public QItemDelegate
         }
       }
 
+      if( index.column() == QgsDbTableModel::dbtmSrid )
+      {
+        QLineEdit *le = new QLineEdit( parent );
+        le->setValidator( new QDoubleValidator( le ) );
+        le->setText( index.data( Qt::DisplayRole ).toString() );
+        return le;
+      }
+
+      //allow selection of type if the layer has no geometry
+      if( index.column() == QgsDbTableModel::dbtmType )
+      {
+        QStringList values;
+        //todo: read potential geometry type constraint and restrict available types
+        values << "POINT" << "MULTIPOINT" << "LINESTRING" << "MULTILINESTRING" << "POLYGON" << "MULTIPOLYGON";
+        QComboBox* typeComboBox = new QComboBox( parent );
+        typeComboBox->addItems( values );
+        typeComboBox->setCurrentIndex( typeComboBox->findText( index.data( Qt::DisplayRole ).toString() ) );
+        return typeComboBox;
+      }
+
       return NULL;
     }
 
@@ -83,7 +103,29 @@ class QgsPgSourceSelectDelegate : public QItemDelegate
     {
       QComboBox *cb = qobject_cast<QComboBox *>( editor );
       if ( cb )
+      {
         model->setData( index, cb->currentText() );
+        if( index.column() == QgsDbTableModel::dbtmType )
+        {
+          //change string in geometry column
+          QModelIndex geomColIndex = index.sibling( index.row(),index.column() + 1 );
+          if( geomColIndex.isValid() )
+          {
+            QString geomColText = geomColIndex.data( Qt::DisplayRole ).toString();
+            QString newGeomColText;
+            int asPos = geomColText.indexOf(" AS ", Qt::CaseInsensitive);
+            if( asPos != -1 )
+            {
+              newGeomColText = geomColText.mid( 0, asPos + 4 ) + cb->currentText();
+            }
+            else
+            {
+              newGeomColText = geomColText + " AS " + cb->currentText();
+            }
+            model->setData( geomColIndex, newGeomColText );
+          }
+        }
+      }
 
       QLineEdit *le = qobject_cast<QLineEdit *>( editor );
       if ( le )

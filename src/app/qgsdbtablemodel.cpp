@@ -18,6 +18,7 @@
 #include "qgsdbtablemodel.h"
 #include "qgsapplication.h"
 #include "qgisapp.h"
+#include <QSettings>
 
 QgsDbTableModel::QgsDbTableModel(): QStandardItemModel(), mTableCount( 0 )
 {
@@ -28,6 +29,7 @@ QgsDbTableModel::QgsDbTableModel(): QStandardItemModel(), mTableCount( 0 )
   headerLabels << tr( "Geometry column" );
   headerLabels << tr( "Primary key column" );
   headerLabels << tr( "Sql" );
+  headerLabels << tr( "Srid" );
   setHorizontalHeaderLabels( headerLabels );
 }
 
@@ -36,7 +38,7 @@ QgsDbTableModel::~QgsDbTableModel()
 
 }
 
-void QgsDbTableModel::addTableEntry( QString type, QString schemaName, QString tableName, QString geometryColName, const QStringList &pkCols, QString sql )
+void QgsDbTableModel::addTableEntry( QString type, QString schemaName, QString tableName, QString geometryColName, const QStringList &pkCols, QString sql, QString srid )
 {
   //is there already a root item with the given scheme Name?
   QStandardItem *schemaItem;
@@ -74,6 +76,8 @@ void QgsDbTableModel::addTableEntry( QString type, QString schemaName, QString t
   pkItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable );
   QStandardItem* sqlItem = new QStandardItem( sql );
   sqlItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable );
+  QStandardItem* sridItem = new QStandardItem( srid );
+  sridItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
 
   childItemList.push_back( schemaNameItem );
   childItemList.push_back( tableItem );
@@ -81,6 +85,7 @@ void QgsDbTableModel::addTableEntry( QString type, QString schemaName, QString t
   childItemList.push_back( geomItem );
   childItemList.push_back( pkItem );
   childItemList.push_back( sqlItem );
+  childItemList.push_back( sridItem );
 
   schemaItem->appendRow( childItemList );
   ++mTableCount;
@@ -173,6 +178,7 @@ void QgsDbTableModel::setGeometryTypesForTable( const QString& schema, const QSt
   QModelIndex currentTypeIndex;
   QModelIndex currentGeomColumnIndex;
   QModelIndex currentPkColumnIndex;
+  QModelIndex currentSridColumnIndex;
 
   for ( int i = 0; i < numChildren; ++i )
   {
@@ -185,6 +191,7 @@ void QgsDbTableModel::setGeometryTypesForTable( const QString& schema, const QSt
     currentTypeIndex = currentChildIndex.sibling( i, dbtmType );
     currentGeomColumnIndex = currentChildIndex.sibling( i, dbtmGeomCol );
     currentPkColumnIndex = currentChildIndex.sibling( i, dbtmPkCol );
+    currentSridColumnIndex = currentChildIndex.sibling( i, dbtmSrid );
     QString geomColText = itemFromIndex( currentGeomColumnIndex )->text();
     QStringList pkCols = itemFromIndex( currentPkColumnIndex )->data().toStringList();
 
@@ -198,7 +205,16 @@ void QgsDbTableModel::setGeometryTypesForTable( const QString& schema, const QSt
     {
       if ( typeIsEmpty )
       {
-        removeRow( i, indexFromItem( schemaItem ) );
+        //no geometry entries. Add POINT as default and make type editable
+        itemFromIndex( currentTypeIndex )->setText( "POINT" );
+        itemFromIndex( currentTypeIndex )->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable );
+        itemFromIndex( currentGeomColumnIndex )->setText( geomColText + " AS POINT" );
+        QSettings settings;
+        //use default epsg system
+        QString sridString = settings.value("/Projections/projectDefaultCrs", GEO_EPSG_CRS_AUTHID).toString();
+        sridString = sridString.right( sridString.size() - 5 ); //remove 'EPSG:'
+        itemFromIndex( currentSridColumnIndex )->setText( sridString );
+        itemFromIndex( currentSridColumnIndex )->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable );
         return;
       }
 
