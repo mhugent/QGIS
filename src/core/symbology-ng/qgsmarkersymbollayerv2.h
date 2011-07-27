@@ -81,6 +81,8 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayerV2 : public QgsMarkerSymbolLayerV2
     bool preparePath();
 
     void prepareCache( QgsSymbolV2RenderContext& context );
+    void resolveFieldIndices( const QgsFieldMap* fields );
+    int fieldNameIndex( const QString& fieldName, const QgsFieldMap* fields ) const;
 
     QColor mBorderColor;
     double mBorderWidth;
