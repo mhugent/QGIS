@@ -9,6 +9,7 @@
 #include "qgsdashspacedialog.h"
 #include "qgssymbolv2propertiesdialog.h"
 #include "qgssvgcache.h"
+#include "qgsvectorlayer.h"
 
 #include "qgsapplication.h"
 
@@ -204,6 +205,8 @@ QgsSimpleMarkerSymbolLayerV2Widget::QgsSimpleMarkerSymbolLayerV2Widget( const Qg
   mDDOutlineColorComboBox->setVisible( false );
   mDDShapeLabel->setVisible( false );
   mDDShapeComboBox->setVisible( false );
+
+  fillDataDefinedComboBoxes();
 }
 
 void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )
@@ -314,6 +317,99 @@ void QgsSimpleMarkerSymbolLayerV2Widget::on_mHeightSpinBox_valueChanged( double 
 {
   mLayer->setSymbolHeight( d );
   emit changed();
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDSymbolWidthComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setWidthField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDSymbolHeightComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setHeightField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDRotationComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setRotationField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDBorderWidthComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setOutlineWidthField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDFillColorComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setFillColorField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDOutlineColorComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setOutlineColorField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::on_mDDShapeComboBox_currentIndexChanged( const QString& text )
+{
+    if( mLayer )
+    {
+        mLayer->setSymbolNameField( text );
+    }
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::fillDataDefinedComboBoxes()
+{
+    mDDSymbolWidthComboBox->clear();
+    mDDSymbolWidthComboBox->addItem("", -1);
+    mDDSymbolHeightComboBox->clear();
+    mDDSymbolHeightComboBox->addItem("", -1);
+    mDDRotationComboBox->clear();
+    mDDRotationComboBox->addItem("", -1);
+    mDDBorderWidthComboBox->clear();
+    mDDBorderWidthComboBox->addItem("", -1);
+    mDDFillColorComboBox->clear();
+    mDDFillColorComboBox->addItem("", -1);
+    mDDOutlineColorComboBox->clear();
+    mDDOutlineColorComboBox->addItem("", -1);
+    mDDShapeComboBox->clear();
+    mDDShapeComboBox->addItem("", -1);
+
+    if( mVectorLayer )
+    {
+      const QgsFieldMap& fm =mVectorLayer->pendingFields();
+      QgsFieldMap::const_iterator fieldIt = fm.constBegin();
+      for(; fieldIt != fm.constEnd(); ++fieldIt )
+      {
+        QString fieldName = fieldIt.value().name();
+        int index = fieldIt.key();
+
+        mDDSymbolWidthComboBox->addItem( fieldName, index );
+        mDDSymbolHeightComboBox->addItem( fieldName, index );
+        mDDRotationComboBox->addItem( fieldName, index );
+        mDDBorderWidthComboBox->addItem( fieldName, index );
+        mDDFillColorComboBox->addItem( fieldName, index );
+        mDDOutlineColorComboBox->addItem( fieldName, index );
+        mDDShapeComboBox->addItem( fieldName, index );
+      }
+    }
 }
 
 

@@ -90,8 +90,19 @@ class GUI_EXPORT QgsSimpleMarkerSymbolLayerV2Widget : public QgsSymbolLayerV2Wid
     void on_mWidthSpinBox_valueChanged( double d );
     void on_mHeightSpinBox_valueChanged( double d );
 
+    void on_mDDSymbolWidthComboBox_currentIndexChanged( const QString& text );
+    void on_mDDSymbolHeightComboBox_currentIndexChanged( const QString& text );
+    void on_mDDRotationComboBox_currentIndexChanged( const QString& text );
+    void on_mDDBorderWidthComboBox_currentIndexChanged( const QString& text );
+    void on_mDDFillColorComboBox_currentIndexChanged( const QString& text );
+    void on_mDDOutlineColorComboBox_currentIndexChanged( const QString& text );
+    void on_mDDShapeComboBox_currentIndexChanged( const QString& text );
+
   protected:
     QgsSimpleMarkerSymbolLayerV2* mLayer;
+
+    //insert available attributes for data defined symbolisation
+    void fillDataDefinedComboBoxes();
 };
 
 ///////////

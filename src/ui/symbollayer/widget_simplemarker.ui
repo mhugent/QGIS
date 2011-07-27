@@ -207,20 +207,34 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="1">
-       <widget class="QComboBox" name="mDDSymbolWidthComboBox"/>
+       <widget class="QComboBox" name="mDDSymbolWidthComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="mDDSymbolHeightLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Symbol height</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QComboBox" name="mDDSymbolHeightComboBox"/>
+       <widget class="QComboBox" name="mDDSymbolHeightComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="mDDSymbolWidthLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Symbol width</string>
         </property>
@@ -228,53 +242,88 @@
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="mDDRotationLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Rotation</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QComboBox" name="mDDRotationComboBox"/>
+       <widget class="QComboBox" name="mDDRotationComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="mDDBorderWidthLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Border width</string>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QComboBox" name="mDDBorderWidthComboBox"/>
+       <widget class="QComboBox" name="mDDBorderWidthComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="4" column="0">
        <widget class="QLabel" name="mDDFillColorLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Fill color</string>
         </property>
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QComboBox" name="mDDFillColorComboBox"/>
+       <widget class="QComboBox" name="mDDFillColorComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="5" column="0">
        <widget class="QLabel" name="mDDOutlineColorLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Outline color</string>
         </property>
        </widget>
       </item>
       <item row="5" column="1">
-       <widget class="QComboBox" name="mDDOutlineColorComboBox"/>
+       <widget class="QComboBox" name="mDDOutlineColorComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item row="6" column="0">
        <widget class="QLabel" name="mDDShapeLabel">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="text">
          <string>Shape</string>
         </property>
        </widget>
       </item>
       <item row="6" column="1">
-       <widget class="QComboBox" name="mDDShapeComboBox"/>
+       <widget class="QComboBox" name="mDDShapeComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
