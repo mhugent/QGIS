@@ -609,10 +609,10 @@ class QgsPostgresProvider : public QgsVectorDataProvider
         int pgVersion() { return postgresqlVersion; }
 
         //! run a query and free result buffer
-        bool PQexecNR( QString query );
+        bool PQexecNR( QString query, bool showMsgBox = true );
 
         //! cursor handling
-        bool openCursor( QString cursorName, QString declare );
+        bool openCursor( QString cursorName, QString declare, bool showErrorMsgBox = true );
         bool closeCursor( QString cursorName );
 
         PGconn *pgConnection() { return conn; }
@@ -628,6 +628,11 @@ class QgsPostgresProvider : public QgsVectorDataProvider
         PGresult *PQgetResult();
         PGresult *PQprepare( QString stmtName, QString query, int nParams, const Oid *paramTypes );
         PGresult *PQexecPrepared( QString stmtName, const QStringList &params );
+
+        //deletes PGconn and reconnects
+        void reconnect( const QString& conninfo );
+
+        static PGconn* createConnection( const QString& conninfo );
 
         static Conn *connectDb( const QString &conninfo, bool readonly );
         static void disconnectRW( Conn *&conn );

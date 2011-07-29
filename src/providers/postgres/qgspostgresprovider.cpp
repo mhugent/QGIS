@@ -213,41 +213,11 @@ QgsPostgresProvider::Conn *QgsPostgresProvider::Conn::connectDb( const QString &
 
   QgsDebugMsg( QString( "New postgres connection for " ) + conninfo );
 
-  PGconn *pd = PQconnectdb( conninfo.toLocal8Bit() );  // use what is set based on locale; after connecting, use Utf8
-  // check the connection status
-  if ( PQstatus( pd ) != CONNECTION_OK )
+  PGconn* pd = createConnection( conninfo.toLocal8Bit() );
+
+  if( !pd )
   {
-    QgsDataSourceURI uri( conninfo );
-    QString username = uri.username();
-    QString password = uri.password();
-
-    while ( PQstatus( pd ) != CONNECTION_OK )
-    {
-      bool ok = QgsCredentials::instance()->get( conninfo, username, password, QString::fromUtf8( PQerrorMessage( pd ) ) );
-      if ( !ok )
-        break;
-
-      ::PQfinish( pd );
-
-      if ( !username.isEmpty() )
-        uri.setUsername( username );
-
-      if ( !password.isEmpty() )
-        uri.setPassword( password );
-
-      QgsDebugMsg( "Connecting to " + uri.connectionInfo() );
-      pd = PQconnectdb( uri.connectionInfo().toLocal8Bit() );
-    }
-
-    if ( PQstatus( pd ) == CONNECTION_OK )
-      QgsCredentials::instance()->put( conninfo, username, password );
-  }
-
-  if ( PQstatus( pd ) != CONNECTION_OK )
-  {
-    ::PQfinish( pd );
-    QgsDebugMsg( "Connection to database failed" );
-    return NULL;
+    return 0;
   }
 
   //set client encoding to unicode because QString uses UTF-8 anyway
@@ -437,11 +407,16 @@ bool QgsPostgresProvider::declareCursor(
     if ( !whereClause.isEmpty() )
       query += QString( " where %1" ).arg( whereClause );
 
-    if ( !connectionRO->openCursor( cursorName, query ) )
+    if ( !connectionRO->openCursor( cursorName, query, false ) )
     {
-      // reloading the fields might help next time around
-      rewind();
-      return false;
+      //todo: try to create a new connection (PGConn). Maybe the connection or database process was closed
+      connectionRO->reconnect( mUri.connectionInfo() );
+      if ( !connectionRO->openCursor( cursorName, query, true ) )
+      {
+        // reloading the fields might help next time around
+        rewind();
+        return false;
+      }
     }
   }
   catch ( PGFieldNotFound )
@@ -3464,15 +3439,15 @@ PGresult *QgsPostgresProvider::Conn::PQexec( QString query )
   return res;
 }
 
-bool QgsPostgresProvider::Conn::openCursor( QString cursorName, QString sql )
+bool QgsPostgresProvider::Conn::openCursor( QString cursorName, QString sql, bool showErrorMsgBox )
 {
   if ( openCursors++ == 0 )
   {
     QgsDebugMsg( "Starting read-only transaction" );
-    PQexecNR( "BEGIN READ ONLY" );
+    PQexecNR( "BEGIN READ ONLY", showErrorMsgBox );
   }
   QgsDebugMsgLevel( QString( "Binary cursor %1 for %2" ).arg( cursorName ).arg( sql ), 3 );
-  return PQexecNR( QString( "declare %1 binary cursor for %2" ).arg( cursorName ).arg( sql ) );
+  return PQexecNR( QString( "declare %1 binary cursor for %2" ).arg( cursorName ).arg( sql ), showErrorMsgBox );
 }
 
 bool QgsPostgresProvider::Conn::closeCursor( QString cursorName )
@@ -3489,7 +3464,7 @@ bool QgsPostgresProvider::Conn::closeCursor( QString cursorName )
   return true;
 }
 
-bool QgsPostgresProvider::Conn::PQexecNR( QString query )
+bool QgsPostgresProvider::Conn::PQexecNR( QString query, bool showMsgBox )
 {
   Result res = ::PQexec( conn, query.toUtf8() );
   if ( !res )
@@ -3509,13 +3484,16 @@ bool QgsPostgresProvider::Conn::PQexecNR( QString query )
 
   if ( openCursors )
   {
-    QgsPostgresProvider::showMessageBox(
+    if( showMsgBox )
+    {
+      QgsPostgresProvider::showMessageBox(
       tr( "Query failed" ),
       tr( "%1 cursor states lost.\nSQL: %2\nResult: %3 (%4)" )
       .arg( openCursors )
       .arg( query )
       .arg( errorStatus )
       .arg( QString::fromUtf8( PQresultErrorMessage( res ) ) ) );
+    }
     openCursors = 0;
   }
 
@@ -3566,6 +3544,55 @@ int QgsPostgresProvider::Conn::PQsendQuery( QString query )
   return ::PQsendQuery( conn, query.toUtf8() );
 }
 
+void QgsPostgresProvider::Conn::reconnect( const QString& conninfo )
+{
+  ::PQfinish(conn);
+  conn = createConnection( conninfo );
+}
+
+PGconn* QgsPostgresProvider::Conn::createConnection( const QString& conninfo )
+{
+  PGconn* c = PQconnectdb( conninfo.toLocal8Bit() );
+
+  //todo: move to new function because it is duplicated with 'static Conn *connectDb( const QString &conninfo, bool readonly )'
+  if ( PQstatus( c ) != CONNECTION_OK )
+  {
+    QgsDataSourceURI uri( conninfo );
+    QString username = uri.username();
+    QString password = uri.password();
+
+    while ( PQstatus( c ) != CONNECTION_OK )
+    {
+      bool ok = QgsCredentials::instance()->get( conninfo, username, password, QString::fromUtf8( PQerrorMessage( c ) ) );
+      if ( !ok )
+        break;
+
+      ::PQfinish( c );
+
+      if ( !username.isEmpty() )
+        uri.setUsername( username );
+
+      if ( !password.isEmpty() )
+        uri.setPassword( password );
+
+      QgsDebugMsg( "Connecting to " + uri.connectionInfo() );
+      c = PQconnectdb( uri.connectionInfo().toLocal8Bit() );
+    }
+
+    if ( PQstatus( c ) == CONNECTION_OK )
+      QgsCredentials::instance()->put( conninfo, username, password );
+  }
+
+  if ( PQstatus( c ) != CONNECTION_OK )
+  {
+    ::PQfinish( c );
+    QgsDebugMsg( "Connection to database failed" );
+    return NULL;
+  }
+
+  return c;
+}
+
 void QgsPostgresProvider::showMessageBox( const QString& title, const QString& text )
 {
   QgsMessageOutput* message = QgsMessageOutput::createMessageOutput();
@@ -3578,7 +3605,6 @@ void QgsPostgresProvider::showMessageBox( const QString& title, const QStringLis
 {
   showMessageBox( title, text.join( "\n" ) );
 }
-
 
 QgsCoordinateReferenceSystem QgsPostgresProvider::crs()
 {
