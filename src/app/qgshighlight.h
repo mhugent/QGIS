@@ -43,8 +43,10 @@ class QgsHighlight: public QgsMapCanvasItem
 
   private:
     void paintPoint( QPainter *p, QgsPoint point );
+#if 0 //new_geometry
     void paintLine( QPainter *p, QgsPolyline line );
     void paintPolygon( QPainter *p, QgsPolygon polygon );
+#endif //0 //new_geometry
 
     QgsHighlight();
 

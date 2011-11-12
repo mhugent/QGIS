@@ -13,6 +13,7 @@ QgsUndoCommand::GeometryChangeEntry::GeometryChangeEntry()
 
 void QgsUndoCommand::GeometryChangeEntry::setOriginalGeometry( QgsGeometry& orig )
 {
+#if 0 //new_geometry
   if ( orig.type() != QGis::UnknownGeometry )
   {
     original = new QgsGeometry( orig );
@@ -21,10 +22,12 @@ void QgsUndoCommand::GeometryChangeEntry::setOriginalGeometry( QgsGeometry& orig
   {
     original = NULL;
   }
+#endif //0 //new_geometry
 }
 
 void QgsUndoCommand::GeometryChangeEntry::setTargetGeometry( QgsGeometry& dest )
 {
+#if 0 //new_geometry
   if ( dest.type() != QGis::UnknownGeometry )
   {
     target = new QgsGeometry( dest );
@@ -33,6 +36,7 @@ void QgsUndoCommand::GeometryChangeEntry::setTargetGeometry( QgsGeometry& dest )
   {
     target = NULL;
   }
+#endif //0 //new_geometry
 }
 
 

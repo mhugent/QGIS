@@ -48,6 +48,7 @@ bool QgsMapToolAddFeature::addFeature( QgsVectorLayer *vlayer, QgsFeature *f )
 
 void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
 {
+#if 0 //new_geometry
   QgsDebugMsg( "entered." );
 
   QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( mCanvas->currentLayer() );
@@ -285,4 +286,5 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
       stopCapturing();
     }
   }
+#endif //0 //new_geometry
 }

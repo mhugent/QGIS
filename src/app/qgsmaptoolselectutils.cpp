@@ -87,6 +87,7 @@ void QgsMapToolSelectUtils::setSelectFeatures( QgsMapCanvas* canvas,
     bool doDifference,
     bool singleSelect )
 {
+#if 0 //new_geometry
   if ( selectGeometry->type() != QGis::Polygon )
   {
     return;
@@ -195,6 +196,7 @@ void QgsMapToolSelectUtils::setSelectFeatures( QgsMapCanvas* canvas,
   vlayer->setSelectedFeatures( layerSelectedFeatures );
 
   QApplication::restoreOverrideCursor();
+#endif //0 new_geometry
 }
 
 void QgsMapToolSelectUtils::setSelectFeatures( QgsMapCanvas* canvas, QgsGeometry* selectGeometry, QMouseEvent * e )

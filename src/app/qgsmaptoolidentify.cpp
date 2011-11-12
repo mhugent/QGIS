@@ -270,6 +270,7 @@ bool QgsMapToolIdentify::identifyVectorLayer( QgsVectorLayer *layer, int x, int 
       if ( f_it->geometry()->wkbType() == QGis::WKBLineString ||
            f_it->geometry()->wkbType() == QGis::WKBLineString25D )
       {
+#if 0 //new_geometry
         // Add the start and end points in as derived attributes
         str = QLocale::system().toString( f_it->geometry()->asPolyline().first().x(), 'g', 10 );
         derivedAttributes.insert( tr( "firstX", "attributes get sorted; translation for lastX should be lexically larger than this one" ), str );
@@ -279,6 +280,7 @@ bool QgsMapToolIdentify::identifyVectorLayer( QgsVectorLayer *layer, int x, int 
         derivedAttributes.insert( tr( "lastX", "attributes get sorted; translation for firstX should be lexically smaller than this one" ), str );
         str = QLocale::system().toString( f_it->geometry()->asPolyline().last().y(), 'g', 10 );
         derivedAttributes.insert( tr( "lastY" ), str );
+#endif //0 //new_geometry
       }
     }
     else if ( layer->geometryType() == QGis::Polygon )
@@ -295,10 +297,12 @@ bool QgsMapToolIdentify::identifyVectorLayer( QgsVectorLayer *layer, int x, int 
     {
       // Include the x and y coordinates of the point as a derived attribute
       QString str;
+#if 0 //new_geometry
       str = QLocale::system().toString( f_it->geometry()->asPoint().x(), 'g', 10 );
       derivedAttributes.insert( "X", str );
       str = QLocale::system().toString( f_it->geometry()->asPoint().y(), 'g', 10 );
       derivedAttributes.insert( "Y", str );
+#endif //0 new_geometry
     }
 
     derivedAttributes.insert( tr( "feature id" ), fid < 0 ? tr( "new feature" ) : FID_TO_STRING( fid ) );

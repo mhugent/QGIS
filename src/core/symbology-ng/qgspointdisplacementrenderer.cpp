@@ -79,7 +79,8 @@ void QgsPointDisplacementRenderer::renderFeature( QgsFeature& feature, QgsRender
     return;
   }
   QPointF pt;
-  _getPoint( pt, context, geom->asWkb() );
+  int wkbSize;
+  _getPoint( pt, context, geom->asWkb( wkbSize ) );
 
 
   //get list of labels and symbols
@@ -369,7 +370,9 @@ void QgsPointDisplacementRenderer::createDisplacementGroups( QgsVectorLayer* vla
     //check, if there is already a point at that position
     if ( f.geometry() )
     {
+#if 0 //new_geometry
       intersectList = spatialIndex.intersects( searchRect( f.geometry()->asPoint() ) );
+#endif //0
       if ( intersectList.empty() )
       {
         spatialIndex.insertFeature( f );

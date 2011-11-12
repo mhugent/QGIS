@@ -310,16 +310,23 @@ static QVariant fcnFeatureId( const QVariantList& , QgsFeature* f, QgsExpression
 static QVariant fcnX( const QVariantList& , QgsFeature* f, QgsExpression* )
 {
   ENSURE_GEOM_TYPE( f, g, QGis::Point );
+#if 0 //new_geometry
   return g->asPoint().x();
+#endif //0 new_geometry
+  return QVariant();
 }
 static QVariant fcnY( const QVariantList& , QgsFeature* f, QgsExpression* )
 {
   ENSURE_GEOM_TYPE( f, g, QGis::Point );
+#if 0 //new_geometry
   return g->asPoint().y();
+#endif //0 new_geometry
+  return QVariant();
 }
 
 static QVariant pointAt( const QVariantList& values, QgsFeature* f, QgsExpression* parent ) // helper function
 {
+#if 0 //new_geometry
   int idx = getIntValue( values.at( 0 ), parent );
   ENSURE_GEOM_TYPE( f, g, QGis::Line );
   QgsPolyline polyline = g->asPolyline();
@@ -332,6 +339,8 @@ static QVariant pointAt( const QVariantList& values, QgsFeature* f, QgsExpressio
     return QVariant();
   }
   return QVariant( QPointF( polyline[idx].x(), polyline[idx].y() ) );
+#endif //0 new_geometry
+  return QVariant();
 }
 
 static QVariant fcnXat( const QVariantList& values, QgsFeature* f, QgsExpression* parent )

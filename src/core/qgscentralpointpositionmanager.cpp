@@ -67,7 +67,8 @@ void QgsCentralPointPositionManager::findObjectPositions( const QgsRenderContext
     QMap<QgsFeatureId, QgsOverlayObject*>::iterator object_it = objectMap->begin();
     for ( ; object_it != objectMap->end(); ++object_it )
     {
-      if ( findObjectPosition( object_it.value()->geometry()->asWkb(), currentPosition ) == 0 )
+      int wkbSize;
+      if ( findObjectPosition( object_it.value()->geometry()->asWkb( wkbSize ), currentPosition ) == 0 )
       {
         object_it.value()->addPosition( currentPosition );
       }

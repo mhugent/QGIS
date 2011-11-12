@@ -435,7 +435,7 @@ void QgsOSMDataProvider::select( QgsAttributeList fetchAttributes,
 
   // store list of attributes to fetch, rectangle of area, geometry, etc.
   mSelectionRectangle = rect;
-  mSelectionRectangleGeom = QgsGeometry::fromRect( rect );
+  mSelectionRectangleGeom = 0; //new_geometry //QgsGeometry::fromRect( rect );
   mAttributesToFetch = fetchAttributes;
 
   // set flags

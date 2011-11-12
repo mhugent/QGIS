@@ -123,6 +123,7 @@ void QgsMapToolDeleteRing::deleteRing( QgsFeatureId fId, int beforeVertexNr, Qgs
 
 int QgsMapToolDeleteRing::ringNumInPolygon( QgsGeometry* g, int vertexNr )
 {
+#if 0 //new_geometry
   QgsPolygon polygon = g->asPolygon();
   for ( int ring = 0; ring < polygon.count(); ring++ )
   {
@@ -131,11 +132,13 @@ int QgsMapToolDeleteRing::ringNumInPolygon( QgsGeometry* g, int vertexNr )
 
     vertexNr -= polygon[ring].count();
   }
+#endif //0 //new_geometry
   return -1;
 }
 
 int QgsMapToolDeleteRing::ringNumInMultiPolygon( QgsGeometry* g, int vertexNr, int& partNum )
 {
+#if 0 //new_geometry
   QgsMultiPolygon mpolygon = g->asMultiPolygon();
   for ( int part = 0; part < mpolygon.count(); part++ )
   {
@@ -151,6 +154,7 @@ int QgsMapToolDeleteRing::ringNumInMultiPolygon( QgsGeometry* g, int vertexNr, i
       vertexNr -= polygon[ring].count();
     }
   }
+#endif //0 //new_geometry
   return -1;
 }
 

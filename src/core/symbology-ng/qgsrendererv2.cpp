@@ -201,7 +201,8 @@ void QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
         break;
       }
       QPointF pt;
-      _getPoint( pt, context, geom->asWkb() );
+      int wkbSize;
+      _getPoint( pt, context, geom->asWkb( wkbSize ) );
       (( QgsMarkerSymbolV2* )symbol )->renderPoint( pt, &feature, context, layer, selected );
 
       //if ( drawVertexMarker )
@@ -218,7 +219,8 @@ void QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
         break;
       }
       QPolygonF pts;
-      _getLineString( pts, context, geom->asWkb() );
+      int wkbSize;
+      _getLineString( pts, context, geom->asWkb( wkbSize ) );
       (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
 
       if ( drawVertexMarker )
@@ -236,7 +238,8 @@ void QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
       }
       QPolygonF pts;
       QList<QPolygonF> holes;
-      _getPolygon( pts, holes, context, geom->asWkb() );
+      int wkbSize;
+      _getPolygon( pts, holes, context, geom->asWkb( wkbSize ) );
       (( QgsFillSymbolV2* )symbol )->renderPolygon( pts, ( holes.count() ? &holes : NULL ), &feature, context, layer, selected );
 
       if ( drawVertexMarker )
@@ -253,7 +256,8 @@ void QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
         break;
       }
 
-      unsigned char* wkb = geom->asWkb();
+      int wkbSize;
+      unsigned char* wkb = geom->asWkb( wkbSize );
       unsigned int num = *(( int* )( wkb + 5 ) );
       unsigned char* ptr = wkb + 9;
       QPointF pt;
@@ -278,7 +282,8 @@ void QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
         break;
       }
 
-      unsigned char* wkb = geom->asWkb();
+      int wkbSize;
+      unsigned char* wkb = geom->asWkb( wkbSize );
       unsigned int num = *(( int* )( wkb + 5 ) );
       unsigned char* ptr = wkb + 9;
       QPolygonF pts;
@@ -303,7 +308,8 @@ void QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
         break;
       }
 
-      unsigned char* wkb = geom->asWkb();
+      int wkbSize;
+      unsigned char* wkb = geom->asWkb( wkbSize );
       unsigned int num = *(( int* )( wkb + 5 ) );
       unsigned char* ptr = wkb + 9;
       QPolygonF pts;

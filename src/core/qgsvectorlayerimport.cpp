@@ -261,7 +261,7 @@ QgsVectorLayerImport::importLayer( QgsVectorLayer* layer,
       {
         if ( fet.geometry() )
         {
-          fet.geometry()->transform( *ct );
+          fet.geometry()->coordinateTransform( *ct );
         }
       }
       catch ( QgsCsException &e )

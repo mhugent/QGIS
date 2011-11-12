@@ -79,7 +79,10 @@ void QgsMapToolMoveFeature::canvasPressEvent( QMouseEvent * e )
     vlayer->select( QgsAttributeList(), selectRect, true );
 
     //find the closest feature
+#if 0 //new_geometry
     QgsGeometry* pointGeometry = QgsGeometry::fromPoint( layerCoords );
+#endif //0 //new_geometry
+    QgsGeometry* pointGeometry = 0; //new_geometry
     if ( !pointGeometry )
     {
       return;

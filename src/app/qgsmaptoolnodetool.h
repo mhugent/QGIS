@@ -214,7 +214,9 @@ class SelectionFeature: public QObject
     QList<VertexEntry> mVertexMap;
     QgsMapCanvas* mCanvas;
 
+#if 0 //new_geometry
     QList< QgsGeometry::Error > mGeomErrors;
+#endif //0 //new_geometry
     QList< QgsVertexMarker * > mGeomErrorMarkers;
 };
 

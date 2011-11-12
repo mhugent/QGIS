@@ -3,20 +3,20 @@ SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/${QGIS_PLUGIN_SUBDI
 SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/${QGIS_PLUGIN_SUBDIR})
 
 ADD_SUBDIRECTORY(delimited_text)
-ADD_SUBDIRECTORY(diagram_overlay)
+#ADD_SUBDIRECTORY(diagram_overlay) #new_geometry
 ADD_SUBDIRECTORY(interpolation)
 ADD_SUBDIRECTORY(oracle_raster)
 ADD_SUBDIRECTORY(raster_terrain_analysis)
 ADD_SUBDIRECTORY(coordinate_capture)
 ADD_SUBDIRECTORY(dxf2shp_converter)
-ADD_SUBDIRECTORY(evis)
-ADD_SUBDIRECTORY(spatialquery)
-ADD_SUBDIRECTORY(sqlanywhere)
-ADD_SUBDIRECTORY(roadgraph)
+#ADD_SUBDIRECTORY(evis) #new_geometry
+#ADD_SUBDIRECTORY(spatialquery) #new_geometry
+#ADD_SUBDIRECTORY(sqlanywhere) #new_geometry
+#ADD_SUBDIRECTORY(roadgraph) #new_geometry
 ADD_SUBDIRECTORY(zonal_statistics)
 
 IF (WITH_SPATIALITE)
-  ADD_SUBDIRECTORY(offline_editing)
+ # ADD_SUBDIRECTORY(offline_editing) #new_geometry
 ENDIF (WITH_SPATIALITE)
 
 IF (POSTGRES_FOUND)

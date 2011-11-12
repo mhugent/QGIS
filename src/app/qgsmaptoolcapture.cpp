@@ -252,7 +252,9 @@ void QgsMapToolCapture::stopCapturing()
     delete mGeomErrorMarkers.takeFirst();
   }
 
+#if 0 //new_geometry
   mGeomErrors.clear();
+#endif //0 //new_geometry
 
 #ifdef Q_OS_WIN
   // hope your wearing your peril sensitive sunglasses.
@@ -271,7 +273,9 @@ void QgsMapToolCapture::closePolygon()
 
 void QgsMapToolCapture::validateGeometry()
 {
+#if 0 //new_geometry
   mGeomErrors.clear();
+#endif //0 //new_geometry
   while ( !mGeomErrorMarkers.isEmpty() )
   {
     delete mGeomErrorMarkers.takeFirst();
@@ -285,12 +289,16 @@ void QgsMapToolCapture::validateGeometry()
     case CaptureLine:
       if ( mCaptureList.size() < 2 )
         return;
+#if 0 //new_geometry
       QgsGeometry::validatePolyline( mGeomErrors, 0, mCaptureList.toVector() );
+#endif //0 //new_geometry
       break;
     case CapturePolygon:
       if ( mCaptureList.size() < 3 )
         return;
+#if 0 //new_geometry
       QgsGeometry::validatePolyline( mGeomErrors, 0, mCaptureList.toVector() << mCaptureList[0], true );
+#endif //0 //new_geometry
       break;
   }
 
@@ -298,6 +306,7 @@ void QgsMapToolCapture::validateGeometry()
   if ( !vlayer )
     return;
 
+#if 0 //new_geometry
   QString tip;
   for ( int i = 0; i < mGeomErrors.size(); i++ )
   {
@@ -319,4 +328,5 @@ void QgsMapToolCapture::validateGeometry()
   sb->showMessage( QObject::tr( "%n geometry error(s) found.", "number of geometry errors", mGeomErrors.size() ) );
   if ( !tip.isEmpty() )
     sb->setToolTip( tip );
+#endif //0 //new_geometry
 }

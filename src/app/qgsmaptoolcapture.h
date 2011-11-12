@@ -105,7 +105,9 @@ class QgsMapToolCapture : public QgsMapToolEdit
     QList<QgsPoint> mCaptureList;
 
     void validateGeometry();
+#if 0 //new_geometry
     QList< QgsGeometry::Error > mGeomErrors;
+#endif //0 //new_geometry
     QList< QgsVertexMarker * > mGeomErrorMarkers;
 
     bool mCaptureModeFromLayer;

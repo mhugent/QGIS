@@ -98,13 +98,14 @@ void QgsMapToolLabel::createRubberBands( )
           fixPoint = r->mapToLayerCoordinates( vlayer, fixPoint );
         }
       }
-
+#if 0 //new_geometry
       QgsGeometry* pointGeom = QgsGeometry::fromPoint( fixPoint );
       mFixPointRubberBand = new QgsRubberBand( mCanvas, false );
       mFixPointRubberBand->setColor( Qt::blue );
       mFixPointRubberBand->setToGeometry( pointGeom, vlayer );
       mFixPointRubberBand->show();
       delete pointGeom;
+#endif //0 //new_geometry
     }
   }
 }

@@ -122,6 +122,7 @@ void QgsMapToolDeletePart::deletePart( QgsFeatureId fId, int beforeVertexNr, Qgs
 
 int QgsMapToolDeletePart::partNumberOfVertex( QgsGeometry* g, int beforeVertexNr )
 {
+#if 0 //new_geometry
   int part;
 
   switch ( g->wkbType() )
@@ -168,6 +169,8 @@ int QgsMapToolDeletePart::partNumberOfVertex( QgsGeometry* g, int beforeVertexNr
     default:
       return -1;
   }
+#endif //0 //new_geometry
+  return -1; //new_geometry
 }
 
 

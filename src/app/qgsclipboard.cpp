@@ -29,6 +29,7 @@
 #include "qgsfield.h"
 #include "qgsgeometry.h"
 #include "qgscoordinatereferencesystem.h"
+#include "qgscoordinatetransform.h"
 #include "qgslogger.h"
 
 
@@ -72,7 +73,7 @@ void QgsClipboard::replaceWithCopyOf( const QgsFieldMap& fields, QgsFeatureList&
     // TODO: Set up Paste Transformations to specify the order in which fields are added.
 
     if ( it->geometry() )
-      textFields += it->geometry()->exportToWkt();
+      textFields += it->geometry()->asWkt();
     else
     {
       QSettings settings;
@@ -135,7 +136,7 @@ void QgsClipboard::insert( QgsFeature& feature )
 {
   mFeatureClipboard.push_back( feature );
 
-  QgsDebugMsg( "inserted " + feature.geometry()->exportToWkt() );
+  //QgsDebugMsg( "inserted " + feature.geometry()->exportToWkt() );
 }
 
 bool QgsClipboard::empty()
@@ -152,7 +153,7 @@ QgsFeatureList QgsClipboard::transformedCopyOf( QgsCoordinateReferenceSystem des
   QgsDebugMsg( "transforming clipboard." );
   for ( QgsFeatureList::iterator iter = featureList.begin(); iter != featureList.end(); ++iter )
   {
-    iter->geometry()->transform( ct );
+    iter->geometry()->coordinateTransform( ct );
   }
 
   return featureList;

@@ -30,7 +30,7 @@ QgsOverlayObject::~QgsOverlayObject()
 
 QgsOverlayObject::QgsOverlayObject( const QgsOverlayObject& other ): mWidth( other.width() ), mHeight( other.height() ), mPositions( other.positions() ), mRotation( other.rotation() )
 {
-  mGeometry = new QgsGeometry( *( other.geometry() ) );
+  mGeometry = other.geometry()->clone();
 }
 
 QgsOverlayObject& QgsOverlayObject::operator=( const QgsOverlayObject & other )
@@ -39,7 +39,7 @@ QgsOverlayObject& QgsOverlayObject::operator=( const QgsOverlayObject & other )
   mHeight = other.height();
   mPositions = other.positions();
   mRotation = other.rotation();
-  mGeometry = new QgsGeometry( *( other.geometry() ) );
+  mGeometry = other.geometry()->clone();
   return *this;
 }
 

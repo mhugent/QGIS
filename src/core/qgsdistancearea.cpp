@@ -181,7 +181,8 @@ double QgsDistanceArea::measure( QgsGeometry* geometry )
   if ( !geometry )
     return 0.0;
 
-  unsigned char* wkb = geometry->asWkb();
+  int wkbSize;
+  unsigned char* wkb = geometry->asWkb( wkbSize );
   if ( !wkb )
     return 0.0;
 
@@ -248,7 +249,8 @@ double QgsDistanceArea::measurePerimeter( QgsGeometry* geometry )
   if ( !geometry )
     return 0.0;
 
-  unsigned char* wkb = geometry->asWkb();
+  int wkbSize;
+  unsigned char* wkb = geometry->asWkb( wkbSize );
   if ( !wkb )
     return 0.0;
 

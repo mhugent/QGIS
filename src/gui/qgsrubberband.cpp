@@ -176,6 +176,7 @@ void QgsRubberBand::setToGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
 
 void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
 {
+#if 0 //new_geometry
   if ( !geom )
   {
     return;
@@ -338,6 +339,7 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
 
   updateRect();
   update();
+#endif //0 //new_geometry
 }
 
 void QgsRubberBand::setToCanvasRectangle( const QRect& rect )
@@ -458,6 +460,7 @@ const QgsPoint *QgsRubberBand::getPoint( int i, int j ) const
 QgsGeometry *QgsRubberBand::asGeometry()
 {
   QgsGeometry *geom = NULL;
+#if 0 //new_geometry
   if ( mIsPolygon )
   {
     QgsPolygon polygon;
@@ -488,9 +491,11 @@ QgsGeometry *QgsRubberBand::asGeometry()
       }
     }
   }
+#endif //0 //new_geometry
   return geom;
 }
 
+#if 0 //new_geometry
 QgsPolyline QgsRubberBand::getPolyline( const QList<QgsPoint> & points )
 {
   QgsPolyline polyline;
@@ -501,3 +506,4 @@ QgsPolyline QgsRubberBand::getPolyline( const QList<QgsPoint> & points )
   }
   return polyline;
 }
+#endif //0 //new_geometry

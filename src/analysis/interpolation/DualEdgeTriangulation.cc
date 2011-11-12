@@ -3081,6 +3081,7 @@ QList<int>* DualEdgeTriangulation::getPointsAroundEdge( double x, double y )
 
 bool DualEdgeTriangulation::saveAsShapefile( const QString& fileName ) const
 {
+#if 0 //new_geometry
   QString shapeFileName = fileName;
 
   QgsFieldMap fields;
@@ -3156,7 +3157,7 @@ bool DualEdgeTriangulation::saveAsShapefile( const QString& fileName ) const
   }
 
   delete [] alreadyVisitedEdges;
-
+#endif //0 //new_geometry
   return true;
 }
 

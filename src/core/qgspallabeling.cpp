@@ -402,19 +402,23 @@ bool QgsPalLayerSettings::checkMinimumSizeMM( const QgsRenderContext& ct, QgsGeo
   double mapUnitsPerMM = ct.mapToPixel().mapUnitsPerPixel() * ct.scaleFactor();
   if ( featureType == QGis::Line )
   {
+#if 0 //new_geometry
     double length = geom->length();
     if ( length >= 0.0 )
     {
       return ( length >= ( minSize * mapUnitsPerMM ) );
     }
+#endif //0 new_geometry
   }
   else if ( featureType == QGis::Polygon )
   {
+#if 0 //new_geometry
     double area = geom->area();
     if ( area >= 0.0 )
     {
       return ( sqrt( area ) >= ( minSize * mapUnitsPerMM ) );
     }
+#endif //0 new_geometry
   }
   return true; //should never be reached. Return true in this case to label such geometries anyway.
 }
@@ -521,7 +525,7 @@ void QgsPalLayerSettings::registerFeature( QgsVectorLayer* layer,  QgsFeature& f
   }
 
   if ( ct ) // reproject the geometry if necessary
-    geom->transform( *ct );
+    geom->coordinateTransform( *ct );
 
   if ( !checkMinimumSizeMM( context, geom, minFeatureSize ) )
   {
@@ -531,6 +535,7 @@ void QgsPalLayerSettings::registerFeature( QgsVectorLayer* layer,  QgsFeature& f
   // CLIP the geometry if it is bigger than the extent
   QgsGeometry* geomClipped = NULL;
   GEOSGeometry* geos_geom;
+#if 0 //new_geometry
   bool do_clip = !extentGeom->contains( geom );
   if ( do_clip )
   {
@@ -545,12 +550,16 @@ void QgsPalLayerSettings::registerFeature( QgsVectorLayer* layer,  QgsFeature& f
   {
     geos_geom = geom->asGeos();
   }
+#endif //0 new_geometry
 
+#if 0 //new_geometry
   if ( geos_geom == NULL )
     return; // invalid geometry
   GEOSGeometry* geos_geom_clone = GEOSGeom_clone( geos_geom );
   if ( do_clip )
     delete geomClipped;
+#endif //0 new_geometry
+  GEOSGeometry* geos_geom_clone = 0; //0 new_geometry
 
   //data defined position / alignment / rotation?
   bool dataDefinedPosition = false;
@@ -863,7 +872,7 @@ int QgsPalLabeling::prepareLayer( QgsVectorLayer* layer, QSet<int>& attrIndices,
   lyr.ptOne = lyr.xform->toMapCoordinates( 1, 0 );
 
   // rect for clipping
-  lyr.extentGeom = QgsGeometry::fromRect( mMapRenderer->extent() );
+  lyr.extentGeom = 0; //#if 0 new_geometry QgsGeometry::fromRect( mMapRenderer->extent() );
 
   return 1; // init successful
 }
@@ -903,7 +912,7 @@ void QgsPalLabeling::registerDiagramFeature( QgsVectorLayer* layer, QgsFeature& 
 
   if ( layerIt.value().ct && !willUseLayer( layer ) ) // reproject the geometry if feature not already transformed for labeling
   {
-    geom->transform( *( layerIt.value().ct ) );
+    geom->coordinateTransform( *( layerIt.value().ct ) );
   }
 
   GEOSGeometry* geos_geom = geom->asGeos();

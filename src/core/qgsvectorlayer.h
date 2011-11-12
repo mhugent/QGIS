@@ -876,7 +876,9 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     bool mModified;
 
     /** cache of the committed geometries retrieved *for the current display* */
+#if 0 //new_geometry
     QgsGeometryMap mCachedGeometries;
+#endif //0 //new_geometry
 
     /** extent for which there are cached geometries */
     QgsRectangle mCachedGeometriesRect;
@@ -908,7 +910,9 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     QgsAttributeIds mAddedAttributeIds;
 
     /** Changed geometries which are not commited. */
+#if 0 //new_geometry
     QgsGeometryMap mChangedGeometries;
+#endif //0 //new_geometry
 
     /** field map to commit */
     QgsFieldMap mUpdatedFields;

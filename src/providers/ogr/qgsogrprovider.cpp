@@ -931,18 +931,22 @@ bool QgsOgrProvider::addFeature( QgsFeature& f )
   OGRFeatureDefnH fdef = OGR_L_GetLayerDefn( ogrLayer );
   OGRFeatureH feature = OGR_F_Create( fdef );
 
-  if ( f.geometry() && f.geometry()->wkbSize() > 0 )
+  if ( f.geometry() )
   {
-    unsigned char* wkb = f.geometry()->asWkb();
-    OGRGeometryH geom = NULL;
-
-    if ( OGR_G_CreateFromWkb( wkb, NULL, &geom, f.geometry()->wkbSize() )
-         != OGRERR_NONE )
+    int wkbSize;
+    unsigned char* wkb = f.geometry()->asWkb( wkbSize );
+    if ( wkbSize > 0 )
     {
-      return false;
-    }
+      OGRGeometryH geom = NULL;
 
-    OGR_F_SetGeometryDirectly( feature, geom );
+      if ( OGR_G_CreateFromWkb( wkb, NULL, &geom, wkbSize )
+           != OGRERR_NONE )
+      {
+        return false;
+      }
+
+      OGR_F_SetGeometryDirectly( feature, geom );
+    }
   }
 
   QgsAttributeMap attrs = f.attributeMap();
@@ -1177,6 +1181,7 @@ bool QgsOgrProvider::changeAttributeValues( const QgsChangedAttributesMap & attr
 
 bool QgsOgrProvider::changeGeometryValues( QgsGeometryMap & geometry_map )
 {
+#if 0 //new_geometry
   OGRErr res;
   OGRFeatureH theOGRFeature = 0;
   OGRGeometryH theNewGeometry = 0;
@@ -1199,10 +1204,12 @@ bool QgsOgrProvider::changeGeometryValues( QgsGeometryMap & geometry_map )
     }
 
     //create an OGRGeometry
-    if ( OGR_G_CreateFromWkb( it->asWkb(),
+    int wkbSize;
+    unsigned char* wkb = it->asWkb( wkbSize );
+    if ( OGR_G_CreateFromWkb( wkb,
                               OGR_L_GetSpatialRef( ogrLayer ),
                               &theNewGeometry,
-                              it->wkbSize() ) != OGRERR_NONE )
+                              wkbSize ) != OGRERR_NONE )
     {
       QgsLogger::warning( "QgsOgrProvider::changeGeometryValues, error while creating new OGRGeometry" );
       OGR_G_DestroyGeometry( theNewGeometry );
@@ -1237,6 +1244,8 @@ bool QgsOgrProvider::changeGeometryValues( QgsGeometryMap & geometry_map )
     OGR_F_Destroy( theOGRFeature );
   }
   return syncToDisc();
+#endif //0 //new_geometry
+  return false; //new_geometry
 }
 
 bool QgsOgrProvider::createSpatialIndex()

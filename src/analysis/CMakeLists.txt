@@ -1,4 +1,4 @@
-SUBDIRS( network )
+#SUBDIRS( network ) #disabled because of new geometry
 
 #############################################################
 # sources
@@ -32,8 +32,8 @@ SET(QGIS_ANALYSIS_SRCS
   raster/qgsrastercalcnode.cpp
   raster/qgsrastercalculator.cpp
   raster/qgsrastermatrix.cpp
-  vector/qgsgeometryanalyzer.cpp
-  vector/qgszonalstatistics.cpp
+#  vector/qgsgeometryanalyzer.cpp #disabled because of new_geometry
+#  vector/qgszonalstatistics.cpp #disabled because of new_geometry
   vector/qgsoverlayanalyzer.cpp
 )
 

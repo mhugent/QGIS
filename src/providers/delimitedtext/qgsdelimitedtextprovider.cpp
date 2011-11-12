@@ -528,7 +528,9 @@ bool QgsDelimitedTextProvider::nextFeature( QgsFeature& feature )
         mFid++;
         if ( boundsCheck( x, y ) )
         {
+#if 0 //new_geometry
           geom = QgsGeometry::fromPoint( QgsPoint( x, y ) );
+#endif //0 //new_geometry
         }
       }
     }

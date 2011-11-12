@@ -700,14 +700,19 @@ QgsSearchTreeValue QgsSearchTreeNode::valueAgainst( const QgsFieldMap& fields, Q
         }
         if ( mOp == opX && f.geometry()->type() == QGis::Point )
         {
+#if 0 //new_geometry
           return QgsSearchTreeValue( f.geometry()->asPoint().x() );
+#endif //0 new_geometry
         }
         if ( mOp == opY && f.geometry()->type() == QGis::Point )
         {
+#if 0 //new_geometry
           return QgsSearchTreeValue( f.geometry()->asPoint().y() );
+#endif //0 new_geometry
         }
         if (( mOp == opXAT || mOp == opYAT ) && f.geometry()->type() == QGis::Line && value1.isNumeric() )
         {
+#if 0 //new_geometry
           QgsPolyline p = f.geometry()->asPolyline();
 
           int idx = value1.number();
@@ -720,8 +725,8 @@ QgsSearchTreeValue QgsSearchTreeNode::valueAgainst( const QgsFieldMap& fields, Q
           {
             return QgsSearchTreeValue( 2, QObject::tr( "Index %1 out of range [0;%2[" ).arg( idx ).arg( p.size() ) );
           }
-
           return QgsSearchTreeValue( mOp == opXAT ? p[idx].x() : p[idx].y() );
+#endif //0 new_geometry
         }
 
         return QgsSearchTreeValue( 0 );

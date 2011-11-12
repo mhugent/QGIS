@@ -495,7 +495,9 @@ bool QgsVectorFileWriter::addFeature( QgsFeature& feature )
         return false;
       }
 
-      OGRErr err = OGR_G_ImportFromWkb( mGeom2, geom->asWkb(), geom->wkbSize() );
+      int wkbSize;
+      unsigned char* wkb = geom->asWkb( wkbSize );
+      OGRErr err = OGR_G_ImportFromWkb( mGeom2, wkb, wkbSize );
       if ( err != OGRERR_NONE )
       {
         QgsDebugMsg( QString( "Failed to import geometry from WKB: %1 (OGR error: %2)" ).arg( err ).arg( CPLGetLastErrorMsg() ) );
@@ -511,7 +513,9 @@ bool QgsVectorFileWriter::addFeature( QgsFeature& feature )
     }
     else if ( geom )
     {
-      OGRErr err = OGR_G_ImportFromWkb( mGeom, geom->asWkb(), geom->wkbSize() );
+      int wkbSize;
+      unsigned char* wkb = geom->asWkb( wkbSize );
+      OGRErr err = OGR_G_ImportFromWkb( mGeom, wkb, wkbSize );
       if ( err != OGRERR_NONE )
       {
         QgsDebugMsg( QString( "Failed to import geometry from WKB: %1 (OGR error: %2)" ).arg( err ).arg( CPLGetLastErrorMsg() ) );
@@ -655,7 +659,7 @@ QgsVectorFileWriter::writeAsVectorFormat( QgsVectorLayer* layer,
       {
         if ( fet.geometry() )
         {
-          fet.geometry()->transform( *ct );
+          fet.geometry()->coordinateTransform( *ct );
         }
       }
       catch ( QgsCsException &e )

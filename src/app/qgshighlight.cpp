@@ -29,7 +29,7 @@ QgsHighlight::QgsHighlight( QgsMapCanvas* mapCanvas, QgsGeometry *geom, QgsVecto
     : QgsMapCanvasItem( mapCanvas )
     , mLayer( layer )
 {
-  mGeometry = geom ? new QgsGeometry( *geom ) : 0;
+  mGeometry = 0; //new_geometry //geom ? new QgsGeometry( *geom ) : 0;
   updateRect();
   update();
   setColor( QColor( Qt::lightGray ) );
@@ -78,6 +78,7 @@ void QgsHighlight::paintPoint( QPainter *p, QgsPoint point )
   p->drawPolygon( r );
 }
 
+#if 0 //new_geometry
 void QgsHighlight::paintLine( QPainter *p, QgsPolyline line )
 {
   QPolygonF polygon( line.size() );
@@ -132,6 +133,7 @@ void QgsHighlight::paintPolygon( QPainter *p, QgsPolygon polygon )
   p->setBrush( mBrush );
   p->drawPolygon( poly );
 }
+#endif //0 //new_geometry
 
 /*!
   Draw the shape in response to an update event.
@@ -146,6 +148,7 @@ void QgsHighlight::paint( QPainter* p )
   p->setPen( mPen );
   p->setBrush( mBrush );
 
+#if 0 //new_geometry
   switch ( mGeometry->wkbType() )
   {
     case QGis::WKBPoint:
@@ -207,6 +210,7 @@ void QgsHighlight::paint( QPainter* p )
     default:
       return;
   }
+#endif //0 new_geometry
 }
 
 void QgsHighlight::updateRect()

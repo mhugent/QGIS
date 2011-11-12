@@ -336,9 +336,11 @@ QList<double> QgsGeometryAnalyzer::simpleMeasure( QgsGeometry* mpGeometry )
   double perim;
   if ( mpGeometry->wkbType() == QGis::WKBPoint )
   {
+#if 0 //new_geometry
     QgsPoint pt = mpGeometry->asPoint();
     list.append( pt.x() );
     list.append( pt.y() );
+#endif //0 new_geometry
   }
   else
   {

@@ -954,6 +954,7 @@ void SelectionFeature::setSelectedFeature( QgsFeatureId featureId,
 
 void SelectionFeature::validateGeometry( QgsGeometry *g )
 {
+#if 0 //new_geometry
   QgsDebugMsg( "validating geometry" );
 
   if ( g == NULL )
@@ -985,6 +986,7 @@ void SelectionFeature::validateGeometry( QgsGeometry *g )
   sb->showMessage( QObject::tr( "%n geometry error(s) found.", "number of geometry errors", mGeomErrors.size() ) );
   if ( !tip.isEmpty() )
     sb->setToolTip( tip );
+#endif //0 //new_geometry
 }
 
 void SelectionFeature::deleteSelectedVertexes()
@@ -1171,6 +1173,7 @@ QgsFeature* SelectionFeature::feature()
 
 void SelectionFeature::createVertexMapPolygon()
 {
+#if 0 //new_geometry
   int y = 0;
   if ( !mFeature->geometry()->asPolygon().empty() )
   { //polygon
@@ -1226,10 +1229,12 @@ void SelectionFeature::createVertexMapPolygon()
       }
     }
   }
+#endif //0 //new_geometry
 }
 
 void SelectionFeature::createVertexMapLine()
 {
+#if 0 //new_geometry
   if ( mFeature->geometry()->isMultipart() )
   {
     int y = 0;
@@ -1275,10 +1280,12 @@ void SelectionFeature::createVertexMapLine()
       mVertexMap.insert( i, entry );
     }
   }
+#endif //0 //new_geometry
 }
 
 void SelectionFeature::createVertexMapPoint()
 {
+#if 0 //new_geometry
   if ( mFeature->geometry()->isMultipart() )
   {//multipoint
     QgsMultiPoint poly = mFeature->geometry()->asMultiPoint();
@@ -1313,6 +1320,7 @@ void SelectionFeature::createVertexMapPoint()
     entry.vertexMarker = marker;
     mVertexMap.insert( 1, entry );
   }
+#endif //0 new_geometry
 }
 
 void SelectionFeature::createVertexMap()

@@ -250,6 +250,7 @@ bool QgsMapToolSimplify::calculateSliderBoudaries()
 
 void QgsMapToolSimplify::canvasPressEvent( QMouseEvent * e )
 {
+#if 0 //new_geometry
   QgsVectorLayer * vlayer = currentVectorLayer();
   QgsPoint layerCoords = mCanvas->getCoordinateTransform()->toMapPoint( e->pos().x(), e->pos().y() );
 
@@ -302,6 +303,7 @@ void QgsMapToolSimplify::canvasPressEvent( QMouseEvent * e )
       QMessageBox::warning( 0, tr( "Unsupported operation" ), tr( "This feature cannot be simplified. Check if feature has enough vertices to be simplified." ) );
     }
   }
+#endif //0 new_geometry
 }
 
 void QgsMapToolSimplify::removeRubberBand()
@@ -321,6 +323,7 @@ void QgsMapToolSimplify::deactivate()
 
 QVector<QgsPoint> QgsMapToolSimplify::getPointList( QgsFeature& f )
 {
+#if 0 //new_geometry
   QgsGeometry* line = f.geometry();
   if (( line->type() != QGis::Line && line->type() != QGis::Polygon ) || line->isMultipart() )
   {
@@ -338,12 +341,15 @@ QVector<QgsPoint> QgsMapToolSimplify::getPointList( QgsFeature& f )
     }
     return line->asPolygon()[0];
   }
+#endif //0 new_geometry
+  return QVector<QgsPoint>(); //new_geometry
 }
 
 
 
 bool QgsSimplifyFeature::simplifyLine( QgsFeature& lineFeature,  double tolerance )
 {
+#if 0 //new_geometry
   QgsGeometry* line = lineFeature.geometry();
   if ( line->type() != QGis::Line )
   {
@@ -352,11 +358,13 @@ bool QgsSimplifyFeature::simplifyLine( QgsFeature& lineFeature,  double toleranc
 
   QVector<QgsPoint> resultPoints = simplifyPoints( line->asPolyline(), tolerance );
   lineFeature.setGeometry( QgsGeometry::fromPolyline( resultPoints ) );
+#endif //0 new_geometry
   return true;
 }
 
 bool QgsSimplifyFeature::simplifyPolygon( QgsFeature& polygonFeature,  double tolerance )
 {
+#if 0 //new_geometry
   QgsGeometry* polygon = polygonFeature.geometry();
   if ( polygon->type() != QGis::Polygon )
   {
@@ -368,6 +376,7 @@ bool QgsSimplifyFeature::simplifyPolygon( QgsFeature& polygonFeature,  double to
   QVector<QgsPolyline> poly;
   poly.append( resultPoints );
   polygonFeature.setGeometry( QgsGeometry::fromPolygon( poly ) );
+#endif //0 new_geometry
   return true;
 }
 

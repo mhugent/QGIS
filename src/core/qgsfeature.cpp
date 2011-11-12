@@ -173,7 +173,7 @@ void QgsFeature::setTypeName( QString typeName )
 
 void QgsFeature::setGeometry( const QgsGeometry& geom )
 {
-  setGeometry( new QgsGeometry( geom ) );
+  setGeometry( geom.clone() );
 }
 
 void QgsFeature::setGeometry( QgsGeometry* geom )
@@ -193,9 +193,12 @@ void QgsFeature::setGeometry( QgsGeometry* geom )
 */
 void QgsFeature::setGeometryAndOwnership( unsigned char *geom, size_t length )
 {
+
+#if 0 //new_geometry
   QgsGeometry *g = new QgsGeometry();
   g->fromWkb( geom, length );
   setGeometry( g );
+#endif 0 //new_geometry
 }
 
 
