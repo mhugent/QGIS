@@ -173,6 +173,9 @@ SET(QGIS_CORE_SRCS
   symbology/qgssymbologyutils.cpp
 
   qgsspatialindex.cpp
+
+  #geometry
+  qgslinestring.cpp
 )
 
 IF(WIN32)

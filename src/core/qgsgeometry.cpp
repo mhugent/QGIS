@@ -1,8 +1,23 @@
 #include "qgsgeometry.h"
+#include "qgslinestring.h"
 
 QgsGeometry* QgsGeometry::fromWkb( unsigned char * wkb, size_t length )
 {
-  return 0;
+  if( length < 1 )
+  {
+    return 0;
+  }
+
+  int type;
+  memcpy( &type, wkb + 1, sizeof( int ) );
+  switch (type)
+  {
+    case QGis::WKBLineString:
+    case QGis::WKBLineString25D:
+      return QgsLineString::fromWkb(wkb);
+    default:
+      return 0;
+  }
 }
 
 QgsGeometry* QgsGeometry::fromWkt( const QString& wkt )
@@ -92,69 +107,39 @@ bool QgsGeometry::isGeosValid() const
   return false;
 }
 
-//linestring
-QgsLineString::QgsLineString()
+QgsPoint QgsGeometry::closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist ) const
 {
+  return QgsPoint(); //soon...
 }
 
-QgsLineString::~QgsLineString()
-{
-}
-
-void QgsLineString::draw( QPainter* p ) const
-{
-}
-
-void QgsLineString::transform( const QgsCoordinateTransform& t )
-{
-}
-
-void QgsLineString::mapToPixel( const QgsMapToPixel& mtp )
-{
-}
-
-//import
-QgsGeometry* QgsLineString::fromWkb( unsigned char * wkb, size_t length )
+QgsGeometry* QgsGeometry::buffer( double distance, int segments ) const
 {
   return 0;
 }
 
-QgsGeometry* QgsLineString::fromWkt( const QString& wkt )
+QgsGeometry* QgsGeometry::simplify( double tolerance ) const
 {
   return 0;
 }
 
-QgsGeometry* QgsLineString::fromGeos( const GEOSGeometry* geos )
+QgsGeometry* QgsGeometry::centroid() const
 {
   return 0;
 }
 
-//export
-unsigned char* QgsLineString::asWkb( int& wkbSize ) const
-{
-  wkbSize = 0;
-  return 0;
-}
-
-GEOSGeometry* QgsLineString::asGeos() const
+QgsGeometry* QgsGeometry::convexHull() const
 {
   return 0;
 }
 
-QString QgsLineString::asWkt() const
-{
-  return "";
-}
-
-QgsGeometry* QgsLineString::clone() const
+QgsGeometry* QgsGeometry::intersection( QgsGeometry* geometry ) const
 {
   return 0;
 }
 
-void QgsLineString::addToPainterPath( QPainterPath& path ) const
+QgsGeometry* QgsGeometry::combine( QgsGeometry* geometry ) const
 {
-  //move to first point
-  //line to other points
+  return 0;
 }
 
 #if 0

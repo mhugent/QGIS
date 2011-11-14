@@ -47,7 +47,7 @@ class QgsGeometry
     virtual QString asWkt() const = 0;
     virtual QgsGeometry* clone() const = 0;
 
-    //is it possible to still support asPoint, asPolygon, ...?
+    //todo: support asPoint, asPolygon, ... such that client classes don't have to cast?
 
     virtual bool hasZ() const = 0;
     virtual bool hasM() const = 0;
@@ -101,6 +101,14 @@ class QgsGeometry
     bool isGeosEqual( QgsGeometry & ) const;
     bool isGeosValid() const;
 
+    QgsPoint closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist ) const;
+    QgsGeometry* buffer( double distance, int segments ) const;
+    QgsGeometry* simplify( double tolerance ) const;
+    QgsGeometry* centroid() const;
+    QgsGeometry* convexHull() const;
+    QgsGeometry* intersection( QgsGeometry* geometry ) const;
+    QgsGeometry* combine( QgsGeometry* geometry ) const;
+
     //edit
     virtual bool insertVertex( double x, double y, int beforeVertex ) = 0; //m and z?
     virtual bool moveVertex( double x, double y, int atVertex ) = 0; //keep m and z
@@ -120,13 +128,6 @@ class QgsGeometry
     virtual double closestVertexWithContext( const QgsPoint& point, int& atVertex ) const = 0;
     virtual double closestSegmentWithContext( const QgsPoint& point, QgsPoint& minDistPoint, int& beforeVertex ) const = 0;
     virtual void adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex ) const = 0;
-    virtual QgsPoint closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist ) const = 0;
-    virtual QgsGeometry* buffer( double distance, int segments ) const = 0;
-    virtual QgsGeometry* simplify( double tolerance ) const = 0;
-    virtual QgsGeometry* centroid() const = 0;
-    virtual QgsGeometry* convexHull() const = 0;
-    virtual QgsGeometry* intersection( QgsGeometry* geometry ) const = 0;
-    virtual QgsGeometry* combine( QgsGeometry* geometry ) const = 0;
     virtual bool deleteRing( int ringNum, int partNum = 0 ) const = 0;
     virtual bool deletePart( int partNum ) = 0;
     virtual double distance( QgsGeometry& geom ) const = 0;
@@ -143,39 +144,6 @@ class QgsCurve: public QgsGeometry
 
   protected:
     virtual void addToPainterPath( QPainterPath& path ) const = 0;
-};
-
-class QgsLineString: public QgsCurve
-{
-  public:
-    QgsLineString();
-    ~QgsLineString();
-
-    void draw( QPainter* p ) const;
-    void transform( const QgsCoordinateTransform& t );
-    void mapToPixel( const QgsMapToPixel& mtp );
-
-    //import
-    static QgsGeometry* fromWkb( unsigned char * wkb, size_t length );
-    static QgsGeometry* fromWkt( const QString& wkt );
-    static QgsGeometry* fromGeos( const GEOSGeometry* geos );
-
-    //export
-    unsigned char* asWkb( int& wkbSize ) const;
-    GEOSGeometry* asGeos() const;
-    QString asWkt() const;
-    QgsGeometry* clone() const;
-
-    bool hasZ() const { return !mZValues.isEmpty(); }
-    bool hasM() const { return !mMValues.isEmpty(); }
-
-  protected:
-    void addToPainterPath( QPainterPath& path ) const;
-
-  private:
-    QPolygonF* mVertices;
-    QVector<double> mZValues;
-    QVector<double> mMValues;
 };
 
 #if 0

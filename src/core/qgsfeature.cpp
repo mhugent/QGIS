@@ -193,12 +193,8 @@ void QgsFeature::setGeometry( QgsGeometry* geom )
 */
 void QgsFeature::setGeometryAndOwnership( unsigned char *geom, size_t length )
 {
-
-#if 0 //new_geometry
-  QgsGeometry *g = new QgsGeometry();
-  g->fromWkb( geom, length );
+  QgsGeometry *g = QgsGeometry::fromWkb( geom, length );
   setGeometry( g );
-#endif 0 //new_geometry
 }
 
 
