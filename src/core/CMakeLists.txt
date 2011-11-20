@@ -6,6 +6,7 @@
 SET(QGIS_CORE_SRCS
 
   geometry/qgsgeometry.cpp
+  geometry/qgsgeometryfactory.cpp
   geometry/qgslinestring.cpp
 
   gps/qextserialport/qextserialport.cpp

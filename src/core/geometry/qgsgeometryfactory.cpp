@@ -1,6 +1,6 @@
 /***************************************************************************
-                              qgsgeometryfactory.h
-                              --------------------
+                              qgsgeometryfactory.cpp
+                              ----------------------
   begin                : November 20th, 2011
   copyright            : (C) 2011 by Marco Hugentobler
   email                : marco dot hugentobler at sourcepole dot ch
@@ -15,29 +15,19 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSGEOMETRYFACTORY_H
-#define QGSGEOMETRYFACTORY_H
+#include "qgsgeometryfactory.h"
+#include "qgslinestring.h"
 
-#include <QPolygonF>
-#include <QVector>
-
-class QgsGeometry;
-class QgsLineString;
-class QPointF;
-
-/**Class to create geometry objects*/
-class QgsGeometryFactory
+QgsGeometryFactory::QgsGeometryFactory()
 {
-  public:
-    QgsGeometryFactory();
-    ~QgsGeometryFactory();
+}
 
-    /*static QgsGeometry* fromWkb( unsigned char * wkb, size_t length );
-    static QgsGeometry* fromWkt( const QString& wkt );
-    static QgsGeometry* fromGeos( const GEOSGeometry* geos );*/
+QgsGeometryFactory::~QgsGeometryFactory()
+{
+}
 
-    /**Creates linestring by taking ownership of coordinate vector*/
-    QgsLineString* createLineString( QPolygonF* vertices, QVector<double>* zValues = 0, QVector<double>* mValues = 0 );
-};
 
-#endif // QGSGEOMETRYFACTORY_H
+QgsLineString* QgsGeometryFactory::createLineString( QPolygonF* vertices, QVector<double>* zValues, QVector<double>* mValues )
+{
+  return new QgsLineString( vertices, zValues, mValues );
+}
