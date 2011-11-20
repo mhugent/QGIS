@@ -5,6 +5,9 @@
 
 SET(QGIS_CORE_SRCS
 
+  geometry/qgsgeometry.cpp
+  geometry/qgslinestring.cpp
+
   gps/qextserialport/qextserialport.cpp
   gps/qextserialport/qextserialenumerator.cpp
 
@@ -61,7 +64,6 @@ SET(QGIS_CORE_SRCS
   qgsexpression.cpp
   qgsfeature.cpp
   qgsfield.cpp
-  qgsgeometry.cpp
   qgshttptransaction.cpp
   qgslabel.cpp
   qgslabelattributes.cpp
@@ -173,9 +175,6 @@ SET(QGIS_CORE_SRCS
   symbology/qgssymbologyutils.cpp
 
   qgsspatialindex.cpp
-
-  #geometry
-  qgslinestring.cpp
 )
 
 IF(WIN32)
@@ -299,7 +298,6 @@ SET(QGIS_CORE_HDRS
   qgsexpression.h
   qgsfeature.h
   qgsfield.h
-  qgsgeometry.h
   qgshttptransaction.h
   qgslabel.h
   qgslabelattributes.h
@@ -344,6 +342,9 @@ SET(QGIS_CORE_HDRS
 
   composer/qgslegendmodel.h
   composer/qgscomposerlegenditem.h
+
+  geometry/qgsgeometry.h
+  geometry/qgslinestring.h
 
   raster/qgscliptominmaxenhancement.h
   raster/qgscolorrampshader.h
@@ -396,6 +397,7 @@ SET(QGIS_CORE_HDRS
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
   composer
+  geometry
   pal
   raster
   renderer

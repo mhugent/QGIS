@@ -194,6 +194,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/symbology-ng
   ../core
   ../core/composer
+  ../core/geometry
   ../core/raster
   ../core/renderer
   ../core/symbology

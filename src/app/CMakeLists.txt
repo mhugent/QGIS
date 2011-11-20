@@ -377,6 +377,7 @@ INCLUDE_DIRECTORIES(
   ${QT_QTUITOOLS_INCLUDE_DIR}
   ../analysis/raster
   ../core
+  ../core/geometry
   ../core/gps ../core/gps/qextserialport
   ../core/composer ../core/raster ../core/renderer ../core/symbology ../core/symbology-ng
   ../gui ../gui/symbology-ng ../gui/attributetable

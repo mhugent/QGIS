@@ -12,6 +12,7 @@ SET (DTEXT_MOC_HDRS	qgsdelimitedtextprovider.h)
 INCLUDE_DIRECTORIES(
   .
   ../../core
+  ../../core/geometry
   ${GDAL_INCLUDE_DIR}
   ${GEOS_INCLUDE_DIR}
 )
