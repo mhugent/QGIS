@@ -39,11 +39,11 @@
 #ifdef Q_OS_MACX
 QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent )
     : QMainWindow( parent, Qt::WindowSystemMenuHint )  // Modeless dialog with close button only
-    , mSettings( "QuantumGIS", "QGISCUSTOMIZATION" )
+	, mSettings( "NIWA", "QGISCUSTOMIZATION" )
 #else
 QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent )
     : QMainWindow( parent )
-    , mSettings( "QuantumGIS", "QGISCUSTOMIZATION" )
+	, mSettings( "NIWA", "QGISCUSTOMIZATION" )
 #endif
 {
   setupUi( this );
@@ -601,7 +601,7 @@ QgsCustomization::QgsCustomization()
     : pDialog( 0 )
     , mEnabled( true )
     , mStatusPath( "/Customization/status" )
-    , mSettings( "QuantumGIS", "QGISCUSTOMIZATION" )
+    , mSettings( "NIWA", "QGISCUSTOMIZATION" )
 {
   QgsDebugMsg( "Entered" );
 }
@@ -785,7 +785,7 @@ void QgsCustomization::customizeWidget( QWidget * widget, QEvent * event )
 
 void QgsCustomization::customizeWidget( QString thePath, QWidget * theWidget )
 {
-  QSettings mySettings( "QuantumGIS", "QGISCUSTOMIZATION" );
+  QSettings mySettings( "NIWA", "QGISCUSTOMIZATION" );
   QString name = theWidget->objectName();
   QString myPath = thePath;
 
