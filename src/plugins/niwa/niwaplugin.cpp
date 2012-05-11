@@ -8,7 +8,7 @@
 static const QString name_ = QObject::tr( "NIWA plugin" );
 static const QString description_ = QObject::tr( "A plugin to access and manage layers from OWS services in a unified way" );
 static const QString version_ = QObject::tr( "Version 0.1" );
-//static const QString icon_ = ":/raster/dem.png";
+static const QString icon_ = ":/niwa/niwa.jpg";
 static const QString category_ = QObject::tr( "Web" );
 
 NiwaPlugin::NiwaPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 )
@@ -25,7 +25,7 @@ void NiwaPlugin::initGui()
 {
   if ( mIface )
   {
-    mAction = new QAction( QIcon( ":/niwa/niwa.jpg" ), tr( "NIWA plugin" ), 0 );
+    mAction = new QAction( QIcon( icon_ ), tr( "NIWA plugin" ), 0 );
     connect( mAction, SIGNAL( triggered() ), this, SLOT( showNiwaDialog() ) );
     mIface->addWebToolBarIcon( mAction );
     mIface->addPluginToMenu( name_, mAction );
@@ -68,10 +68,10 @@ QGISEXTERN QString version()
   return version_;
 }
 
-/*QGISEXTERN QString icon()
+QGISEXTERN QString icon()
 {
   return icon_;
-}*/
+}
 
 QGISEXTERN int type()
 {
