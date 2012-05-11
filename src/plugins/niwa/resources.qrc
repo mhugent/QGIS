@@ -1,0 +1,5 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource prefix="/niwa">
+     <file>niwa.jpg</file>
+ </qresource>
+ </RCC>

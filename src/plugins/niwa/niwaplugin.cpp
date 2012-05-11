@@ -25,7 +25,7 @@ void NiwaPlugin::initGui()
 {
   if ( mIface )
   {
-    mAction = new QAction( this );
+    mAction = new QAction( QIcon( ":/niwa/niwa.jpg" ), tr( "NIWA plugin" ), 0 );
     connect( mAction, SIGNAL( triggered() ), this, SLOT( showNiwaDialog() ) );
     mIface->addWebToolBarIcon( mAction );
     mIface->addPluginToMenu( name_, mAction );

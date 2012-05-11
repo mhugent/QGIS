@@ -15,7 +15,7 @@ SET (NIWA_MOC_HDRS
      niwaplugindialog.h
 )
 
-#SET (NIWA_RCCS  resources.qrc)
+SET (NIWA_RCCS  resources.qrc)
 ########################################################
 # Build
 
@@ -29,7 +29,7 @@ ADD_LIBRARY (niwaplugin MODULE
   ${NIWA_SRCS} 
   ${NIWA_UIS_H}
   ${NIWA_MOC_SRCS} 
-#  ${NIWA_RCC_SRCS}
+  ${NIWA_RCC_SRCS}
 )
 
 INCLUDE_DIRECTORIES(
