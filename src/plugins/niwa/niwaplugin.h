@@ -2,19 +2,27 @@
 #define NIWAPLUGIN_H
 
 #include "qgisplugin.h"
-class QgisInterface;
+#include <QObject>
 
-class NiwaPlugin: public QgisPlugin
+class QgisInterface;
+class QAction;
+
+class NiwaPlugin: public QObject, public QgisPlugin
 {
-    public:
+    Q_OBJECT
+  public:
     NiwaPlugin( QgisInterface* iface );
     ~NiwaPlugin();
 
     void initGui();
     void unload();
 
-    private:
+  private slots:
+    void showNiwaDialog();
+
+  private:
     QgisInterface* mIface;
+    QAction* mAction;
 };
 
 #endif // NIWAPLUGIN_H

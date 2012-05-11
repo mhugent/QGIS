@@ -1,5 +1,8 @@
 #include "niwaplugin.h"
+#include "niwaplugindialog.h"
 #include "qgis.h"
+#include "qgisinterface.h"
+#include <QAction>
 #include <QObject>
 
 static const QString name_ = QObject::tr( "NIWA plugin" );
@@ -8,24 +11,39 @@ static const QString version_ = QObject::tr( "Version 0.1" );
 //static const QString icon_ = ":/raster/dem.png";
 static const QString category_ = QObject::tr( "Web" );
 
-NiwaPlugin::NiwaPlugin( QgisInterface* iface ): mIface( iface )
+NiwaPlugin::NiwaPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 )
 {
 
 }
 
 NiwaPlugin::~NiwaPlugin()
 {
-
+  delete mAction;
 }
 
 void NiwaPlugin::initGui()
 {
-    //soon...
+  if ( mIface )
+  {
+    mAction = new QAction( this );
+    connect( mAction, SIGNAL( triggered() ), this, SLOT( showNiwaDialog() ) );
+    mIface->addWebToolBarIcon( mAction );
+    mIface->addPluginToMenu( name_, mAction );
+  }
 }
 
 void NiwaPlugin::unload()
 {
-    //soon...
+  mIface->removePluginMenu( name_, mAction );
+  mIface->removeWebToolBarIcon( mAction );
+  delete mAction;
+  mAction = 0;
+}
+
+void NiwaPlugin::showNiwaDialog()
+{
+  NiwaPluginDialog d;
+  d.exec();
 }
 
 

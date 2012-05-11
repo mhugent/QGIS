@@ -3,14 +3,17 @@
 
 SET (NIWA_SRCS
      niwaplugin.cpp
+     niwaplugindialog.cpp
 )
 
 SET (NIWA_UIS 
      niwaplugindialogbase.ui
     )
 
-#SET (NIWA_MOC_HDRS
-#)
+SET (NIWA_MOC_HDRS
+     niwaplugin.h
+     niwaplugindialog.h
+)
 
 #SET (NIWA_RCCS  resources.qrc)
 ########################################################
@@ -25,7 +28,7 @@ QT4_ADD_RESOURCES(NIWA_RCC_SRCS ${NIWA_RCCS})
 ADD_LIBRARY (niwaplugin MODULE 
   ${NIWA_SRCS} 
   ${NIWA_UIS_H}
- #  ${NIWA_MOC_SRCS} 
+  ${NIWA_MOC_SRCS} 
 #  ${NIWA_RCC_SRCS}
 )
 
