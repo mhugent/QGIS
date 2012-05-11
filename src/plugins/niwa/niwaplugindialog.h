@@ -2,6 +2,7 @@
 #define NIWAPLUGINDIALOG_H
 
 #include "ui_niwaplugindialogbase.h"
+class QNetworkReply;
 
 class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
 {
@@ -9,6 +10,23 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
   public:
     NiwaPluginDialog( QWidget* parent = 0, Qt::WindowFlags f = 0 );
     ~NiwaPluginDialog();
+
+  private slots:
+    void on_mAddPushButton_clicked();
+    void on_mRemovePushButton_clicked();
+    void on_mEditPushButton_clicked();
+    void on_mConnectPushButton_clicked();
+    void on_mAddLayerToListButton_clicked();
+
+    void wfsCapabilitiesRequestFinished();
+    void wmsCapabilitiesRequestFinished();
+
+  private:
+    QNetworkReply *mCapabilitiesReply;
+
+    void insertServices();
+    void insertWMSServices();
+    void insertWFSServices();
 };
 
 #endif // NIWAPLUGINDIALOG_H

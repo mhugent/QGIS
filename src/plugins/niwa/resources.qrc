@@ -1,5 +1,9 @@
  <!DOCTYPE RCC><RCC version="1.0">
  <qresource prefix="/niwa">
-     <file>niwa.jpg</file>
+     <file>icons/niwa.jpg</file>
+     <file>icons/add_from_favourites.png</file>
+     <file>icons/online.png</file>
+     <file>icons/offline.png</file>
+     <file>icons/add_to_list.png</file>
  </qresource>
  </RCC>

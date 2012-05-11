@@ -4,10 +4,12 @@
 SET (NIWA_SRCS
      niwaplugin.cpp
      niwaplugindialog.cpp
+     addservicedialog.cpp
 )
 
 SET (NIWA_UIS 
      niwaplugindialogbase.ui
+     addservicedialogbase.ui
     )
 
 SET (NIWA_MOC_HDRS

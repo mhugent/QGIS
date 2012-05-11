@@ -19,9 +19,9 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="mDatasourceTab">
+     <widget class="QWidget" name="mDatasourcesTab">
       <attribute name="title">
-       <string>Datasource</string>
+       <string>Datasources</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="0" colspan="2">
@@ -40,7 +40,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="mServiceComboBox"/>
+          <widget class="QComboBox" name="mServicesComboBox"/>
          </item>
         </layout>
        </item>
@@ -71,6 +71,20 @@
           <widget class="QPushButton" name="mConnectPushButton">
            <property name="text">
             <string>Connect</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="mAddLayerToListButton">
+           <property name="toolTip">
+            <string>Add selected entry to layer list</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/niwa/icons/add_to_list.png</normaloff>:/niwa/icons/add_to_list.png</iconset>
            </property>
           </widget>
          </item>
@@ -119,6 +133,82 @@
       <attribute name="title">
        <string>Layers</string>
       </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QPushButton" name="mAddLayerFromFavoritesButton">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/niwa/icons/add_from_favourites.png</normaloff>:/niwa/icons/add_from_favourites.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="mChangeOfflineButton">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/niwa/icons/offline.png</normaloff>:/niwa/icons/offline.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="mChangeOnlineButton">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/niwa/icons/online.png</normaloff>:/niwa/icons/online.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>238</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <widget class="QTreeWidget" name="treeWidget">
+         <column>
+          <property name="text">
+           <string>Layer</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Service</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Status</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Abstract</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
@@ -134,7 +224,10 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+  <include location="icons/icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

@@ -8,7 +8,7 @@
 static const QString name_ = QObject::tr( "NIWA plugin" );
 static const QString description_ = QObject::tr( "A plugin to access and manage layers from OWS services in a unified way" );
 static const QString version_ = QObject::tr( "Version 0.1" );
-static const QString icon_ = ":/niwa/niwa.jpg";
+static const QString icon_ = ":/niwa/icons/niwa.jpg";
 static const QString category_ = QObject::tr( "Web" );
 
 NiwaPlugin::NiwaPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 )
