@@ -85,7 +85,11 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
 
   //make service url
   QSettings settings;
-  QString url = settings.value( QString( "/Qgis/connections-wfs/" ) + mServicesComboBox->currentText() + QString( "/url" ) ).toString() + "?";
+  QString url = settings.value( QString( "/Qgis/connections-wfs/" ) + mServicesComboBox->currentText() + QString( "/url" ) ).toString();
+  if ( !url.endsWith( "?" ) && !url.endsWith( "&" ) )
+  {
+    url.append( "?" );
+  }
   url.append( "REQUEST=GetCapabilities&SERVICE=" );
   url.append( serviceType );
 
@@ -109,7 +113,21 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
 
 void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
 {
+  QTreeWidgetItem* cItem = mDatasourceLayersTreeWidget->currentItem();
+  if ( !cItem )
+  {
+    return;
+  }
+  QString name = cItem->text( 0 );
+  QString type = cItem->text( 2 );
+  QString abstract = cItem->text( 3 );
 
+  QTreeWidgetItem* newItem = new QTreeWidgetItem();
+  newItem->setText( 0, name );
+  newItem->setText( 1, type );
+  newItem->setText( 2, tr( "online" ) );
+  newItem->setText( 3, abstract );
+  mLayerTreeWidget->addTopLevelItem( newItem );
 }
 
 void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
