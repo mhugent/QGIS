@@ -2,11 +2,13 @@
 #include "addservicedialog.h"
 #include "qgsnetworkaccessmanager.h"
 #include <QDomDocument>
+#include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSettings>
 
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
+static const QString WMS_NAMESPACE = "http://www.opengis.net/wms";
 
 NiwaPluginDialog::NiwaPluginDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mCapabilitiesReply( 0 )
 {
@@ -22,24 +24,19 @@ NiwaPluginDialog::~NiwaPluginDialog()
 void NiwaPluginDialog::insertServices()
 {
   mServicesComboBox->clear();
-  insertWFSServices();
-  insertWMSServices();
+  insertServices( "WFS" );
+  insertServices( "WMS" );
 }
 
-void NiwaPluginDialog::insertWMSServices()
-{
-  //todo...
-}
-
-void NiwaPluginDialog::insertWFSServices()
+void NiwaPluginDialog::insertServices( const QString& service )
 {
   QSettings settings;
-  settings.beginGroup( "/Qgis/connections-wfs" );
+  settings.beginGroup( "/Qgis/connections-" + service.toLower() );
   QStringList keys = settings.childGroups();
   QStringList::const_iterator it = keys.constBegin();
   for ( ; it != keys.constEnd(); ++it )
   {
-    mServicesComboBox->addItem( *it, "WFS" );
+    mServicesComboBox->addItem( *it, service );
   }
 }
 
@@ -85,7 +82,7 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
 
   //make service url
   QSettings settings;
-  QString url = settings.value( QString( "/Qgis/connections-wfs/" ) + mServicesComboBox->currentText() + QString( "/url" ) ).toString();
+  QString url = settings.value( QString( "/Qgis/connections-" ) + serviceType.toLower() + "/" + mServicesComboBox->currentText() + QString( "/url" ) ).toString();
   if ( !url.endsWith( "?" ) && !url.endsWith( "&" ) )
   {
     url.append( "?" );
@@ -134,6 +131,7 @@ void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
 {
   if ( mCapabilitiesReply->error() != QNetworkReply::NoError )
   {
+    QMessageBox::critical( 0, tr( "Error" ), tr( "Capabilities could not be retrieved from the server" ) );
     return;
   }
 
@@ -147,6 +145,8 @@ void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
   QDomDocument capabilitiesDocument;
   if ( !capabilitiesDocument.setContent( buffer, true, &capabilitiesDocError ) )
   {
+    QMessageBox::critical( 0, tr( "Error parsing capabilities document" ), capabilitiesDocError );
+    return;
   }
 
   QDomNodeList featureTypeList = capabilitiesDocument.elementsByTagNameNS( WFS_NAMESPACE, "FeatureType" );
@@ -185,5 +185,51 @@ void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
 
 void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
 {
+  if ( mCapabilitiesReply->error() != QNetworkReply::NoError )
+  {
+    QMessageBox::critical( 0, tr( "Error" ), tr( "Capabilities could not be retrieved from the server" ) );
+    return;
+  }
 
+  mDatasourceLayersTreeWidget->clear();
+
+  QByteArray buffer = mCapabilitiesReply->readAll();
+
+  QString capabilitiesDocError;
+  QDomDocument capabilitiesDocument;
+  if ( !capabilitiesDocument.setContent( buffer, true, &capabilitiesDocError ) )
+  {
+    QMessageBox::critical( 0, tr( "Error parsing capabilities document" ), capabilitiesDocError );
+    return;
+  }
+
+  //get name, title, abstract of all layers (style / CRS? )
+  QDomNodeList layerList = capabilitiesDocument.elementsByTagNameNS( WMS_NAMESPACE, "Layer" );
+  for ( unsigned int i = 0; i < layerList.length(); ++i )
+  {
+    QString name, title, abstract;
+    QDomElement layerElem = layerList.at( i ).toElement();
+    QDomNodeList nameList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Name" );
+    if ( nameList.size() > 0 )
+    {
+      name = nameList.at( 0 ).toElement().text();
+    }
+    QDomNodeList titleList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Title" );
+    if ( titleList.size() > 0 )
+    {
+      title = titleList.at( 0 ).toElement().text();
+    }
+    QDomNodeList abstractList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Abstract" );
+    if ( abstractList.size() > 0 )
+    {
+      abstract = abstractList.at( 0 ).toElement().text();
+    }
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    item->setText( 0, name );
+    item->setText( 1, title );
+    item->setText( 2, "WMS" );
+    item->setText( 3, abstract );
+    //todo: add style / CRS?
+    mDatasourceLayersTreeWidget->addTopLevelItem( item );
+  }
 }
