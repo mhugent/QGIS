@@ -26,7 +26,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
 
     void insertServices();
     /**Insert services into combo box
-        @param service type (WMS,WFS,WCS)*/
+        @param service ("WMS","WFS","WCS")*/
     void insertServices( const QString& service );
     void insertWFSServices();
 };
