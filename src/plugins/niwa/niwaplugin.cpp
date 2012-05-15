@@ -42,7 +42,7 @@ void NiwaPlugin::unload()
 
 void NiwaPlugin::showNiwaDialog()
 {
-  NiwaPluginDialog d;
+  NiwaPluginDialog d( mIface );
   d.exec();
 }
 

@@ -125,6 +125,16 @@
            <string>Abstract</string>
           </property>
          </column>
+         <column>
+          <property name="text">
+           <string>CRS</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Style</string>
+          </property>
+         </column>
         </widget>
        </item>
       </layout>
@@ -170,6 +180,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="mAddToMapButton">
+           <property name="text">
+            <string>Add to map</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="horizontalSpacer_2">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -203,7 +220,22 @@
          </column>
          <column>
           <property name="text">
+           <string>In map</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
            <string>Abstract</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>CRS</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Styles</string>
           </property>
          </column>
         </widget>
