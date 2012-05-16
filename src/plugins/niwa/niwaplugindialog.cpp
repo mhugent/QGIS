@@ -2,8 +2,11 @@
 #include "addservicedialog.h"
 #include "qgisinterface.h"
 #include "qgsapplication.h"
+#include "qgsmaplayerregistry.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgsproject.h"
 #include "qgsvectorfilewriter.h"
+#include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
 #include <QDomDocument>
 #include <QMessageBox>
@@ -18,11 +21,12 @@ NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::W
 {
   setupUi( this );
   insertServices();
+  loadFromProject();
 }
 
 NiwaPluginDialog::~NiwaPluginDialog()
 {
-
+  saveToProject();
 }
 
 void NiwaPluginDialog::insertServices()
@@ -127,6 +131,7 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   newItem->setText( 0, name );
   newItem->setText( 1, type );
   newItem->setText( 2, tr( "online" ) );
+  newItem->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
   newItem->setCheckState( 3, Qt::Unchecked );
   newItem->setText( 4, abstract );
   newItem->setText( 5, crs );
@@ -157,17 +162,28 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   QString serviceType = item->text( 1 );
   QString url = item->data( 0, Qt::UserRole ).toString();
   QString layerName = item->text( 0 );
+  bool online = ( item->text( 2 ) == tr( "online " ) );
 
   //online / offline
   //assume online for now
   if ( serviceType == "WFS" )
   {
     QString requestURL = wfsUrlFromLayerItem( item );
-    QgsVectorLayer* vl = mIface->addVectorLayer( requestURL, layerName, "WFS" );
+    QgsVectorLayer* vl = 0;
+    if ( online )
+    {
+      vl = mIface->addVectorLayer( requestURL, layerName, "WFS" );
+    }
+    else
+    {
+      vl = mIface->addVectorLayer( item->data( 3, Qt::UserRole ).toString(), layerName, "ogr" );
+    }
+
     if ( !vl )
     {
       return;
     }
+    item->setData( 3, Qt::UserRole, vl->id() );
   }
   else if ( serviceType == "WMS" )
   {
@@ -195,26 +211,77 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
   QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
   QString filePath;
 
+  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
   bool offlineOk = false;
 
   if ( serviceType == "WFS" )
   {
     //create table <layername//url>
-    QString wfsUrl = wfsUrlFromLayerItem( item );
-    QgsVectorLayer wfsLayer( wfsUrl, layername, "WFS" );
-    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer.crs();
+    QgsVectorLayer* wfsLayer = 0;
+    if ( layerInMap )
+    {
+      wfsLayer = static_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( item->data( 3, Qt::UserRole ).toString() ) );
+    }
+    else
+    {
+      QString wfsUrl = wfsUrlFromLayerItem( item );
+      wfsLayer = new QgsVectorLayer( wfsUrl, layername, "WFS" );
+    }
+
+    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
     QString filePath = saveFilePath + layerId + ".shp";
-    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( &wfsLayer, filePath,
+    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
                   "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
+    if ( offlineOk && layerInMap )
+    {
+      QgsVectorLayer* offlineLayer = mIface->addVectorLayer( filePath, layername, "ogr" );
+      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+    }
   }
 
   if ( offlineOk )
   {
     item->setText( 2, "offline" );
+    item->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
     item->setData( 2, Qt::UserRole, filePath );
   }
+}
 
-  //if in map, exchange layer with the offline one
+void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
+{
+  //get current entry
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
+
+  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
+  QString serviceType = item->text( 1 );
+  QString layername = item->text( 0 );
+
+  if ( layerInMap )
+  {
+    //generate new wfs/wms layer
+    //exchange with layer in map
+    QgsMapLayer* onlineLayer = 0;
+    if ( serviceType == "WFS" )
+    {
+      QString wfsUrl = wfsUrlFromLayerItem( item );
+      onlineLayer = mIface->addVectorLayer( wfsUrl, layername, "WFS" );
+    }
+
+    if ( onlineLayer )
+    {
+      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), onlineLayer );
+    }
+  }
+
+  //remove offline datasource file first
+  QgsVectorFileWriter::deleteShapeFile( item->data( 2, Qt::UserRole ).toString() );
+  item->setText( 2, "online" );
+  item->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
+  item->setData( 2, Qt::UserRole, "" );
 }
 
 void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
@@ -405,4 +472,124 @@ QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item )
     wfsUrl.append( "&SRSNAME=" + srs );
   }
   return wfsUrl;
+}
+
+bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer )
+{
+  if ( !mIface )
+  {
+    return false;
+  }
+
+  QgsMapLayer* oldLayer = QgsMapLayerRegistry::instance()->mapLayer( layerId );
+  if ( !oldLayer || !newLayer )
+  {
+    return false;
+  }
+
+  if ( newLayer->type() == QgsMapLayer::VectorLayer )
+  {
+    QgsVectorLayer* newVectorLayer = static_cast<QgsVectorLayer*>( newLayer );
+    QgsVectorLayer* oldVectorLayer = static_cast<QgsVectorLayer*>( oldLayer );
+
+    //write old style
+    QDomDocument vectorQMLDoc;
+    QDomElement qmlRootElem = vectorQMLDoc.createElement( "qgis" );
+    vectorQMLDoc.appendChild( qmlRootElem );
+    QString errorMessage;
+    if ( !oldVectorLayer->writeSymbology( qmlRootElem, vectorQMLDoc, errorMessage ) )
+    {
+      return false;
+    }
+
+    //set old style to new layer
+    if ( !newVectorLayer->readSymbology( qmlRootElem, errorMessage ) )
+    {
+      return false;
+    }
+  }
+  else if ( newLayer->type() == QgsMapLayer::RasterLayer )
+  {
+    QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
+    QgsRasterLayer* oldRasterLayer = static_cast<QgsRasterLayer*>( oldLayer );
+  }
+
+  //remove old layer
+  QgsMapLayerRegistry::instance()->removeMapLayer( layerId );
+
+  return false;
+}
+
+void NiwaPluginDialog::loadFromProject()
+{
+  QStringList layerNameList = QgsProject::instance()->readListEntry( "NIWA", "/layerNameList" );
+  QStringList serviceTypeList = QgsProject::instance()->readListEntry( "NIWA", "/serviceTypeList" );
+  QStringList onlineList = QgsProject::instance()->readListEntry( "NIWA", "/onlineList" );
+  QStringList inMapList = QgsProject::instance()->readListEntry( "NIWA", "/inMapList" );
+  QStringList abstractList = QgsProject::instance()->readListEntry( "NIWA", "/abstractList" );
+  QStringList crsList = QgsProject::instance()->readListEntry( "NIWA", "/crsList" );
+  QStringList styleList = QgsProject::instance()->readListEntry( "NIWA", "/styleList" );
+
+  mLayerTreeWidget->clear();
+  for ( int i = 0; i < layerNameList.size(); ++i )
+  {
+    QTreeWidgetItem* newItem = new QTreeWidgetItem();
+    newItem->setText( 0, layerNameList.at( i ) );
+    newItem->setText( 1, serviceTypeList.at( i ) );
+    newItem->setText( 2, onlineList.at( i ) );
+    if ( newItem->text( 2 ) == tr( "online" ) )
+    {
+      newItem->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
+    }
+    else
+    {
+      newItem->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
+    }
+    if ( inMapList.at( i ) == "t" )
+    {
+      newItem->setCheckState( 3, Qt::Checked );
+    }
+    else
+    {
+      newItem->setCheckState( 3, Qt::Unchecked );
+    }
+    newItem->setText( 4, abstractList.at( i ) );
+    newItem->setText( 5, crsList.at( i ) );
+    newItem->setText( 6, styleList.at( i ) );
+    newItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+    mLayerTreeWidget->addTopLevelItem( newItem );
+  }
+}
+
+void NiwaPluginDialog::saveToProject()
+{
+  QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList;
+
+  QTreeWidgetItem* currentItem = 0;
+  for ( int i = 0; i < mLayerTreeWidget->topLevelItemCount(); ++i )
+  {
+    currentItem = mLayerTreeWidget->topLevelItem( i );
+    layerNameList.append( currentItem->text( 0 ) );
+    serviceTypeList.append( currentItem->text( 1 ) );
+    onlineList.append( currentItem->text( 2 ) );
+    if ( currentItem->checkState( 3 ) == Qt::Checked )
+    {
+      inMapList.append( "t" );
+    }
+    else
+    {
+      inMapList.append( "f" );
+    }
+    abstractList.append( currentItem->text( 4 ) );
+    crsList.append( currentItem->text( 5 ) );
+    styleList.append( currentItem->text( 6 ) );
+  }
+
+  QgsProject::instance()->writeEntry( "NIWA", "/layerNameList", layerNameList );
+  QgsProject::instance()->writeEntry( "NIWA", "/serviceTypeList", serviceTypeList );
+  QgsProject::instance()->writeEntry( "NIWA", "/onlineList", onlineList );
+  QgsProject::instance()->writeEntry( "NIWA", "/inMapList", inMapList );
+  QgsProject::instance()->writeEntry( "NIWA", "/abstractList", abstractList );
+  QgsProject::instance()->writeEntry( "NIWA", "/crsList", crsList );
+  QgsProject::instance()->writeEntry( "NIWA", "/styleList", styleList );
 }

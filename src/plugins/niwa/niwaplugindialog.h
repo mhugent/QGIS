@@ -3,6 +3,7 @@
 
 #include "ui_niwaplugindialogbase.h"
 class QgisInterface;
+class QgsMapLayer;
 class QNetworkReply;
 
 class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
@@ -20,6 +21,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void on_mAddLayerToListButton_clicked();
     void on_mAddToMapButton_clicked();
     void on_mChangeOfflineButton_clicked();
+    void on_mChangeOnlineButton_clicked();
 
     void wfsCapabilitiesRequestFinished();
     void wmsCapabilitiesRequestFinished();
@@ -35,6 +37,12 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void insertWFSServices();
     QString serviceURLFromComboBox();
     QString wfsUrlFromLayerItem( QTreeWidgetItem* item );
+    /**Exchanges a layer in the map canvas (and copies the style of the new layer to the old one)*/
+    bool exchangeLayer( const QString& layerId, QgsMapLayer* newLayer );
+
+  private slots:
+    void loadFromProject();
+    void saveToProject();
 };
 
 #endif // NIWAPLUGINDIALOG_H

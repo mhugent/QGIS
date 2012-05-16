@@ -36,7 +36,9 @@ ADD_LIBRARY (niwaplugin MODULE
 
 INCLUDE_DIRECTORIES(
      ${CMAKE_CURRENT_BINARY_DIR}
-     ../../core  
+     ${GDAL_INCLUDE_DIR}
+     ../../core
+     ../../core/raster
      ../../gui
      ..
      .
