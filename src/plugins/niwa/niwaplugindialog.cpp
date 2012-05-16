@@ -157,7 +157,6 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   QString serviceType = item->text( 1 );
   QString url = item->data( 0, Qt::UserRole ).toString();
   QString layerName = item->text( 0 );
-  QString srs = item->text( 4 );
 
   //online / offline
   //assume online for now
@@ -194,6 +193,7 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
   QString saveFilePath = QgsApplication::qgisSettingsDirPath() + "/cachelayers/";
   QDateTime dt = QDateTime::currentDateTime();
   QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
+  QString filePath;
 
   bool offlineOk = false;
 
@@ -203,13 +203,15 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     QString wfsUrl = wfsUrlFromLayerItem( item );
     QgsVectorLayer wfsLayer( wfsUrl, layername, "WFS" );
     const QgsCoordinateReferenceSystem& layerCRS = wfsLayer.crs();
-    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( &wfsLayer, saveFilePath + layerId + ".gml",
-                  "UTF-8", &layerCRS, "GML" ) == QgsVectorFileWriter::NoError );
+    QString filePath = saveFilePath + layerId + ".shp";
+    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( &wfsLayer, filePath,
+                  "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
   }
 
   if ( offlineOk )
   {
     item->setText( 2, "offline" );
+    item->setData( 2, Qt::UserRole, filePath );
   }
 
   //if in map, exchange layer with the offline one
@@ -395,7 +397,7 @@ QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item )
   QString serviceType = item->text( 1 );
   QString url = item->data( 0, Qt::UserRole ).toString();
   QString layerName = item->text( 0 );
-  QString srs = item->text( 4 );
+  QString srs = item->text( 5 );
 
   wfsUrl = url + "SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=" + layerName;
   if ( !srs.isEmpty() )
