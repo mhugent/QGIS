@@ -42,6 +42,9 @@ class QgsLegendInterface : QObject
     //! @note added in 1.5
     virtual bool isLayerVisible( QgsMapLayer * ml ) =0;
 
+    //! Moves layer item after another one
+    virtual void moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after ) = 0;
+
   signals:
 
     //! emitted when a group index has changed

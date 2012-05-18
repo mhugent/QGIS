@@ -61,6 +61,9 @@ class QgsAppLegendInterface : public QgsLegendInterface
     //! Check if a layer is visible
     bool isLayerVisible( QgsMapLayer * ml );
 
+    //! Moves layer item after another one
+    void moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after );
+
   public slots:
 
     //! Add a new group

@@ -126,6 +126,11 @@ bool QgsAppLegendInterface::isLayerVisible( QgsMapLayer * ml )
   return ( Qt::Checked == mLegend->layerCheckState( ml ) );
 }
 
+void QgsAppLegendInterface::moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after )
+{
+  mLegend->moveLayer( ml, after );
+}
+
 QList< QgsMapLayer * > QgsAppLegendInterface::layers() const
 {
   return mLegend->layers();

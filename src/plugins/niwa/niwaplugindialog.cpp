@@ -2,6 +2,7 @@
 #include "addservicedialog.h"
 #include "qgisinterface.h"
 #include "qgsapplication.h"
+#include "qgslegendinterface.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsnetworkaccessmanager.h"
@@ -289,6 +290,7 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     {
       QgsVectorLayer* offlineLayer = mIface->addVectorLayer( filePath, layername, "ogr" );
       exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+      item->setData( 3, Qt::UserRole, offlineLayer->id() );
     }
   }
 
@@ -329,6 +331,7 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
     if ( onlineLayer )
     {
       exchangeLayer( item->data( 3, Qt::UserRole ).toString(), onlineLayer );
+      item->setData( 3, Qt::UserRole, onlineLayer->id() );
     }
   }
 
@@ -350,7 +353,7 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   }
 
   bool online = false;
-  if ( current->data( 2, Qt::UserRole ).toString() == tr( "online" ) )
+  if ( current->text( 2 ) == tr( "online" ) )
   {
     online = true;
   }
@@ -670,7 +673,15 @@ bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLa
     QgsRasterLayer* oldRasterLayer = static_cast<QgsRasterLayer*>( oldLayer );
   }
 
+  //move new layer next to the old one
   //remove old layer
+  QgsLegendInterface* legendIface = mIface->legendInterface();
+  if ( legendIface )
+  {
+    legendIface->moveLayer( newLayer, oldLayer );
+    legendIface->refreshLayerSymbology( newLayer );
+  }
+
   QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
 
   return false;
