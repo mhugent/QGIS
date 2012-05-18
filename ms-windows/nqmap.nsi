@@ -6,6 +6,15 @@ OutFile "nqmap_setup.exe"
 
 InstallDir $PROGRAMFILES\NQMAP
 
+!define MUI_ABORTWARNING
+!define MUI_ICON ".\Installer-Files\Install_QGIS.ico"
+!define MUI_UNICON ".\Installer-Files\Uninstall_QGIS.ico"
+!define MUI_HEADERIMAGE_BITMAP_NOSTETCH ".\Installer-Files\InstallHeaderImage.bmp"
+!define MUI_HEADERIMAGE_UNBITMAP_NOSTRETCH ".\Installer-Files\UnInstallHeaderImage.bmp"
+!define MUI_WELCOMEFINISHPAGE_BITMAP ".\Installer-Files\WelcomeFinishPage.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP ".\Installer-Files\UnWelcomeFinishPage.bmp"
+
+!insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE ".\Installer-Files\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
