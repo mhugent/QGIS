@@ -162,7 +162,7 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   QString serviceType = item->text( 1 );
   QString url = item->data( 0, Qt::UserRole ).toString();
   QString layerName = item->text( 0 );
-  bool online = ( item->text( 2 ) == tr( "online " ) );
+  bool online = ( item->text( 2 ) == tr( "online" ) );
 
   //online / offline
   //assume online for now
@@ -529,6 +529,9 @@ void NiwaPluginDialog::loadFromProject()
   QStringList abstractList = QgsProject::instance()->readListEntry( "NIWA", "/abstractList" );
   QStringList crsList = QgsProject::instance()->readListEntry( "NIWA", "/crsList" );
   QStringList styleList = QgsProject::instance()->readListEntry( "NIWA", "/styleList" );
+  QStringList urlList = QgsProject::instance()->readListEntry( "NIWA", "/urlList" );
+  QStringList filenameList = QgsProject::instance()->readListEntry( "NIWA", "/filenameList" );
+  QStringList layerIdList = QgsProject::instance()->readListEntry( "NIWA", "/layerIdList" );
 
   mLayerTreeWidget->clear();
   for ( int i = 0; i < layerNameList.size(); ++i )
@@ -556,6 +559,9 @@ void NiwaPluginDialog::loadFromProject()
     newItem->setText( 4, abstractList.at( i ) );
     newItem->setText( 5, crsList.at( i ) );
     newItem->setText( 6, styleList.at( i ) );
+    newItem->setData( 0, Qt::UserRole, urlList.at( i ) );
+    newItem->setData( 2, Qt::UserRole, filenameList.at( i ) );
+    newItem->setData( 3, Qt::UserRole, layerIdList.at( i ) );
     newItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
     mLayerTreeWidget->addTopLevelItem( newItem );
   }
@@ -563,7 +569,8 @@ void NiwaPluginDialog::loadFromProject()
 
 void NiwaPluginDialog::saveToProject()
 {
-  QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList;
+  QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList,
+  urlList, filenameList, layerIdList;
 
   QTreeWidgetItem* currentItem = 0;
   for ( int i = 0; i < mLayerTreeWidget->topLevelItemCount(); ++i )
@@ -583,6 +590,9 @@ void NiwaPluginDialog::saveToProject()
     abstractList.append( currentItem->text( 4 ) );
     crsList.append( currentItem->text( 5 ) );
     styleList.append( currentItem->text( 6 ) );
+    urlList.append( currentItem->data( 0, Qt::UserRole ).toString() );
+    filenameList.append( currentItem->data( 2, Qt::UserRole ).toString() );
+    layerIdList.append( currentItem->data( 3, Qt::UserRole ).toString() );
   }
 
   QgsProject::instance()->writeEntry( "NIWA", "/layerNameList", layerNameList );
@@ -592,4 +602,7 @@ void NiwaPluginDialog::saveToProject()
   QgsProject::instance()->writeEntry( "NIWA", "/abstractList", abstractList );
   QgsProject::instance()->writeEntry( "NIWA", "/crsList", crsList );
   QgsProject::instance()->writeEntry( "NIWA", "/styleList", styleList );
+  QgsProject::instance()->writeEntry( "NIWA", "/urlList", urlList );
+  QgsProject::instance()->writeEntry( "NIWA", "/filenameList", filenameList );
+  QgsProject::instance()->writeEntry( "NIWA", "/layerIdList", layerIdList );
 }
