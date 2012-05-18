@@ -180,9 +180,27 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="mReloadButton">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/niwa/icons/refresh.png</normaloff>:/niwa/icons/refresh.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="mAddToMapButton">
            <property name="text">
             <string>Add to map</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="mRemoveFromMapPushButton">
+           <property name="text">
+            <string>Remove from map</string>
            </property>
           </widget>
          </item>
