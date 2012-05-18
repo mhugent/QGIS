@@ -2,6 +2,7 @@
 #include "addservicedialog.h"
 #include "qgisinterface.h"
 #include "qgsapplication.h"
+#include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsproject.h"
@@ -308,6 +309,7 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
 
 void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous )
 {
+  Q_UNUSED( previous )
   if ( !current )
   {
     return;
@@ -318,7 +320,7 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   {
     online = true;
   }
-  mChangeOnlineButton->setEnabled( online );
+  mChangeOfflineButton->setEnabled( online );
   mChangeOnlineButton->setEnabled( !online );
 }
 
@@ -554,11 +556,26 @@ void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url
     }
   }
 
-  //crs: prefer map crs
+  //CRS: prefer map crs
   QStringList crsList = item->text( 5 ).split( "," );
   if ( crsList.size() > 0 )
   {
     crs = crsList.at( 0 );
+    QgsMapCanvas* canvas = mIface->mapCanvas();
+    if ( canvas )
+    {
+      QgsMapRenderer* renderer = canvas->mapRenderer();
+      if ( renderer )
+      {
+        const QgsCoordinateReferenceSystem& destCRS = renderer->destinationCrs();
+        QString authId = destCRS.authid();
+        if ( crsList.contains( authId ) )
+        {
+          crs = authId;
+        }
+      }
+    }
+
   }
 
   layers.append( item->text( 0 ) );
