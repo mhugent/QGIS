@@ -110,7 +110,7 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
   }
   else if ( serviceType == "WCS" )
   {
-
+    //todo...
   }
 }
 
@@ -126,6 +126,8 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   QString abstract = cItem->text( 3 );
   QString crs = cItem->text( 4 );
   QString style = cItem->text( 5 );
+  QString version = cItem->data( 2, Qt::UserRole ).toString();
+  QString formatList = cItem->text( 6 );
 
   QTreeWidgetItem* newItem = new QTreeWidgetItem();
   newItem->setText( 0, name );
@@ -136,11 +138,13 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   newItem->setText( 4, abstract );
   newItem->setText( 5, crs );
   newItem->setText( 6, style );
+  newItem->setText( 7, formatList );
   newItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
 
   //add url as user data to name column
   QString serviceURL = serviceURLFromComboBox();
   newItem->setData( 0, Qt::UserRole, serviceURL );
+  newItem->setData( 1, Qt::UserRole, version );
 
   mLayerTreeWidget->addTopLevelItem( newItem );
   mLayerTreeWidget->setCurrentItem( newItem );
@@ -169,7 +173,6 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   bool online = ( item->text( 2 ) == tr( "online" ) );
 
   //online / offline
-  //assume online for now
   if ( serviceType == "WFS" )
   {
     QString requestURL = wfsUrlFromLayerItem( item );
@@ -192,7 +195,17 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   }
   else if ( serviceType == "WMS" )
   {
+    if ( online )
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromItem( item, url, format, crs, layers, styles );
 
+      //add to map
+      mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
+    }
   }
 
   item->setCheckState( 3, Qt::Checked );
@@ -392,6 +405,23 @@ void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
     return;
   }
 
+  QString version = capabilitiesDocument.documentElement().attribute( "version" );
+
+  //get format list for GetMap
+  QString formatList;
+  QDomElement capabilityElem = capabilitiesDocument.documentElement().firstChildElement( "Capability" );
+  QDomElement requestElem = capabilityElem.firstChildElement( "Request" );
+  QDomElement getMapElem = requestElem.firstChildElement( "GetMap" );
+  QDomNodeList formatNodeList = getMapElem.elementsByTagName( "Format" );
+  for ( int i = 0; i < formatNodeList.size(); ++i )
+  {
+    if ( i > 0 )
+    {
+      formatList.append( "," );
+    }
+    formatList.append( formatNodeList.at( i ).toElement().text() );
+  }
+
   //get name, title, abstract of all layers (style / CRS? )
   QDomNodeList layerList = capabilitiesDocument.elementsByTagNameNS( WMS_NAMESPACE, "Layer" );
   for ( unsigned int i = 0; i < layerList.length(); ++i )
@@ -450,9 +480,11 @@ void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
     item->setText( 0, name );
     item->setText( 1, title );
     item->setText( 2, "WMS" );
+    item->setData( 2, Qt::UserRole, version );
     item->setText( 3, abstract );
     item->setText( 4, crs );
     item->setText( 5, style );
+    item->setText( 6, formatList );
     //todo: add style / CRS?
     mDatasourceLayersTreeWidget->addTopLevelItem( item );
   }
@@ -477,7 +509,7 @@ QString NiwaPluginDialog::serviceURLFromComboBox()
   return url;
 }
 
-QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item )
+QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item ) const
 {
   QString wfsUrl;
   if ( !item )
@@ -497,6 +529,46 @@ QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item )
     wfsUrl.append( "&SRSNAME=" + srs );
   }
   return wfsUrl;
+}
+
+void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const
+{
+  if ( !item )
+  {
+    return;
+  }
+
+  url = item->data( 0, Qt::UserRole ).toString();
+
+  //format: prefer png
+  QStringList formatList = item->text( 7 ).split( "," );
+  if ( formatList.size() > 0 )
+  {
+    if ( formatList.contains( "image/png" ) )
+    {
+      format = "image/png";
+    }
+    else
+    {
+      format = formatList.at( 0 );
+    }
+  }
+
+  //crs: prefer map crs
+  QStringList crsList = item->text( 5 ).split( "," );
+  if ( crsList.size() > 0 )
+  {
+    crs = crsList.at( 0 );
+  }
+
+  layers.append( item->text( 0 ) );
+
+  //take first style
+  QString stylesString = item->text( 6 );
+  if ( !stylesString.isEmpty() )
+  {
+    styles.append( stylesString.split( "," ).at( 0 ) );
+  }
 }
 
 bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer )
