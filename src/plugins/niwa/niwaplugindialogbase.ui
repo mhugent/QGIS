@@ -153,6 +153,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QPushButton" name="mAddLayerFromFavoritesButton">
+           <property name="toolTip">
+            <string>Favourite list</string>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -164,6 +167,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="mChangeOfflineButton">
+           <property name="toolTip">
+            <string>Change to offline</string>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -175,6 +181,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="mChangeOnlineButton">
+           <property name="toolTip">
+            <string>Change to online</string>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -186,6 +195,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="mReloadButton">
+           <property name="toolTip">
+            <string>Refresh data</string>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -197,13 +209,19 @@
          </item>
          <item>
           <widget class="QPushButton" name="mAddToMapButton">
+           <property name="toolTip">
+            <string>Add layer to map</string>
+           </property>
            <property name="text">
             <string>Add to map</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="mRemoveFromMapPushButton">
+          <widget class="QPushButton" name="mRemoveFromMapButton">
+           <property name="toolTip">
+            <string>Remove layer from map</string>
+           </property>
            <property name="text">
             <string>Remove from map</string>
            </property>

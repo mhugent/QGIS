@@ -132,14 +132,19 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
 
   QTreeWidgetItem* newItem = new QTreeWidgetItem();
   newItem->setText( 0, name );
+  newItem->setToolTip( 0, name );
   newItem->setText( 1, type );
   newItem->setText( 2, tr( "online" ) );
   newItem->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
   newItem->setCheckState( 3, Qt::Unchecked );
   newItem->setText( 4, abstract );
+  newItem->setToolTip( 4, abstract );
   newItem->setText( 5, crs );
+  newItem->setToolTip( 5, crs );
   newItem->setText( 6, style );
+  newItem->setToolTip( 6, style );
   newItem->setText( 7, formatList );
+  newItem->setToolTip( 7, formatList );
   newItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
 
   //add url as user data to name column
@@ -151,7 +156,8 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   mLayerTreeWidget->setCurrentItem( newItem );
   mChangeOfflineButton->setEnabled( true );
   mChangeOnlineButton->setEnabled( false );
-
+  mAddToMapButton->setEnabled( true );
+  mRemoveFromMapButton->setEnabled( false );
 }
 
 void NiwaPluginDialog::on_mAddToMapButton_clicked()
@@ -205,11 +211,39 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
       wmsParameterFromItem( item, url, format, crs, layers, styles );
 
       //add to map
-      mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
+      QgsRasterLayer* rl = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
+      if ( !rl )
+      {
+        return;
+      }
+      item->setData( 3, Qt::UserRole, rl->id() );
     }
   }
 
   item->setCheckState( 3, Qt::Checked );
+  mAddToMapButton->setEnabled( false );
+  mRemoveFromMapButton->setEnabled( true );
+}
+
+void NiwaPluginDialog::on_mRemoveFromMapButton_clicked()
+{
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
+
+  QString layerId = item->data( 3, Qt::UserRole ).toString();
+  if ( layerId.isEmpty() )
+  {
+    return;
+  }
+
+  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
+  item->setCheckState( 3, Qt::Unchecked );
+  item->setData( 3, Qt::UserRole, "" );
+  mAddToMapButton->setEnabled( true );
+  mRemoveFromMapButton->setEnabled( false );
 }
 
 void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
@@ -379,10 +413,13 @@ void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
 
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText( 0, name );
+    item->setToolTip( 0, name );
     item->setText( 1, title );
     item->setText( 2, "WFS" );
     item->setText( 3, abstract );
+    item->setToolTip( 3, abstract );
     item->setText( 4, srs );
+    item->setToolTip( 4, srs );
     mDatasourceLayersTreeWidget->addTopLevelItem( item );
   }
 }
@@ -480,13 +517,18 @@ void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
     }
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText( 0, name );
+    item->setToolTip( 0, name );
     item->setText( 1, title );
     item->setText( 2, "WMS" );
     item->setData( 2, Qt::UserRole, version );
     item->setText( 3, abstract );
+    item->setToolTip( 3, abstract );
     item->setText( 4, crs );
+    item->setToolTip( 4, crs );
     item->setText( 5, style );
+    item->setToolTip( 5, style );
     item->setText( 6, formatList );
+    item->setToolTip( 6, formatList );
     //todo: add style / CRS?
     mDatasourceLayersTreeWidget->addTopLevelItem( item );
   }
@@ -629,7 +671,7 @@ bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLa
   }
 
   //remove old layer
-  QgsMapLayerRegistry::instance()->removeMapLayer( layerId );
+  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
 
   return false;
 }
