@@ -737,7 +737,8 @@ void NiwaPluginDialog::loadFromProject()
     {
       newItem->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
     }
-    if ( inMapList.at( i ) == "t" )
+    QString layerId = layerIdList.at( i );
+    if ( inMapList.at( i ) == "t" && QgsMapLayerRegistry::instance()->mapLayer( layerId ) )
     {
       newItem->setCheckState( 3, Qt::Checked );
     }
@@ -750,7 +751,7 @@ void NiwaPluginDialog::loadFromProject()
     newItem->setText( 6, styleList.at( i ) );
     newItem->setData( 0, Qt::UserRole, urlList.at( i ) );
     newItem->setData( 2, Qt::UserRole, filenameList.at( i ) );
-    newItem->setData( 3, Qt::UserRole, layerIdList.at( i ) );
+    newItem->setData( 3, Qt::UserRole, layerId );
     newItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
     mLayerTreeWidget->addTopLevelItem( newItem );
   }
