@@ -159,6 +159,13 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   mChangeOnlineButton->setEnabled( false );
   mAddToMapButton->setEnabled( true );
   mRemoveFromMapButton->setEnabled( false );
+
+  //online / offline not yet implemented for wms layers
+  if ( type == "WMS" )
+  {
+    mChangeOfflineButton->setEnabled( false );
+    mChangeOnlineButton->setEnabled( false );
+  }
 }
 
 void NiwaPluginDialog::on_mAddToMapButton_clicked()
@@ -349,6 +356,21 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   Q_UNUSED( previous )
   if ( !current )
   {
+    return;
+  }
+
+  bool inMap = false;
+  if ( current->checkState( 3 ) == Qt::Checked )
+  {
+    inMap = true;
+  }
+  mAddToMapButton->setEnabled( !inMap );
+  mRemoveFromMapButton->setEnabled( inMap );
+
+  if ( current->text( 1 ) == "WMS" ) //online/offline not implemented yet
+  {
+    mChangeOfflineButton->setEnabled( false );
+    mChangeOnlineButton->setEnabled( false );
     return;
   }
 

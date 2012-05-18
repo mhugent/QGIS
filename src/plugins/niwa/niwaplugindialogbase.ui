@@ -195,6 +195,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="mReloadButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="toolTip">
             <string>Refresh data</string>
            </property>
