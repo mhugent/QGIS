@@ -22,6 +22,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void on_mAddToMapButton_clicked();
     void on_mChangeOfflineButton_clicked();
     void on_mChangeOnlineButton_clicked();
+    void on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous );
 
     void wfsCapabilitiesRequestFinished();
     void wmsCapabilitiesRequestFinished();

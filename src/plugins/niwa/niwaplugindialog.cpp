@@ -143,6 +143,10 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   newItem->setData( 0, Qt::UserRole, serviceURL );
 
   mLayerTreeWidget->addTopLevelItem( newItem );
+  mLayerTreeWidget->setCurrentItem( newItem );
+  mChangeOfflineButton->setEnabled( true );
+  mChangeOnlineButton->setEnabled( false );
+
 }
 
 void NiwaPluginDialog::on_mAddToMapButton_clicked()
@@ -176,7 +180,8 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
     }
     else
     {
-      vl = mIface->addVectorLayer( item->data( 3, Qt::UserRole ).toString(), layerName, "ogr" );
+      QString filePath = item->data( 2, Qt::UserRole ).toString();
+      vl = mIface->addVectorLayer( item->data( 2, Qt::UserRole ).toString(), layerName, "ogr" );
     }
 
     if ( !vl )
@@ -229,7 +234,7 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     }
 
     const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
-    QString filePath = saveFilePath + layerId + ".shp";
+    filePath = saveFilePath + layerId + ".shp";
     offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
                   "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
     if ( offlineOk && layerInMap )
@@ -244,6 +249,8 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     item->setText( 2, "offline" );
     item->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
     item->setData( 2, Qt::UserRole, filePath );
+    mChangeOfflineButton->setEnabled( false );
+    mChangeOnlineButton->setEnabled( true );
   }
 }
 
@@ -280,8 +287,26 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
   //remove offline datasource file first
   QgsVectorFileWriter::deleteShapeFile( item->data( 2, Qt::UserRole ).toString() );
   item->setText( 2, "online" );
-  item->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
+  item->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
   item->setData( 2, Qt::UserRole, "" );
+  mChangeOfflineButton->setEnabled( true );
+  mChangeOnlineButton->setEnabled( false );
+}
+
+void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous )
+{
+  if ( !current )
+  {
+    return;
+  }
+
+  bool online = false;
+  if ( current->data( 2, Qt::UserRole ).toString() == tr( "online" ) )
+  {
+    online = true;
+  }
+  mChangeOnlineButton->setEnabled( online );
+  mChangeOnlineButton->setEnabled( !online );
 }
 
 void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
