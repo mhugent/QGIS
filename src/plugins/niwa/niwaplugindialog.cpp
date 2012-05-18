@@ -24,6 +24,12 @@ NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::W
   setupUi( this );
   insertServices();
   loadFromProject();
+  //create cache layer directory if not already there
+  QDir cacheDirectory = QDir( QgsApplication::qgisSettingsDirPath() + "/cachelayers" );
+  if ( !cacheDirectory.exists() )
+  {
+    cacheDirectory.mkpath( QgsApplication::qgisSettingsDirPath() + "/cachelayers" );
+  }
 }
 
 NiwaPluginDialog::~NiwaPluginDialog()
