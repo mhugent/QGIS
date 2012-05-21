@@ -6,9 +6,9 @@ SET(RELEASE_NAME "Lisboa")
 SET(PROJECT_VERSION ${COMPLETE_VERSION})
 PROJECT(qgis${PROJECT_VERSION})
 IF (APPLE)
-  SET(QGIS_APP_NAME "QGIS")
+  SET(QGIS_APP_NAME "NQMAP")
 ELSE (APPLE)
-  SET(QGIS_APP_NAME "qgis")
+  SET(QGIS_APP_NAME "nqmap")
 ENDIF (APPLE)
 
 # Note the version no is Mmmpp for Major/minor/patch, 0-padded, thus '10100' for 1.1.0

@@ -1,6 +1,6 @@
  <!DOCTYPE RCC><RCC version="1.0">
  <qresource prefix="/niwa">
-     <file>icons/niwa.jpg</file>
+     <file>icons/nqmap.png</file>
      <file>icons/add_from_favourites.png</file>
      <file>icons/online.png</file>
      <file>icons/offline.png</file>
