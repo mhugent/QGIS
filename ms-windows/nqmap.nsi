@@ -42,7 +42,7 @@ Section ""
 
 ;Desktop shortcut
   Delete "$DESKTOP\NQMAP.lnk"
-  CreateShortCut "$DESKTOP\NQMAP.lnk" "$INSTDIR\bin\qgis.exe" "" "$INSTDIR\icons\QGIS.ico"
+  CreateShortCut "$DESKTOP\NQMAP.lnk" "$INSTDIR\bin\nqmap.exe" "" "$INSTDIR\icons\NQMAPico.ico"
 
   
 SectionEnd
