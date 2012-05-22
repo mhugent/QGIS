@@ -11,12 +11,23 @@ class QgsRasterFileWriter
   public:
     enum WriterError
     {
-      NoError = 0
+      NoError = 0,
+      SourceProviderError = 1,
+      DestProviderError = 2,
+      CreateDatasourceError = 3,
+      WriteError = 4
     };
 
     QgsRasterFileWriter( const QString& outputUrl );
     ~QgsRasterFileWriter();
-    WriterError writeRaster( QgsRasterDataProvider* sourceRaster, int nCols, int nRows );
+
+    WriterError writeRaster( QgsRasterDataProvider* sourceProvider, int nCols, int nRows );
+
+    void setOutputFormat( const QString& format ) { mOutputFormat = format; }
+    QString outputFormat() const { return mOutputFormat; }
+
+    void setOutputProviderKey( const QString& key ) { mOutputProviderKey = key; }
+    QString outputProviderKey() const { return mOutputProviderKey; }
 
   private:
     QgsRasterFileWriter(); //forbidden
