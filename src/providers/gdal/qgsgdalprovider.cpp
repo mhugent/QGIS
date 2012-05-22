@@ -2018,6 +2018,13 @@ bool QgsGdalProvider::create( const QString& format, int nBands, QgsRasterDataPr
   mGeoTransform[3] = geoTransform[3];
   mGeoTransform[4] = geoTransform[4];
   mGeoTransform[5] = geoTransform[5];
+  GDALSetGeoTransform( dataset, mGeoTransform );
+
+  //crs
+  if ( GDALSetProjection( dataset, crs.toWkt().toLocal8Bit().data() ) != CE_None )
+  {
+    bool error = true;
+  }
 
   mGdalBaseDataset = dataset;
   initBaseDataset();

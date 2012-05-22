@@ -163,6 +163,7 @@ SET(QGIS_CORE_SRCS
   raster/qgsrastertransparency.cpp
   raster/qgsrastershader.cpp
   raster/qgsrastershaderfunction.cpp
+  raster/qgsrasterfilewriter.cpp
 
   renderer/qgscontinuouscolorrenderer.cpp
   renderer/qgsgraduatedsymbolrenderer.cpp
