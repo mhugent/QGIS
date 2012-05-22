@@ -260,6 +260,9 @@ class QgsGdalProvider : public QgsRasterDataProvider
     /** Emit a signal to notify of the progress event. */
     void emitProgress( int theType, double theProgress, QString theMessage );
 
+    /**Writes into the provider datasource*/
+    bool write( void* data, int band, int width, int height, int xOffset, int yOffset );
+
     /** Creates a new dataset with mDataSourceURI
         @return true in case of success*/
     bool create( const QString& format, int nBands, QgsRasterDataProvider::DataType type, int width, int height,

@@ -17,9 +17,9 @@ QgsRasterFileWriter::~QgsRasterFileWriter()
 
 }
 
-QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( const QgsRasterDataProvider* sourceRaster, int nCols, int nRows )
+QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterDataProvider* sourceRaster, int nCols, int nRows )
 {
-  if ( !sourceRaster || ! const_cast<QgsRasterDataProvider*>( sourceRaster )->isValid() ) //isValid() should be const
+  if ( !sourceRaster || ! sourceRaster->isValid() ) //isValid() should be const
   {
 
   }
@@ -27,7 +27,7 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( const QgsRast
   QgsRasterLayer layer( mOutputUrl ); //only gdal for now...
   QgsRasterDataProvider* provider = layer.dataProvider();
 
-  QgsRectangle sourceProviderRect = const_cast<QgsRasterDataProvider*>( sourceRaster )->extent();
+  QgsRectangle sourceProviderRect = sourceRaster->extent();
   double geoTransform[6];
   geoTransform[0] = sourceProviderRect.xMinimum();
   geoTransform[1] = sourceProviderRect.width() / nCols;
@@ -37,14 +37,24 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( const QgsRast
   geoTransform[5] = -( sourceProviderRect.height() / nRows );
 
   //crs() should be const too
-  if ( !provider->create( mOutputFormat, sourceRaster->bandCount(), ( QgsRasterDataProvider::DataType )sourceRaster->dataType( 1 ), nCols, nRows, geoTransform, const_cast<QgsRasterDataProvider*>( sourceRaster )->crs() ) )
+  if ( !provider->create( mOutputFormat, sourceRaster->bandCount(), ( QgsRasterDataProvider::DataType )sourceRaster->dataType( 1 ), nCols, nRows, geoTransform,
+                          sourceRaster->crs() ) )
   {
     //error
   }
 
-  //read data from sourceRaster
 
-  //write into provider
+
+  //read/write data for each band
+  for ( int i = 0; i < sourceRaster->bandCount(); ++i )
+  {
+    void* data = VSIMalloc( provider->dataTypeSize( i + 1 ) * nCols * nRows );
+    sourceRaster->readBlock( i + 1, sourceProviderRect, nCols, nRows, data );
+    if ( !provider->write( data, i + 1, nCols, nRows, 0, 0 ) )
+    {
+    }
+    CPLFree( data );
+  }
 
 
   return NoError;
