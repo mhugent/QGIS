@@ -655,7 +655,11 @@ void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url
 
   //take first style
   QString stylesString = item->text( 6 );
-  if ( !stylesString.isEmpty() )
+  if ( stylesString.isEmpty() )
+  {
+    styles.append( "" );
+  }
+  else
   {
     styles.append( stylesString.split( "," ).at( 0 ) );
   }
