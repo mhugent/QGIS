@@ -11,5 +11,5 @@ class QgsRasterFileWriter
 
         QgsRasterFileWriter( const QString& outputUrl );
         ~QgsRasterFileWriter();
-        WriterError writeRaster( const QgsRasterDataProvider* sourceRaster, int nCols, int nRows );
+        WriterError writeRaster( const QgsRasterDataProvider* sourceRaster, int nCols );
 };

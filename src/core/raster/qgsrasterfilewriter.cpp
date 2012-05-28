@@ -18,7 +18,7 @@ QgsRasterFileWriter::~QgsRasterFileWriter()
 
 }
 
-QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterDataProvider* sourceProvider, int nCols, int nRows )
+QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterDataProvider* sourceProvider, int nCols )
 {
   if ( !sourceProvider || ! sourceProvider->isValid() )
   {
@@ -32,34 +32,82 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterData
   }
 
   QgsRectangle sourceProviderRect = sourceProvider->extent();
+  double pixelSize = sourceProviderRect.width() / nCols;
+  int nRows = ( double )nCols / sourceProviderRect.width() * sourceProviderRect.height() + 0.5;
   double geoTransform[6];
   geoTransform[0] = sourceProviderRect.xMinimum();
-  geoTransform[1] = sourceProviderRect.width() / nCols;
+  geoTransform[1] = pixelSize;
   geoTransform[2] = 0.0;
   geoTransform[3] = sourceProviderRect.yMaximum();
   geoTransform[4] = 0.0;
-  geoTransform[5] = -( sourceProviderRect.height() / nRows );
+  geoTransform[5] = -pixelSize;
 
-  if ( !destProvider->create( mOutputFormat, sourceProvider->bandCount(), ( QgsRasterDataProvider::DataType )sourceProvider->dataType( 1 ), nCols, nRows, geoTransform,
+  //debug
+  bool hasARGBType = false;
+  QgsRasterDataProvider::DataType outputDataType = ( QgsRasterDataProvider::DataType )sourceProvider->dataType( 1 );
+  int nOutputBands = sourceProvider->bandCount();
+  int nInputBands = sourceProvider->bandCount();
+  if ( outputDataType == QgsRasterDataProvider::ARGBDataType )
+  {
+    hasARGBType = true; //needs to be converted to four band 8bit
+    outputDataType = QgsRasterDataProvider::Byte;
+    nOutputBands = 4;
+  }
+
+  if ( !destProvider->create( mOutputFormat, nOutputBands, outputDataType, nCols, nRows, geoTransform,
                               sourceProvider->crs() ) )
   {
     delete destProvider;
     return CreateDatasourceError;
   }
 
-
-
-  //read/write data for each band
-  for ( int i = 0; i < sourceProvider->bandCount(); ++i )
+  if ( hasARGBType && nInputBands == 1 )
   {
-    void* data = VSIMalloc( destProvider->dataTypeSize( i + 1 ) * nCols * nRows );
-    sourceProvider->readBlock( i + 1, sourceProviderRect, nCols, nRows, data );
-    bool writeSuccess = destProvider->write( data, i + 1, nCols, nRows, 0, 0 );
-    CPLFree( data );
-    if ( !writeSuccess )
+    //For ARGB data, always use 1 input band and four int8 output bands
+    int nPixels = nCols * nRows;
+    int dataSize = destProvider->dataTypeSize( 1 ) * nPixels;
+    void* data = VSIMalloc( dataSize );
+    sourceProvider->readBlock( 1, sourceProviderRect, nCols, nRows, data );
+
+    //data for output bands
+    void* redData = VSIMalloc( nPixels );
+    void* greenData = VSIMalloc( nPixels );
+    void* blueData = VSIMalloc( nPixels );
+    void* alphaData = VSIMalloc( nPixels );
+
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    int alpha = 255;
+    uint* p = ( uint* ) data;
+    for ( int i = 0; i < nPixels; ++i )
     {
-      delete destProvider;
-      return WriteError;
+      QRgb c( *p++ );
+      red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
+      memcpy( redData + i, &red, 1 );
+      memcpy( greenData + i, &green, 1 );
+      memcpy( blueData + i, &blue, 1 );
+      memcpy( alphaData + i, &alpha, 1 );
+    }
+    destProvider->write( redData, 1, nCols, nRows, 0, 0 );
+    destProvider->write( greenData, 2, nCols, nRows, 0, 0 );
+    destProvider->write( blueData, 3, nCols, nRows, 0, 0 );
+    destProvider->write( alphaData, 4, nCols, nRows, 0, 0 );
+  }
+  else
+  {
+    //read/write data for each band
+    for ( int i = 0; i < sourceProvider->bandCount(); ++i )
+    {
+      void* data = VSIMalloc( destProvider->dataTypeSize( i + 1 ) * nCols * nRows );
+      sourceProvider->readBlock( i + 1, sourceProviderRect, nCols, nRows, data );
+      bool writeSuccess = destProvider->write( data, i + 1, nCols, nRows, 0, 0 );
+      CPLFree( data );
+      if ( !writeSuccess )
+      {
+        delete destProvider;
+        return WriteError;
+      }
     }
   }
 
