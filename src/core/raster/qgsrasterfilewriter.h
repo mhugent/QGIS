@@ -29,13 +29,29 @@ class QgsRasterFileWriter
     void setOutputProviderKey( const QString& key ) { mOutputProviderKey = key; }
     QString outputProviderKey() const { return mOutputProviderKey; }
 
+    void setTiledMode( bool t ) { mTiledMode = t; }
+    bool tiledMode() const { return mTiledMode; }
+
+    void setMaxTileWidth( int w ) { mMaxTileWidth = w; }
+    int maxTileWidth() const { return mMaxTileWidth; }
+
+    void setMaxTileHeight( int h ) { mMaxTileHeight = h; }
+    int maxTileHeight() const { return mMaxTileHeight; }
+
   private:
     QgsRasterFileWriter(); //forbidden
+    WriterError writeRasterSingleTile( QgsRasterDataProvider* sourceProvider, int nCols );
+    WriterError writeRasterTiled( QgsRasterDataProvider* sourceProvider, int nCols );
 
     QString mOutputUrl;
     QString mOutputProviderKey;
     QString mOutputFormat;
     QgsCoordinateReferenceSystem mOutputCRS;
+
+    /**False: Write one file, true: create a directory and add the files numbered*/
+    bool mTiledMode;
+    double mMaxTileWidth;
+    double mMaxTileHeight;
 };
 
 #endif // QGSRASTERFILEWRITER_H

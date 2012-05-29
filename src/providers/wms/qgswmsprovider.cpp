@@ -3083,8 +3083,9 @@ void QgsWmsProvider::identifyReplyFinished()
 
 QgsCoordinateReferenceSystem QgsWmsProvider::crs()
 {
-  // TODO: implement
-  return QgsCoordinateReferenceSystem();
+  QgsCoordinateReferenceSystem crs;
+  crs.createFromOgcWmsCrs( imageCrs );
+  return crs;
 }
 
 QString QgsWmsProvider::lastErrorTitle()
