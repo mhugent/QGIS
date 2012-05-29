@@ -79,7 +79,18 @@ void NiwaPluginDialog::on_mAddPushButton_clicked()
 
 void NiwaPluginDialog::on_mRemovePushButton_clicked()
 {
-  //todo...
+  int currentIndex = mServicesComboBox->currentIndex();
+  if ( currentIndex == -1 )
+  {
+    return;
+  }
+
+  QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
+  QString name = mServicesComboBox->itemText( currentIndex );
+
+  QSettings s;
+  s.remove( "/Qgis/connections-" + serviceType.toLower() + "/" + name );
+  insertServices();
 }
 
 void NiwaPluginDialog::on_mEditPushButton_clicked()
