@@ -281,6 +281,7 @@ const int AFTER_RECENT_PATHS = 321;
   */
 static void setTitleBarText_( QWidget & qgisApp )
 {
+#if 0
   QString caption = QgisApp::tr( "Quantum GIS " );
 
   if ( QString( QGis::QGIS_VERSION ).endsWith( "Alpha" ) )
@@ -309,7 +310,9 @@ static void setTitleBarText_( QWidget & qgisApp )
   {
     caption += " - " + QgsProject::instance()->title();
   }
+#endif //0
 
+  QString caption = "NIWA Quantum Map 1.0";
   qgisApp.setWindowTitle( caption );
 } // setTitleBarText_( QWidget * qgisApp )
 
@@ -519,7 +522,7 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, QWidget * parent, 
 
   // set application's caption
   //QString caption = tr( "Quantum GIS - %1 ('%2')" ).arg( QGis::QGIS_VERSION ).arg( QGis::QGIS_RELEASE_NAME );
-  QString caption("NIWA Quantum Map");
+  QString caption( "NIWA Quantum Map" );
   setWindowTitle( caption );
 
   QgsMessageLog::logMessage( tr( "QGIS starting..." ) );
