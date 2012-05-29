@@ -1,10 +1,10 @@
 !include "MUI2.nsh"
 
-Name "NQMAP installer"
-!define INSTALLATIONNAME "NQMAP"
-OutFile "nqmap_setup.exe"
+Name "NIWA Quantum MAP installer"
+!define INSTALLATIONNAME "NIWA Quantum Map"
+OutFile "niwa_quantum_map_setup.exe"
 
-InstallDir $PROGRAMFILES\NQMAP
+InstallDir $PROGRAMFILES\NIWA_Quantum_Map
 
 !define MUI_ABORTWARNING
 !define MUI_ICON ".\Installer-Files\nqmap.ico"
@@ -32,7 +32,7 @@ Section ""
 ;Uninstaller
   WriteUninstaller $INSTDIR\uninstall.exe
   
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}" "DisplayName" "NQMAP"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}" "DisplayName" "NIWA Quantum Map"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}" "UninstallString" "$INSTDIR\uninstall.exe"
 
@@ -40,9 +40,11 @@ Section ""
 
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}" "NoRepair" 1
 
+  WriteRegStr HKEY_CURRENT_USER "Software\NIWA\NIWA Quantum Map\Plugins" "niwaplugin" "true"
+
 ;Desktop shortcut
-  Delete "$DESKTOP\NQMAP.lnk"
-  CreateShortCut "$DESKTOP\NQMAP.lnk" "$INSTDIR\bin\nqmap.exe" "" "$INSTDIR\icons\nqmap.ico"
+  Delete "$DESKTOP\NIWA Quantum Map.lnk"
+  CreateShortCut "$DESKTOP\NIWA Quantum Map.lnk" "$INSTDIR\bin\niwa_quantum_map.exe" "" "$INSTDIR\icons\nqmap.ico"
 
   
 SectionEnd
@@ -50,6 +52,6 @@ SectionEnd
 Section "Uninstall"
   Delete $INSTDIR\uninstall.exe
   RMDir /r "$INSTDIR"
-  Delete "$DESKTOP\NQMAP.lnk"
+  Delete "$DESKTOP\NIWA Quantum Map.lnk"
 
 SectionEnd

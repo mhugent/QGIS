@@ -518,7 +518,8 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, QWidget * parent, 
 #endif
 
   // set application's caption
-  QString caption = tr( "Quantum GIS - %1 ('%2')" ).arg( QGis::QGIS_VERSION ).arg( QGis::QGIS_RELEASE_NAME );
+  //QString caption = tr( "Quantum GIS - %1 ('%2')" ).arg( QGis::QGIS_VERSION ).arg( QGis::QGIS_RELEASE_NAME );
+  QString caption("NIWA Quantum Map");
   setWindowTitle( caption );
 
   QgsMessageLog::logMessage( tr( "QGIS starting..." ) );
