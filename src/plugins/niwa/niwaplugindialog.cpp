@@ -645,6 +645,7 @@ void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url
   }
 
   url = item->data( 0, Qt::UserRole ).toString();
+  url.append( ",ignoreUrl=GetMap;GetFeatureInfo" ); //ignore advertised urls per default
 
   //format: prefer png
   QStringList formatList = item->text( 7 ).split( "," );
