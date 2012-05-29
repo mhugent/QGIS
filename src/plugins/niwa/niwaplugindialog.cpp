@@ -61,20 +61,20 @@ void NiwaPluginDialog::on_mAddPushButton_clicked()
   AddServiceDialog d( this );
   if ( d.exec() == QDialog::Accepted )
   {
-    //add service, url, type to QSettings
-    QString name = d.name();
-    QString service = d.service();
-    QString url = d.url();
-
-    if ( name.isEmpty() || url.isEmpty() || service.isEmpty() )
-    {
-      return;
-    }
-
-    QSettings s;
-    s.setValue( "/Qgis/connections-" + service.toLower() + "/" + name + "/url", url );
-    insertServices();
+    setServiceSetting( d.name(), d.service(), d.url() );
   }
+}
+
+void NiwaPluginDialog::setServiceSetting( const QString& name, const QString& serviceType, const QString& url )
+{
+  if ( name.isEmpty() || url.isEmpty() || serviceType.isEmpty() )
+  {
+    return;
+  }
+
+  QSettings s;
+  s.setValue( "/Qgis/connections-" + serviceType.toLower() + "/" + name + "/url", url );
+  insertServices();
 }
 
 void NiwaPluginDialog::on_mRemovePushButton_clicked()
@@ -95,7 +95,27 @@ void NiwaPluginDialog::on_mRemovePushButton_clicked()
 
 void NiwaPluginDialog::on_mEditPushButton_clicked()
 {
-  //todo...
+  int currentIndex = mServicesComboBox->currentIndex();
+  if ( currentIndex == -1 )
+  {
+    return;
+  }
+
+  QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
+  QString name = mServicesComboBox->itemText( currentIndex );
+
+  QSettings s;
+  QString url = serviceURLFromComboBox();
+
+  AddServiceDialog d;
+  d.setName( name );
+  d.setUrl( url );
+  d.setService( serviceType );
+  d.enableServiceTypeSelection( false );
+  if ( d.exec() == QDialog::Accepted )
+  {
+    setServiceSetting( d.name(), d.service(), d.url() );
+  }
 }
 
 void NiwaPluginDialog::on_mConnectPushButton_clicked()

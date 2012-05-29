@@ -42,6 +42,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void wmsParameterFromItem( QTreeWidgetItem* item, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const;
     /**Exchanges a layer in the map canvas (and copies the style of the new layer to the old one)*/
     bool exchangeLayer( const QString& layerId, QgsMapLayer* newLayer );
+    void setServiceSetting( const QString& name, const QString& serviceType, const QString& url );
 
   private slots:
     void loadFromProject();
