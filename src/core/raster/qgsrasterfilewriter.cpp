@@ -173,10 +173,11 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterTiled( QgsRaste
     void* alphaData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
     QgsRectangle mapRect;
     int iterLeft, iterTop, iterCols, iterRows;
+    double progress = 0;
     int fileIndex = 0;
 
     iter.select( outputExtent, outputMapUnitsPerPixel );
-    while ( iter.nextPart( data, mapRect, iterLeft, iterTop, iterCols, iterRows ) )
+    while ( iter.nextPart( data, mapRect, iterLeft, iterTop, iterCols, iterRows, progress ) )
     {
       if ( iterCols <= 0 || iterRows <= 0 )
       {

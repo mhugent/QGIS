@@ -32,7 +32,8 @@ void QgsRasterIterator::select( QgsRectangle& extent, double mapUnitsPerPixel )
   mMapUnitsPerPixel = mapUnitsPerPixel;
 }
 
-bool QgsRasterIterator::nextPart( void* data, QgsRectangle& mapRect, int& left, int& top, int& nCols, int& nRows )
+bool QgsRasterIterator::nextPart( void* data, QgsRectangle& mapRect, int& left, int& top, int& nCols, int& nRows,
+                                  double& progress )
 {
   //get tile index to fetch
   if ( mCurrentTileX == mNTilesX )
@@ -72,7 +73,7 @@ bool QgsRasterIterator::nextPart( void* data, QgsRectangle& mapRect, int& left, 
   mapRect = QgsRectangle( mapLeft, mapBottom, mapRight, mapTop );
 
   mDataProvider->readBlock( mRasterBand, mapRect, nCols, nRows, data );
-
   ++mCurrentTileX;
+  progress = ( mCurrentTileX + mNTilesX * mCurrentTileY ) / ( mNTilesX + mNTilesY );
   return true;
 }
