@@ -68,6 +68,7 @@ qgscredentialdialog.cpp
 qgsprojectbadlayerguihandler.cpp
 qgsprojectionselector.cpp
 qgsquickprint.cpp
+qgsrasterlayersaveasdialog.cpp
 qgsrubberband.cpp
 qgsscalecombobox.cpp
 qgstextannotationitem.cpp
