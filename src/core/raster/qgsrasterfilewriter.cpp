@@ -22,13 +22,20 @@ QgsRasterFileWriter::~QgsRasterFileWriter()
 
 QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterDataProvider* sourceProvider, int nCols )
 {
-  if ( mTiledMode )
+  if ( !sourceProvider || ! sourceProvider->isValid() )
   {
-    return writeRasterTiled( sourceProvider, nCols );
+    return SourceProviderError;
+  }
+
+  QgsRasterDataProvider::DataType inputDataType = ( QgsRasterDataProvider::DataType )sourceProvider->dataType( 1 );
+  if ( inputDataType == QgsRasterDataProvider::ARGBDataType && sourceProvider->bandCount() == 1 )
+  {
+    return writeARGBRaster( sourceProvider, nCols );
   }
   else
   {
-    return writeRasterSingleTile( sourceProvider, nCols );
+    //
+    return NoError;
   }
 }
 
@@ -129,81 +136,105 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterSingleTile( Qgs
   return NoError;
 }
 
-QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterTiled( QgsRasterDataProvider* sourceProvider, int nCols )
+QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols )
 {
   if ( !sourceProvider || ! sourceProvider->isValid() )
   {
     return SourceProviderError;
   }
 
-  QgsRasterDataProvider* destProvider = QgsRasterLayer::loadProvider( mOutputProviderKey, mOutputUrl );
-  if ( !destProvider )
+  QgsRasterDataProvider::DataType sourceDataType = ( QgsRasterDataProvider::DataType )sourceProvider->dataType( 1 );
+  int nInputBands = sourceProvider->bandCount();
+  if ( sourceDataType != QgsRasterDataProvider::ARGBDataType || nInputBands != 1 )
   {
-    return DestProviderError;
+    return SourceProviderError;
   }
+
 
   //create directory for output files
   QDir destDir( mOutputUrl );
-  destDir.mkdir( mOutputUrl );
-
-  bool hasARGBType = false;
-  QgsRasterDataProvider::DataType outputDataType = ( QgsRasterDataProvider::DataType )sourceProvider->dataType( 1 );
-  int nOutputBands = sourceProvider->bandCount();
-  int nInputBands = sourceProvider->bandCount();
-  if ( outputDataType == QgsRasterDataProvider::ARGBDataType )
+  if ( mTiledMode )
   {
-    hasARGBType = true; //needs to be converted to four band 8bit
-    outputDataType = QgsRasterDataProvider::Byte;
-    nOutputBands = 4;
+    destDir.mkdir( mOutputUrl );
   }
 
   //Get output map units per pixel
   QgsRectangle outputExtent = sourceProvider->extent();
   double outputMapUnitsPerPixel = outputExtent.width() / nCols;
 
-  if ( hasARGBType && nInputBands == 1 )
+  QgsRasterIterator iter( 1, sourceProvider );
+  iter.setMaximumTileWidth( mMaxTileWidth );
+  iter.setMaximumTileHeight( mMaxTileHeight );
+  void* data = VSIMalloc( sourceProvider->dataTypeSize( 1 ) * mMaxTileWidth * mMaxTileHeight );
+  void* redData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
+  void* greenData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
+  void* blueData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
+  void* alphaData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
+  QgsRectangle mapRect;
+  int iterLeft, iterTop, iterCols, iterRows;
+  double progress = 0;
+  int fileIndex = 0;
+
+  QgsRasterDataProvider* destProvider = 0;
+  if ( !mTiledMode )
   {
-    QgsRasterIterator iter( 1, sourceProvider );
-    iter.setMaximumTileWidth( mMaxTileWidth );
-    iter.setMaximumTileHeight( mMaxTileHeight );
-    void* data = VSIMalloc( sourceProvider->dataTypeSize( 1 ) * mMaxTileWidth * mMaxTileHeight );
-    void* redData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
-    void* greenData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
-    void* blueData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
-    void* alphaData = VSIMalloc( mMaxTileWidth * mMaxTileHeight );
-    QgsRectangle mapRect;
-    int iterLeft, iterTop, iterCols, iterRows;
-    double progress = 0;
-    int fileIndex = 0;
+    //create destProvider for whole dataset here
+    QgsRectangle sourceProviderRect = sourceProvider->extent();
+    double pixelSize = sourceProviderRect.width() / nCols;
+    int nRows = ( double )nCols / sourceProviderRect.width() * sourceProviderRect.height() + 0.5;
+    double geoTransform[6];
+    geoTransform[0] = sourceProviderRect.xMinimum();
+    geoTransform[1] = pixelSize;
+    geoTransform[2] = 0.0;
+    geoTransform[3] = sourceProviderRect.yMaximum();
+    geoTransform[4] = 0.0;
+    geoTransform[5] = -pixelSize;
 
-    iter.select( outputExtent, outputMapUnitsPerPixel );
-    while ( iter.nextPart( data, mapRect, iterLeft, iterTop, iterCols, iterRows, progress ) )
+    destProvider = QgsRasterLayer::loadProvider( mOutputProviderKey, mOutputUrl );
+    if ( !destProvider )
     {
-      if ( iterCols <= 0 || iterRows <= 0 )
-      {
-        continue;
-      }
+      return DestProviderError;
+    }
 
-      //fill into red/green/blue/alpha channels
-      uint* p = ( uint* ) data;
-      int nPixels = iterCols * iterRows;
-      int red = 0;
-      int green = 0;
-      int blue = 0;
-      int alpha = 255;
-      for ( int i = 0; i < nPixels; ++i )
-      {
-        QRgb c( *p++ );
-        red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
-        memcpy( redData + i, &red, 1 );
-        memcpy( greenData + i, &green, 1 );
-        memcpy( blueData + i, &blue, 1 );
-        memcpy( alphaData + i, &alpha, 1 );
-      }
+    if ( !destProvider->create( mOutputFormat, 4, QgsRasterDataProvider::Byte, nCols, nRows, geoTransform,
+                                sourceProvider->crs() ) )
+    {
+      delete destProvider;
+      return CreateDatasourceError;
+    }
+  }
 
-      //create output file
+  iter.select( outputExtent, outputMapUnitsPerPixel );
+  while ( iter.nextPart( data, mapRect, iterLeft, iterTop, iterCols, iterRows, progress ) )
+  {
+    if ( iterCols <= 0 || iterRows <= 0 )
+    {
+      continue;
+    }
+
+    //fill into red/green/blue/alpha channels
+    uint* p = ( uint* ) data;
+    int nPixels = iterCols * iterRows;
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    int alpha = 255;
+    for ( int i = 0; i < nPixels; ++i )
+    {
+      QRgb c( *p++ );
+      red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
+      memcpy( redData + i, &red, 1 );
+      memcpy( greenData + i, &green, 1 );
+      memcpy( blueData + i, &blue, 1 );
+      memcpy( alphaData + i, &alpha, 1 );
+    }
+
+    //create output file
+    if ( mTiledMode )
+    {
       QString outputFile = mOutputUrl + "/" + QString::number( fileIndex );
-      QgsRasterDataProvider* destProvider = QgsRasterLayer::loadProvider( mOutputProviderKey, outputFile );
+      delete destProvider;
+      destProvider = QgsRasterLayer::loadProvider( mOutputProviderKey, outputFile );
       if ( !destProvider )
       {
         return DestProviderError;
@@ -229,17 +260,21 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterTiled( QgsRaste
       destProvider->write( greenData, 2, iterCols, iterRows, 0, 0 );
       destProvider->write( blueData, 3, iterCols, iterRows, 0, 0 );
       destProvider->write( alphaData, 4, iterCols, iterRows, 0, 0 );
-
-      delete destProvider;
-      ++fileIndex;
     }
-    CPLFree( data ); CPLFree( redData ); CPLFree( greenData ); CPLFree( blueData ); CPLFree( alphaData );
+    else
+    {
+      destProvider->write( redData, 1, iterCols, iterRows, iterLeft, iterTop );
+      destProvider->write( greenData, 2, iterCols, iterRows, iterLeft, iterTop );
+      destProvider->write( blueData, 3, iterCols, iterRows, iterLeft, iterTop );
+      destProvider->write( alphaData, 4, iterCols, iterRows, iterLeft, iterTop );
+    }
+
+    ++fileIndex;
   }
-  else
-  {
-
-  }
-
-
+  delete destProvider;
+  CPLFree( data ); CPLFree( redData ); CPLFree( greenData ); CPLFree( blueData ); CPLFree( alphaData );
   return NoError;
 }
+
+
+

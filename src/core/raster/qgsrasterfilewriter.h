@@ -41,7 +41,7 @@ class QgsRasterFileWriter
   private:
     QgsRasterFileWriter(); //forbidden
     WriterError writeRasterSingleTile( QgsRasterDataProvider* sourceProvider, int nCols );
-    WriterError writeRasterTiled( QgsRasterDataProvider* sourceProvider, int nCols );
+    WriterError writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols );
 
     QString mOutputUrl;
     QString mOutputProviderKey;
