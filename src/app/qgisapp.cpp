@@ -3589,7 +3589,7 @@ void QgisApp::saveAsRasterFile()
     return;
   }
 
-  QgsRasterLayerSaveAsDialog d;
+  QgsRasterLayerSaveAsDialog d( rasterLayer->dataProvider() );
   d.exec();
 }
 
