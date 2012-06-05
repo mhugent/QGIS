@@ -2,6 +2,8 @@
 #define QGSRASTERFILEWRITER_H
 
 #include "qgscoordinatereferencesystem.h"
+#include <QDomDocument>
+#include <QDomElement>
 #include <QString>
 
 class QgsRasterDataProvider;
@@ -43,6 +45,11 @@ class QgsRasterFileWriter
     WriterError writeRasterSingleTile( QgsRasterDataProvider* sourceProvider, int nCols );
     WriterError writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols );
 
+    //initialize vrt member variables
+    void createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform );
+    //write vrt document to disk
+    bool writeVRT( const QString& file );
+
     QString mOutputUrl;
     QString mOutputProviderKey;
     QString mOutputFormat;
@@ -52,6 +59,12 @@ class QgsRasterFileWriter
     bool mTiledMode;
     double mMaxTileWidth;
     double mMaxTileHeight;
+
+    QDomDocument mVRTDocument;
+    QDomElement mVRTRedBand;
+    QDomElement mVRTGreenBand;
+    QDomElement mVRTBlueBand;
+    QDomElement mVRTAlphaBand;
 };
 
 #endif // QGSRASTERFILEWRITER_H

@@ -3,6 +3,7 @@
 #include "qgsrasterdataprovider.h"
 #include "qgsrasteriterator.h"
 #include "qgsrasterlayer.h"
+#include <QTextStream>
 
 QgsRasterFileWriter::QgsRasterFileWriter( const QString& outputUrl ): mOutputUrl( outputUrl ), mOutputProviderKey( "gdal" ), mOutputFormat( "GTiff" ), mTiledMode( false ),
     mMaxTileWidth( 500 ), mMaxTileHeight( 500 )
@@ -176,20 +177,25 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   int fileIndex = 0;
 
   QgsRasterDataProvider* destProvider = 0;
-  if ( !mTiledMode )
-  {
-    //create destProvider for whole dataset here
-    QgsRectangle sourceProviderRect = sourceProvider->extent();
-    double pixelSize = sourceProviderRect.width() / nCols;
-    int nRows = ( double )nCols / sourceProviderRect.width() * sourceProviderRect.height() + 0.5;
-    double geoTransform[6];
-    geoTransform[0] = sourceProviderRect.xMinimum();
-    geoTransform[1] = pixelSize;
-    geoTransform[2] = 0.0;
-    geoTransform[3] = sourceProviderRect.yMaximum();
-    geoTransform[4] = 0.0;
-    geoTransform[5] = -pixelSize;
 
+  //create destProvider for whole dataset here
+  QgsRectangle sourceProviderRect = sourceProvider->extent();
+  double pixelSize = sourceProviderRect.width() / nCols;
+  int nRows = ( double )nCols / sourceProviderRect.width() * sourceProviderRect.height() + 0.5;
+  double geoTransform[6];
+  geoTransform[0] = sourceProviderRect.xMinimum();
+  geoTransform[1] = pixelSize;
+  geoTransform[2] = 0.0;
+  geoTransform[3] = sourceProviderRect.yMaximum();
+  geoTransform[4] = 0.0;
+  geoTransform[5] = -pixelSize;
+
+  if ( mTiledMode )
+  {
+    createVRT( nCols, nRows, sourceProvider->crs(), geoTransform );
+  }
+  else
+  {
     destProvider = QgsRasterLayer::loadProvider( mOutputProviderKey, mOutputUrl );
     if ( !destProvider )
     {
@@ -260,6 +266,15 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
       destProvider->write( greenData, 2, iterCols, iterRows, 0, 0 );
       destProvider->write( blueData, 3, iterCols, iterRows, 0, 0 );
       destProvider->write( alphaData, 4, iterCols, iterRows, 0, 0 );
+
+      //add band information to vrt
+      /*<SimpleSource>
+            <SourceFilename relativeToVRT="1">0</SourceFilename>
+            <SourceBand>1</SourceBand>
+            <SourceProperties RasterXSize="2000" RasterYSize="2000" DataType="Byte" BlockXSize="2000" BlockYSize="1" />
+            <SrcRect xOff="0" yOff="0" xSize="2000" ySize="2000" />
+            <DstRect xOff="0" yOff="0" xSize="2000" ySize="2000" />
+          </SimpleSource>*/
     }
     else
     {
@@ -273,8 +288,95 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   }
   delete destProvider;
   CPLFree( data ); CPLFree( redData ); CPLFree( greenData ); CPLFree( blueData ); CPLFree( alphaData );
+
+  if ( mTiledMode )
+  {
+    QFileInfo outputInfo( mOutputUrl );
+    writeVRT( mOutputUrl + "/" + outputInfo.baseName() + ".vrt" );
+  }
+
   return NoError;
 }
+
+void QgsRasterFileWriter::createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform )
+{
+  mVRTDocument.clear();
+  QDomElement VRTDatasetElem = mVRTDocument.createElement( "VRTDataset" );
+
+  //xsize / ysize
+  VRTDatasetElem.setAttribute( "rasterXSize", xSize );
+  VRTDatasetElem.setAttribute( "rasterYSize", ySize );
+  mVRTDocument.appendChild( VRTDatasetElem );
+
+  //CRS
+  QDomElement SRSElem = mVRTDocument.createElement( "SRS" );
+  QDomText crsText = mVRTDocument.createTextNode( crs.toWkt() );
+  SRSElem.appendChild( crsText );
+  VRTDatasetElem.appendChild( SRSElem );
+
+  //geotransform
+  if ( geoTransform )
+  {
+    QDomElement geoTransformElem = mVRTDocument.createElement( "GeoTransform" );
+    QString geoTransformString = QString::number( geoTransform[0] ) + ", " + QString::number( geoTransform[1] ) + ", " + QString::number( geoTransform[2] ) +
+                                 ", "  + QString::number( geoTransform[3] ) + ", " + QString::number( geoTransform[4] ) + ", " + QString::number( geoTransform[5] );
+    QDomText geoTransformText = mVRTDocument.createTextNode( geoTransformString );
+    geoTransformElem.appendChild( geoTransformText );
+    VRTDatasetElem.appendChild( geoTransformElem );
+  }
+
+  //VRT rasterbands
+  mVRTRedBand = mVRTDocument.createElement( "VRTRasterBand" );
+  mVRTRedBand.setAttribute( "dataType", "Byte" );
+  mVRTRedBand.setAttribute( "band", "1" );
+  QDomElement colorInterpRedElement = mVRTDocument.createElement( "ColorInterp" );
+  QDomText redInterprText = mVRTDocument.createTextNode( "Red" );
+  colorInterpRedElement.appendChild( redInterprText );
+  mVRTRedBand.appendChild( colorInterpRedElement );
+
+  mVRTGreenBand = mVRTDocument.createElement( "VRTRasterBand" );
+  mVRTGreenBand.setAttribute( "dataType", "Byte" );
+  mVRTGreenBand.setAttribute( "band", "2" );
+  QDomElement colorInterpGreenElement = mVRTDocument.createElement( "ColorInterp" );
+  QDomText greenInterprText = mVRTDocument.createTextNode( "Green" );
+  colorInterpGreenElement.appendChild( greenInterprText );
+  mVRTGreenBand.appendChild( colorInterpGreenElement );
+
+  mVRTBlueBand = mVRTDocument.createElement( "VRTRasterBand" );
+  mVRTBlueBand.setAttribute( "dataType", "Byte" );
+  mVRTBlueBand.setAttribute( "band", "3" );
+  QDomElement colorInterpBlueElement = mVRTDocument.createElement( "ColorInterp" );
+  QDomText blueInterprText = mVRTDocument.createTextNode( "Blue" );
+  colorInterpBlueElement.appendChild( blueInterprText );
+  mVRTBlueBand.appendChild( colorInterpBlueElement );
+
+  mVRTAlphaBand = mVRTDocument.createElement( "VRTRasterBand" );
+  mVRTAlphaBand.setAttribute( "dataType", "Byte" );
+  mVRTAlphaBand.setAttribute( "band", "4" );
+  QDomElement colorInterpAlphaElement = mVRTDocument.createElement( "ColorInterp" );
+  QDomText alphaInterprText = mVRTDocument.createTextNode( "Alpha" );
+  colorInterpAlphaElement.appendChild( alphaInterprText );
+  mVRTAlphaBand.appendChild( colorInterpAlphaElement );
+
+  VRTDatasetElem.appendChild( mVRTRedBand );
+  VRTDatasetElem.appendChild( mVRTGreenBand );
+  VRTDatasetElem.appendChild( mVRTBlueBand );
+  VRTDatasetElem.appendChild( mVRTAlphaBand );
+}
+
+bool QgsRasterFileWriter::writeVRT( const QString& file )
+{
+  QFile outputFile( file );
+  if ( ! outputFile.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+  {
+    return false;
+  }
+
+  QTextStream outStream( &outputFile );
+  mVRTDocument.save( outStream, 2 );
+  return true;
+}
+
 
 
 

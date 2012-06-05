@@ -3,6 +3,7 @@
 
 #include "ui_qgsrasterlayersaveasdialogbase.h"
 
+class QgsCoordinateReferenceSystem;
 class QgsRasterDataProvider;
 
 class QgsRasterLayerSaveAsDialog: public QDialog, private Ui::QgsRasterLayerSaveAsDialogBase
