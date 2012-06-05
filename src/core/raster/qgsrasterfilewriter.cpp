@@ -267,14 +267,10 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
       destProvider->write( blueData, 3, iterCols, iterRows, 0, 0 );
       destProvider->write( alphaData, 4, iterCols, iterRows, 0, 0 );
 
-      //add band information to vrt
-      /*<SimpleSource>
-            <SourceFilename relativeToVRT="1">0</SourceFilename>
-            <SourceBand>1</SourceBand>
-            <SourceProperties RasterXSize="2000" RasterYSize="2000" DataType="Byte" BlockXSize="2000" BlockYSize="1" />
-            <SrcRect xOff="0" yOff="0" xSize="2000" ySize="2000" />
-            <DstRect xOff="0" yOff="0" xSize="2000" ySize="2000" />
-          </SimpleSource>*/
+      addToVRT( QString::number( fileIndex ), 1, iterCols, iterRows, iterLeft, iterTop );
+      addToVRT( QString::number( fileIndex ), 2, iterCols, iterRows, iterLeft, iterTop );
+      addToVRT( QString::number( fileIndex ), 3, iterCols, iterRows, iterLeft, iterTop );
+      addToVRT( QString::number( fileIndex ), 4, iterCols, iterRows, iterLeft, iterTop );
     }
     else
     {
@@ -296,6 +292,71 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   }
 
   return NoError;
+}
+
+void QgsRasterFileWriter::addToVRT( const QString& filename, int band, int xSize, int ySize, int xOffset, int yOffset )
+{
+  QDomElement bandElem;
+
+  switch ( band )
+  {
+    case 1:
+      bandElem = mVRTRedBand;
+      break;
+    case 2:
+      bandElem = mVRTGreenBand;
+      break;
+    case 3:
+      bandElem = mVRTBlueBand;
+      break;
+    case 4:
+      bandElem = mVRTAlphaBand;
+      break;
+    default:
+      return;
+  }
+
+  QDomElement simpleSourceElem = mVRTDocument.createElement( "SimpleSource" );
+
+  //SourceFilename
+  QDomElement sourceFilenameElem = mVRTDocument.createElement( "SourceFilename" );
+  sourceFilenameElem.setAttribute( "relativeToVRT", "1" );
+  QDomText sourceFilenameText = mVRTDocument.createTextNode( filename );
+  sourceFilenameElem.appendChild( sourceFilenameText );
+  simpleSourceElem.appendChild( sourceFilenameElem );
+
+  //SourceBand
+  QDomElement sourceBandElem = mVRTDocument.createElement( "SourceBand" );
+  QDomText sourceBandText = mVRTDocument.createTextNode( QString::number( band ) );
+  sourceBandElem.appendChild( sourceBandText );
+  simpleSourceElem.appendChild( sourceBandElem );
+
+  //SourceProperties
+  QDomElement sourcePropertiesElem = mVRTDocument.createElement( "SourceProperties" );
+  sourcePropertiesElem.setAttribute( "RasterXSize", xSize );
+  sourcePropertiesElem.setAttribute( "RasterYSize", ySize );
+  sourcePropertiesElem.setAttribute( "BlockXSize", xSize );
+  sourcePropertiesElem.setAttribute( "BlockYSize", ySize );
+  sourcePropertiesElem.setAttribute( "DataType", "Byte" );
+  simpleSourceElem.appendChild( sourcePropertiesElem );
+
+  //SrcRect
+  QDomElement srcRectElem = mVRTDocument.createElement( "SrcRect" );
+  srcRectElem.setAttribute( "xOff", "0" );
+  srcRectElem.setAttribute( "yOff", "0" );
+  srcRectElem.setAttribute( "xSize", xSize );
+  srcRectElem.setAttribute( "ySize", ySize );
+  simpleSourceElem.appendChild( srcRectElem );
+
+  //DstRect
+  QDomElement dstRectElem = mVRTDocument.createElement( "DstRect" );
+  dstRectElem.setAttribute( "xOff", xOffset );
+  dstRectElem.setAttribute( "yOff", yOffset );
+  dstRectElem.setAttribute( "xSize", xSize );
+  dstRectElem.setAttribute( "ySize", ySize );
+  simpleSourceElem.appendChild( dstRectElem );
+
+  bandElem.appendChild( simpleSourceElem );
 }
 
 void QgsRasterFileWriter::createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform )

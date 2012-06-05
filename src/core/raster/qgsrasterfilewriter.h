@@ -49,6 +49,8 @@ class QgsRasterFileWriter
     void createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform );
     //write vrt document to disk
     bool writeVRT( const QString& file );
+    //add file entry to vrt
+    void addToVRT( const QString& filename, int band, int xSize, int ySize, int xOffset, int yOffset );
 
     QString mOutputUrl;
     QString mOutputProviderKey;
