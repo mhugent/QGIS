@@ -51,6 +51,7 @@ class QgsRasterFileWriter
     bool writeVRT( const QString& file );
     //add file entry to vrt
     void addToVRT( const QString& filename, int band, int xSize, int ySize, int xOffset, int yOffset );
+    void buildPyramides( const QString& filename );
 
     QString mOutputUrl;
     QString mOutputProviderKey;

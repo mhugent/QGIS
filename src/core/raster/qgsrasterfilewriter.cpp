@@ -4,6 +4,7 @@
 #include "qgsrasteriterator.h"
 #include "qgsrasterlayer.h"
 #include <QTextStream>
+#include "gdal.h"
 
 QgsRasterFileWriter::QgsRasterFileWriter( const QString& outputUrl ): mOutputUrl( outputUrl ), mOutputProviderKey( "gdal" ), mOutputFormat( "GTiff" ), mTiledMode( false ),
     mMaxTileWidth( 500 ), mMaxTileHeight( 500 )
@@ -288,7 +289,9 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   if ( mTiledMode )
   {
     QFileInfo outputInfo( mOutputUrl );
-    writeVRT( mOutputUrl + "/" + outputInfo.baseName() + ".vrt" );
+    QString vrtFilePath( mOutputUrl + "/" + outputInfo.baseName() + ".vrt" );
+    writeVRT( vrtFilePath );
+    buildPyramides( vrtFilePath );
   }
 
   return NoError;
@@ -357,6 +360,27 @@ void QgsRasterFileWriter::addToVRT( const QString& filename, int band, int xSize
   simpleSourceElem.appendChild( dstRectElem );
 
   bandElem.appendChild( simpleSourceElem );
+}
+
+void QgsRasterFileWriter::buildPyramides( const QString& filename )
+{
+  GDALDatasetH dataSet;
+  GDALAllRegister();
+  dataSet = GDALOpen( filename.toLocal8Bit().data(), GA_Update );
+  if ( !dataSet )
+  {
+    return;
+  }
+
+  //2,4,8,16,32,64
+  int overviewList[6];
+  overviewList[0] = 2;
+  overviewList[1] = 4;
+  overviewList[2] = 8;
+  overviewList[3] = 16;
+  overviewList[4] = 32;
+  overviewList[5] = 64;
+  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, 0, 0 );
 }
 
 void QgsRasterFileWriter::createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform )

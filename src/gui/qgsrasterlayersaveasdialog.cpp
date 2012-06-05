@@ -2,6 +2,7 @@
 #include "qgsrasterdataprovider.h"
 #include <QFileDialog>
 
+
 QgsRasterLayerSaveAsDialog::QgsRasterLayerSaveAsDialog( QgsRasterDataProvider* sourceProvider,
     QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ),
     mDataProvider( sourceProvider )
