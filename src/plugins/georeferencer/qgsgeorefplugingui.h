@@ -38,6 +38,13 @@ class QgsPoint;
 class QgsRasterLayer;
 class QgsRectangle;
 
+class QgsGeorefDockWidget : public QDockWidget
+{
+    Q_OBJECT
+  public:
+    QgsGeorefDockWidget( const QString & title, QWidget * parent = 0, Qt::WindowFlags flags = 0 );
+};
+
 class QgsGeorefPluginGui : public QMainWindow, private Ui::QgsGeorefPluginGuiBase
 {
     Q_OBJECT
@@ -107,6 +114,8 @@ class QgsGeorefPluginGui : public QMainWindow, private Ui::QgsGeorefPluginGuiBas
 
     bool updateGeorefTransform();
 
+    void updateIconTheme( QString theme);
+
   private:
     enum SaveGCPs
     {
@@ -124,6 +133,7 @@ class QgsGeorefPluginGui : public QMainWindow, private Ui::QgsGeorefPluginGuiBas
     void createDockWidgets();
     void createStatusBar();
     void setupConnections();
+    void removeOldLayer();
 
     // Mapcanvas Plugin
     void addRaster( QString file );
@@ -235,14 +245,6 @@ class QgsGeorefPluginGui : public QMainWindow, private Ui::QgsGeorefPluginGuiBas
     bool mLoadInQgis;
 
     QDockWidget* mDock;
-};
-
-class QgsGeorefDockWidget : public QDockWidget
-{
-    Q_OBJECT
-  public:
-    QgsGeorefDockWidget( const QString & title, QWidget * parent = 0, Qt::WindowFlags flags = 0 );
-    virtual void closeEvent( QCloseEvent * ev );
 };
 
 #endif

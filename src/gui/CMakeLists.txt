@@ -68,6 +68,7 @@ qgscredentialdialog.cpp
 qgsprojectbadlayerguihandler.cpp
 qgsprojectionselector.cpp
 qgsquickprint.cpp
+qgsrasterlayersaveasdialog.cpp
 qgsrubberband.cpp
 qgsscalecombobox.cpp
 qgstextannotationitem.cpp
@@ -139,6 +140,7 @@ qgsnewvectorlayerdialog.h
 qgscredentialdialog.h
 qgsprojectionselector.h
 qgsquickprint.h
+qgsrasterlayersaveasdialog.h
 qgsludialog.h
 qgsprojectbadlayerguihandler.h
 qgslonglongvalidator.h
@@ -245,6 +247,7 @@ ELSE (WITH_INTERNAL_SPATIALITE)
 ENDIF (WITH_INTERNAL_SPATIALITE)
 
 INCLUDE_DIRECTORIES(${GEOS_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
 IF (WIN32)
   IF (MSVC)

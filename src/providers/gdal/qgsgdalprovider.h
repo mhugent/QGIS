@@ -260,12 +260,29 @@ class QgsGdalProvider : public QgsRasterDataProvider
     /** Emit a signal to notify of the progress event. */
     void emitProgress( int theType, double theProgress, QString theMessage );
 
+    /**Writes into the provider datasource*/
+    bool write( void* data, int band, int width, int height, int xOffset, int yOffset );
+
+    /** Creates a new dataset with mDataSourceURI
+        @return true in case of success*/
+    bool create( const QString& format, int nBands, QgsRasterDataProvider::DataType type, int width, int height,
+                 double* geoTransform, const QgsCoordinateReferenceSystem& crs );
+
+    /**Returns the formats supported by create()*/
+    QStringList createFormats() const;
+
+    /**Remove dataset*/
+    bool remove();
+
   signals:
     void statusChanged( QString );
 
   private:
     // initialize CRS from wkt
     bool crsFromWkt( const char *wkt );
+
+    /**Do some initialisation on the dataset (e.g. handling of south-up datasets)*/
+    void initBaseDataset();
 
     /**
     * Flag indicating if the layer data source is a valid layer

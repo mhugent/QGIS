@@ -64,7 +64,9 @@ class CORE_EXPORT QgsRasterDataProvider : public QgsDataProvider
       EstimatedMinimumMaximum = 1 << 3,
       BuildPyramids =           1 << 4,
       Histogram =               1 << 5,
-      Size =                    1 << 6  // has fixed source type
+      Size =                    1 << 6,  // has fixed source type
+      Create =                  1 << 7, //create new datasets
+      Remove =                  1 << 8 //delete datasets
     };
 
     // This is modified copy of GDALDataType
@@ -488,6 +490,40 @@ class CORE_EXPORT QgsRasterDataProvider : public QgsDataProvider
 
     /** Current time stamp of data source */
     virtual QDateTime dataTimestamp() const { return QDateTime(); }
+
+    /**Writes into the provider datasource*/
+    virtual bool write( void* data, int band, int width, int height, int xOffset, int yOffset )
+    {
+      Q_UNUSED( data );
+      Q_UNUSED( band );
+      Q_UNUSED( width );
+      Q_UNUSED( height );
+      Q_UNUSED( xOffset );
+      Q_UNUSED( yOffset );
+      return false;
+    }
+
+    /** Creates a new dataset with mDataSourceURI
+        @return true in case of success*/
+    virtual bool create( const QString& format, int nBands,
+                         QgsRasterDataProvider::DataType type, int width, int height, double* geoTransform,
+                         const QgsCoordinateReferenceSystem& crs /*e.v. color table*/ )
+    {
+      Q_UNUSED( format );
+      Q_UNUSED( nBands );
+      Q_UNUSED( type );
+      Q_UNUSED( width );
+      Q_UNUSED( height );
+      Q_UNUSED( geoTransform );
+      Q_UNUSED( crs );
+      return false;
+    }
+
+    /**Returns the formats supported by create()*/
+    virtual QStringList createFormats() const { return QStringList(); }
+
+    /** Remove dataset*/
+    virtual bool remove() { return false; }
 
   signals:
     /** Emit a signal to notify of the progress event.

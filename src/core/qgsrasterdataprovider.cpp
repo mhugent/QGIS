@@ -172,6 +172,16 @@ QString QgsRasterDataProvider::capabilitiesString() const
     abilitiesList += tr( "Build Pyramids" );
   }
 
+  if ( abilities & QgsRasterDataProvider::Create )
+  {
+    abilitiesList += tr( "Create Datasources" );
+  }
+
+  if ( abilities & QgsRasterDataProvider::Remove )
+  {
+    abilitiesList += tr( "Remove Datasources" );
+  }
+
   QgsDebugMsg( "Capability: " + abilitiesList.join( ", " ) );
 
   return abilitiesList.join( ", " );

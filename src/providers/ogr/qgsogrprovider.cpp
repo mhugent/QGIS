@@ -270,13 +270,19 @@ QgsOgrProvider::QgsOgrProvider( QString const & uri )
     // cannot be interleaved, so for now just use read-only.
     openReadOnly = true;
     if ( !mFilePath.startsWith( "/vsizip/" ) )
+    {
       mFilePath = "/vsizip/" + mFilePath;
+      setDataSourceUri( mFilePath );
+    }
     QgsDebugMsg( QString( "Trying /vsizip syntax, mFilePath= %1" ).arg( mFilePath ) );
   }
   else if ( mFilePath.endsWith( ".gz", Qt::CaseInsensitive ) )
   {
     if ( !mFilePath.startsWith( "/vsigzip/" ) )
+    {
       mFilePath = "/vsigzip/" + mFilePath;
+      setDataSourceUri( mFilePath );
+    }
     QgsDebugMsg( QString( "Trying /vsigzip syntax, mFilePath= %1" ).arg( mFilePath ) );
   }
 
@@ -1785,9 +1791,8 @@ QString createFilters( QString type )
     // This does not work for some file types, see VSIFileHandler doc.
     // Ideally we should also add support for /vsitar/ (requires cpl_vsil_tar.cpp).
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1600
-    // QSettings settings;
-    // if ( settings.value( "/qgis/scanZipInBrowser", 1 ).toInt() != 0 )
-    if ( 1 )
+    QSettings settings;
+    if ( settings.value( "/qgis/scanZipInBrowser", 2 ).toInt() != 0 )
     {
       myFileFilters += createFileFilter_( QObject::tr( "GDAL/OGR VSIFileHandler" ), "*.zip *.gz" );
       myExtensions << "zip" << "gz";
