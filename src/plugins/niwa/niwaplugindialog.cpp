@@ -7,6 +7,8 @@
 #include "qgsmaplayerregistry.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsproject.h"
+#include "qgsrasterfilewriter.h"
+#include "qgsrasterlayersaveasdialog.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
@@ -14,6 +16,7 @@
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QProgressDialog>
 #include <QSettings>
 
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
@@ -309,6 +312,7 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
   QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
   QString filePath;
 
+
   bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
   bool offlineOk = false;
 
@@ -326,8 +330,8 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
       wfsLayer = new QgsVectorLayer( wfsUrl, layername, "WFS" );
     }
 
-    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
     filePath = saveFilePath + layerId + ".shp";
+    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
     offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
                   "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
     if ( offlineOk && layerInMap )
@@ -336,6 +340,43 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
       exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
       item->setData( 3, Qt::UserRole, offlineLayer->id() );
     }
+  }
+  else if ( serviceType == "WMS" )
+  {
+    //get raster layer
+    QgsRasterLayer* wmsLayer = 0;
+    if ( layerInMap )
+    {
+      wmsLayer = static_cast<QgsRasterLayer*>( QgsMapLayerRegistry::instance()->mapLayer( item->data( 3, Qt::UserRole ).toString() ) );
+    }
+    else
+    {
+      //todo...
+    }
+
+    //call save as dialog
+    filePath = saveFilePath + "/" + layerId;
+    QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    if ( d.exec() == QDialog::Accepted )
+    {
+      QgsRasterFileWriter fileWriter( filePath /*d.outputFileName()*/ );
+      if ( d.tileMode() )
+      {
+        fileWriter.setTiledMode( true );
+        fileWriter.setMaxTileWidth( d.maximumTileSizeX() );
+        fileWriter.setMaxTileHeight( d.maximumTileSizeY() );
+      }
+
+      QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
+      pd.setWindowModality( Qt::WindowModal );
+      fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
+      QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath + "/" + layerId + ".vrt", layername );
+      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+      item->setData( 3, Qt::UserRole, offlineLayer->id() );
+      offlineOk = true;
+    }
+
+    //save raster in
   }
 
   if ( offlineOk )
@@ -403,13 +444,6 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   }
   mAddToMapButton->setEnabled( !inMap );
   mRemoveFromMapButton->setEnabled( inMap );
-
-  if ( current->text( 1 ) == "WMS" ) //online/offline not implemented yet
-  {
-    mChangeOfflineButton->setEnabled( false );
-    mChangeOnlineButton->setEnabled( false );
-    return;
-  }
 
   bool online = false;
   if ( current->text( 2 ) == tr( "online" ) )
@@ -733,8 +767,8 @@ bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLa
   }
   else if ( newLayer->type() == QgsMapLayer::RasterLayer )
   {
-    QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
-    QgsRasterLayer* oldRasterLayer = static_cast<QgsRasterLayer*>( oldLayer );
+    /* QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
+     QgsRasterLayer* oldRasterLayer = static_cast<QgsRasterLayer*>( oldLayer ); */
   }
 
   //move new layer next to the old one

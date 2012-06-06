@@ -185,6 +185,7 @@ qgsfieldvalidator.h
 qgsexpressionbuilderwidget.h
 qgsexpressionbuilderdialog.h
 qgsexpressionhighlighter.h
+qgsrasterlayersaveasdialog.h
 
 attributetable/qgsattributetablemodel.h
 attributetable/qgsattributetablememorymodel.h

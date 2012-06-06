@@ -36,6 +36,7 @@ ADD_LIBRARY (niwaplugin MODULE
 
 INCLUDE_DIRECTORIES(
      ${CMAKE_CURRENT_BINARY_DIR}
+     ${CMAKE_CURRENT_BINARY_DIR}/../../ui
      ${GDAL_INCLUDE_DIR}
      ../../core
      ../../core/raster
