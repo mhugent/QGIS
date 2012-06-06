@@ -13,7 +13,7 @@ class QgsRasterIterator
     ~QgsRasterIterator();
     /**Start raster read
         @param mapUnitsPerPixel raster resolution*/
-    void select( QgsRectangle& extent, double mapUnitsPerPixel );
+    void select( const QgsRectangle& extent, double mapUnitsPerPixel );
     /**Returns the next tile data (or false if end)
         @param progress runs from 0 to 1*/
     bool nextPart( void* data, QgsRectangle& mapRect, int& left, int& top, int& nCols, int& nRows, double& progress );
@@ -26,6 +26,9 @@ class QgsRasterIterator
 
     /**Set raster projector (takes ownership). Without projector, the provider CRS is used*/
     void setRasterProjector( QgsRasterProjector* projector ) { mRasterProjector = projector; }
+
+    int nTilesX() const { return mNTilesX; }
+    int nTilesY() const { return mNTilesY; }
 
   private:
 

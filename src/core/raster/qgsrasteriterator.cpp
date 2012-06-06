@@ -19,7 +19,7 @@ QgsRasterIterator::~QgsRasterIterator()
   delete mRasterProjector;
 }
 
-void QgsRasterIterator::select( QgsRectangle& extent, double mapUnitsPerPixel )
+void QgsRasterIterator::select( const QgsRectangle& extent, double mapUnitsPerPixel )
 {
   //get number of tiles in x/y direction
   mNPixelsX = extent.width() / mapUnitsPerPixel + 1;

@@ -3,11 +3,12 @@
 #include "qgsrasterdataprovider.h"
 #include "qgsrasteriterator.h"
 #include "qgsrasterlayer.h"
+#include <QProgressDialog>
 #include <QTextStream>
 #include "gdal.h"
 
 QgsRasterFileWriter::QgsRasterFileWriter( const QString& outputUrl ): mOutputUrl( outputUrl ), mOutputProviderKey( "gdal" ), mOutputFormat( "GTiff" ), mTiledMode( false ),
-    mMaxTileWidth( 500 ), mMaxTileHeight( 500 )
+    mMaxTileWidth( 500 ), mMaxTileHeight( 500 ), mProgressDialog( 0 )
 {
 
 }
@@ -22,21 +23,31 @@ QgsRasterFileWriter::~QgsRasterFileWriter()
 
 }
 
-QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterDataProvider* sourceProvider, int nCols )
+QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRaster( QgsRasterDataProvider* sourceProvider, int nCols, QgsRectangle outputExtent, QProgressDialog* p )
 {
   if ( !sourceProvider || ! sourceProvider->isValid() )
   {
     return SourceProviderError;
   }
 
+  if ( outputExtent.isEmpty() )
+  {
+    outputExtent = sourceProvider->extent();
+  }
+
+  mProgressDialog = p;
+
   QgsRasterDataProvider::DataType inputDataType = ( QgsRasterDataProvider::DataType )sourceProvider->dataType( 1 );
   if ( inputDataType == QgsRasterDataProvider::ARGBDataType && sourceProvider->bandCount() == 1 )
   {
-    return writeARGBRaster( sourceProvider, nCols );
+    WriterError e = writeARGBRaster( sourceProvider, nCols, outputExtent );
+    mProgressDialog = 0;
+    return e;
   }
   else
   {
     //
+    mProgressDialog = 0;
     return NoError;
   }
 }
@@ -138,7 +149,7 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterSingleTile( Qgs
   return NoError;
 }
 
-QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols )
+QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols, const QgsRectangle& outputExtent )
 {
   if ( !sourceProvider || ! sourceProvider->isValid() )
   {
@@ -161,7 +172,6 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   }
 
   //Get output map units per pixel
-  QgsRectangle outputExtent = sourceProvider->extent();
   double outputMapUnitsPerPixel = outputExtent.width() / nCols;
 
   QgsRasterIterator iter( 1, sourceProvider );
@@ -180,14 +190,13 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   QgsRasterDataProvider* destProvider = 0;
 
   //create destProvider for whole dataset here
-  QgsRectangle sourceProviderRect = sourceProvider->extent();
-  double pixelSize = sourceProviderRect.width() / nCols;
-  int nRows = ( double )nCols / sourceProviderRect.width() * sourceProviderRect.height() + 0.5;
+  double pixelSize = outputExtent.width() / nCols;
+  int nRows = ( double )nCols / outputExtent.width() * outputExtent.height() + 0.5;
   double geoTransform[6];
-  geoTransform[0] = sourceProviderRect.xMinimum();
+  geoTransform[0] = outputExtent.xMinimum();
   geoTransform[1] = pixelSize;
   geoTransform[2] = 0.0;
-  geoTransform[3] = sourceProviderRect.yMaximum();
+  geoTransform[3] = outputExtent.yMaximum();
   geoTransform[4] = 0.0;
   geoTransform[5] = -pixelSize;
 
@@ -212,11 +221,31 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   }
 
   iter.select( outputExtent, outputMapUnitsPerPixel );
+
+  //initialize progress dialog
+  int nTiles = iter.nTilesX() * iter.nTilesY();
+  if ( mProgressDialog )
+  {
+    mProgressDialog->setWindowTitle( QObject::tr( "Save raster" ) );
+    mProgressDialog->setMaximum( nTiles );
+    mProgressDialog->show();
+  }
+
   while ( iter.nextPart( data, mapRect, iterLeft, iterTop, iterCols, iterRows, progress ) )
   {
     if ( iterCols <= 0 || iterRows <= 0 )
     {
       continue;
+    }
+
+    if ( mProgressDialog )
+    {
+      mProgressDialog->setValue( fileIndex );
+      mProgressDialog->setLabelText( QObject::tr( "Downloaded %1 raster tiles from %2" ).arg( fileIndex ).arg( nTiles ) );
+      if ( mProgressDialog->wasCanceled() )
+      {
+        break;
+      }
     }
 
     //fill into red/green/blue/alpha channels
@@ -285,6 +314,11 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
   }
   delete destProvider;
   CPLFree( data ); CPLFree( redData ); CPLFree( greenData ); CPLFree( blueData ); CPLFree( alphaData );
+
+  if ( mProgressDialog )
+  {
+    mProgressDialog->setValue( nTiles );
+  }
 
   if ( mTiledMode )
   {
@@ -380,7 +414,33 @@ void QgsRasterFileWriter::buildPyramides( const QString& filename )
   overviewList[3] = 16;
   overviewList[4] = 32;
   overviewList[5] = 64;
-  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, 0, 0 );
+
+  if ( mProgressDialog )
+  {
+    mProgressDialog->setLabelText( QObject::tr( "Building Pyramides..." ) );
+    mProgressDialog->setValue( 0 );
+    mProgressDialog->setWindowModality( Qt::WindowModal );
+    mProgressDialog->show();
+  }
+  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, pyramidesProgress, mProgressDialog );
+}
+
+int QgsRasterFileWriter::pyramidesProgress( double dfComplete, const char *pszMessage, void* pData )
+{
+  Q_UNUSED( pszMessage );
+  GDALTermProgress( dfComplete, 0, 0 );
+  QProgressDialog* p = static_cast<QProgressDialog*>( pData );
+  if ( pData && p->wasCanceled() )
+  {
+    return 0;
+  }
+
+  if ( pData )
+  {
+    p->setRange( 0, 100 );
+    p->setValue( dfComplete * 100 );
+  }
+  return 1;
 }
 
 void QgsRasterFileWriter::createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform )

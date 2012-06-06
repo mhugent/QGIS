@@ -2,10 +2,12 @@
 #define QGSRASTERFILEWRITER_H
 
 #include "qgscoordinatereferencesystem.h"
+#include "qgsrectangle.h"
 #include <QDomDocument>
 #include <QDomElement>
 #include <QString>
 
+class QProgressDialog;
 class QgsRasterDataProvider;
 
 class QgsRasterFileWriter
@@ -23,7 +25,7 @@ class QgsRasterFileWriter
     QgsRasterFileWriter( const QString& outputUrl );
     ~QgsRasterFileWriter();
 
-    WriterError writeRaster( QgsRasterDataProvider* sourceProvider, int nCols );
+    WriterError writeRaster( QgsRasterDataProvider* sourceProvider, int nCols, QgsRectangle outputExtent = QgsRectangle(), QProgressDialog* p = 0 );
 
     void setOutputFormat( const QString& format ) { mOutputFormat = format; }
     QString outputFormat() const { return mOutputFormat; }
@@ -43,7 +45,7 @@ class QgsRasterFileWriter
   private:
     QgsRasterFileWriter(); //forbidden
     WriterError writeRasterSingleTile( QgsRasterDataProvider* sourceProvider, int nCols );
-    WriterError writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols );
+    WriterError writeARGBRaster( QgsRasterDataProvider* sourceProvider, int nCols, const QgsRectangle& outputExtent );
 
     //initialize vrt member variables
     void createVRT( int xSize, int ySize, const QgsCoordinateReferenceSystem& crs, double* geoTransform );
@@ -52,6 +54,8 @@ class QgsRasterFileWriter
     //add file entry to vrt
     void addToVRT( const QString& filename, int band, int xSize, int ySize, int xOffset, int yOffset );
     void buildPyramides( const QString& filename );
+
+    static int pyramidesProgress( double dfComplete, const char *pszMessage, void* pData );
 
     QString mOutputUrl;
     QString mOutputProviderKey;
@@ -68,6 +72,8 @@ class QgsRasterFileWriter
     QDomElement mVRTGreenBand;
     QDomElement mVRTBlueBand;
     QDomElement mVRTAlphaBand;
+
+    QProgressDialog* mProgressDialog;
 };
 
 #endif // QGSRASTERFILEWRITER_H

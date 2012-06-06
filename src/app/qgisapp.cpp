@@ -3590,7 +3590,7 @@ void QgisApp::saveAsRasterFile()
     return;
   }
 
-  QgsRasterLayerSaveAsDialog d( rasterLayer->dataProvider() );
+  QgsRasterLayerSaveAsDialog d( rasterLayer->dataProvider(),  mMapCanvas->extent() );
   if ( d.exec() == QDialog::Accepted )
   {
     QgsRasterFileWriter fileWriter( d.outputFileName() );
@@ -3600,7 +3600,10 @@ void QgisApp::saveAsRasterFile()
       fileWriter.setMaxTileWidth( d.maximumTileSizeX() );
       fileWriter.setMaxTileHeight( d.maximumTileSizeY() );
     }
-    fileWriter.writeRaster( rasterLayer->dataProvider(), d.nColumns() );
+
+    QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
+    pd.setWindowModality( Qt::WindowModal );
+    fileWriter.writeRaster( rasterLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
   }
 }
 
