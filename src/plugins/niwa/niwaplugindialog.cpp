@@ -340,6 +340,11 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
       exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
       item->setData( 3, Qt::UserRole, offlineLayer->id() );
     }
+
+    if ( !layerInMap )
+    {
+      delete wfsLayer;
+    }
   }
   else if ( serviceType == "WMS" )
   {
@@ -351,7 +356,12 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     }
     else
     {
-      //todo...
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromItem( item, url, format, crs, layers, styles );
+      wmsLayer = new QgsRasterLayer( 0, url, layername, "wms", layers, styles, format, crs );
     }
 
     //call save as dialog
@@ -370,13 +380,18 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
       QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
       pd.setWindowModality( Qt::WindowModal );
       fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
-      QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath + "/" + layerId + ".vrt", layername );
-      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
-      item->setData( 3, Qt::UserRole, offlineLayer->id() );
       offlineOk = true;
+      if ( layerInMap )
+      {
+        QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath + "/" + layerId + ".vrt", layername );
+        exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+        item->setData( 3, Qt::UserRole, offlineLayer->id() );
+      }
+      else
+      {
+        delete wmsLayer;
+      }
     }
-
-    //save raster in
   }
 
   if ( offlineOk )
@@ -412,6 +427,17 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
       QString wfsUrl = wfsUrlFromLayerItem( item );
       onlineLayer = mIface->addVectorLayer( wfsUrl, layername, "WFS" );
     }
+    else if ( serviceType == "WMS" )
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromItem( item, url, format, crs, layers, styles );
+
+      //add to map
+      onlineLayer = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
+    }
 
     if ( onlineLayer )
     {
@@ -421,7 +447,24 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
   }
 
   //remove offline datasource file first
-  QgsVectorFileWriter::deleteShapeFile( item->data( 2, Qt::UserRole ).toString() );
+  QString offlineFileName = item->data( 2, Qt::UserRole ).toString();
+  if ( serviceType == "WFS" )
+  {
+    QgsVectorFileWriter::deleteShapeFile( offlineFileName );
+  }
+  else if ( serviceType == "WMS" )
+  {
+    //remove directory and content
+    QDir rasterFileDir( offlineFileName );
+    QFileInfoList rasterFileList = rasterFileDir.entryInfoList( QDir::Files | QDir::NoDotAndDotDot );
+    QFileInfoList::iterator it = rasterFileList.begin();
+    for ( ; it != rasterFileList.end(); ++it )
+    {
+      QFile::remove( it->absoluteFilePath() );
+    }
+    rasterFileDir.rmdir( offlineFileName );
+  }
+
   item->setText( 2, "online" );
   item->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
   item->setData( 2, Qt::UserRole, "" );
@@ -767,8 +810,15 @@ bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLa
   }
   else if ( newLayer->type() == QgsMapLayer::RasterLayer )
   {
-    /* QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
-     QgsRasterLayer* oldRasterLayer = static_cast<QgsRasterLayer*>( oldLayer ); */
+    //set Red/Green/Blue/Alpha channels
+    QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
+    if ( newRasterLayer->dataProvider() && newRasterLayer->dataProvider()->name() != "wms" )
+    {
+      newRasterLayer->setRedBandName( newRasterLayer->bandName( 1 ) );
+      newRasterLayer->setGreenBandName( newRasterLayer->bandName( 2 ) );
+      newRasterLayer->setBlueBandName( newRasterLayer->bandName( 3 ) );
+      newRasterLayer->setTransparentBandName( newRasterLayer->bandName( 4 ) );
+    }
   }
 
   //move new layer next to the old one
