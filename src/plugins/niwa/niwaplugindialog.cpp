@@ -837,6 +837,7 @@ void NiwaPluginDialog::loadFromProject()
   QStringList abstractList = QgsProject::instance()->readListEntry( "NIWA", "/abstractList" );
   QStringList crsList = QgsProject::instance()->readListEntry( "NIWA", "/crsList" );
   QStringList styleList = QgsProject::instance()->readListEntry( "NIWA", "/styleList" );
+  QStringList formatList = QgsProject::instance()->readListEntry( "NIWA", "/formatList" );
   QStringList urlList = QgsProject::instance()->readListEntry( "NIWA", "/urlList" );
   QStringList filenameList = QgsProject::instance()->readListEntry( "NIWA", "/filenameList" );
   QStringList layerIdList = QgsProject::instance()->readListEntry( "NIWA", "/layerIdList" );
@@ -868,6 +869,7 @@ void NiwaPluginDialog::loadFromProject()
     newItem->setText( 4, abstractList.at( i ) );
     newItem->setText( 5, crsList.at( i ) );
     newItem->setText( 6, styleList.at( i ) );
+    newItem->setText( 7, formatList.at( i ) );
     newItem->setData( 0, Qt::UserRole, urlList.at( i ) );
     newItem->setData( 2, Qt::UserRole, filenameList.at( i ) );
     newItem->setData( 3, Qt::UserRole, layerId );
@@ -878,7 +880,7 @@ void NiwaPluginDialog::loadFromProject()
 
 void NiwaPluginDialog::saveToProject()
 {
-  QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList,
+  QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList, formatList,
   urlList, filenameList, layerIdList;
 
   QTreeWidgetItem* currentItem = 0;
@@ -899,6 +901,7 @@ void NiwaPluginDialog::saveToProject()
     abstractList.append( currentItem->text( 4 ) );
     crsList.append( currentItem->text( 5 ) );
     styleList.append( currentItem->text( 6 ) );
+    formatList.append( currentItem->text( 7 ) );
     urlList.append( currentItem->data( 0, Qt::UserRole ).toString() );
     filenameList.append( currentItem->data( 2, Qt::UserRole ).toString() );
     layerIdList.append( currentItem->data( 3, Qt::UserRole ).toString() );
@@ -911,6 +914,7 @@ void NiwaPluginDialog::saveToProject()
   QgsProject::instance()->writeEntry( "NIWA", "/abstractList", abstractList );
   QgsProject::instance()->writeEntry( "NIWA", "/crsList", crsList );
   QgsProject::instance()->writeEntry( "NIWA", "/styleList", styleList );
+  QgsProject::instance()->writeEntry( "NIWA", "/formatList", formatList );
   QgsProject::instance()->writeEntry( "NIWA", "/urlList", urlList );
   QgsProject::instance()->writeEntry( "NIWA", "/filenameList", filenameList );
   QgsProject::instance()->writeEntry( "NIWA", "/layerIdList", layerIdList );
