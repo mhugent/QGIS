@@ -22,7 +22,8 @@
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
 static const QString WMS_NAMESPACE = "http://www.opengis.net/wms";
 
-NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mCapabilitiesReply( 0 ), mIface( iface )
+NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mCapabilitiesReply( 0 ), mIface( iface ),
+    mNIWAServicesRequestFinished( false )
 {
   setupUi( this );
   insertServices();
@@ -78,6 +79,54 @@ void NiwaPluginDialog::setServiceSetting( const QString& name, const QString& se
   QSettings s;
   s.setValue( "/Qgis/connections-" + serviceType.toLower() + "/" + name + "/url", url );
   insertServices();
+}
+
+void NiwaPluginDialog::addServicesFromHtml( const QString& url )
+{
+  //get html page with QgsNetworkAccessManager
+
+  mNIWAServicesRequestFinished = false;
+  QNetworkRequest request( url );
+  QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
+  connect( reply, SIGNAL( finished() ), this, SLOT( NIWAServicesRequestFinished() ) );
+  while ( !mNIWAServicesRequestFinished )
+  {
+    QCoreApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+  }
+
+  QByteArray response = reply->readAll();
+
+  //debug
+  QString responseString( response );
+  qWarning( responseString.toLocal8Bit().data() );
+  reply->deleteLater();
+
+  QDomDocument htmlDoc;
+  QString errorMsg;
+  int errorLine;
+  int errorColumn;
+  if ( !htmlDoc.setContent( response, false, &errorMsg, &errorLine, &errorColumn ) )
+  {
+    bool debugBla = true;
+    return;
+  }
+
+  QDomNodeList tbodyNodeList = htmlDoc.elementsByTagName( "tbody" );
+  for ( int i = 0; i < tbodyNodeList.size(); ++i )
+  {
+    QDomNodeList trNodeList = tbodyNodeList.at( i ).toElement().elementsByTagName( "tr" );
+    for ( int j = 0; j < trNodeList.size(); ++j )
+    {
+      QDomNodeList tdNodeList = trNodeList.at( j ).toElement().elementsByTagName( "td" );
+      if ( tdNodeList.size() > 4 )
+      {
+        QString name = tdNodeList.at( 0 ).toElement().text();
+        QString url = tdNodeList.at( 4 ).toElement().text();
+        QString service = tdNodeList.at( 3 ).toElement().text();
+        setServiceSetting( name, service, url );
+      }
+    }
+  }
 }
 
 void NiwaPluginDialog::on_mRemovePushButton_clicked()
@@ -500,6 +549,17 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   }
   mChangeOfflineButton->setEnabled( online );
   mChangeOnlineButton->setEnabled( !online );
+}
+
+void NiwaPluginDialog::on_mAddNIWAServicesButton_clicked()
+{
+  //addServicesFromHtml( "http://localhost/xhtml.xml" );
+  addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
+}
+
+void NiwaPluginDialog::NIWAServicesRequestFinished()
+{
+  mNIWAServicesRequestFinished = true;
 }
 
 void NiwaPluginDialog::wfsCapabilitiesRequestFinished()

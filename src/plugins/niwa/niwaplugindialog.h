@@ -24,6 +24,8 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void on_mChangeOfflineButton_clicked();
     void on_mChangeOnlineButton_clicked();
     void on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous );
+    void on_mAddNIWAServicesButton_clicked();
+    void NIWAServicesRequestFinished();
 
     void wfsCapabilitiesRequestFinished();
     void wmsCapabilitiesRequestFinished();
@@ -31,6 +33,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
   private:
     QNetworkReply *mCapabilitiesReply;
     QgisInterface* mIface;
+    bool mNIWAServicesRequestFinished; //flag to make network request blocking
 
     void insertServices();
     /**Insert services into combo box
@@ -43,6 +46,9 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     /**Exchanges a layer in the map canvas (and copies the style of the new layer to the old one)*/
     bool exchangeLayer( const QString& layerId, QgsMapLayer* newLayer );
     void setServiceSetting( const QString& name, const QString& serviceType, const QString& url );
+
+    /**Adds services to the combo box from an html page (e.g. https://www.niwa.co.nz/ei/feeds/report)*/
+    void addServicesFromHtml( const QString& url );
 
   private slots:
     void loadFromProject();
