@@ -141,6 +141,19 @@ QgsRectangle QgsRasterLayerSaveAsDialog::outputRectangle() const
   return QgsRectangle( mXMinLineEdit->text().toDouble(), mYMinLineEdit->text().toDouble(), mXMaxLineEdit->text().toDouble(), mYMaxLineEdit->text().toDouble() );
 }
 
+void QgsRasterLayerSaveAsDialog::hideFormat()
+{
+  mFormatLabel->hide();
+  mFormatComboBox->hide();
+}
+
+void QgsRasterLayerSaveAsDialog::hideOutput()
+{
+  mSaveAsLabel->hide();
+  mSaveAsLineEdit->hide();
+  mBrowseButton->hide();
+}
+
 void QgsRasterLayerSaveAsDialog::setOutputExtent( const QgsRectangle& r )
 {
   mXMinLineEdit->setText( QString::number( r.xMinimum() ) );

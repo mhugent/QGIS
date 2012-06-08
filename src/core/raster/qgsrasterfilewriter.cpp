@@ -3,6 +3,7 @@
 #include "qgsrasterdataprovider.h"
 #include "qgsrasteriterator.h"
 #include "qgsrasterlayer.h"
+#include <QCoreApplication>
 #include <QProgressDialog>
 #include <QTextStream>
 #include "gdal.h"
@@ -241,11 +242,13 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
     if ( mProgressDialog )
     {
       mProgressDialog->setValue( fileIndex );
-      mProgressDialog->setLabelText( QObject::tr( "Downloaded %1 raster tiles from %2" ).arg( fileIndex ).arg( nTiles ) );
+      mProgressDialog->setLabelText( QObject::tr( "Downloading raster tile %1 from %2" ).arg( fileIndex + 1 ).arg( nTiles ) );
+      qApp->processEvents( QEventLoop::AllEvents, 2000 );
       if ( mProgressDialog->wasCanceled() )
       {
         break;
       }
+
     }
 
     //fill into red/green/blue/alpha channels
