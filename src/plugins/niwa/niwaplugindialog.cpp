@@ -243,6 +243,7 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   }
   else if ( serviceType == "WMS" )
   {
+    QgsRasterLayer* rl = 0;
     if ( online )
     {
       //get preferred style, crs, format
@@ -252,13 +253,22 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
       wmsParameterFromItem( item, url, format, crs, layers, styles );
 
       //add to map
-      QgsRasterLayer* rl = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
-      if ( !rl )
-      {
-        return;
-      }
-      item->setData( 3, Qt::UserRole, rl->id() );
+      rl = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
     }
+    else
+    {
+      rl = mIface->addRasterLayer( item->data( 2, Qt::UserRole ).toString(), layerName );
+      rl->setRedBandName( rl->bandName( 1 ) );
+      rl->setGreenBandName( rl->bandName( 2 ) );
+      rl->setBlueBandName( rl->bandName( 3 ) );
+      rl->setTransparentBandName( rl->bandName( 4 ) );
+    }
+
+    if ( !rl )
+    {
+      return;
+    }
+    item->setData( 3, Qt::UserRole, rl->id() );
   }
 
   item->setCheckState( 3, Qt::Checked );
@@ -373,10 +383,12 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
       QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
       pd.setWindowModality( Qt::WindowModal );
       fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
+
+      filePath += ( "/" + layerId + ".vrt" );
       offlineOk = true;
       if ( layerInMap )
       {
-        QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath + "/" + layerId + ".vrt", layername );
+        QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath, layername );
         exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
         item->setData( 3, Qt::UserRole, offlineLayer->id() );
       }
