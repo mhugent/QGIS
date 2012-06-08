@@ -26,8 +26,8 @@ QgsRasterLayerSaveAsDialog::QgsRasterLayerSaveAsDialog( QgsRasterDataProvider* s
     else //wms
     {
       mTileModeCheckBox->setChecked( true );
-      mColumnsLineEdit->setText( QString::number( 10000 ) );
-      mRowsLineEdit->setText( QString::number( 10000 ) );
+      mColumnsLineEdit->setText( QString::number( 6000 ) );
+      mRowsLineEdit->setText( QString::number( 6000 ) );
       mMaximumSizeXLineEdit->setText( QString::number( 2000 ) );
       mMaximumSizeYLineEdit->setText( QString::number( 2000 ) );
     }
@@ -139,6 +139,19 @@ QString QgsRasterLayerSaveAsDialog::outputFormat() const
 QgsRectangle QgsRasterLayerSaveAsDialog::outputRectangle() const
 {
   return QgsRectangle( mXMinLineEdit->text().toDouble(), mYMinLineEdit->text().toDouble(), mXMaxLineEdit->text().toDouble(), mYMaxLineEdit->text().toDouble() );
+}
+
+void QgsRasterLayerSaveAsDialog::hideFormat()
+{
+  mFormatLabel->hide();
+  mFormatComboBox->hide();
+}
+
+void QgsRasterLayerSaveAsDialog::hideOutput()
+{
+  mSaveAsLabel->hide();
+  mSaveAsLineEdit->hide();
+  mBrowseButton->hide();
 }
 
 void QgsRasterLayerSaveAsDialog::setOutputExtent( const QgsRectangle& r )
