@@ -57,7 +57,7 @@ bool QgsRasterIterator::nextPart( void* data, QgsRectangle& mapRect, int& left, 
   {
     nRows = mMaximumTileHeight;
   }
-  if ( nCols <= 0 || nRows <= 0 )
+  if ( nCols <= 5 || nRows <= 5 )
   {
     ++mCurrentTileX;
     return true;
@@ -71,6 +71,12 @@ bool QgsRasterIterator::nextPart( void* data, QgsRectangle& mapRect, int& left, 
   double mapRight = mapLeft + nCols * mMapUnitsPerPixel;
   double mapBottom = mapTop - nRows * mMapUnitsPerPixel;
   mapRect = QgsRectangle( mapLeft, mapBottom, mapRight, mapTop );
+
+  if ( mapRect.width() < 0.000000001 || mapRect.height() < 0.000000001 )
+  {
+    ++mCurrentTileX;
+    return true;
+  }
 
   mDataProvider->readBlock( mRasterBand, mapRect, nCols, nRows, data );
   ++mCurrentTileX;

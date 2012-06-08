@@ -234,7 +234,12 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
 
   while ( iter.nextPart( data, mapRect, iterLeft, iterTop, iterCols, iterRows, progress ) )
   {
-    if ( iterCols <= 0 || iterRows <= 0 )
+    if ( iterCols <= 5 || iterRows <= 5 ) //some wms servers don't like small values
+    {
+      continue;
+    }
+
+    if ( mapRect.width() < 0.000000001 || mapRect.height() < 0.000000001 )
     {
       continue;
     }
