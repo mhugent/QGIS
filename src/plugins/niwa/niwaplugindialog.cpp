@@ -199,13 +199,6 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   mChangeOnlineButton->setEnabled( false );
   mAddToMapButton->setEnabled( true );
   mRemoveFromMapButton->setEnabled( false );
-
-  //online / offline not yet implemented for wms layers
-  if ( type == "WMS" )
-  {
-    mChangeOfflineButton->setEnabled( false );
-    mChangeOnlineButton->setEnabled( false );
-  }
 }
 
 void NiwaPluginDialog::on_mAddToMapButton_clicked()
