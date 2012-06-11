@@ -6,5 +6,6 @@
      <file>icons/offline.png</file>
      <file>icons/add_to_list.png</file>
      <file>icons/refresh.png</file>
+     <file>icons/remove_from_list.png</file>
  </qresource>
  </RCC>

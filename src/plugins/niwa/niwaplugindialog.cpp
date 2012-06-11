@@ -557,6 +557,11 @@ void NiwaPluginDialog::on_mAddNIWAServicesButton_clicked()
   addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
 }
 
+void NiwaPluginDialog::on_mRemoveFromListButton_clicked()
+{
+  delete( mLayerTreeWidget->currentItem() );
+}
+
 void NiwaPluginDialog::NIWAServicesRequestFinished()
 {
   mNIWAServicesRequestFinished = true;
