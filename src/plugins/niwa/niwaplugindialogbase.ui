@@ -245,6 +245,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="mRemoveFromListButton">
+           <property name="toolTip">
+            <string>Remove layer from list</string>
+           </property>
            <property name="text">
             <string/>
            </property>

@@ -76,8 +76,12 @@ void NiwaPluginDialog::setServiceSetting( const QString& name, const QString& se
     return;
   }
 
+  //filter out / from name
+  QString serviceName = name;
+  serviceName.replace( "/", "_" );
+
   QSettings s;
-  s.setValue( "/Qgis/connections-" + serviceType.toLower() + "/" + name + "/url", url );
+  s.setValue( "/Qgis/connections-" + serviceType.toLower() + "/" + serviceName + "/url", url );
   insertServices();
 }
 
@@ -120,7 +124,7 @@ void NiwaPluginDialog::addServicesFromHtml( const QString& url )
       if ( tdNodeList.size() > 4 )
       {
         QString name = tdNodeList.at( 0 ).toElement().text();
-        QString url = tdNodeList.at( 4 ).toElement().text();
+        QString url = tdNodeList.at( 4 ).toElement().firstChildElement( "a" ).text();
         QString service = tdNodeList.at( 3 ).toElement().text();
         setServiceSetting( name, service, url );
       }
@@ -856,7 +860,14 @@ QString NiwaPluginDialog::serviceURLFromComboBox()
   QString url = settings.value( QString( "/Qgis/connections-" ) + serviceType.toLower() + "/" + mServicesComboBox->currentText() + QString( "/url" ) ).toString();
   if ( !url.endsWith( "?" ) && !url.endsWith( "&" ) )
   {
-    url.append( "?" );
+    if ( url.contains( "?" ) )
+    {
+      url.append( "&" );
+    }
+    else
+    {
+      url.append( "?" );
+    }
   }
   return url;
 }
