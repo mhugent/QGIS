@@ -97,8 +97,8 @@ void NiwaPluginDialog::addServicesFromHtml( const QString& url )
   QByteArray response = reply->readAll();
 
   //debug
-  QString responseString( response );
-  qWarning( responseString.toLocal8Bit().data() );
+  //QString responseString( response );
+  //qWarning( responseString.toLocal8Bit().data() );
   reply->deleteLater();
 
   QDomDocument htmlDoc;
@@ -107,7 +107,6 @@ void NiwaPluginDialog::addServicesFromHtml( const QString& url )
   int errorColumn;
   if ( !htmlDoc.setContent( response, false, &errorMsg, &errorLine, &errorColumn ) )
   {
-    bool debugBla = true;
     return;
   }
 
@@ -364,7 +363,6 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
   QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
   QString filePath;
 
-
   bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
   bool offlineOk = false;
 
@@ -455,6 +453,7 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     item->setData( 2, Qt::UserRole, filePath );
     mChangeOfflineButton->setEnabled( false );
     mChangeOnlineButton->setEnabled( true );
+    mReloadButton->setEnabled( true );
   }
 }
 
@@ -549,6 +548,7 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   }
   mChangeOfflineButton->setEnabled( online );
   mChangeOnlineButton->setEnabled( !online );
+  mReloadButton->setEnabled( !online );
 }
 
 void NiwaPluginDialog::on_mAddNIWAServicesButton_clicked()
@@ -560,6 +560,101 @@ void NiwaPluginDialog::on_mAddNIWAServicesButton_clicked()
 void NiwaPluginDialog::on_mRemoveFromListButton_clicked()
 {
   delete( mLayerTreeWidget->currentItem() );
+}
+
+void NiwaPluginDialog::on_mReloadButton_clicked()
+{
+  //online: no action required
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
+
+  if ( item->text( 2 ) == tr( "online" ) )
+  {
+    return;
+  }
+
+  //offline: store old dataset
+  QString saveFilePath = QgsApplication::qgisSettingsDirPath() + "/cachelayers/";
+  QString serviceType = item->text( 1 );
+  QString oldDataset = item->data( 2, Qt::UserRole ).toString();
+  QString oldLayerId = item->data( 3, Qt::UserRole ).toString();
+  QString layerName = item->text( 0 );
+  QDateTime dt = QDateTime::currentDateTime();
+  QString layerId = layerName + dt.toString( "yyyyMMddhhmmsszzz" );
+  bool offlineOk = false;
+  QString filePath;
+
+  //create online dataset (WFS/WMS) and save to new source
+  if ( serviceType == "WFS" )
+  {
+    QString wfsUrl = wfsUrlFromLayerItem( item );
+    QgsVectorLayer* wfsLayer = new QgsVectorLayer( wfsUrl, layerName, "WFS" );
+    filePath = saveFilePath + layerId + ".shp";
+    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
+    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
+                  "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
+    if ( offlineOk )
+    {
+      QgsVectorLayer* offlineLayer = mIface->addVectorLayer( filePath, layerName, "ogr" );
+      exchangeLayer( oldLayerId, offlineLayer );
+      item->setData( 3, Qt::UserRole, offlineLayer->id() );
+
+      //delete old files
+      QgsVectorFileWriter::deleteShapeFile( oldDataset );
+    }
+    delete wfsLayer;
+  }
+  else if ( serviceType == "WMS" )
+  {
+    //get preferred style, crs, format
+    QString url, format, crs;
+    QString providerKey = "wms";
+    QStringList layers, styles;
+    wmsParameterFromItem( item, url, format, crs, layers, styles );
+    QgsRasterLayer* wmsLayer = new QgsRasterLayer( 0, url, layerName, "wms", layers, styles, format, crs );
+
+    //call save as dialog
+    filePath = saveFilePath + "/" + layerId;
+    QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    if ( d.exec() == QDialog::Accepted )
+    {
+      QgsRasterFileWriter fileWriter( filePath );
+      if ( d.tileMode() )
+      {
+        fileWriter.setTiledMode( true );
+        fileWriter.setMaxTileWidth( d.maximumTileSizeX() );
+        fileWriter.setMaxTileHeight( d.maximumTileSizeY() );
+      }
+
+      QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
+      pd.setWindowModality( Qt::WindowModal );
+      fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
+
+      filePath += ( "/" + layerId + ".vrt" );
+      offlineOk = true;
+      QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath, layerName );
+      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+      item->setData( 3, Qt::UserRole, offlineLayer->id() );
+      delete wmsLayer;
+
+      //delete old files
+      //remove directory and content
+      QFileInfo oldDatasetInfo( oldDataset );
+      QDir rasterFileDir = oldDatasetInfo.dir();
+      QFileInfoList rasterFileList = rasterFileDir.entryInfoList( QDir::Files | QDir::NoDotAndDotDot );
+      QFileInfoList::iterator it = rasterFileList.begin();
+      for ( ; it != rasterFileList.end(); ++it )
+      {
+        QFile::remove( it->absoluteFilePath() );
+      }
+      rasterFileDir.rmdir( rasterFileDir.absolutePath() );
+    }
+  }
+
+  item->setData( 2, Qt::UserRole, filePath );
 }
 
 void NiwaPluginDialog::NIWAServicesRequestFinished()

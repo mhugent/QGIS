@@ -26,6 +26,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous );
     void on_mAddNIWAServicesButton_clicked();
     void on_mRemoveFromListButton_clicked();
+    void on_mReloadButton_clicked();
     void NIWAServicesRequestFinished();
 
     void wfsCapabilitiesRequestFinished();
