@@ -417,6 +417,8 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
     //call save as dialog
     filePath = saveFilePath + "/" + layerId;
     QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    d.hideFormat();
+    d.hideOutput();
     if ( d.exec() == QDialog::Accepted )
     {
       QgsRasterFileWriter fileWriter( filePath /*d.outputFileName()*/ );
@@ -619,6 +621,8 @@ void NiwaPluginDialog::on_mReloadButton_clicked()
     //call save as dialog
     filePath = saveFilePath + "/" + layerId;
     QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    d.hideFormat();
+    d.hideOutput();
     if ( d.exec() == QDialog::Accepted )
     {
       QgsRasterFileWriter fileWriter( filePath );
