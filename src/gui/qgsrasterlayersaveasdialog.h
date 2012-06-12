@@ -7,7 +7,7 @@
 class QgsCoordinateReferenceSystem;
 class QgsRasterDataProvider;
 
-class QgsRasterLayerSaveAsDialog: public QDialog, private Ui::QgsRasterLayerSaveAsDialogBase
+class GUI_EXPORT QgsRasterLayerSaveAsDialog: public QDialog, private Ui::QgsRasterLayerSaveAsDialogBase
 {
     Q_OBJECT
   public:

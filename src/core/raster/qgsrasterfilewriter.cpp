@@ -119,10 +119,10 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterSingleTile( Qgs
     {
       QRgb c( *p++ );
       red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
-      memcpy( redData + i, &red, 1 );
-      memcpy( greenData + i, &green, 1 );
-      memcpy( blueData + i, &blue, 1 );
-      memcpy( alphaData + i, &alpha, 1 );
+      memcpy(( char* )redData + i, &red, 1 );
+      memcpy(( char* )greenData + i, &green, 1 );
+      memcpy(( char* )blueData + i, &blue, 1 );
+      memcpy(( char* )alphaData + i, &alpha, 1 );
     }
     destProvider->write( redData, 1, nCols, nRows, 0, 0 );
     destProvider->write( greenData, 2, nCols, nRows, 0, 0 );
@@ -246,8 +246,8 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
 
     if ( mProgressDialog )
     {
-      mProgressDialog->setValue( fileIndex );
-      mProgressDialog->setLabelText( QObject::tr( "Downloading raster tile %1 from %2" ).arg( fileIndex + 1 ).arg( nTiles ) );
+      mProgressDialog->setValue( fileIndex + 1 );
+      mProgressDialog->setLabelText( QObject::tr( "Downloaded raster tile %1 from %2" ).arg( fileIndex + 1 ).arg( nTiles ) );
       qApp->processEvents( QEventLoop::AllEvents, 2000 );
       if ( mProgressDialog->wasCanceled() )
       {
@@ -267,10 +267,10 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
     {
       QRgb c( *p++ );
       red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
-      memcpy( redData + i, &red, 1 );
-      memcpy( greenData + i, &green, 1 );
-      memcpy( blueData + i, &blue, 1 );
-      memcpy( alphaData + i, &alpha, 1 );
+      memcpy(( char* )redData + i, &red, 1 );
+      memcpy(( char* )greenData + i, &green, 1 );
+      memcpy(( char* )blueData + i, &blue, 1 );
+      memcpy(( char* )alphaData + i, &alpha, 1 );
     }
 
     //create output file
@@ -423,14 +423,14 @@ void QgsRasterFileWriter::buildPyramides( const QString& filename )
   overviewList[4] = 32;
   overviewList[5] = 64;
 
-  if ( mProgressDialog )
+  /*if ( mProgressDialog )
   {
     mProgressDialog->setLabelText( QObject::tr( "Building Pyramides..." ) );
     mProgressDialog->setValue( 0 );
     mProgressDialog->setWindowModality( Qt::WindowModal );
     mProgressDialog->show();
-  }
-  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, pyramidesProgress, mProgressDialog );
+  }*/
+  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, /*pyramidesProgress*/ 0, /*mProgressDialog*/ 0 );
 }
 
 int QgsRasterFileWriter::pyramidesProgress( double dfComplete, const char *pszMessage, void* pData )
