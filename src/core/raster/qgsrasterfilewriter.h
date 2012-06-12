@@ -10,7 +10,7 @@
 class QProgressDialog;
 class QgsRasterDataProvider;
 
-class QgsRasterFileWriter
+class CORE_EXPORT QgsRasterFileWriter
 {
   public:
     enum WriterError
