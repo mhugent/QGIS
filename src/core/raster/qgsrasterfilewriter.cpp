@@ -119,10 +119,10 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeRasterSingleTile( Qgs
     {
       QRgb c( *p++ );
       red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
-      memcpy( redData + i, &red, 1 );
-      memcpy( greenData + i, &green, 1 );
-      memcpy( blueData + i, &blue, 1 );
-      memcpy( alphaData + i, &alpha, 1 );
+      memcpy( (char*)redData + i, &red, 1 );
+      memcpy( (char*)greenData + i, &green, 1 );
+      memcpy( (char*)blueData + i, &blue, 1 );
+      memcpy( (char*)alphaData + i, &alpha, 1 );
     }
     destProvider->write( redData, 1, nCols, nRows, 0, 0 );
     destProvider->write( greenData, 2, nCols, nRows, 0, 0 );
@@ -267,10 +267,10 @@ QgsRasterFileWriter::WriterError QgsRasterFileWriter::writeARGBRaster( QgsRaster
     {
       QRgb c( *p++ );
       red = qRed( c ); green = qGreen( c ); blue = qBlue( c ); alpha = qAlpha( c );
-      memcpy( redData + i, &red, 1 );
-      memcpy( greenData + i, &green, 1 );
-      memcpy( blueData + i, &blue, 1 );
-      memcpy( alphaData + i, &alpha, 1 );
+      memcpy( (char*)redData + i, &red, 1 );
+      memcpy( (char*)greenData + i, &green, 1 );
+      memcpy( (char*)blueData + i, &blue, 1 );
+      memcpy( (char*)alphaData + i, &alpha, 1 );
     }
 
     //create output file
