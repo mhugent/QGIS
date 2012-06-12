@@ -423,14 +423,14 @@ void QgsRasterFileWriter::buildPyramides( const QString& filename )
   overviewList[4] = 32;
   overviewList[5] = 64;
 
-  if ( mProgressDialog )
+  /*if ( mProgressDialog )
   {
     mProgressDialog->setLabelText( QObject::tr( "Building Pyramides..." ) );
     mProgressDialog->setValue( 0 );
     mProgressDialog->setWindowModality( Qt::WindowModal );
     mProgressDialog->show();
-  }
-  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, pyramidesProgress, mProgressDialog );
+  }*/
+  GDALBuildOverviews( dataSet, "AVERAGE", 6, overviewList, 0, 0, /*pyramidesProgress*/ 0, /*mProgressDialog*/ 0 );
 }
 
 int QgsRasterFileWriter::pyramidesProgress( double dfComplete, const char *pszMessage, void* pData )
