@@ -152,6 +152,11 @@ void QgsRasterLayerSaveAsDialog::hideOutput()
   mSaveAsLabel->hide();
   mSaveAsLineEdit->hide();
   mBrowseButton->hide();
+  QPushButton* okButton = mButtonBox->button( QDialogButtonBox::Ok );
+  if ( okButton )
+  {
+    okButton->setEnabled( true );
+  }
 }
 
 void QgsRasterLayerSaveAsDialog::setOutputExtent( const QgsRectangle& r )
