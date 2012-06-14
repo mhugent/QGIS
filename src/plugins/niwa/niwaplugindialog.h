@@ -55,6 +55,7 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
   private slots:
     void loadFromSettings();
     void saveToSettings();
+    void handleDownloadProgress( qint64 progress, qint64 total );
 };
 
 #endif // NIWAPLUGINDIALOG_H

@@ -13,10 +13,12 @@
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
 #include <QDomDocument>
+#include <QMainWindow>
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProgressDialog>
+#include <QStatusBar>
 #include <QSettings>
 
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
@@ -207,6 +209,7 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
   {
     //todo...
   }
+  connect( mCapabilitiesReply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( handleDownloadProgress( qint64, qint64 ) ) );
 }
 
 void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
@@ -1108,4 +1111,30 @@ void NiwaPluginDialog::saveToSettings()
   s.setValue( "NIWA/urlList", urlList );
   s.setValue( "NIWA/filenameList", filenameList );
   s.setValue( "NIWA/layerIdList", layerIdList );
+}
+
+void NiwaPluginDialog::handleDownloadProgress( qint64 progress, qint64 total )
+{
+  QWidgetList topLevelWidgets = QApplication::topLevelWidgets();
+  QWidget* qgisApp = 0;
+  for ( int i = 0; i < topLevelWidgets.size(); ++i )
+  {
+    if ( topLevelWidgets.at( i )->objectName() == "QgisApp" )
+    {
+      qgisApp = topLevelWidgets.at( i );
+      break;
+    }
+  }
+
+  if ( !qgisApp )
+  {
+    return;
+  }
+
+  QMainWindow* mainWindow = qobject_cast<QMainWindow*>( qgisApp );
+  if ( mainWindow )
+  {
+    mainWindow->statusBar()->showMessage( QString( "Downloaded %1 bytes" ).arg( progress ) );
+  }
+  //qWarning( QString("Downloaded %1 bytes").arg( progress ).toLocal8Bit().data() );
 }
