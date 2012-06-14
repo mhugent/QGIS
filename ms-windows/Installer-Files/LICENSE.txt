@@ -1,6 +1,7 @@
-              QGIS is Copyright (C) QGIS Development Team 
-                   and the respective authors, 2004. 
-
+    NIWA Quantum Map is developed by Sourcepole for the National institute 
+    of Water and Atmospheric Research, New Zealand (NIWA) based on Quantum GIS 
+    and is released under the same licence and condistions as Quantum GIS.
+     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   In addition, as a special exception, the QGIS Development Team gives
+   In addition, as a special exception, the Quantum GIS Development Team gives
    permission to link the code of this program with the Qt library,
    including but not limited to the following versions (both free and
    commercial): Qt/Non-commercial Windows, Qt/Windows, Qt/X11, Qt/Mac,
