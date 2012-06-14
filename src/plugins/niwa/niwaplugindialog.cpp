@@ -27,7 +27,7 @@ NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::W
 {
   setupUi( this );
   insertServices();
-  loadFromProject();
+  loadFromSettings();
   //create cache layer directory if not already there
   QDir cacheDirectory = QDir( QgsApplication::qgisSettingsDirPath() + "/cachelayers" );
   if ( !cacheDirectory.exists() )
@@ -38,7 +38,7 @@ NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::W
 
 NiwaPluginDialog::~NiwaPluginDialog()
 {
-  saveToProject();
+  saveToSettings();
 }
 
 void NiwaPluginDialog::insertServices()
@@ -192,6 +192,7 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
 
   QNetworkRequest request( url );
   request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
+  request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork );
   mCapabilitiesReply = QgsNetworkAccessManager::instance()->get( request );
 
   if ( serviceType == "WFS" )
@@ -1015,19 +1016,20 @@ bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLa
   return false;
 }
 
-void NiwaPluginDialog::loadFromProject()
+void NiwaPluginDialog::loadFromSettings()
 {
-  QStringList layerNameList = QgsProject::instance()->readListEntry( "NIWA", "/layerNameList" );
-  QStringList serviceTypeList = QgsProject::instance()->readListEntry( "NIWA", "/serviceTypeList" );
-  QStringList onlineList = QgsProject::instance()->readListEntry( "NIWA", "/onlineList" );
-  QStringList inMapList = QgsProject::instance()->readListEntry( "NIWA", "/inMapList" );
-  QStringList abstractList = QgsProject::instance()->readListEntry( "NIWA", "/abstractList" );
-  QStringList crsList = QgsProject::instance()->readListEntry( "NIWA", "/crsList" );
-  QStringList styleList = QgsProject::instance()->readListEntry( "NIWA", "/styleList" );
-  QStringList formatList = QgsProject::instance()->readListEntry( "NIWA", "/formatList" );
-  QStringList urlList = QgsProject::instance()->readListEntry( "NIWA", "/urlList" );
-  QStringList filenameList = QgsProject::instance()->readListEntry( "NIWA", "/filenameList" );
-  QStringList layerIdList = QgsProject::instance()->readListEntry( "NIWA", "/layerIdList" );
+  QSettings s;
+  QStringList layerNameList = s.value( "NIWA/layerNameList" ).toStringList();
+  QStringList serviceTypeList = s.value( "NIWA/serviceTypeList" ).toStringList();
+  QStringList onlineList = s.value( "NIWA/onlineList" ).toStringList();
+  QStringList inMapList = s.value( "NIWA/inMapList" ).toStringList();
+  QStringList abstractList = s.value( "NIWA/abstractList" ).toStringList();
+  QStringList crsList = s.value( "NIWA/crsList" ).toStringList();
+  QStringList styleList = s.value( "NIWA/styleList" ).toStringList();
+  QStringList formatList = s.value( "NIWA/formatList" ).toStringList();
+  QStringList urlList = s.value( "NIWA/urlList" ).toStringList();
+  QStringList filenameList = s.value( "NIWA/filenameList" ).toStringList();
+  QStringList layerIdList = s.value( "NIWA/layerIdList" ).toStringList();
 
   mLayerTreeWidget->clear();
   for ( int i = 0; i < layerNameList.size(); ++i )
@@ -1065,8 +1067,9 @@ void NiwaPluginDialog::loadFromProject()
   }
 }
 
-void NiwaPluginDialog::saveToProject()
+void NiwaPluginDialog::saveToSettings()
 {
+  QSettings s;
   QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList, formatList,
   urlList, filenameList, layerIdList;
 
@@ -1094,15 +1097,15 @@ void NiwaPluginDialog::saveToProject()
     layerIdList.append( currentItem->data( 3, Qt::UserRole ).toString() );
   }
 
-  QgsProject::instance()->writeEntry( "NIWA", "/layerNameList", layerNameList );
-  QgsProject::instance()->writeEntry( "NIWA", "/serviceTypeList", serviceTypeList );
-  QgsProject::instance()->writeEntry( "NIWA", "/onlineList", onlineList );
-  QgsProject::instance()->writeEntry( "NIWA", "/inMapList", inMapList );
-  QgsProject::instance()->writeEntry( "NIWA", "/abstractList", abstractList );
-  QgsProject::instance()->writeEntry( "NIWA", "/crsList", crsList );
-  QgsProject::instance()->writeEntry( "NIWA", "/styleList", styleList );
-  QgsProject::instance()->writeEntry( "NIWA", "/formatList", formatList );
-  QgsProject::instance()->writeEntry( "NIWA", "/urlList", urlList );
-  QgsProject::instance()->writeEntry( "NIWA", "/filenameList", filenameList );
-  QgsProject::instance()->writeEntry( "NIWA", "/layerIdList", layerIdList );
+  s.setValue( "NIWA/layerNameList", layerNameList );
+  s.setValue( "NIWA/serviceTypeList", serviceTypeList );
+  s.setValue( "NIWA/onlineList", onlineList );
+  s.setValue( "NIWA/inMapList", inMapList );
+  s.setValue( "NIWA/abstractList", abstractList );
+  s.setValue( "NIWA/crsList", crsList );
+  s.setValue( "NIWA/styleList", styleList );
+  s.setValue( "NIWA/formatList", formatList );
+  s.setValue( "NIWA/urlList", urlList );
+  s.setValue( "NIWA/filenameList", filenameList );
+  s.setValue( "NIWA/layerIdList", layerIdList );
 }

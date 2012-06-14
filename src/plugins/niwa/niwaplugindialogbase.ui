@@ -165,20 +165,6 @@
        <item row="0" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QPushButton" name="mAddLayerFromFavoritesButton">
-           <property name="toolTip">
-            <string>Favourite list</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/niwa/icons/add_from_favourites.png</normaloff>:/niwa/icons/add_from_favourites.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="mChangeOfflineButton">
            <property name="toolTip">
             <string>Change to offline</string>

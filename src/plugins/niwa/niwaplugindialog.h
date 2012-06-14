@@ -53,8 +53,8 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void addServicesFromHtml( const QString& url );
 
   private slots:
-    void loadFromProject();
-    void saveToProject();
+    void loadFromSettings();
+    void saveToSettings();
 };
 
 #endif // NIWAPLUGINDIALOG_H
