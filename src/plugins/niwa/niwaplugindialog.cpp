@@ -246,6 +246,7 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
 
   //add url as user data to name column
   QString serviceURL = serviceURLFromComboBox();
+
   newItem->setData( 0, Qt::UserRole, serviceURL );
   newItem->setData( 1, Qt::UserRole, version );
 
@@ -906,7 +907,11 @@ void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url
   }
 
   url = item->data( 0, Qt::UserRole ).toString();
-  url.append( ",ignoreUrl=GetMap;GetFeatureInfo" ); //ignore advertised urls per default
+  //remove version parameter already contained in the url
+  if ( !url.contains( "version", Qt::CaseInsensitive ) )
+  {
+    url.append( ",ignoreUrl=GetMap;GetFeatureInfo" ); //ignore advertised urls per default
+  }
 
   //format: prefer png
   QStringList formatList = item->text( 7 ).split( "," );
