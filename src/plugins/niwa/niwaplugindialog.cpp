@@ -1078,22 +1078,35 @@ void NiwaPluginDialog::loadFromSettings()
     {
       newItem->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
     }
-    QString layerId = layerIdList.at( i );
-    if ( inMapList.at( i ) == "t" && QgsMapLayerRegistry::instance()->mapLayer( layerId ) )
+
+    newItem->setData( 0, Qt::UserRole, urlList.at( i ) );
+    newItem->setData( 2, Qt::UserRole, filenameList.at( i ) );
+
+    //find out if layer is in map
+    QString layerTestUrl;
+    if ( newItem->text( 2 ) == tr( "online" ) )
     {
-      newItem->setCheckState( 3, Qt::Checked );
+      layerTestUrl = newItem->data( 0, Qt::UserRole ).toString();
     }
     else
     {
+      layerTestUrl = newItem->data( 2, Qt::UserRole ).toString();
+    }
+    QString layerId = layerIdFromUrl( layerTestUrl,  serviceTypeList.at( i ), newItem->text( 2 ) == tr( "online" ), layerNameList.at( i ) );
+    if ( layerId.isEmpty() )
+    {
       newItem->setCheckState( 3, Qt::Unchecked );
     }
+    else
+    {
+      newItem->setCheckState( 3, Qt::Checked );
+      newItem->setData( 3, Qt::UserRole, layerId );
+    }
+
     newItem->setText( 4, abstractList.at( i ) );
     newItem->setText( 5, crsList.at( i ) );
     newItem->setText( 6, styleList.at( i ) );
     newItem->setText( 7, formatList.at( i ) );
-    newItem->setData( 0, Qt::UserRole, urlList.at( i ) );
-    newItem->setData( 2, Qt::UserRole, filenameList.at( i ) );
-    newItem->setData( 3, Qt::UserRole, layerId );
     newItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
     mLayerTreeWidget->addTopLevelItem( newItem );
   }
@@ -1154,4 +1167,36 @@ void NiwaPluginDialog::handleDownloadProgress( qint64 progress, qint64 total )
     progressMessage = tr( "%1 bytes downloaded" ).arg( progress );
   }
   mStatusLabel->setText( progressMessage );
+}
+
+QString NiwaPluginDialog::layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName )
+{
+  const QMap<QString, QgsMapLayer*>& layerMap = QgsMapLayerRegistry::instance()->mapLayers();
+  QMap<QString, QgsMapLayer*>::const_iterator layerIt = layerMap.constBegin();
+  for ( ; layerIt != layerMap.constEnd(); ++layerIt )
+  {
+    const QgsMapLayer* layer = layerIt.value();
+    if ( !online || serviceType == "WFS" )
+    {
+      if ( layer && QFileInfo( layer->source() ) == QFileInfo( url ) )
+      {
+        return layer->id();
+      }
+    }
+    else //for online WMS, we need to additionally consider the layer name
+    {
+      if ( layer->source().startsWith( url ) )
+      {
+        const QgsRasterLayer* rlayer = dynamic_cast<const QgsRasterLayer*>( layer );
+        if ( rlayer )
+        {
+          if ( rlayer->layers().join( "" ) == layerName )
+          {
+            return layer->id();
+          }
+        }
+      }
+    }
+  }
+  return QString();
 }

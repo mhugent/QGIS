@@ -665,6 +665,8 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
     /** Time stamp of data source in the moment when data/metadata were loaded by provider */
     virtual QDateTime timestamp() const { return mDataProvider->timestamp() ; }
 
+    QStringList layers() const { return mLayers; }
+
   public slots:
     /** \brief Create GDAL pyramid overviews */
     QString buildPyramids( const RasterPyramidList &,
