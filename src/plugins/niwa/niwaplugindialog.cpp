@@ -13,12 +13,10 @@
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
 #include <QDomDocument>
-#include <QMainWindow>
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProgressDialog>
-#include <QStatusBar>
 #include <QSettings>
 
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
@@ -95,6 +93,8 @@ void NiwaPluginDialog::addServicesFromHtml( const QString& url )
   QNetworkRequest request( url );
   QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
   connect( reply, SIGNAL( finished() ), this, SLOT( NIWAServicesRequestFinished() ) );
+  connect( reply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( handleDownloadProgress( qint64, qint64 ) ) );
+
   while ( !mNIWAServicesRequestFinished )
   {
     QCoreApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
@@ -132,6 +132,7 @@ void NiwaPluginDialog::addServicesFromHtml( const QString& url )
       }
     }
   }
+  mStatusLabel->setText( tr( "Ready" ) );
 }
 
 void NiwaPluginDialog::on_mRemovePushButton_clicked()
@@ -739,6 +740,7 @@ void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
     item->setToolTip( 4, srs );
     mDatasourceLayersTreeWidget->addTopLevelItem( item );
   }
+  mStatusLabel->setText( tr( "Ready" ) );
 }
 
 void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
@@ -846,9 +848,9 @@ void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
     item->setToolTip( 5, style );
     item->setText( 6, formatList );
     item->setToolTip( 6, formatList );
-    //todo: add style / CRS?
     mDatasourceLayersTreeWidget->addTopLevelItem( item );
   }
+  mStatusLabel->setText( tr( "Ready" ) );
 }
 
 QString NiwaPluginDialog::serviceURLFromComboBox()
@@ -1120,26 +1122,14 @@ void NiwaPluginDialog::saveToSettings()
 
 void NiwaPluginDialog::handleDownloadProgress( qint64 progress, qint64 total )
 {
-  QWidgetList topLevelWidgets = QApplication::topLevelWidgets();
-  QWidget* qgisApp = 0;
-  for ( int i = 0; i < topLevelWidgets.size(); ++i )
+  QString progressMessage;
+  if ( total != -1 )
   {
-    if ( topLevelWidgets.at( i )->objectName() == "QgisApp" )
-    {
-      qgisApp = topLevelWidgets.at( i );
-      break;
-    }
+    progressMessage = tr( "%1 of %2 bytes downloaded" ).arg( progress ).arg( total );
   }
-
-  if ( !qgisApp )
+  else
   {
-    return;
+    progressMessage = tr( "%1 bytes downloaded" ).arg( progress );
   }
-
-  QMainWindow* mainWindow = qobject_cast<QMainWindow*>( qgisApp );
-  if ( mainWindow )
-  {
-    mainWindow->statusBar()->showMessage( QString( "Downloaded %1 bytes" ).arg( progress ) );
-  }
-  //qWarning( QString("Downloaded %1 bytes").arg( progress ).toLocal8Bit().data() );
+  mStatusLabel->setText( progressMessage );
 }
