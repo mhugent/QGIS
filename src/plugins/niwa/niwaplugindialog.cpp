@@ -511,30 +511,34 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
     }
   }
 
-  //remove offline datasource file first
   QString offlineFileName = item->data( 2, Qt::UserRole ).toString();
-  if ( serviceType == "WFS" )
-  {
-    QgsVectorFileWriter::deleteShapeFile( offlineFileName );
-  }
-  else if ( serviceType == "WMS" )
-  {
-    //remove directory and content
-    QDir rasterFileDir( offlineFileName );
-    QFileInfoList rasterFileList = rasterFileDir.entryInfoList( QDir::Files | QDir::NoDotAndDotDot );
-    QFileInfoList::iterator it = rasterFileList.begin();
-    for ( ; it != rasterFileList.end(); ++it )
-    {
-      QFile::remove( it->absoluteFilePath() );
-    }
-    rasterFileDir.rmdir( offlineFileName );
-  }
+  deleteOfflineDatasource( serviceType, offlineFileName );
 
   item->setText( 2, "online" );
   item->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
   item->setData( 2, Qt::UserRole, "" );
   mChangeOfflineButton->setEnabled( true );
   mChangeOnlineButton->setEnabled( false );
+}
+
+void NiwaPluginDialog::deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath )
+{
+  if ( serviceType == "WFS" )
+  {
+    QgsVectorFileWriter::deleteShapeFile( offlinePath );
+  }
+  else if ( serviceType == "WMS" )
+  {
+    //remove directory and content
+    QDir rasterFileDir( offlinePath );
+    QFileInfoList rasterFileList = rasterFileDir.entryInfoList( QDir::Files | QDir::NoDotAndDotDot );
+    QFileInfoList::iterator it = rasterFileList.begin();
+    for ( ; it != rasterFileList.end(); ++it )
+    {
+      QFile::remove( it->absoluteFilePath() );
+    }
+    rasterFileDir.rmdir( offlinePath );
+  }
 }
 
 void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous )
@@ -571,7 +575,25 @@ void NiwaPluginDialog::on_mAddNIWAServicesButton_clicked()
 
 void NiwaPluginDialog::on_mRemoveFromListButton_clicked()
 {
-  delete( mLayerTreeWidget->currentItem() );
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
+
+  bool online = false;
+  if ( item->text( 2 ) == tr( "online" ) )
+  {
+    online = true;
+  }
+
+  if ( !online ) //if offline: delete datasource
+  {
+    QString serviceType = item->text( 1 );
+    QString offlinePath = item->data( 2, Qt::UserRole ).toString();
+    deleteOfflineDatasource( serviceType, offlinePath );
+  }
+  delete( item );
 }
 
 void NiwaPluginDialog::on_mReloadButton_clicked()

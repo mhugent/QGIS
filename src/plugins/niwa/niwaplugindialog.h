@@ -52,6 +52,8 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     /**Adds services to the combo box from an html page (e.g. https://www.niwa.co.nz/ei/feeds/report)*/
     void addServicesFromHtml( const QString& url );
 
+    void deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath );
+
   private slots:
     void loadFromSettings();
     void saveToSettings();
