@@ -1,37 +1,37 @@
 ########################################################
 # Files
 
-SET (NIWA_SRCS
-     niwaplugin.cpp
-     niwaplugindialog.cpp
+SET (WEB_DATA_SRCS
+     webdataplugin.cpp
+     webdatadialog.cpp
      addservicedialog.cpp
 )
 
-SET (NIWA_UIS 
-     niwaplugindialogbase.ui
+SET (WEB_DATA_UIS 
+     webdatadialogbase.ui
      addservicedialogbase.ui
     )
 
-SET (NIWA_MOC_HDRS
-     niwaplugin.h
-     niwaplugindialog.h
+SET (WEB_DATA_MOC_HDRS
+     webdataplugin.h
+     webdatadialog.h
 )
 
-SET (NIWA_RCCS  resources.qrc)
+SET (WEB_DATA_RCCS  resources.qrc)
 ########################################################
 # Build
 
-QT4_WRAP_UI (NIWA_UIS_H  ${NIWA_UIS})
+QT4_WRAP_UI (WEB_DATA_UIS_H  ${WEB_DATA_UIS})
 
-QT4_WRAP_CPP (NIWA_MOC_SRCS  ${NIWA_MOC_HDRS})
+QT4_WRAP_CPP (WEB_DATA_MOC_SRCS  ${WEB_DATA_MOC_HDRS})
 
-QT4_ADD_RESOURCES(NIWA_RCC_SRCS ${NIWA_RCCS})
+QT4_ADD_RESOURCES(WEB_DATA_RCC_SRCS ${WEB_DATA_RCCS})
 
-ADD_LIBRARY (niwaplugin MODULE 
-  ${NIWA_SRCS} 
-  ${NIWA_UIS_H}
-  ${NIWA_MOC_SRCS} 
-  ${NIWA_RCC_SRCS}
+ADD_LIBRARY (webdataplugin MODULE 
+  ${WEB_DATA_SRCS} 
+  ${WEB_DATA_UIS_H}
+  ${WEB_DATA_MOC_SRCS} 
+  ${WEB_DATA_RCC_SRCS}
 )
 
 INCLUDE_DIRECTORIES(
@@ -45,7 +45,7 @@ INCLUDE_DIRECTORIES(
      .
 )
 
-TARGET_LINK_LIBRARIES(niwaplugin
+TARGET_LINK_LIBRARIES(webdataplugin
   qgis_core
   qgis_gui
 )
@@ -54,7 +54,7 @@ TARGET_LINK_LIBRARIES(niwaplugin
 ########################################################
 # Install
 
-INSTALL(TARGETS niwaplugin
+INSTALL(TARGETS webdataplugin
   RUNTIME DESTINATION ${QGIS_PLUGIN_DIR}
   LIBRARY DESTINATION ${QGIS_PLUGIN_DIR}
   )

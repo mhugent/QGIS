@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>NiwaPluginDialogBase</class>
- <widget class="QDialog" name="NiwaPluginDialogBase">
+ <class>WebDataDialogBase</class>
+ <widget class="QDialog" name="WebDataDialogBase">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>NIWA plugin</string>
+   <string>Web data plugin</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="1" column="0">
@@ -333,7 +333,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>NiwaPluginDialogBase</receiver>
+   <receiver>WebDataDialogBase</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -349,7 +349,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>NiwaPluginDialogBase</receiver>
+   <receiver>WebDataDialogBase</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

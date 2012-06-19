@@ -15,7 +15,7 @@ ADD_SUBDIRECTORY(sqlanywhere)
 ADD_SUBDIRECTORY(roadgraph)
 ADD_SUBDIRECTORY(zonal_statistics)
 ADD_SUBDIRECTORY(georeferencer)
-ADD_SUBDIRECTORY(niwa)
+ADD_SUBDIRECTORY(web_data)
 
 IF (WITH_SPATIALITE)
   ADD_SUBDIRECTORY(offline_editing)

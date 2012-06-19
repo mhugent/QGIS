@@ -1,17 +1,17 @@
-#ifndef NIWAPLUGINDIALOG_H
-#define NIWAPLUGINDIALOG_H
+#ifndef WEBDATADIALOG_H
+#define WEBDATADIALOG_H
 
-#include "ui_niwaplugindialogbase.h"
+#include "ui_webdatadialogbase.h"
 class QgisInterface;
 class QgsMapLayer;
 class QNetworkReply;
 
-class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
+class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
 {
     Q_OBJECT
   public:
-    NiwaPluginDialog( QgisInterface* iface, QWidget* parent = 0, Qt::WindowFlags f = 0 );
-    ~NiwaPluginDialog();
+    WebDataDialog( QgisInterface* iface, QWidget* parent = 0, Qt::WindowFlags f = 0 );
+    ~WebDataDialog();
 
   private slots:
     void on_mAddPushButton_clicked();
@@ -63,4 +63,4 @@ class NiwaPluginDialog: public QDialog, private Ui::NiwaPluginDialogBase
     void handleDownloadProgress( qint64 progress, qint64 total );
 };
 
-#endif // NIWAPLUGINDIALOG_H
+#endif // WEBDATADIALOG_H

@@ -1,4 +1,4 @@
-#include "niwaplugindialog.h"
+#include "webdatadialog.h"
 #include "addservicedialog.h"
 #include "qgisinterface.h"
 #include "qgsapplication.h"
@@ -22,7 +22,7 @@
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
 static const QString WMS_NAMESPACE = "http://www.opengis.net/wms";
 
-NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mCapabilitiesReply( 0 ), mIface( iface ),
+WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mCapabilitiesReply( 0 ), mIface( iface ),
     mNIWAServicesRequestFinished( false )
 {
   setupUi( this );
@@ -36,19 +36,19 @@ NiwaPluginDialog::NiwaPluginDialog( QgisInterface* iface, QWidget* parent, Qt::W
   }
 }
 
-NiwaPluginDialog::~NiwaPluginDialog()
+WebDataDialog::~WebDataDialog()
 {
   saveToSettings();
 }
 
-void NiwaPluginDialog::insertServices()
+void WebDataDialog::insertServices()
 {
   mServicesComboBox->clear();
   insertServices( "WFS" );
   insertServices( "WMS" );
 }
 
-void NiwaPluginDialog::insertServices( const QString& service )
+void WebDataDialog::insertServices( const QString& service )
 {
   QSettings settings;
   settings.beginGroup( "/Qgis/connections-" + service.toLower() );
@@ -60,7 +60,7 @@ void NiwaPluginDialog::insertServices( const QString& service )
   }
 }
 
-void NiwaPluginDialog::on_mAddPushButton_clicked()
+void WebDataDialog::on_mAddPushButton_clicked()
 {
   AddServiceDialog d( this );
   if ( d.exec() == QDialog::Accepted )
@@ -69,7 +69,7 @@ void NiwaPluginDialog::on_mAddPushButton_clicked()
   }
 }
 
-void NiwaPluginDialog::setServiceSetting( const QString& name, const QString& serviceType, const QString& url )
+void WebDataDialog::setServiceSetting( const QString& name, const QString& serviceType, const QString& url )
 {
   if ( name.isEmpty() || url.isEmpty() || serviceType.isEmpty() )
   {
@@ -85,7 +85,7 @@ void NiwaPluginDialog::setServiceSetting( const QString& name, const QString& se
   insertServices();
 }
 
-void NiwaPluginDialog::addServicesFromHtml( const QString& url )
+void WebDataDialog::addServicesFromHtml( const QString& url )
 {
   //get html page with QgsNetworkAccessManager
 
@@ -135,7 +135,7 @@ void NiwaPluginDialog::addServicesFromHtml( const QString& url )
   mStatusLabel->setText( tr( "Ready" ) );
 }
 
-void NiwaPluginDialog::on_mRemovePushButton_clicked()
+void WebDataDialog::on_mRemovePushButton_clicked()
 {
   int currentIndex = mServicesComboBox->currentIndex();
   if ( currentIndex == -1 )
@@ -151,7 +151,7 @@ void NiwaPluginDialog::on_mRemovePushButton_clicked()
   insertServices();
 }
 
-void NiwaPluginDialog::on_mEditPushButton_clicked()
+void WebDataDialog::on_mEditPushButton_clicked()
 {
   int currentIndex = mServicesComboBox->currentIndex();
   if ( currentIndex == -1 )
@@ -176,7 +176,7 @@ void NiwaPluginDialog::on_mEditPushButton_clicked()
   }
 }
 
-void NiwaPluginDialog::on_mConnectPushButton_clicked()
+void WebDataDialog::on_mConnectPushButton_clicked()
 {
   QString url = serviceURLFromComboBox();
   url.append( "REQUEST=GetCapabilities&SERVICE=" );
@@ -213,7 +213,7 @@ void NiwaPluginDialog::on_mConnectPushButton_clicked()
   connect( mCapabilitiesReply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( handleDownloadProgress( qint64, qint64 ) ) );
 }
 
-void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
+void WebDataDialog::on_mAddLayerToListButton_clicked()
 {
   QTreeWidgetItem* cItem = mDatasourceLayersTreeWidget->currentItem();
   if ( !cItem )
@@ -259,7 +259,7 @@ void NiwaPluginDialog::on_mAddLayerToListButton_clicked()
   mRemoveFromMapButton->setEnabled( false );
 }
 
-void NiwaPluginDialog::on_mAddToMapButton_clicked()
+void WebDataDialog::on_mAddToMapButton_clicked()
 {
   if ( !mIface )
   {
@@ -334,7 +334,7 @@ void NiwaPluginDialog::on_mAddToMapButton_clicked()
   mRemoveFromMapButton->setEnabled( true );
 }
 
-void NiwaPluginDialog::on_mRemoveFromMapButton_clicked()
+void WebDataDialog::on_mRemoveFromMapButton_clicked()
 {
   QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
   if ( !item )
@@ -355,7 +355,7 @@ void NiwaPluginDialog::on_mRemoveFromMapButton_clicked()
   mRemoveFromMapButton->setEnabled( false );
 }
 
-void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
+void WebDataDialog::on_mChangeOfflineButton_clicked()
 {
   //get current entry
   QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
@@ -469,7 +469,7 @@ void NiwaPluginDialog::on_mChangeOfflineButton_clicked()
   }
 }
 
-void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
+void WebDataDialog::on_mChangeOnlineButton_clicked()
 {
   //get current entry
   QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
@@ -521,7 +521,7 @@ void NiwaPluginDialog::on_mChangeOnlineButton_clicked()
   mChangeOnlineButton->setEnabled( false );
 }
 
-void NiwaPluginDialog::deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath )
+void WebDataDialog::deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath )
 {
   if ( serviceType == "WFS" )
   {
@@ -541,7 +541,7 @@ void NiwaPluginDialog::deleteOfflineDatasource( const QString& serviceType, cons
   }
 }
 
-void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous )
+void WebDataDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous )
 {
   Q_UNUSED( previous )
   if ( !current )
@@ -567,13 +567,13 @@ void NiwaPluginDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* 
   mReloadButton->setEnabled( !online );
 }
 
-void NiwaPluginDialog::on_mAddNIWAServicesButton_clicked()
+void WebDataDialog::on_mAddNIWAServicesButton_clicked()
 {
   //addServicesFromHtml( "http://localhost/xhtml.xml" );
   addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
 }
 
-void NiwaPluginDialog::on_mRemoveFromListButton_clicked()
+void WebDataDialog::on_mRemoveFromListButton_clicked()
 {
   QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
   if ( !item )
@@ -596,7 +596,7 @@ void NiwaPluginDialog::on_mRemoveFromListButton_clicked()
   delete( item );
 }
 
-void NiwaPluginDialog::on_mReloadButton_clicked()
+void WebDataDialog::on_mReloadButton_clicked()
 {
   //online: no action required
   QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
@@ -693,12 +693,12 @@ void NiwaPluginDialog::on_mReloadButton_clicked()
   item->setData( 2, Qt::UserRole, filePath );
 }
 
-void NiwaPluginDialog::NIWAServicesRequestFinished()
+void WebDataDialog::NIWAServicesRequestFinished()
 {
   mNIWAServicesRequestFinished = true;
 }
 
-void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
+void WebDataDialog::wfsCapabilitiesRequestFinished()
 {
   if ( mCapabilitiesReply->error() != QNetworkReply::NoError )
   {
@@ -765,7 +765,7 @@ void NiwaPluginDialog::wfsCapabilitiesRequestFinished()
   mStatusLabel->setText( tr( "Ready" ) );
 }
 
-void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
+void WebDataDialog::wmsCapabilitiesRequestFinished()
 {
   if ( mCapabilitiesReply->error() != QNetworkReply::NoError )
   {
@@ -875,7 +875,7 @@ void NiwaPluginDialog::wmsCapabilitiesRequestFinished()
   mStatusLabel->setText( tr( "Ready" ) );
 }
 
-QString NiwaPluginDialog::serviceURLFromComboBox()
+QString WebDataDialog::serviceURLFromComboBox()
 {
   int currentIndex = mServicesComboBox->currentIndex();
   if ( currentIndex == -1 )
@@ -901,7 +901,7 @@ QString NiwaPluginDialog::serviceURLFromComboBox()
   return url;
 }
 
-QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item ) const
+QString WebDataDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item ) const
 {
   QString wfsUrl;
   if ( !item )
@@ -923,7 +923,7 @@ QString NiwaPluginDialog::wfsUrlFromLayerItem( QTreeWidgetItem* item ) const
   return wfsUrl;
 }
 
-void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const
+void WebDataDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const
 {
   if ( !item )
   {
@@ -987,7 +987,7 @@ void NiwaPluginDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url
   }
 }
 
-bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer )
+bool WebDataDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer )
 {
   if ( !mIface )
   {
@@ -1048,7 +1048,7 @@ bool NiwaPluginDialog::exchangeLayer( const QString& layerId, QgsMapLayer* newLa
   return false;
 }
 
-void NiwaPluginDialog::loadFromSettings()
+void WebDataDialog::loadFromSettings()
 {
   QSettings s;
   QStringList layerNameList = s.value( "NIWA/layerNameList" ).toStringList();
@@ -1112,7 +1112,7 @@ void NiwaPluginDialog::loadFromSettings()
   }
 }
 
-void NiwaPluginDialog::saveToSettings()
+void WebDataDialog::saveToSettings()
 {
   QSettings s;
   QStringList layerNameList, serviceTypeList, onlineList, inMapList, abstractList, crsList, styleList, formatList,
@@ -1155,7 +1155,7 @@ void NiwaPluginDialog::saveToSettings()
   s.setValue( "NIWA/layerIdList", layerIdList );
 }
 
-void NiwaPluginDialog::handleDownloadProgress( qint64 progress, qint64 total )
+void WebDataDialog::handleDownloadProgress( qint64 progress, qint64 total )
 {
   QString progressMessage;
   if ( total != -1 )
@@ -1169,7 +1169,7 @@ void NiwaPluginDialog::handleDownloadProgress( qint64 progress, qint64 total )
   mStatusLabel->setText( progressMessage );
 }
 
-QString NiwaPluginDialog::layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName )
+QString WebDataDialog::layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName )
 {
   const QMap<QString, QgsMapLayer*>& layerMap = QgsMapLayerRegistry::instance()->mapLayers();
   QMap<QString, QgsMapLayer*>::const_iterator layerIt = layerMap.constBegin();
