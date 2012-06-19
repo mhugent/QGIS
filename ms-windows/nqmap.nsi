@@ -40,7 +40,7 @@ Section ""
 
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}" "NoRepair" 1
 
-  WriteRegStr HKEY_CURRENT_USER "Software\NIWA\NIWA Quantum Map\Plugins" "niwaplugin" "true"
+  WriteRegStr HKEY_CURRENT_USER "Software\NIWA\NIWA Quantum Map\Plugins" "webdataplugin" "true"
 
 ;Desktop shortcut
   Delete "$DESKTOP\NIWA Quantum Map.lnk"
