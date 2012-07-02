@@ -931,11 +931,7 @@ void WebDataDialog::wmsParameterFromItem( QTreeWidgetItem* item, QString& url, Q
   }
 
   url = item->data( 0, Qt::UserRole ).toString();
-  //remove version parameter already contained in the url
-  if ( !url.contains( "version", Qt::CaseInsensitive ) )
-  {
-    url.append( ",ignoreUrl=GetMap;GetFeatureInfo" ); //ignore advertised urls per default
-  }
+  url.prepend( "ignoreUrl=GetMap;GetFeatureInfo,url=" ); //ignore advertised urls per default
 
   //format: prefer png
   QStringList formatList = item->text( 7 ).split( "," );
@@ -1185,7 +1181,7 @@ QString WebDataDialog::layerIdFromUrl( const QString& url, const QString& servic
     }
     else //for online WMS, we need to additionally consider the layer name
     {
-      if ( layer->source().startsWith( url ) )
+      if ( layer->source().contains( url ) )
       {
         const QgsRasterLayer* rlayer = dynamic_cast<const QgsRasterLayer*>( layer );
         if ( rlayer )
