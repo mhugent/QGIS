@@ -1172,16 +1172,28 @@ QString WebDataDialog::layerIdFromUrl( const QString& url, const QString& servic
   for ( ; layerIt != layerMap.constEnd(); ++layerIt )
   {
     const QgsMapLayer* layer = layerIt.value();
-    if ( !online || serviceType == "WFS" )
+    if ( !online )
     {
       if ( layer && QFileInfo( layer->source() ) == QFileInfo( url ) )
       {
         return layer->id();
       }
     }
+    else if ( serviceType == "WFS" )
+    {
+      QString layerSource = layer->source();
+      QString layerUrl = url;
+      if ( layerSource.startsWith( layerUrl )
+           && layerSource.contains( "TYPENAME=" + layerName, Qt::CaseInsensitive ) )
+      {
+        return layer->id();
+      }
+    }
     else //for online WMS, we need to additionally consider the layer name
     {
-      if ( layer->source().contains( url ) )
+      QString testUrl = url;
+      testUrl.chop( 1 );
+      if ( layer->source().contains( testUrl ) ) //sometimes url contains '?' or '&' at the end
       {
         const QgsRasterLayer* rlayer = dynamic_cast<const QgsRasterLayer*>( layer );
         if ( rlayer )
