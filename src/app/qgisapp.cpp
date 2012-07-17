@@ -666,6 +666,11 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, QWidget * parent, 
 
 QgisApp::~QgisApp()
 {
+  //save visibility of digitize and advance digitize toolbar
+  QSettings settings;
+  settings.setValue( "/qgis/digitize_toolbar_visible", mDigitizeToolBar->isVisible() );
+  settings.setValue( "/qgis/advanced_digitize_toolbar_visible", mDigitizeToolBar->isVisible() );
+
   delete mInternalClipboard;
   delete mQgisInterface;
 
@@ -1212,6 +1217,10 @@ void QgisApp::createToolBars()
   << mDatabaseToolBar
   << mWebToolBar
   << mLabelToolBar;
+
+  //restore visibility of digitize and advance digitize toolbar
+  mDigitizeToolBar->setVisible( settings.value( "/qgis/digitize_toolbar_visible", "false" ).toBool() );
+  mAdvancedDigitizeToolBar->setVisible( settings.value( "/qgis/advanced_digitize_toolbar_visible", "false" ).toBool() );
 
   QList<QAction*> toolbarMenuActions;
   // Set action names so that they can be used in customization
