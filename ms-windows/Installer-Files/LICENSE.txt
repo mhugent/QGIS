@@ -1,6 +1,6 @@
     NIWA Quantum Map is developed by Sourcepole for the National institute 
     of Water and Atmospheric Research, New Zealand (NIWA) based on Quantum GIS 
-    and is released under the same licence and condistions as Quantum GIS.
+    and is released under the same licence and conditions as Quantum GIS.
      
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

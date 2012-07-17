@@ -49,6 +49,8 @@ Section ""
 ;Desktop shortcut
   Delete "$DESKTOP\NIWA Quantum Map.lnk"
   CreateShortCut "$DESKTOP\NIWA Quantum Map.lnk" "$INSTDIR\bin\niwa_quantum_map.exe" "" "$INSTDIR\icons\nqmap.ico"
+  Delete "$DESKTOP\Demo project.lnk"
+  CreateShortCut "$DESKTOP\Demo project.lnk" "$INSTDIR\bin\niwa_quantum_map.exe" "$\"$INSTDIR\data\project1.qgs$\"" "$INSTDIR\icons\nqmap.ico"
 
   
 SectionEnd
