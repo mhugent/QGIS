@@ -3034,6 +3034,13 @@ bool QgsRasterLayer::readSymbology( const QDomNode& layer_node, QString& errorMe
   QgsDebugMsg( QString( " Setting gray band to : " ) + myElement.text() );
   setGrayBandName( myElement.text() );
 
+  snode = mnl.namedItem( "mTransparencyBandName" );
+  if ( !snode.isNull() )
+  {
+    myElement = snode.toElement();
+    setTransparentBandName( myElement.text() );
+  }
+
   snode = mnl.namedItem( "mStandardDeviations" );
   myElement = snode.toElement();
   setStandardDeviations( myElement.text().toDouble() );
@@ -3451,6 +3458,17 @@ bool QgsRasterLayer::writeSymbology( QDomNode & layer_node, QDomDocument & docum
 
   mGrayBandNameElement.appendChild( mGrayBandNameText );
   rasterPropertiesElement.appendChild( mGrayBandNameElement );
+
+  //<mTransparentBandName>
+  QDomElement mTransparencyBandNameElement = document.createElement( "mTransparencyBandName" );
+  QString writtenTransparentBandName = transparentBandName();
+  if ( writtenTransparentBandName == TRSTRING_NOT_SET )
+  {
+    writtenTransparentBandName = QSTRING_NOT_SET;
+  }
+  QDomText mTransparencyBandNameText = document.createTextNode( writtenTransparentBandName );
+  mTransparencyBandNameElement.appendChild( mTransparencyBandNameText );
+  rasterPropertiesElement.appendChild( mTransparencyBandNameElement );
 
   // <mStandardDeviations>
   QDomElement mStandardDeviationsElement = document.createElement( "mStandardDeviations" );
