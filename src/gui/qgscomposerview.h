@@ -63,6 +63,7 @@ class GUI_EXPORT QgsComposerView: public QGraphicsView
       AddEllipse,
       AddTriangle,
       AddTable, //add attribute table
+      AddHtml,
       MoveItemContent //move content of item (e.g. content of map)
     };
 

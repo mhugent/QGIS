@@ -116,6 +116,7 @@ SET(QGIS_CORE_SRCS
   composer/qgscomposeritem.cpp
   composer/qgscomposeritemcommand.cpp
   composer/qgscomposeritemgroup.cpp
+  composer/qgscomposerhtmlitem.cpp
   composer/qgscomposerlabel.cpp
   composer/qgscomposerlegenditem.cpp
   composer/qgscomposerpicture.cpp
@@ -281,6 +282,7 @@ SET(QGIS_CORE_MOC_HDRS
   composer/qgscomposershape.h
   composer/qgscomposerattributetable.h
   composer/qgscomposition.h
+  composer/qgscomposerhtmlitem.h
 
   composer/qgslegendmodel.h
   symbology/qgsmarkercatalogue.h
@@ -517,6 +519,7 @@ TARGET_LINK_LIBRARIES(qgis_core
   ${QT_QTGUI_LIBRARY}
   ${QT_QTNETWORK_LIBRARY}
   ${QT_QTSVG_LIBRARY}
+  ${QT_QTWEBKIT_LIBRARY}
 
   ${PROJ_LIBRARY}
   ${GEOS_LIBRARY}

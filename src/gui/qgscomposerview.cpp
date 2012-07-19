@@ -26,6 +26,7 @@
 #include "qgscomposerarrow.h"
 #include "qgscomposerlabel.h"
 #include "qgscomposerlegend.h"
+#include "qgscomposerhtmlitem.h"
 #include "qgscomposermap.h"
 #include "qgscomposeritemgroup.h"
 #include "qgscomposerpicture.h"
@@ -199,6 +200,16 @@ void QgsComposerView::mousePressEvent( QMouseEvent* e )
         composition()->addComposerTable( newTable );
         emit actionFinished();
         composition()->pushAddRemoveCommand( newTable, tr( "Table added" ) );
+      }
+      break;
+    case AddHtml:
+      if ( composition() )
+      {
+        QgsComposerHtmlItem* newHtml = new QgsComposerHtmlItem( composition() );
+        newHtml->setSceneRect( QRectF( snappedScenePoint.x(), snappedScenePoint.y(), 50, 50 ) );
+        composition()->addComposerHtml( newHtml );
+        emit actionFinished();
+        //composition()->pushAddRemoveCommand();
       }
       break;
     default:

@@ -20,6 +20,7 @@
 #include "qgscomposerlabel.h"
 #include "qgscomposerlegend.h"
 #include "qgscomposermap.h"
+#include "qgscomposerhtmlitem.h"
 #include "qgscomposeritemgroup.h"
 #include "qgscomposerpicture.h"
 #include "qgscomposerscalebar.h"
@@ -1094,6 +1095,15 @@ void QgsComposition::addComposerTable( QgsComposerAttributeTable* table )
   clearSelection();
   table->setSelected( true );
   emit selectedItemChanged( table );
+}
+
+void QgsComposition::addComposerHtml( QgsComposerHtmlItem* html )
+{
+  addItem( html );
+  //emit composerHtmlAdded( html )
+  clearSelection();
+  html->setSelected( true );
+  emit selectedItemChanged( html );
 }
 
 void QgsComposition::removeComposerItem( QgsComposerItem* item )
