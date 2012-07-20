@@ -107,6 +107,16 @@ void QgsComposerHtmlItem::setSceneRect( const QRectF& rectangle )
   emit itemChanged();
 }
 
+QUrl QgsComposerHtmlItem::url() const
+{
+  if ( !mHtml )
+  {
+    return QUrl();
+  }
+
+  return mHtml->mainFrame()->requestedUrl();
+}
+
 void QgsComposerHtmlItem::frameLoaded( bool ok )
 {
   mLoaded = true;
@@ -114,12 +124,38 @@ void QgsComposerHtmlItem::frameLoaded( bool ok )
 
 bool QgsComposerHtmlItem::writeXML( QDomElement& elem, QDomDocument & doc ) const
 {
-  return false; //soon...
+  if ( elem.isNull() )
+  {
+    return false;
+  }
+
+  QDomElement composerHtmlElem = doc.createElement( "ComposerHtml" );
+  composerHtmlElem.setAttribute( "url" , url().toString() );
+  elem.appendChild( composerHtmlElem );
+  return _writeXML( composerHtmlElem, doc );
 }
 
 bool QgsComposerHtmlItem::readXML( const QDomElement& itemElem, const QDomDocument& doc )
 {
-  return false; //soon...
+  if ( itemElem.isNull() )
+  {
+    return false;
+  }
+
+  QString urlString = itemElem.attribute( "url", "" );
+  if ( !urlString.isEmpty() )
+  {
+    setUrl( QUrl( urlString ) );
+  }
+
+  //restore general composer item properties
+  QDomNodeList composerItemList = itemElem.elementsByTagName( "ComposerItem" );
+  if ( composerItemList.size() > 0 )
+  {
+    QDomElement composerItemElem = composerItemList.at( 0 ).toElement();
+    _readXML( composerItemElem, doc );
+  }
+  return true;
 }
 
 

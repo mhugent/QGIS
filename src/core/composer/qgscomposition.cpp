@@ -346,6 +346,20 @@ void QgsComposition::addItemsFromXML( const QDomElement& elem, const QDomDocumen
       pushAddRemoveCommand( newArrow, tr( "Arrow added" ) );
     }
   }
+  //html
+  QDomNodeList composerHtmlList = elem.elementsByTagName( "ComposerHtml" );
+  for ( int i = 0; i < composerHtmlList.size(); ++i )
+  {
+    QDomElement currentHtmlElem = composerHtmlList.at( i ).toElement();
+    QgsComposerHtmlItem* newHtmlItem = new QgsComposerHtmlItem( this );
+    newHtmlItem->readXML( currentHtmlElem, doc );
+    addComposerHtml( newHtmlItem );
+    if ( addUndoCommands )
+    {
+      pushAddRemoveCommand( newHtmlItem, tr( "Html added" ) );
+    }
+  }
+
   // scalebar
   QDomNodeList composerScaleBarList = elem.elementsByTagName( "ComposerScaleBar" );
   for ( int i = 0; i < composerScaleBarList.size(); ++i )

@@ -31,6 +31,7 @@ class QgsComposerHtmlItem: public QgsComposerItem
     ~QgsComposerHtmlItem();
 
     void setUrl( const QUrl& url );
+    QUrl url() const;
 
     virtual bool writeXML( QDomElement& elem, QDomDocument & doc ) const;
 
