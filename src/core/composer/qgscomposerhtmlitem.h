@@ -38,16 +38,19 @@ class QgsComposerHtmlItem: public QgsComposerItem
 
     void paint( QPainter* painter, const QStyleOptionGraphicsItem* itemStyle, QWidget* pWidget );
 
+    virtual void setSceneRect( const QRectF& rectangle );
+
   private slots:
     void frameLoaded( bool ok );
+    void renderHtmlToImage();
 
   private:
     QWebPage* mHtml;
     bool mLoaded;
     QImage* mImage; //backbuffering image
+    bool mRendering; //true if rendering to backbuffer image
 
     void createImage();
-    void renderHtmlToImage();
 };
 
 #endif // QGSCOMPOSERHTMLITEM_H

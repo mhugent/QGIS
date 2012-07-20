@@ -20,11 +20,12 @@
 #include <QPainter>
 #include <QWebFrame>
 
-QgsComposerHtmlItem::QgsComposerHtmlItem( QgsComposition* c ): QgsComposerItem( c ), mLoaded( false ), mImage( 0 )
+QgsComposerHtmlItem::QgsComposerHtmlItem( QgsComposition* c ): QgsComposerItem( c ), mLoaded( false ), mImage( 0 ), mRendering( false )
 {
   //test
   mHtml = new QWebPage();
   QObject::connect( mHtml, SIGNAL( loadFinished( bool ) ), this, SLOT( frameLoaded( bool ) ) );
+  QObject::connect( mHtml, SIGNAL( repaintRequested( const QRect& ) ), this, SLOT( renderHtmlToImage() ) );
 }
 
 QgsComposerHtmlItem::~QgsComposerHtmlItem()
@@ -42,19 +43,18 @@ void QgsComposerHtmlItem::setUrl( const QUrl& url )
   }
 
   mHtml->setViewportSize( mHtml->mainFrame()->contentsSize() );
+  renderHtmlToImage();
 }
 
 void QgsComposerHtmlItem::paint( QPainter* painter, const QStyleOptionGraphicsItem* itemStyle, QWidget* pWidget )
 {
+  if ( mRendering )
+  {
+    return;
+  }
+
   drawBackground( painter );
-
-  painter->save();
-  double pixelPerMM = mComposition->printResolution() / 25.4;
-  double screenPixelPerMM = 96.0 / 25.4;
-  painter->scale( 1.0 / ( pixelPerMM / screenPixelPerMM ), 1.0 / ( pixelPerMM / screenPixelPerMM ) );
-  mHtml->mainFrame()->render( painter, QRegion( 0, 0, rect().width() * ( pixelPerMM / screenPixelPerMM ), rect().height() * ( pixelPerMM / screenPixelPerMM ) ) );
-  painter->restore();
-
+  painter->drawImage( rect(), *mImage, QRectF( 0, 0, mImage->width(), mImage->height() ) );
   drawFrame( painter );
   if ( isSelected() )
   {
@@ -64,21 +64,47 @@ void QgsComposerHtmlItem::paint( QPainter* painter, const QStyleOptionGraphicsIt
 
 void QgsComposerHtmlItem::createImage()
 {
-    if( !mComposition )
-    {
-        return;
-    }
+  if ( !mComposition )
+  {
+    return;
+  }
 
-    delete mImage;
-    double pixelPerMM = mComposition->printResolution() / 25.4;
-    int pixelWidth = rect().width() * pixelPerMM;
-    int pixelHeight = rect().height() * pixelPerMM;
-    mImage = new QImage( pixelWidth, pixelHeight, QImage::Format_ARGB32_Premultiplied );
+  delete mImage;
+  double pixelPerMM = mComposition->printResolution() / 25.4;
+  int pixelWidth = rect().width() * pixelPerMM;
+  int pixelHeight = rect().height() * pixelPerMM;
+  mImage = new QImage( pixelWidth, pixelHeight, QImage::Format_ARGB32_Premultiplied );
 }
 
 void QgsComposerHtmlItem::renderHtmlToImage()
 {
+  if ( !mImage )
+  {
+    return;
+  }
 
+  if ( mRendering )
+  {
+    return;
+  }
+
+  mRendering = true;
+  QPainter p( mImage );
+  double pixelPerMM = mComposition->printResolution() / 25.4;
+  double scaleFactor = pixelPerMM / ( 96.0 / 25.4 );
+  p.scale( scaleFactor, scaleFactor );
+  mHtml->mainFrame()->render( &p, QRegion( 0, 0, rect().width() * pixelPerMM, rect().height() * pixelPerMM ) );
+  mRendering = false;
+  update();
+}
+
+void QgsComposerHtmlItem::setSceneRect( const QRectF& rectangle )
+{
+  QgsComposerItem::setSceneRect( rectangle );
+  createImage();
+  renderHtmlToImage();
+  update();
+  emit itemChanged();
 }
 
 void QgsComposerHtmlItem::frameLoaded( bool ok )
