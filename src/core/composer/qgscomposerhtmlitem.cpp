@@ -17,9 +17,10 @@
 
 #include "qgscomposerhtmlitem.h"
 #include <QApplication>
+#include <QPainter>
 #include <QWebFrame>
 
-QgsComposerHtmlItem::QgsComposerHtmlItem( QgsComposition* c ): QgsComposerItem( c ), mLoaded( false )
+QgsComposerHtmlItem::QgsComposerHtmlItem( QgsComposition* c ): QgsComposerItem( c ), mLoaded( false ), mImage( 0 )
 {
   //test
   mHtml = new QWebPage();
@@ -29,6 +30,7 @@ QgsComposerHtmlItem::QgsComposerHtmlItem( QgsComposition* c ): QgsComposerItem( 
 QgsComposerHtmlItem::~QgsComposerHtmlItem()
 {
   delete mHtml;
+  delete mImage;
 }
 
 void QgsComposerHtmlItem::setUrl( const QUrl& url )
@@ -38,18 +40,45 @@ void QgsComposerHtmlItem::setUrl( const QUrl& url )
   {
     qApp->processEvents();
   }
+
   mHtml->setViewportSize( mHtml->mainFrame()->contentsSize() );
 }
 
 void QgsComposerHtmlItem::paint( QPainter* painter, const QStyleOptionGraphicsItem* itemStyle, QWidget* pWidget )
 {
   drawBackground( painter );
-  mHtml->mainFrame()->render( painter, QRegion( 0, 0, rect().width(), rect().height() ) );
+
+  painter->save();
+  double pixelPerMM = mComposition->printResolution() / 25.4;
+  double screenPixelPerMM = 96.0 / 25.4;
+  painter->scale( 1.0 / ( pixelPerMM / screenPixelPerMM ), 1.0 / ( pixelPerMM / screenPixelPerMM ) );
+  mHtml->mainFrame()->render( painter, QRegion( 0, 0, rect().width() * ( pixelPerMM / screenPixelPerMM ), rect().height() * ( pixelPerMM / screenPixelPerMM ) ) );
+  painter->restore();
+
   drawFrame( painter );
   if ( isSelected() )
   {
     drawSelectionBoxes( painter );
   }
+}
+
+void QgsComposerHtmlItem::createImage()
+{
+    if( !mComposition )
+    {
+        return;
+    }
+
+    delete mImage;
+    double pixelPerMM = mComposition->printResolution() / 25.4;
+    int pixelWidth = rect().width() * pixelPerMM;
+    int pixelHeight = rect().height() * pixelPerMM;
+    mImage = new QImage( pixelWidth, pixelHeight, QImage::Format_ARGB32_Premultiplied );
+}
+
+void QgsComposerHtmlItem::renderHtmlToImage()
+{
+
 }
 
 void QgsComposerHtmlItem::frameLoaded( bool ok )

@@ -21,6 +21,8 @@
 #include "qgscomposeritem.h"
 #include <QWebPage>
 
+class QImage;
+
 class QgsComposerHtmlItem: public QgsComposerItem
 {
     Q_OBJECT
@@ -42,6 +44,10 @@ class QgsComposerHtmlItem: public QgsComposerItem
   private:
     QWebPage* mHtml;
     bool mLoaded;
+    QImage* mImage; //backbuffering image
+
+    void createImage();
+    void renderHtmlToImage();
 };
 
 #endif // QGSCOMPOSERHTMLITEM_H
