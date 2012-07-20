@@ -23,6 +23,8 @@
 #include "qgscompositionwidget.h"
 #include "qgscomposerarrow.h"
 #include "qgscomposerarrowwidget.h"
+#include "qgscomposerhtmlitem.h"
+#include "qgscomposerhtmlitemwidget.h"
 #include "qgscomposerlabel.h"
 #include "qgscomposerlabelwidget.h"
 #include "qgscomposerlegend.h"
@@ -376,6 +378,7 @@ void QgsComposer::connectSlots()
   connect( mComposition, SIGNAL( composerPictureAdded( QgsComposerPicture* ) ), this, SLOT( addComposerPicture( QgsComposerPicture* ) ) );
   connect( mComposition, SIGNAL( composerShapeAdded( QgsComposerShape* ) ), this, SLOT( addComposerShape( QgsComposerShape* ) ) );
   connect( mComposition, SIGNAL( composerTableAdded( QgsComposerAttributeTable* ) ), this, SLOT( addComposerTable( QgsComposerAttributeTable* ) ) );
+  connect( mComposition, SIGNAL( composerHtmlAdded( QgsComposerHtmlItem* ) ), this, SLOT( addComposerHtml( QgsComposerHtmlItem* ) ) );
   connect( mComposition, SIGNAL( itemRemoved( QgsComposerItem* ) ), this, SLOT( deleteItem( QgsComposerItem* ) ) );
 }
 
@@ -1336,6 +1339,16 @@ void QgsComposer::addComposerTable( QgsComposerAttributeTable* table )
   }
   QgsComposerTableWidget* tWidget = new QgsComposerTableWidget( table );
   mItemWidgetMap.insert( table, tWidget );
+}
+
+void QgsComposer::addComposerHtml( QgsComposerHtmlItem* html )
+{
+  if ( !html )
+  {
+    return;
+  }
+  QgsComposerHtmlItemWidget* hWidget = new QgsComposerHtmlItemWidget( html );
+  mItemWidgetMap.insert( html, hWidget );
 }
 
 void QgsComposer::deleteItem( QgsComposerItem* item )

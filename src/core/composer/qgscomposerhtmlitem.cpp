@@ -24,7 +24,6 @@ QgsComposerHtmlItem::QgsComposerHtmlItem( QgsComposition* c ): QgsComposerItem( 
   //test
   mHtml = new QWebPage();
   QObject::connect( mHtml, SIGNAL( loadFinished( bool ) ), this, SLOT( frameLoaded( bool ) ) );
- // setUrl( QUrl( "http://www.myserver.com" ) );
 }
 
 QgsComposerHtmlItem::~QgsComposerHtmlItem()
@@ -40,7 +39,6 @@ void QgsComposerHtmlItem::setUrl( const QUrl& url )
     qApp->processEvents();
   }
   mHtml->setViewportSize( mHtml->mainFrame()->contentsSize() );
-  //mHtml->setViewportSize( QSize( rect().width(), rect().height() ) );
 }
 
 void QgsComposerHtmlItem::paint( QPainter* painter, const QStyleOptionGraphicsItem* itemStyle, QWidget* pWidget )

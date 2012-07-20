@@ -1100,7 +1100,7 @@ void QgsComposition::addComposerTable( QgsComposerAttributeTable* table )
 void QgsComposition::addComposerHtml( QgsComposerHtmlItem* html )
 {
   addItem( html );
-  //emit composerHtmlAdded( html )
+  emit composerHtmlAdded( html );
   clearSelection();
   html->setSelected( true );
   emit selectedItemChanged( html );

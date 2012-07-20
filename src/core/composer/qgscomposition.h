@@ -314,6 +314,8 @@ class CORE_EXPORT QgsComposition: public QGraphicsScene
     void composerShapeAdded( QgsComposerShape* shape );
     /**Is emitted when a new composer table has been added*/
     void composerTableAdded( QgsComposerAttributeTable* table );
+    /**Is emitted when a new composer html item has been added*/
+    void composerHtmlAdded( QgsComposerHtmlItem* html );
     /**Is emitted when a composer item has been removed from the scene*/
     void itemRemoved( QgsComposerItem* );
 };
