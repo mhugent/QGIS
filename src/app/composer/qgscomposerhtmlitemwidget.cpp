@@ -25,8 +25,10 @@ void QgsComposerHtmlItemWidget::on_mUrlLineEdit_editingFinished()
 {
   if ( mHtmlItem )
   {
+    mHtmlItem->beginCommand( tr( "Url changed" ) );
     mHtmlItem->setUrl( QUrl( mUrlLineEdit->text() ) );
     mHtmlItem->update();
+    mHtmlItem->endCommand();
   }
 }
 
@@ -36,7 +38,9 @@ void QgsComposerHtmlItemWidget::on_mFileToolButton_clicked()
   if ( !file.isEmpty() )
   {
     QUrl url = QUrl::fromLocalFile( file );
+    mHtmlItem->beginCommand( tr( "Url changed" ) );
     mHtmlItem->setUrl( url );
+    mHtmlItem->endCommand();
     mUrlLineEdit->setText( url.toString() );
   }
 }
@@ -45,7 +49,9 @@ void QgsComposerHtmlItemWidget::on_mResizeToFullContentButton_clicked()
 {
   if ( mHtmlItem )
   {
+    mHtmlItem->beginCommand( tr( "Set size to html content" ) );
     mHtmlItem->setToFullHtmlContent();
+    mHtmlItem->endCommand();
   }
 }
 

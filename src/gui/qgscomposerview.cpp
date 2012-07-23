@@ -209,7 +209,7 @@ void QgsComposerView::mousePressEvent( QMouseEvent* e )
         newHtml->setSceneRect( QRectF( snappedScenePoint.x(), snappedScenePoint.y(), 50, 50 ) );
         composition()->addComposerHtml( newHtml );
         emit actionFinished();
-        //composition()->pushAddRemoveCommand();
+        composition()->pushAddRemoveCommand( newHtml, tr( "Html added" ) );
       }
       break;
     default:

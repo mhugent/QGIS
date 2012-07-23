@@ -1231,6 +1231,13 @@ void QgsComposition::sendItemAddedSignal( QgsComposerItem* item )
     emit selectedItemChanged( table );
     return;
   }
+  QgsComposerHtmlItem* html = dynamic_cast<QgsComposerHtmlItem*>( item );
+  if ( html )
+  {
+    emit composerHtmlAdded( html );
+    emit selectedItemChanged( html );
+    return;
+  }
 }
 
 void QgsComposition::updatePaperItems()
