@@ -116,6 +116,17 @@ void QgsComposerHtmlItem::setToFullHtmlContent()
     double width = size.width() / sFactor;
     double height = size.height() / sFactor;
     setSceneRect( QRectF( transform().dx(), transform().dy(), width, height ) );
+
+    //create additional pages in composition if necessary
+    if ( mComposition )
+    {
+      double maxHeight = transform().dy() + height;
+      int nPages = maxHeight / mComposition->paperHeight() + 1;
+      if ( mComposition->numPages() < nPages )
+      {
+        mComposition->setNumPages( nPages );
+      }
+    }
   }
 }
 
