@@ -41,6 +41,14 @@ void QgsComposerHtmlItemWidget::on_mFileToolButton_clicked()
   }
 }
 
+void QgsComposerHtmlItemWidget::on_mResizeToFullContentButton_clicked()
+{
+  if ( mHtmlItem )
+  {
+    mHtmlItem->setToFullHtmlContent();
+  }
+}
+
 void QgsComposerHtmlItemWidget::setGuiElementValues()
 {
   if ( !mHtmlItem )

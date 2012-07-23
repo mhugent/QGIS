@@ -15,6 +15,7 @@ class QgsComposerHtmlItemWidget: public QWidget, private Ui::QgsComposerHtmlItem
   private slots:
     void on_mUrlLineEdit_editingFinished();
     void on_mFileToolButton_clicked();
+    void on_mResizeToFullContentButton_clicked();
     /**Sets the GUI elements to the values of mHtmlItem*/
     void setGuiElementValues();
 

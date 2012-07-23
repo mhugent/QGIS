@@ -41,6 +41,9 @@ class QgsComposerHtmlItem: public QgsComposerItem
 
     virtual void setSceneRect( const QRectF& rectangle );
 
+    /**Sets size of this item to include all the content of the html page*/
+    void setToFullHtmlContent();
+
   private slots:
     void frameLoaded( bool ok );
     void renderHtmlToImage();
@@ -49,7 +52,7 @@ class QgsComposerHtmlItem: public QgsComposerItem
     QWebPage* mHtml;
     bool mLoaded;
     QImage* mImage; //backbuffering image
-    bool mRendering; //true if rendering to backbuffer image
+    bool mRendering; //true if rendering to backbuffer image is in progress
 
     void createImage();
 };

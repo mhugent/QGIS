@@ -91,7 +91,7 @@ void QgsComposerHtmlItem::renderHtmlToImage()
   mRendering = true;
   QPainter p( mImage );
   double pixelPerMM = mComposition->printResolution() / 25.4;
-  double scaleFactor = pixelPerMM / ( 96.0 / 25.4 );
+  double scaleFactor = pixelPerMM / (( double )mImage->dotsPerMeterX() / 1000.0 );
   p.scale( scaleFactor, scaleFactor );
   mHtml->mainFrame()->render( &p, QRegion( 0, 0, rect().width() * pixelPerMM, rect().height() * pixelPerMM ) );
   mRendering = false;
@@ -105,6 +105,19 @@ void QgsComposerHtmlItem::setSceneRect( const QRectF& rectangle )
   renderHtmlToImage();
   update();
   emit itemChanged();
+}
+
+void QgsComposerHtmlItem::setToFullHtmlContent()
+{
+  if ( mHtml && mHtml->mainFrame() )
+  {
+    QSize size = mHtml->mainFrame()->contentsSize();
+    double pixelPerMM = mComposition->printResolution() / 25.4;
+    double scaleFactor = pixelPerMM / (( double )mImage->dotsPerMeterX() / 1000.0 );
+    double width = size.width() / scaleFactor;
+    double height = size.height() / scaleFactor;
+    setSceneRect( QRectF( transform().dx(), transform().dy(), width, height ) );
+  }
 }
 
 QUrl QgsComposerHtmlItem::url() const
