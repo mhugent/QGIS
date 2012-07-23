@@ -47,6 +47,7 @@ class QgsComposerHtmlItem: public QgsComposerItem
   private slots:
     void frameLoaded( bool ok );
     void renderHtmlToImage();
+    double scaleFactor(); //pixel / unit scale factor
 
   private:
     QWebPage* mHtml;

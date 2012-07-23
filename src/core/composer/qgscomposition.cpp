@@ -37,7 +37,7 @@
 #include <QSettings>
 
 QgsComposition::QgsComposition( QgsMapRenderer* mapRenderer ):
-    QGraphicsScene( 0 ), mMapRenderer( mapRenderer ), mPlotStyle( QgsComposition::Preview ), mPageWidth( 297 ), mPageHeight( 210 ), mSpaceBetweenPages( 10 ), mPrintAsRaster( false ), mSelectionTolerance( 0.0 ),
+    QGraphicsScene( 0 ), mMapRenderer( mapRenderer ), mPlotStyle( QgsComposition::Preview ), mPageWidth( 297 ), mPageHeight( 210 ), mSpaceBetweenPages( 0 /*10*/ ), mPrintAsRaster( false ), mSelectionTolerance( 0.0 ),
     mSnapToGrid( false ), mSnapGridResolution( 0.0 ), mSnapGridOffsetX( 0.0 ), mSnapGridOffsetY( 0.0 ), mActiveCommand( 0 )
 {
   setBackgroundBrush( Qt::gray );
@@ -48,7 +48,7 @@ QgsComposition::QgsComposition( QgsMapRenderer* mapRenderer ):
 }
 
 QgsComposition::QgsComposition():
-    QGraphicsScene( 0 ), mMapRenderer( 0 ), mPlotStyle( QgsComposition::Preview ),  mPageWidth( 297 ), mPageHeight( 210 ), mSpaceBetweenPages( 10 ), mPrintAsRaster( false ),
+    QGraphicsScene( 0 ), mMapRenderer( 0 ), mPlotStyle( QgsComposition::Preview ),  mPageWidth( 297 ), mPageHeight( 210 ), mSpaceBetweenPages( 0 /*10*/ ), mPrintAsRaster( false ),
     mSelectionTolerance( 0.0 ), mSnapToGrid( false ), mSnapGridResolution( 0.0 ), mSnapGridOffsetX( 0.0 ), mSnapGridOffsetY( 0.0 ), mActiveCommand( 0 )
 {
   loadSettings();
