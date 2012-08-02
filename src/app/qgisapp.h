@@ -510,6 +510,8 @@ class QgisApp : public QMainWindow, private Ui::MainWindow
 
     //! QGis Sponsors
     void sponsors();
+    //! Show Niwa Quantum Map documentation
+    void on_mActionNiwaFAQ_triggered();
     //! About QGis
     void about();
     //! Add a raster layer to the map (will prompt user for file name using dlg )

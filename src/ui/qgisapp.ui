@@ -17,7 +17,7 @@
      <x>0</x>
      <y>0</y>
      <width>1052</width>
-     <height>28</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="mEditMenu">
@@ -192,6 +192,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="mActionNiwaFAQ"/>
     <addaction name="mActionHelpContents"/>
     <addaction name="mActionHelpAPI"/>
     <addaction name="separator"/>
@@ -1673,9 +1674,19 @@
     <string>Paste style</string>
    </property>
   </action>
+  <action name="mActionNiwaFAQ">
+   <property name="icon">
+    <iconset resource="../plugins/web_data/resources.qrc">
+     <normaloff>:/niwa/icons/nqmap.png</normaloff>:/niwa/icons/nqmap.png</iconset>
+   </property>
+   <property name="text">
+    <string>FAQ</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../../images/images.qrc"/>
+  <include location="../plugins/web_data/resources.qrc"/>
  </resources>
  <connections/>
 </ui>
