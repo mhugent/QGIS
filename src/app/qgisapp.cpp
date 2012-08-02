@@ -2143,6 +2143,7 @@ void QgisApp::on_mActionNiwaFAQ_triggered()
   QString faqPath = QgsApplication::pkgDataPath() + "/resources/niwa_faq.html";
   QUrl url = QUrl::fromLocalFile( faqPath );
   QWebView* view = new QWebView();
+  view->setWindowTitle( tr( "NIWA Quantum Map FAQ" ) );
   view->setUrl( url );
   view->show();
 }
