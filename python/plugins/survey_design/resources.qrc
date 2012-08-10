@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/plugins/survey_design">
+        <file>mActionNewAttribute.png</file>
+        <file>mActionNewVectorLayer.png</file>
+	<file>mActionToggleEditing.png</file>
+    </qresource>
+</RCC>
