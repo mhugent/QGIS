@@ -16,13 +16,12 @@ class SurveyDesignPlugin:
         
         isSurveyProject = self.projectContainsSurveyDesign()
 
-        self.actionInitSurvey = QAction( 'Init survey design',  self.iface.mainWindow() )
+        self.actionInitSurvey = QAction( 'Init survey',  self.iface.mainWindow() )
         QObject.connect( self.actionInitSurvey, SIGNAL("triggered()"), self.initSurveyDesign)
-        self.actionInitSurvey.setEnabled( isSurveyProject == False )
       
-        self.actionSurveyProperties = QAction( 'Survey design settings',  self.iface.mainWindow() )
+        self.actionSurveyProperties = QAction( 'Survey design',  self.iface.mainWindow() )
         QObject.connect( self.actionSurveyProperties, SIGNAL("triggered()"), self.openSurveyDesignWidget )
-        self.actionSurveyProperties.setEnabled( isSurveyProject == True )
+        self.checkSurveyDesignPossible()
         
         surveyDesignMenu.addAction( self.actionInitSurvey  )
         surveyDesignMenu.addAction(  self.actionSurveyProperties )
@@ -33,16 +32,22 @@ class SurveyDesignPlugin:
         
     def initSurveyDesign(self):
         dialog = SurveyInitDialog()
-        dialog.exec_()
+        if dialog.exec_() == QDialog.Accepted:
+            self.checkSurveyDesignPossible()
         
     def openSurveyDesignWidget(self):
         dialog = SurveyDesignDialog()
         dialog.exec_()
         
-    def projectContainsSurveyDesign(self):
-        surveyAreaLayerId = QgsProject.instance().readEntry( "SurveyDesign",  "SurveyAreaLayerId" )
-        strataLayerId = QgsProject.instance().readEntry( "SurveyDesign",  "StrataLayerId" )
-        baseLineLayerId = QgsProject.instance().readEntry( "SurveyDesign",  "BaseLineLayerId" )
+    def checkSurveyDesignPossible( self ):
+            self.actionSurveyProperties.setEnabled( self.projectContainsSurveyDesign() )
         
-        if surveyAreaLayerId[0].isEmpty() or strataLayerId[0].isEmpty() or baseLineLayerId[0].isEmpty():
+    def projectContainsSurveyDesign(self):
+        surveyAreaLayerId = QgsProject.instance().readEntry( "Survey",  "SurveyAreaLayer" )[0]
+        strataLayerId = QgsProject.instance().readEntry( "Survey",  "StrataLayer" )[0]
+        baseLineLayerId = QgsProject.instance().readEntry( "Survey",  "SurveyBaselineLayer" )[0]
+        
+        if strataLayerId.isEmpty() or baseLineLayerId.isEmpty():
             return False
+        else:
+            return True
