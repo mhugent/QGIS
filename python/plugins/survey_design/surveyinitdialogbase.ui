@@ -122,14 +122,14 @@
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QLabel" name="mNumberOfSamplePointsAttribute">
+       <widget class="QLabel" name="mNSamplePointsAttribute">
         <property name="text">
          <string>N sample points attribute</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QComboBox" name="mStrataLayerLabelComboBox"/>
+       <widget class="QComboBox" name="mStrataLayerComboBox"/>
       </item>
       <item row="0" column="2">
        <widget class="QToolButton" name="mNewStrataLayerButton">
@@ -143,7 +143,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QComboBox" name="comboBox"/>
+       <widget class="QComboBox" name="mNSamplePointsComboBox"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="mMinDistanceLabel">
