@@ -24,5 +24,16 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         
         print 'no Error'
         inputLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
-        p = QgsPointSample (  inputLayer, '/home/marco/tmp/pointshape.shp', strataNSamplePoints, strataMinDistance )
+        
+        s = QSettings()
+        saveDir = s.value( '/SurveyPlugin/SaveDir','').toString()
+        
+        outputShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
+        print outputShape
+        if outputShape.isEmpty():
+            return
+        
+        p = QgsPointSample (  inputLayer, outputShape, strataNSamplePoints, strataMinDistance )
         p.createRandomPoints( None )
+        
+        s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputShape ).absolutePath() )

@@ -2,6 +2,7 @@
 #include "qgsgeometry.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
+#include <QFile>
 
 
 QgsPointSample::QgsPointSample( QgsVectorLayer* inputLayer, const QString& outputLayer, int nPointsAttribute, int minDistAttribute ): mInputLayer( inputLayer ),
@@ -32,6 +33,11 @@ int QgsPointSample::createRandomPoints( QProgressDialog* pd )
     return 2;
   }
 
+  //delete output file if it already exists
+  if ( QFile::exists( mOutputLayer ) )
+  {
+    QgsVectorFileWriter::deleteShapeFile( mOutputLayer );
+  }
 
   //create vector file writer
   QgsFieldMap outputFields;
