@@ -1,0 +1,37 @@
+#ifndef QGSPOINTSAMPLE_H
+#define QGSPOINTSAMPLE_H
+
+#include <QString>
+
+class QgsFeature;
+class QgsVectorFileWriter;
+class QgsVectorLayer;
+class QProgressDialog;
+
+/**Creates random points in polygons / multipolygons*/
+class QgsPointSample
+{
+  public:
+    QgsPointSample( QgsVectorLayer* inputLayer, const QString& outputLayer, int nPointsAttribute, int minDistAttribute = -1 );
+    ~QgsPointSample();
+
+    /**Starts calculation of random points
+        @return 0 in case of success*/
+    int createRandomPoints( QProgressDialog* pd );
+
+  private:
+
+    QgsPointSample(); //default constructor is forbidden
+    void addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWriter& writer, int nPoints, double minDistance );
+
+    /**Layer id of input polygon/multipolygon layer*/
+    QgsVectorLayer* mInputLayer;
+    /**Output path of result layer*/
+    QString mOutputLayer;
+    /**Attribute containing number of points per feature*/
+    int mNumberOfPointsAttribute;
+    /**Attribute containing minimum distance between sample points (or -1 if no min. distance constraint)*/
+    int mMinDistanceAttribute;
+};
+
+#endif // QGSPOINTSAMPLE_H

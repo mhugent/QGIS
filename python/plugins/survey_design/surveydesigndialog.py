@@ -1,6 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
+from qgis.analysis import *
 from ui_surveydesigndialogbase import Ui_SurveyDesignDialogBase
 
 class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
@@ -12,4 +13,16 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         
         
     def createSample( self ):
-        print 'Create Survey'
+        #get StrataLayer, StrataMinDistance, StrataNSamplePoints
+        strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
+        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
+        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
+        
+        if strataLayer.isEmpty() or strataNSamplePoints < 0:
+            print 'Error'
+            return
+        
+        print 'no Error'
+        inputLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
+        p = QgsPointSample (  inputLayer, '/home/marco/tmp/pointshape.shp', strataNSamplePoints, strataMinDistance )
+        p.createRandomPoints( None )

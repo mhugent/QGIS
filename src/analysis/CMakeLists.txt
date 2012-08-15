@@ -35,6 +35,7 @@ SET(QGIS_ANALYSIS_SRCS
   raster/qgsrastercalculator.cpp
   raster/qgsrastermatrix.cpp
   vector/qgsgeometryanalyzer.cpp
+  vector/qgspointsample.cpp
   vector/qgszonalstatistics.cpp
   vector/qgsoverlayanalyzer.cpp
 )

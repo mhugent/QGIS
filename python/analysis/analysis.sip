@@ -8,4 +8,5 @@
 
 %Include qgsgeometryanalyzer.sip
 %Include qgsoverlayanalyzer.sip
+%Include qgspointsample.sip
 %Include qgszonalstatistics.sip
