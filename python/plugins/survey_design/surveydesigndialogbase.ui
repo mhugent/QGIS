@@ -104,9 +104,9 @@
     </spacer>
    </item>
    <item row="3" column="1">
-    <widget class="QPushButton" name="mCreateSurveyButton">
+    <widget class="QPushButton" name="mCreateSampleButton">
      <property name="text">
-      <string>Create survey</string>
+      <string>Create sample</string>
      </property>
     </widget>
    </item>

@@ -8,3 +8,8 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
     def __init__(self):
         QDialog.__init__(self, None)
         self.setupUi(self)
+        QObject.connect( self.mCreateSampleButton, SIGNAL('clicked()'), self.createSample )
+        
+        
+    def createSample( self ):
+        print 'Create Survey'
