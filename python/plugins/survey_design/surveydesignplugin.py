@@ -27,6 +27,8 @@ class SurveyDesignPlugin:
         surveyDesignMenu.addAction(  self.actionSurveyProperties )
         self.surveyDesignAction = menuBar.addMenu( surveyDesignMenu )
         
+        QObject.connect( self.iface, SIGNAL('projectRead()'), self.projectLoaded )
+        
     def unload(self):
         self.iface.mainWindow().menuBar().removeAction( self.surveyDesignAction )
         
@@ -45,9 +47,11 @@ class SurveyDesignPlugin:
     def projectContainsSurveyDesign(self):
         surveyAreaLayerId = QgsProject.instance().readEntry( "Survey",  "SurveyAreaLayer" )[0]
         strataLayerId = QgsProject.instance().readEntry( "Survey",  "StrataLayer" )[0]
-        baseLineLayerId = QgsProject.instance().readEntry( "Survey",  "SurveyBaselineLayer" )[0]
         
-        if strataLayerId.isEmpty() or baseLineLayerId.isEmpty():
+        if strataLayerId.isEmpty():
             return False
         else:
             return True
+            
+    def projectLoaded( self ):
+        self.checkSurveyDesignPossible()

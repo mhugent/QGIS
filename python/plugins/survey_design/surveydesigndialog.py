@@ -10,6 +10,11 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         QDialog.__init__(self, None)
         self.setupUi(self)
         QObject.connect( self.mCreateSampleButton, SIGNAL('clicked()'), self.createSample )
+        self.mPointSurveyRadioButton.setChecked( True )
+       
+        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
+        if surveyBaselineLayer.isEmpty():
+           self.mTransectSurveyRadioButton.setEnabled( False )
         
         
     def createSample( self ):

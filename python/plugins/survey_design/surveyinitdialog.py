@@ -11,6 +11,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         
         #possible entries in layer combo boxes
         self.mSurveyAreaLayerComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), '' )
+        self.mSurveyBaselineLayerComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), '' )
         
         mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         for id in mapLayers:
