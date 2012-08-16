@@ -1,6 +1,7 @@
 #ifndef QGSPOINTSAMPLE_H
 #define QGSPOINTSAMPLE_H
 
+#include "qgsfeature.h"
 #include <QString>
 
 class QgsFeature;
@@ -25,7 +26,7 @@ class QgsPointSample
 
     QgsPointSample(); //default constructor is forbidden
     void addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWriter& writer, int nPoints, double minDistance );
-    bool checkMinDistance( QgsPoint& pt, QgsSpatialIndex& index, double minDistance );
+    bool checkMinDistance( QgsPoint& pt, QgsSpatialIndex& index, double minDistance, QMap< QgsFeatureId, QgsPoint >& pointMap );
 
     /**Layer id of input polygon/multipolygon layer*/
     QgsVectorLayer* mInputLayer;
@@ -35,6 +36,7 @@ class QgsPointSample
     int mNumberOfPointsAttribute;
     /**Attribute containing minimum distance between sample points (or -1 if no min. distance constraint)*/
     int mMinDistanceAttribute;
+    QgsFeatureId mNCreatedPoints; //helper to find free ids
 };
 
 #endif // QGSPOINTSAMPLE_H
