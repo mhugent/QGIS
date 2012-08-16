@@ -4,6 +4,8 @@
 #include <QString>
 
 class QgsFeature;
+class QgsPoint;
+class QgsSpatialIndex;
 class QgsVectorFileWriter;
 class QgsVectorLayer;
 class QProgressDialog;
@@ -23,6 +25,7 @@ class QgsPointSample
 
     QgsPointSample(); //default constructor is forbidden
     void addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWriter& writer, int nPoints, double minDistance );
+    bool checkMinDistance( QgsPoint& pt, QgsSpatialIndex& index, double minDistance );
 
     /**Layer id of input polygon/multipolygon layer*/
     QgsVectorLayer* mInputLayer;

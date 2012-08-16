@@ -1,5 +1,6 @@
 #include "qgspointsample.h"
 #include "qgsgeometry.h"
+#include "qgsspatialindex.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
 #include <QFile>
@@ -92,6 +93,8 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
     return;
   }
 
+  QgsSpatialIndex sIndex; //to check minimum distance
+
   int nIterations = 0;
   int maxIterations = nPoints * 20;
   int points = 0;
@@ -103,14 +106,16 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
   {
     randX = (( double )rand() / RAND_MAX ) * geomRect.width() + geomRect.xMinimum();
     randY = (( double )rand() / RAND_MAX ) * geomRect.height() + geomRect.yMinimum();
-    QgsGeometry* ptGeom = QgsGeometry::fromPoint( QgsPoint( randX, randY ) );
-    if ( ptGeom->within( geom ) )
+    QgsPoint randPoint( randX, randY );
+    QgsGeometry* ptGeom = QgsGeometry::fromPoint( randPoint );
+    if ( ptGeom->within( geom ) && checkMinDistance( randPoint, sIndex, minDistance ) )
     {
       //add feature to writer
       QgsFeature f;
       f.addAttribute( 0, inputFeature.id() );
       f.setGeometry( ptGeom );
       writer.addFeature( f );
+      sIndex.insertFeature( f );
       ++points;
     }
     else
@@ -120,5 +125,13 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
     ++nIterations;
   }
 }
+
+bool QgsPointSample::checkMinDistance( QgsPoint& pt, QgsSpatialIndex& index, double minDistance )
+{
+
+    return true; //todo...
+}
+
+
 
 
