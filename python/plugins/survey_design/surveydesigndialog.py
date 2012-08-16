@@ -6,9 +6,10 @@ from ui_surveydesigndialogbase import Ui_SurveyDesignDialogBase
 
 class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
     
-    def __init__(self):
+    def __init__(self, iface):
         QDialog.__init__(self, None)
         self.setupUi(self)
+        self.iface = iface
         QObject.connect( self.mCreateSampleButton, SIGNAL('clicked()'), self.createSample )
         self.mPointSurveyRadioButton.setChecked( True )
        
@@ -42,3 +43,4 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         p.createRandomPoints( None )
         
         s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputShape ).absolutePath() )
+        self.iface.addVectorLayer( outputShape, 'sample', 'ogr' )

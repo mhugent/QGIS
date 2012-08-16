@@ -1,6 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
+from qgis.gui import *
 from ui_surveyinitdialogbase import Ui_SurveyInitDialogBase
 
 class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
@@ -45,6 +46,11 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         QObject.connect( self.mStrataLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.setMinimumDistanceAttributes )
         QObject.connect( self.mStrataLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.setNSamplePointsAttributes )
         QObject.connect( self.mStrataLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.setStrataIdAttributes )
+        
+        #connections for buttons
+        QObject.connect( self.mNewStrataLayerButton, SIGNAL('clicked()'), self.createNewStrataLayer )
+        QObject.connect( self.mNewSurveyLayerButton, SIGNAL('clicked()'), self.createNewSurveyAreaLayer )
+        QObject.connect( self.mNewBaselineLayerButton, SIGNAL('clicked()'), self.createNewBaselineLayer )
         
         self.mStratumIdComboBox.setCurrentIndex(  self.mStratumIdComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', 0 )[0]  ) )
         self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', 0 )[0]  )  )
@@ -140,6 +146,39 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
                 for key in fieldMap:
                     field = fieldMap[key]
                     self.mStrataIdAttributeComboBox.addItem( field.name(), key )
+                    
+    def createNewStrataLayer( self ):
+        attributeList = []
+        #samples per polygon
+        nPointsAttribute = QgsNewVectorLayerDialog.AttributeEntry()
+        nPointsAttribute.name = 'nPoints'
+        nPointsAttribute.type = 'Integer'
+        nPointsAttribute.width = 10
+        nPointsAttribute.precision = 0
+        attributeList.append( nPointsAttribute )
+        #min distance between samples
+        minDistAttribute = QgsNewVectorLayerDialog.AttributeEntry()
+        minDistAttribute.name = 'minDist'
+        minDistAttribute.type = 'Real'
+        minDistAttribute.width = 10
+        minDistAttribute.precision = 2
+        attributeList.append( minDistAttribute )
+        
+        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
+        
+    def createNewSurveyAreaLayer( self ):
+        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon )
+        
+    def createNewBaselineLayer( self ):
+        attributeList = []
+        #strata id
+        strataIdAttribute = QgsNewVectorLayerDialog.AttributeEntry()
+        strataIdAttribute.name = 'strata_id'
+        strataIdAttribute.type = 'Integer'
+        strataIdAttribute.width = 10
+        strataIdAttribute.precision = 0
+        attributeList.append( strataIdAttribute )
+        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
         
     def accept( self ):
          #store the settings to the properties section of the project file
