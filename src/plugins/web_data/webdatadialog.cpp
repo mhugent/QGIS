@@ -569,7 +569,6 @@ void WebDataDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* cur
 
 void WebDataDialog::on_mAddNIWAServicesButton_clicked()
 {
-  //addServicesFromHtml( "http://localhost/xhtml.xml" );
   addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
 }
 
