@@ -70,7 +70,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         
     #Return index of strata layer attribute containing the minimum distance between sample points
     def strataMinDistanceAttribute( self ):
-        return self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ).toString()
+        return self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ).toInt()
         
     #Return index of strata layer attribut containing the number of sample points
     def strataNSamplePointsAttribute( self ):
@@ -98,6 +98,9 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     
     def setMinimumDistanceAttributes( self, index ):
         self.mMinimumDistanceAttributeComboBox.clear()
+        
+        self.mMinimumDistanceAttributeComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), -1 )
+        
         layerId = self.mStrataLayerComboBox.itemData( index ).toString()
         if not layerId.isEmpty():
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )

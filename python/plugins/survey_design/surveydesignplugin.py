@@ -12,7 +12,7 @@ class SurveyDesignPlugin:
         
     def initGui(self):
         menuBar = self.iface.mainWindow().menuBar()
-        surveyDesignMenu = QMenu( QCoreApplication.translate("SurveyDesignPlugin","Survey design") ,  menuBar)
+        surveyDesignMenu = QMenu( QCoreApplication.translate("SurveyDesignPlugin","Survey") ,  menuBar)
         
         isSurveyProject = self.projectContainsSurveyDesign()
 
