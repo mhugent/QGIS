@@ -113,6 +113,7 @@ void WebDataDialog::addServicesFromHtml( const QString& url )
   int errorColumn;
   if ( !htmlDoc.setContent( response, false, &errorMsg, &errorLine, &errorColumn ) )
   {
+    QMessageBox::critical( 0, tr( "Failed to parse XHTML file" ), tr( "Error parsing the xhtml from %1: %2 on line %3, column %4" ).arg( url ).arg( errorMsg ).arg( errorLine ).arg( errorColumn ) );
     return;
   }
 
