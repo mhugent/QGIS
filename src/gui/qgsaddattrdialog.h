@@ -24,7 +24,7 @@
 
 class QgsVectorLayer;
 
-class QgsAddAttrDialog: public QDialog, private Ui::QgsAddAttrDialogBase
+class GUI_EXPORT QgsAddAttrDialog: public QDialog, private Ui::QgsAddAttrDialogBase
 {
     Q_OBJECT
   public:
