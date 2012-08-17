@@ -34,6 +34,7 @@ attributetable/qgsattributetabledelegate.cpp
 
 qgisgui.cpp
 qgisinterface.cpp
+qgsaddattrdialog.cpp
 qgsannotationitem.cpp
 qgsattributeeditor.cpp
 qgslegendinterface.cpp
@@ -119,6 +120,7 @@ attributetable/qgsattributetablemodel.h
 attributetable/qgsattributetablememorymodel.h
 attributetable/qgsattributetabledelegate.h
 
+qgsaddattrdialog.h
 qgsattributeeditor.h
 qgscomposerview.h
 qgsdetaileditemdelegate.h

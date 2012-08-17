@@ -46,11 +46,16 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         QObject.connect( self.mStrataLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.setMinimumDistanceAttributes )
         QObject.connect( self.mStrataLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.setNSamplePointsAttributes )
         QObject.connect( self.mStrataLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.setStrataIdAttributes )
+        QObject.connect( self.mStratumIdToolButton, SIGNAL('currentIndexChanged( int )'), self.createBaselineStrataAttribute )
         
         #connections for buttons
         QObject.connect( self.mNewStrataLayerButton, SIGNAL('clicked()'), self.createNewStrataLayer )
         QObject.connect( self.mNewSurveyLayerButton, SIGNAL('clicked()'), self.createNewSurveyAreaLayer )
         QObject.connect( self.mNewBaselineLayerButton, SIGNAL('clicked()'), self.createNewBaselineLayer )
+        QObject.connect( self.mStrataMinDistToolButton, SIGNAL('clicked()'), self.createStrataMinDistAttribute )
+        QObject.connect( self.mStrataNSamplePointsToolButton, SIGNAL('clicked()') , self.createStrataNSamplePointsAttribute )
+        QObject.connect(self.mStrataIdAttributeToolButton, SIGNAL('clicked()'), self.createStrataIdAttribute )
+        QObject.connect(self.mStratumIdToolButton, SIGNAL('clicked()'), self.createBaselineStrataAttribute )
         
         self.mStratumIdComboBox.setCurrentIndex(  self.mStratumIdComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', 0 )[0]  ) )
         self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', 0 )[0]  )  )
@@ -76,7 +81,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         
     #Return index of strata layer attribute containing the minimum distance between sample points
     def strataMinDistanceAttribute( self ):
-        return self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ).toInt()
+        return self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ).toInt()[0]
         
     #Return index of strata layer attribut containing the number of sample points
     def strataNSamplePointsAttribute( self ):
@@ -90,7 +95,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     def setBaselineStrataIdAttributes( self, index ):
         self.mStratumIdComboBox.clear()
         self.mStratumIdComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), -1 )
-        layerId = self.mStrataLayerComboBox.itemData( index ).toString()
+        layerId = self.mSurveyBaselineLayerComboBox.itemData( index ).toString()
         if not layerId.isEmpty():
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )
             if not layer is None:
@@ -179,6 +184,97 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         strataIdAttribute.precision = 0
         attributeList.append( strataIdAttribute )
         QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
+        
+    def createStrataMinDistAttribute( self ):
+        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
+        if strataLayer is None:
+            return
+            
+        d = QgsAddAttrDialog( strataLayer )
+        d.setType( 0 )
+        d.setFieldName( 'min_dist' )
+        d.setWidth( 10 )
+        d.setPrecision( 0 )
+        if d.exec_() == QDialog.Accepted:
+            fieldList = []
+            newField = d.field()
+            fieldList.append( newField )
+            strataLayer.dataProvider().addAttributes( fieldList )
+            strataLayer.updateFieldMap()
+            self.setMinimumDistanceAttributes( self. mStrataLayerComboBox.currentIndex() )
+            #try to set new attribute as current item
+            fieldIndex = strataLayer.dataProvider().fieldNameIndex( newField.name() )
+            if fieldIndex != -1:
+                self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( fieldIndex ) )
+                
+    def createStrataNSamplePointsAttribute( self ):
+        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
+        if strataLayer is None:
+            return
+            
+        d = QgsAddAttrDialog( strataLayer )
+        d.setType( 0 )
+        d.setFieldName( 'n_points' )
+        d.setWidth( 10 )
+        d.setPrecision( 0 )
+        if d.exec_() == QDialog.Accepted:
+            fieldList = []
+            newField = d.field()
+            fieldList.append( newField )
+            strataLayer.dataProvider().addAttributes( fieldList )
+            strataLayer.updateFieldMap()
+            self.setNSamplePointsAttributes( self. mStrataLayerComboBox.currentIndex() )
+            #try to set new attribute as current item
+            fieldIndex = strataLayer.dataProvider().fieldNameIndex( newField.name() )
+            if fieldIndex != -1:
+                self.mNSamplePointsComboBox.setCurrentIndex( self.mNSamplePointsComboBox.findData( fieldIndex ) )
+            
+            
+    def createStrataIdAttribute( self ):
+        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
+        if strataLayer is None:
+            return
+            
+        d = QgsAddAttrDialog( strataLayer )
+        d.setType( 0 )
+        d.setFieldName( 'strata_id' )
+        d.setWidth( 10 )
+        d.setPrecision( 0 )
+        if d.exec_() == QDialog.Accepted:
+            fieldList = []
+            newField = d.field()
+            fieldList.append( newField )
+            strataLayer.dataProvider().addAttributes( fieldList )
+            strataLayer.updateFieldMap()
+            self.setStrataIdAttributes( self. mStrataLayerComboBox.currentIndex() )
+            #try to set new attribute as current item
+            fieldIndex = strataLayer.dataProvider().fieldNameIndex( newField.name() )
+            if fieldIndex != -1:
+                self.mStrataIdAttributeComboBox.setCurrentIndex( self.mStrataIdAttributeComboBox.findData( fieldIndex ) )
+            
+            
+    def createBaselineStrataAttribute( self ):
+        baselineLayer  = QgsMapLayerRegistry.instance().mapLayer( self.mSurveyBaselineLayerComboBox.itemData( self.mSurveyBaselineLayerComboBox.currentIndex() ).toString() )
+        if not baselineLayer:
+            return
+    
+        d = QgsAddAttrDialog( baselineLayer )
+        d.setType( 0 )
+        d.setFieldName( 'strata_id' )
+        d.setWidth( 10 )
+        d.setPrecision( 0 )
+        if d.exec_() == QDialog.Accepted:
+            fieldList = []
+            newField = d.field()
+            fieldList.append( newField )
+            baselineLayer.dataProvider().addAttributes( fieldList )
+            baselineLayer.updateFieldMap()
+            self.setBaselineStrataIdAttributes( self.mSurveyBaselineLayerComboBox.currentIndex() )
+            #try to set new attribute as current item
+            fieldIndex = baselineLayer.dataProvider().fieldNameIndex( newField.name() )
+            if fieldIndex != -1:
+                self.mStratumIdComboBox.setCurrentIndex( self.mStratumIdComboBox.findData( fieldIndex ) )
+        
         
     def accept( self ):
          #store the settings to the properties section of the project file

@@ -7,6 +7,7 @@
 
 %Import core/core.sip
 
+%Include qgsaddattrdialog.sip
 %Include qgsannotationitem.sip
 %Include qgscolorbutton.sip
 %Include qgslegendinterface.sip
