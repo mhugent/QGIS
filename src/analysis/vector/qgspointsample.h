@@ -12,7 +12,7 @@ class QgsVectorLayer;
 class QProgressDialog;
 
 /**Creates random points in polygons / multipolygons*/
-class QgsPointSample
+class ANALYSIS_EXPORT QgsPointSample
 {
   public:
     QgsPointSample( QgsVectorLayer* inputLayer, const QString& outputLayer, int nPointsAttribute, int minDistAttribute = -1 );
