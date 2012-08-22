@@ -6,8 +6,9 @@ from ui_surveyinitdialogbase import Ui_SurveyInitDialogBase
 
 class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     
-    def __init__(self):
+    def __init__(self,  iface):
         QDialog.__init__(self, None)
+        self.iface = iface
         self.setupUi(self)
         
         #possible entries in layer combo boxes
@@ -169,10 +170,14 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         minDistAttribute.precision = 2
         attributeList.append( minDistAttribute )
         
-        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
+        filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
+        if not filename.isEmpty():
+            self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
         
     def createNewSurveyAreaLayer( self ):
-        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon )
+        filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon )
+        if not filename.isEmpty():
+            self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
         
     def createNewBaselineLayer( self ):
         attributeList = []
@@ -183,7 +188,10 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         strataIdAttribute.width = 10
         strataIdAttribute.precision = 0
         attributeList.append( strataIdAttribute )
-        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
+        filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
+        if not filename.isEmpty():
+            self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
+            
         
     def createStrataMinDistAttribute( self ):
         strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
