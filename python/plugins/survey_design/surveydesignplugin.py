@@ -33,7 +33,7 @@ class SurveyDesignPlugin:
         self.iface.mainWindow().menuBar().removeAction( self.surveyDesignAction )
         
     def initSurveyDesign(self):
-        dialog = SurveyInitDialog()
+        dialog = SurveyInitDialog( self.iface)
         if dialog.exec_() == QDialog.Accepted:
             self.checkSurveyDesignPossible()
         

@@ -6,25 +6,15 @@ from ui_surveyinitdialogbase import Ui_SurveyInitDialogBase
 
 class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     
-    def __init__(self):
+    def __init__(self,  iface):
         QDialog.__init__(self, None)
+        self.iface = iface
         self.setupUi(self)
         
         #possible entries in layer combo boxes
-        self.mSurveyAreaLayerComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), '' )
-        self.mSurveyBaselineLayerComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), '' )
-        
-        mapLayers = QgsMapLayerRegistry.instance().mapLayers()
-        for id in mapLayers:
-            currentLayer = mapLayers[id]
-            if currentLayer.type() != QgsMapLayer.VectorLayer:
-                continue
-            
-            if currentLayer.geometryType() == QGis.Polygon:
-                self.mSurveyAreaLayerComboBox.addItem( currentLayer.name(), currentLayer.id() )
-                self.mStrataLayerComboBox.addItem( currentLayer.name(), currentLayer.id() )
-            elif currentLayer.geometryType() == QGis.Line:
-                self.mSurveyBaselineLayerComboBox.addItem( currentLayer.name(), currentLayer.id() )
+        self.fillLayerComboBox( self.mSurveyAreaLayerComboBox,  QGis.Polygon,  True )
+        self.fillLayerComboBox( self.mSurveyBaselineLayerComboBox, QGis.Line,  True )
+        self.fillLayerComboBox( self.mStrataLayerComboBox,  QGis.Polygon,  False )
         
         #set layers from project file
         surveyAreaLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyAreaLayer','' )
@@ -61,6 +51,20 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', 0 )[0]  )  )
         self.mNSamplePointsComboBox.setCurrentIndex( self.mNSamplePointsComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', 0 )[0]  )  )
         self.mStrataIdAttributeComboBox.setCurrentIndex( self.mStrataIdAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataId',  0 ) [0] )  )
+     
+    def fillLayerComboBox( self,  comboBox,  geometryType,  noneEntry ):
+        comboBox.clear()
+        if noneEntry == True:
+            comboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), '' )
+            
+        mapLayers = QgsMapLayerRegistry.instance().mapLayers()
+        for id in mapLayers:
+            currentLayer = mapLayers[id]
+            if currentLayer.type() != QgsMapLayer.VectorLayer:
+                continue
+            
+            if currentLayer.geometryType() == geometryType:
+                comboBox.addItem( currentLayer.name(), currentLayer.id() )
         
         
     #Return id of survey area layer (or empty string if none)
@@ -169,10 +173,18 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         minDistAttribute.precision = 2
         attributeList.append( minDistAttribute )
         
-        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
+        filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
+        if not filename.isEmpty():
+            vlayer = self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
+            self.fillLayerComboBox( self.mStrataLayerComboBox,  QGis.Polygon,  False )
+            self.mStrataLayerComboBox.setCurrentIndex( self.mStrataLayerComboBox.findData( vlayer.id() ) )
         
     def createNewSurveyAreaLayer( self ):
-        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon )
+        filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon )
+        if not filename.isEmpty():
+            vlayer = self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
+            self.fillLayerComboBox( self.mSurveyAreaLayerComboBox,  QGis.Polygon,  True )
+            self.mSurveyAreaLayerComboBox.setCurrentIndex( self.mSurveyAreaLayerComboBox.findData(  vlayer.id())  )
         
     def createNewBaselineLayer( self ):
         attributeList = []
@@ -183,7 +195,11 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         strataIdAttribute.width = 10
         strataIdAttribute.precision = 0
         attributeList.append( strataIdAttribute )
-        QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
+        filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
+        if not filename.isEmpty():
+            vlayer = self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
+            self.fillLayerComboBox( self.mSurveyBaselineLayerComboBox,  QGis.Line,  True )
+            self.mSurveyBaselineLayerComboBox.setCurrentIndex( self.mSurveyBaselineLayerComboBox.findData( vlayer.id() ) )
         
     def createStrataMinDistAttribute( self ):
         strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
