@@ -14,11 +14,47 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         self.mPointSurveyRadioButton.setChecked( True )
        
         surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
-        if surveyBaselineLayer.isEmpty():
+        baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )[0]
+        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
+        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
+        if surveyBaselineLayer.isEmpty() or baselineStrataId == -1 or strataMinDistance == -1 or strataNSamplePoints == -1:
            self.mTransectSurveyRadioButton.setEnabled( False )
-        
-        
+           
     def createSample( self ):
+        if self.mPointSurveyRadioButton.isChecked():
+            self.createPointSample()
+        elif self.mTransectSurveyRadioButton.isChecked():
+            self.createTransectSample()
+   
+    def createTransectSample( self ):
+        s = QSettings()
+        saveDir = s.value( '/SurveyPlugin/SaveDir','').toString()
+        
+        outputPointShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output point shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
+        if outputPointShape.isEmpty():
+            return
+        
+        outputLineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output line shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
+        if outputLineShape.isEmpty():
+            return
+        
+        strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
+        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
+        baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )[0]
+        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
+        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
+        
+        strataMapLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
+        baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
+        transectSample = QgsTransectSample(  strataMapLayer, -1, strataMinDistance, strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
+        baselineStrataId, outputPointShape, outputLineShape )
+        transectSample.createSample( None )
+        
+        s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputLineShape ).absolutePath() )
+        self.iface.addVectorLayer( outputPointShape, 'sample_point', 'ogr' )
+        self.iface.addVectorLayer( outputLineShape, 'sample_line', 'ogr' )
+        
+    def createPointSample( self ):
         #get StrataLayer, StrataMinDistance, StrataNSamplePoints
         strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
         strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]

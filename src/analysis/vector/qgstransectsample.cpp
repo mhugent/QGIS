@@ -110,8 +110,8 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       QgsFeature samplePointFeature;
       samplePointFeature.setGeometry( samplePoint );
       samplePointFeature.addAttribute( 0, fet.id() );
-      outputPointWriter.addFeature( fet );
-      ++nIterations;
+      outputPointWriter.addFeature( samplePointFeature );
+      ++nCreatedTransects;
 
       //find closest point on clipped buffer line
 
@@ -131,7 +131,7 @@ QgsGeometry* QgsTransectSample::findBaselineGeometry( int strataId )
   while ( mBaselineLayer->nextFeature( fet ) ) //todo: cache this in case there are many baslines
   {
     int id = fet.attributeMap()[mBaselineStrataId].toInt();
-    if ( id == strataId )
+    if ( id == strataId || mShareBaseline )
     {
       return fet.geometryAndOwnership();
     }
