@@ -1,5 +1,6 @@
 #include "qgstransectsample.h"
 #include "qgsgeometry.h"
+#include "qgsspatialindex.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
 
@@ -68,7 +69,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     }
 
     //find baseline for strata
-    QgsGeometry* baselineGeom = findBaselineGeometry( fet.attributeMap()[mStrataIdAttribute].toInt() );
+    QgsGeometry* baselineGeom = findBaselineGeometry( fet.id() );
     if ( !baselineGeom )
     {
       continue;
@@ -107,6 +108,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     int nIterations = 0;
     int nMaxIterations = nTransects * 50;
 
+    QgsSpatialIndex sIndex; //to check minimum distance
+    QMap< QgsFeatureId, QgsGeometry* > lineFeatureMap;
+
     while ( nCreatedTransects < nTransects && nIterations < nMaxIterations )
     {
       double randomPosition = (( double )rand() / RAND_MAX ) * clippedBaseline->length();
@@ -120,8 +124,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       QgsFeature samplePointFeature;
       samplePointFeature.setGeometry( samplePoint );
       samplePointFeature.addAttribute( 0, fet.id() );
-      outputPointWriter.addFeature( samplePointFeature );
-
 
       //find closest point on clipped buffer line
       QgsPoint minDistPoint;
@@ -132,7 +134,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
         continue;
       }
 
-      QgsFeature sampleLineFeature;
       QgsPolyline sampleLinePolyline;
       QgsPoint ptFarAway( sampleQgsPoint.x() + ( minDistPoint.x() - sampleQgsPoint.x() ) * 1000000,
                           sampleQgsPoint.y() + ( minDistPoint.y() - sampleQgsPoint.y() ) * 1000000 );
@@ -146,17 +147,39 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
         continue;
       }
 
+      //search closest existing profile. Cancel if dist < minDist
+      if ( otherTransectWithinDistance( lineClipStratum, minDistance, sIndex, lineFeatureMap ) )
+      {
+        delete lineFarAwayGeom; delete lineClipStratum;
+        continue;
+      }
+
+      QgsFeatureId fid( nCreatedTransects );
+      QgsFeature sampleLineFeature( fid );
       sampleLineFeature.setGeometry( lineClipStratum );
       sampleLineFeature.addAttribute( 0, fet.id() );
       outputLineWriter.addFeature( sampleLineFeature );
 
-      //search closest existing profile. Cancel if dist < minDist
+      //add point to file writer here.
+      //It can only be written if the corresponding transect has been as well
+      outputPointWriter.addFeature( samplePointFeature );
+
+      sIndex.insertFeature( sampleLineFeature );
+      lineFeatureMap.insert( fid, sampleLineFeature.geometryAndOwnership() );
 
       delete lineFarAwayGeom;
       ++nCreatedTransects;
     }
     delete baselineGeom; delete clippedBaseline; delete clipBaselineBuffer; delete bufferLine;
     delete bufferLineClipped;
+
+    //delete all line geometries in spatial index
+    QMap< QgsFeatureId, QgsGeometry* >::iterator featureMapIt = lineFeatureMap.begin();
+    for ( ; featureMapIt != lineFeatureMap.end(); ++featureMapIt )
+    {
+      delete( featureMapIt.value() );
+    }
+    lineFeatureMap.clear();
   }
 
   return 0;
@@ -170,11 +193,44 @@ QgsGeometry* QgsTransectSample::findBaselineGeometry( int strataId )
   QgsFeature fet;
   while ( mBaselineLayer->nextFeature( fet ) ) //todo: cache this in case there are many baslines
   {
-    int id = fet.attributeMap()[mBaselineStrataId].toInt();
-    if ( id == strataId || mShareBaseline )
+    if ( strataId == fet.attributeMap()[mBaselineStrataId].toInt() || mShareBaseline )
     {
       return fet.geometryAndOwnership();
     }
   }
   return 0;
+}
+
+bool QgsTransectSample::otherTransectWithinDistance( QgsGeometry* geom, double minDistance, QgsSpatialIndex& sIndex,
+    const QMap< QgsFeatureId, QgsGeometry* >& lineFeatureMap )
+{
+  if ( !geom )
+  {
+    return false;
+  }
+
+  QgsGeometry* buffer = geom->buffer( minDistance, 8 );
+  if ( !buffer )
+  {
+    return false;
+  }
+  QgsRectangle rect = buffer->boundingBox();
+  QList<QgsFeatureId> lineIdList = sIndex.intersects( rect );
+
+  QList<QgsFeatureId>::const_iterator lineIdIt = lineIdList.constBegin();
+  for ( ; lineIdIt != lineIdList.constEnd(); ++lineIdIt )
+  {
+    const QMap< QgsFeatureId, QgsGeometry* >::const_iterator idMapIt = lineFeatureMap.find( *lineIdIt );
+    if ( idMapIt != lineFeatureMap.constEnd() )
+    {
+      if ( geom->distance( *( idMapIt.value() ) ) < minDistance )
+      {
+        delete buffer;
+        return true;
+      }
+    }
+  }
+
+  delete buffer;
+  return false;
 }

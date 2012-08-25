@@ -1,9 +1,12 @@
 #ifndef QGSTRANSECTSAMPLE_H
 #define QGSTRANSECTSAMPLE_H
 
+#include "qgsfeature.h"
+#include <QMap>
 #include <QString>
 
 class QgsGeometry;
+class QgsSpatialIndex;
 class QgsVectorLayer;
 class QProgressDialog;
 
@@ -22,6 +25,10 @@ class QgsTransectSample
     QgsTransectSample(); //default constructor forbidden
 
     QgsGeometry* findBaselineGeometry( int strataId );
+
+    /**Returns true if another transect is within the specified minimum distance*/
+    static bool otherTransectWithinDistance( QgsGeometry* geom, double minDistance, QgsSpatialIndex& sIndex, const QMap< QgsFeatureId, QgsGeometry* >&
+        lineFeatureMap );
 
     QgsVectorLayer* mStrataLayer;
     int mStrataIdAttribute;
