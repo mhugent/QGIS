@@ -45,6 +45,13 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 3;
   }
 
+  QgsVectorFileWriter outputLineWriter( mOutputLineLayer, "utf-8", outputPointFields, QGis::WKBLineString,
+                                        &( mStrataLayer->crs() ) );
+  if ( outputLineWriter.hasError() != QgsVectorFileWriter::NoError )
+  {
+    return 4;
+  }
+
   //iterate over strata layer
   QgsAttributeList attList;
   attList << mStrataIdAttribute;
@@ -71,6 +78,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
     if ( !clippedBaseline )
     {
+      delete baselineGeom;
       continue;
     }
 
@@ -80,6 +88,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     if ( !clipBaselineBuffer && !( clipBaselineBuffer->wkbType() == QGis::WKBPolygon ||
                                    clipBaselineBuffer->wkbType() == QGis::WKBPolygon25D ) )
     {
+      delete baselineGeom; delete clippedBaseline; delete clipBaselineBuffer;
       continue;
     }
 
@@ -88,6 +97,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     QgsGeometry* bufferLineClipped = bufferLine->intersection( strataGeom );
     if ( !bufferLineClipped )
     {
+      delete baselineGeom; delete clippedBaseline; delete clipBaselineBuffer; delete bufferLine;
       continue;
     }
 
@@ -111,12 +121,42 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       samplePointFeature.setGeometry( samplePoint );
       samplePointFeature.addAttribute( 0, fet.id() );
       outputPointWriter.addFeature( samplePointFeature );
-      ++nCreatedTransects;
+
 
       //find closest point on clipped buffer line
+      QgsPoint minDistPoint;
+      QgsPoint sampleQgsPoint = samplePoint->asPoint();
+      int afterVertex;
+      if ( bufferLineClipped->closestSegmentWithContext( sampleQgsPoint, minDistPoint, afterVertex ) < 0 )
+      {
+        continue;
+      }
+
+      QgsFeature sampleLineFeature;
+      QgsPolyline sampleLinePolyline;
+      QgsPoint ptFarAway( sampleQgsPoint.x() + ( minDistPoint.x() - sampleQgsPoint.x() ) * 1000000,
+                          sampleQgsPoint.y() + ( minDistPoint.y() - sampleQgsPoint.y() ) * 1000000 );
+      QgsPolyline lineFarAway;
+      lineFarAway << sampleQgsPoint << ptFarAway;
+      QgsGeometry* lineFarAwayGeom = QgsGeometry::fromPolyline( lineFarAway );
+      QgsGeometry* lineClipStratum = lineFarAwayGeom->intersection( strataGeom );
+      if ( !lineClipStratum )
+      {
+        delete lineFarAwayGeom; delete lineClipStratum;
+        continue;
+      }
+
+      sampleLineFeature.setGeometry( lineClipStratum );
+      sampleLineFeature.addAttribute( 0, fet.id() );
+      outputLineWriter.addFeature( sampleLineFeature );
 
       //search closest existing profile. Cancel if dist < minDist
+
+      delete lineFarAwayGeom;
+      ++nCreatedTransects;
     }
+    delete baselineGeom; delete clippedBaseline; delete clipBaselineBuffer; delete bufferLine;
+    delete bufferLineClipped;
   }
 
   return 0;
