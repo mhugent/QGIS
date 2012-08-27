@@ -38,8 +38,8 @@ class SurveyDesignPlugin:
             self.checkSurveyDesignPossible()
         
     def openSurveyDesignWidget(self):
-        dialog = SurveyDesignDialog( self.iface )
-        dialog.exec_()
+        self.designDialog = SurveyDesignDialog( self.iface.mainWindow(),  self.iface )
+        self.designDialog.show()
         
     def checkSurveyDesignPossible( self ):
             self.actionSurveyProperties.setEnabled( self.projectContainsSurveyDesign() )

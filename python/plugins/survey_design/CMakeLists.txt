@@ -3,6 +3,7 @@ __init__.py
 surveydesignplugin.py
 surveyinitdialog.py
 surveydesigndialog.py
+surveydigitizetool.py
 )
 
 PYQT4_WRAP_UI(PYUI_FILES
