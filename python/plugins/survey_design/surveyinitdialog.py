@@ -55,7 +55,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     def fillLayerComboBox( self,  comboBox,  geometryType,  noneEntry ):
         comboBox.clear()
         if noneEntry == True:
-            comboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), '' )
+            comboBox.addItem( self.tr( 'None' ) )
             
         mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         for id in mapLayers:
@@ -98,7 +98,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     #Fill attributes into mStratumIdComboBox
     def setBaselineStrataIdAttributes( self, index ):
         self.mStratumIdComboBox.clear()
-        self.mStratumIdComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), -1 )
+        self.mStratumIdComboBox.addItem( self.tr( 'None' ), -1 )
         layerId = self.mSurveyBaselineLayerComboBox.itemData( index ).toString()
         if not layerId.isEmpty():
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )
@@ -114,7 +114,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     def setMinimumDistanceAttributes( self, index ):
         self.mMinimumDistanceAttributeComboBox.clear()
         
-        self.mMinimumDistanceAttributeComboBox.addItem( QCoreApplication.translate( 'SurveyInitDialog', 'None' ), -1 )
+        self.mMinimumDistanceAttributeComboBox.addItem( self.tr('None'), -1 )
         
         layerId = self.mStrataLayerComboBox.itemData( index ).toString()
         if not layerId.isEmpty():
