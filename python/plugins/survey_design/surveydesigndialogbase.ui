@@ -29,7 +29,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="resources.qrc">
          <normaloff>:/plugins/survey_design/mActionToggleEditing.png</normaloff>:/plugins/survey_design/mActionToggleEditing.png</iconset>
        </property>
       </widget>
@@ -47,7 +47,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="resources.qrc">
          <normaloff>:/plugins/survey_design/mActionToggleEditing.png</normaloff>:/plugins/survey_design/mActionToggleEditing.png</iconset>
        </property>
       </widget>
@@ -65,7 +65,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="resources.qrc">
          <normaloff>:/plugins/survey_design/mActionToggleEditing.png</normaloff>:/plugins/survey_design/mActionToggleEditing.png</iconset>
        </property>
       </widget>
@@ -96,6 +96,9 @@
       <widget class="QCheckBox" name="mShareBaselineCheckBox">
        <property name="text">
         <string>Share baseline</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -132,11 +135,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>mCreateSampleButton</zorder>
-  <zorder>buttonBox</zorder>
-  <zorder>mShareBaselineRadioButton</zorder>
-  <zorder>label</zorder>
-  <zorder>toolButton_3</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>
