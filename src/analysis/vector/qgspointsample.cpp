@@ -54,6 +54,9 @@ int QgsPointSample::createRandomPoints( QProgressDialog* pd )
     return 3;
   }
 
+  //init random number generator
+  srand( QTime::currentTime().msec() );
+
   //iterate through input layer
   QgsAttributeList attList;
   attList << mNumberOfPointsAttribute;

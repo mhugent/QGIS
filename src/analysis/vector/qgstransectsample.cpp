@@ -53,6 +53,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 4;
   }
 
+  //init random number generator
+  srand( QTime::currentTime().msec() );
+
   //iterate over strata layer
   QgsAttributeList attList;
   attList << mStrataIdAttribute;
