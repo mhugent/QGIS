@@ -7,7 +7,6 @@ SET(QGIS_APP_SRCS
   qgsaddjoindialog.cpp
   qgsannotationwidget.cpp
   qgsattributeactiondialog.cpp
-  qgsattributedialog.cpp
   qgsattributetypedialog.cpp
   qgsattributetypeloaddialog.cpp
   qgsattributetabledialog.cpp
@@ -99,7 +98,6 @@ SET(QGIS_APP_SRCS
   qgstipfactory.cpp
   qgsuniquevaluedialog.cpp
   qgsvectorlayerproperties.cpp
-  qgshighlight.cpp
   qgshandlebadlayers.cpp
 
   composer/qgsattributeselectiondialog.cpp
@@ -156,7 +154,6 @@ SET (QGIS_APP_MOC_HDRS
   qgsaddjoindialog.h
   qgsannotationwidget.h
   qgsattributeactiondialog.h
-  qgsattributedialog.h
   qgsattributetypedialog.h
   qgsattributetypeloaddialog.h
   qgsattributetabledialog.h

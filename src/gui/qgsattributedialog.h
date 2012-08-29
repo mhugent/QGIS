@@ -26,12 +26,12 @@ class QgsField;
 class QgsVectorLayer;
 class QgsHighlight;
 
-class QgsAttributeDialog : public QObject
+class GUI_EXPORT QgsAttributeDialog : public QObject
 {
     Q_OBJECT
 
   public:
-    QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeature, bool featureOwner );
+    QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeature, bool featureOwner, QWidget* parent = 0 );
     ~QgsAttributeDialog();
 
     /** Saves the size and position for the next time
@@ -52,7 +52,7 @@ class QgsAttributeDialog : public QObject
   public slots:
     void accept();
 
-    int exec();
+    int exec_();
     void show();
 
     void dialogDestroyed();

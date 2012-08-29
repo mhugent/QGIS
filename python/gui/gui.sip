@@ -8,6 +8,7 @@
 %Import core/core.sip
 
 %Include qgsaddattrdialog.sip
+%Include qgsattributedialog.sip
 %Include qgsannotationitem.sip
 %Include qgscolorbutton.sip
 %Include qgslegendinterface.sip
@@ -16,6 +17,7 @@
 %Include qgsencodingfiledialog.sip
 %Include qgsformannotationitem.sip
 %Include qgsgenericprojectionselector.sip
+%Include qgshighlight.sip
 %Include qgsmapcanvas.sip
 %Include qgsmapcanvasitem.sip
 %Include qgsmapcanvasmap.sip

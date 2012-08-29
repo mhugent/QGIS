@@ -9,6 +9,8 @@ class SurveyDigitizeTool( QgsMapTool ):
         QgsMapTool.__init__(self,  mapCanvas )
         self.mPolygonMode = polygonMode #True: polygon, False: line
         self.mRubberBand = QgsRubberBand( mapCanvas,  polygonMode )
+        self.mRubberBand.setColor( QColor( 255,  0,  0 ) )
+        self.mRubberBand.setWidth(  2 )
         self.mLayerCoordList = []
         self.mMapCanvas = mapCanvas
         self.mDigitizeLayerId = digitizeLayer
@@ -70,11 +72,19 @@ class SurveyDigitizeTool( QgsMapTool ):
             if self.mEditLayer is None:
                 return
             feature = QgsFeature()
-            feature.setGeometry( self.geometryFromPointList( self.mLayerCoordList ) )
-            self.mEditLayer.beginEditCommand('Add feature')
-            self.mEditLayer.addFeature( feature )
-            self.mEditLayer.endEditCommand()
-            self.mRubberBand.reset()
+            
+            #add default attributes
+            fieldMap = self.mEditLayer.pendingFields()
+            for key in fieldMap:
+                feature.addAttribute( key,  self.mEditLayer.dataProvider().defaultValue( key ) )
+            
+            attDialog = QgsAttributeDialog(  self.mEditLayer,  feature,  False )
+            if attDialog.exec_() == QDialog.Accepted:
+                feature.setGeometry( self.geometryFromPointList( self.mLayerCoordList ) )
+                self.mEditLayer.beginEditCommand('Add feature')
+                self.mEditLayer.addFeature( feature )
+                self.mEditLayer.endEditCommand()
+            self.mRubberBand.reset( self.mPolygonMode )
             del self.mLayerCoordList[:]
             self.mMapCanvas.refresh()
             

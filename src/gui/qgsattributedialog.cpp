@@ -27,7 +27,7 @@
 #include "qgsexpression.h"
 #include "qgspythonrunner.h"
 
-#include "qgisapp.h"
+//#include "qgisapp.h"
 
 #include <QTableWidgetItem>
 #include <QSettings>
@@ -45,7 +45,7 @@
 
 int QgsAttributeDialog::smFormCounter = 0;
 
-QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeature, bool featureOwner )
+QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeature, bool featureOwner, QWidget* parent )
     : mDialog( 0 )
     , mSettingsPath( "/Windows/AttributeDialog/" )
     , mLayer( vl )
@@ -75,7 +75,7 @@ QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeat
 
       QFileInfo fi( vl->editForm() );
       loader.setWorkingDirectory( fi.dir() );
-      QWidget *myWidget = loader.load( &file, QgisApp::instance() );
+      QWidget *myWidget = loader.load( &file, parent );
       file.close();
 
       mDialog = qobject_cast<QDialog*>( myWidget );
@@ -85,7 +85,7 @@ QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeat
 
   if ( !mDialog )
   {
-    mDialog = new QDialog( QgisApp::instance() );
+    mDialog = new QDialog( parent );
 
     QGridLayout *gridLayout;
     QFrame *mFrame;
@@ -342,7 +342,7 @@ void QgsAttributeDialog::accept()
   }
 }
 
-int QgsAttributeDialog::exec()
+int QgsAttributeDialog::exec_()
 {
   if ( mDialog )
   {

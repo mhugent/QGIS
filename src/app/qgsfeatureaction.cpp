@@ -21,6 +21,7 @@
 #include "qgsidentifyresults.h"
 #include "qgsattributedialog.h"
 #include "qgslogger.h"
+#include "qgisapp.h"
 
 #include <QPushButton>
 #include <QSettings>
@@ -42,7 +43,7 @@ void QgsFeatureAction::execute()
 QgsAttributeDialog *QgsFeatureAction::newDialog( bool cloneFeature )
 {
   QgsFeature *f = cloneFeature ? new QgsFeature( mFeature ) : &mFeature;
-  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature );
+  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, QgisApp::instance() );
 
   if ( mLayer->actions()->size() > 0 )
   {
@@ -95,13 +96,13 @@ bool QgsFeatureAction::editFeature()
 
   if ( !mLayer->isEditable() )
   {
-    res = dialog->exec();
+    res = dialog->exec_();
   }
   else
   {
     QgsAttributeMap src = mFeature.attributeMap();
 
-    if ( dialog->exec() )
+    if ( dialog->exec_() )
     {
       mLayer->beginEditCommand( text() );
 
@@ -170,7 +171,7 @@ bool QgsFeatureAction::addFeature()
       origValues = mFeature.attributeMap();
 
     QgsAttributeDialog *dialog = newDialog( false );
-    if ( dialog->exec() )
+    if ( dialog->exec_() )
     {
       if ( reuseLastValues )
       {
