@@ -87,10 +87,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     double minDistance = fet.attributeMap()[mMinDistanceAttribute].toDouble();
 
     //clip baseline by strata
-    //first buffer stratum to avoid empty result because of numerical problems
-    QgsGeometry* strataMinDistBuffer = strataGeom->buffer( minDistance, 8 );
-    QgsGeometry* clippedBaseline = strataMinDistBuffer->intersection( baselineGeom );
-    delete strataMinDistBuffer;
+    QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
     if ( !clippedBaseline )
     {
       delete baselineGeom;
