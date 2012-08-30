@@ -61,6 +61,13 @@ class QgsMapTool : QObject
     void setAction(QAction* action);
     
     QAction* action();
+
+    /** Use this to associate a button to this maptool. It has the same meaning
+     * as setAction() function except it works with a button instead of an QAction. */
+    void setButton( QAbstractButton* button );
+
+    /** Return associated button with map tool or NULL if no button is associated */
+    QAbstractButton* button();
     
     /** Check whether this MapTool performs a zoom or pan operation.
      * If it does, we will be able to perform the zoom  and then 

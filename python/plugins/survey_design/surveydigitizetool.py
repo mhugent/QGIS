@@ -30,7 +30,7 @@ class SurveyDigitizeTool( QgsMapTool ):
         
         self.cursor = QCursor(QPixmap(["16 16 3 1",
                                   "      c None",
-                                  ".     c #FF0000",
+                                  ".     c #000000",
                                   "+     c #FFFFFF",
                                   "                ",
                                   "       +.+      ",
@@ -56,10 +56,12 @@ class SurveyDigitizeTool( QgsMapTool ):
         
     def deactivate( self ):
         self.mRubberBand.reset( self.mPolygonMode )
-      #  QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
         
         if not self.mEditLayer is None:
             self.mEditLayer.commitChanges()
+            
+        QgsMapTool.deactivate( self )
         
     def canvasMoveEvent(self,  event ):
         self.mRubberBand.movePoint( self.snappedPoint( event.pos() ) )
@@ -103,3 +105,6 @@ class SurveyDigitizeTool( QgsMapTool ):
             return QgsGeometry.fromPolygon(  [pointList] )
         else:
             return QgsGeometry.fromPolyline( pointList )
+            
+    def isEditTool(self):
+        return True

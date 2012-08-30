@@ -10,7 +10,7 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
     
     def __init__(self, parent,  iface):
         QDialog.__init__(self, None)
-        self.setWindowFlags( Qt.Dialog | Qt.Tool )
+        self.setWindowFlags( Qt.Dialog | Qt.Tool | Qt.WindowStaysOnTopHint )
         
         self.setupUi(self)
         self.iface = iface
@@ -23,22 +23,23 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         if surveyBaselineLayer.isEmpty() or baselineStrataId == -1 or strataMinDistance == -1 or strataNSamplePoints == -1:
            self.mTransectSurveyRadioButton.setEnabled( False )
            
-        #connect signals and slots
         QObject.connect( self.mCreateSampleButton, SIGNAL('clicked()'), self.createSample )
-        QObject.connect( self.mAddStratumToolButton,  SIGNAL('clicked( bool )'),  self.addStratumToggled )
-        QObject.connect( self.mAddBaselineToolButton,  SIGNAL('clicked( bool )'),  self.addBaselineToggled )
-        
+    
         #create digitize map tools
         strataLayerId = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
         self.stratumDigiTool = SurveyDigitizeTool( strataLayerId,  self.iface.mapCanvas(), strataLayerId,  20,  True  )
-        self.stratumDigiTool.setAction( self.mAddStratumToolButton.defaultAction() )
+        self.stratumDigiTool.setButton( self.mAddStratumToolButton )
+        QObject.connect( self.mAddStratumToolButton,  SIGNAL('clicked( bool )'),  self.addStratumToggled )
         
-        self.baselineDigiTool = SurveyDigitizeTool( surveyBaselineLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  False )
-        self.baselineDigiTool.setAction( self.mAddBaselineToolButton.defaultAction() )
+        if not surveyBaselineLayer.isEmpty():
+            self.baselineDigiTool = SurveyDigitizeTool( surveyBaselineLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  False )
+            self.baselineDigiTool.setButton( self.mAddBaselineToolButton  )
+            QObject.connect( self.mAddBaselineToolButton,  SIGNAL('clicked( bool )'),  self.addBaselineToggled )
         
         surveyAreaLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyAreaLayer' )[0]
         if not surveyAreaLayer.isEmpty():
             self.surveyAreaTool = SurveyDigitizeTool( surveyAreaLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  True )
+            self.surveyAreaTool.setButton( self.mAddSurveyAreaToolButton )
             QObject.connect( self.mAddSurveyAreaToolButton,  SIGNAL('clicked( bool )'),  self.addSurveyAreaToggled )
            
     def createSample( self ):
