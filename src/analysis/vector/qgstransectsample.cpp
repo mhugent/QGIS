@@ -80,8 +80,13 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       continue;
     }
 
+    double minDistance = fet.attributeMap()[mMinDistanceAttribute].toDouble();
+
     //clip baseline by strata
-    QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
+    //first buffer stratum to avoid empty result because of numerical problems
+    QgsGeometry* strataMinDistBuffer = strataGeom->buffer( minDistance, 8 );
+    QgsGeometry* clippedBaseline = strataMinDistBuffer->intersection( baselineGeom );
+    delete strataMinDistBuffer;
     if ( !clippedBaseline )
     {
       delete baselineGeom;
@@ -89,7 +94,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     }
 
     //create line buffer and clip by strata
-    double minDistance = fet.attributeMap()[mMinDistanceAttribute].toDouble();
     QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( minDistance, 8 );
     if ( !clipBaselineBuffer && !( clipBaselineBuffer->wkbType() == QGis::WKBPolygon ||
                                    clipBaselineBuffer->wkbType() == QGis::WKBPolygon25D ) )
@@ -99,6 +103,11 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     }
 
     QgsPolygon bufferPolygon = clipBaselineBuffer->asPolygon();
+    if ( bufferPolygon.size() < 1 )
+    {
+      delete baselineGeom; delete clippedBaseline; delete clipBaselineBuffer;
+      continue;
+    }
     QgsGeometry* bufferLine = QgsGeometry::fromPolyline( bufferPolygon[0] );
     QgsGeometry* bufferLineClipped = bufferLine->intersection( strataGeom );
     if ( !bufferLineClipped )
