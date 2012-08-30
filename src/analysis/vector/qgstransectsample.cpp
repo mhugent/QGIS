@@ -38,7 +38,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
   //create vector file writers for output
   QgsFieldMap outputPointFields;
-  outputPointFields.insert( 0, QgsField( "strata_id", QVariant::Int ) );
+  outputPointFields.insert( 0, QgsField( "id", QVariant::Int ) );
+  outputPointFields.insert( 1, QgsField( "station_id", QVariant::Int ) );
+  outputPointFields.insert( 2, QgsField( "stratum_id", QVariant::Int ) );
   QgsVectorFileWriter outputPointWriter( mOutputPointLayer, "utf-8", outputPointFields, QGis::WKBPoint,
                                          &( mStrataLayer->crs() ) );
   if ( outputPointWriter.hasError() != QgsVectorFileWriter::NoError )
@@ -63,6 +65,8 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   attList << mNPointsAttribute;
   mStrataLayer->select( attList );
   QgsFeature fet;
+  int nTotalTransects = 0;
+
   while ( mStrataLayer->nextFeature( fet ) )
   {
     QgsGeometry* strataGeom = fet.geometry();
@@ -137,7 +141,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
       QgsFeature samplePointFeature;
       samplePointFeature.setGeometry( samplePoint );
-      samplePointFeature.addAttribute( 0, fet.id() );
+      samplePointFeature.addAttribute( 0, nTotalTransects );
+      samplePointFeature.addAttribute( 1, nCreatedTransects );
+      samplePointFeature.addAttribute( 2, fet.id() );
 
       //find closest point on clipped buffer line
       QgsPoint minDistPoint;
@@ -171,7 +177,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       QgsFeatureId fid( nCreatedTransects );
       QgsFeature sampleLineFeature( fid );
       sampleLineFeature.setGeometry( lineClipStratum );
-      sampleLineFeature.addAttribute( 0, fet.id() );
+      sampleLineFeature.addAttribute( 0, nTotalTransects );
+      sampleLineFeature.addAttribute( 1, nCreatedTransects );
+      sampleLineFeature.addAttribute( 2, fet.id() );
       outputLineWriter.addFeature( sampleLineFeature );
 
       //add point to file writer here.
@@ -182,6 +190,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       lineFeatureMap.insert( fid, sampleLineFeature.geometryAndOwnership() );
 
       delete lineFarAwayGeom;
+      ++nTotalTransects;
       ++nCreatedTransects;
     }
     delete baselineGeom; delete clippedBaseline; delete clipBaselineBuffer; delete bufferLine;
