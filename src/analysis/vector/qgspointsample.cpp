@@ -42,7 +42,9 @@ int QgsPointSample::createRandomPoints( QProgressDialog* pd )
 
   //create vector file writer
   QgsFieldMap outputFields;
-  outputFields.insert( 0, QgsField( "feature_id", QVariant::Int ) );
+  outputFields.insert( 0, QgsField( "id", QVariant::Int ) );
+  outputFields.insert( 1, QgsField( "station_id", QVariant::Int ) );
+  outputFields.insert( 2, QgsField( "stratum_id", QVariant::Int ) );
   QgsVectorFileWriter writer( mOutputLayer, "UTF-8",
                               outputFields,
                               QGis::WKBPoint,
@@ -118,7 +120,9 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
     {
       //add feature to writer
       QgsFeature f( mNCreatedPoints );
-      f.addAttribute( 0, inputFeature.id() );
+      f.addAttribute( 0, mNCreatedPoints );
+      f.addAttribute( 1, points );
+      f.addAttribute( 2, inputFeature.id() );
       f.setGeometry( ptGeom );
       writer.addFeature( f );
       sIndex.insertFeature( f );
