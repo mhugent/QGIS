@@ -139,6 +139,11 @@ void QgsProjectParser::layersAndStylesCapabilities( QDomElement& parentElement, 
   combineExtentAndCrsOfGroupChildren( layerParentElem, doc );
 }
 
+void QgsProjectParser::layerProjectSettings( QDomElement& parentelement, QDomDocument& doc ) const
+{
+  //soon...
+}
+
 void QgsProjectParser::featureTypeList( QDomElement& parentElement, QDomDocument& doc ) const
 {
   QStringList wfsLayersId = wfsLayers();

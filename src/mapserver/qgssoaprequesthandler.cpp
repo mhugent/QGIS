@@ -825,3 +825,24 @@ int QgsSOAPRequestHandler::findOutHostAddress( QString& address ) const
   }
   return 0;
 }
+
+void QgsSOAPRequestHandler::sendXMLResponse( const QDomDocument& doc ) const
+{
+  QDomDocument responseDoc;
+
+  //Envelope
+  QDomElement soapEnvelopeElement = responseDoc.createElement( "soap:Envelope" );
+  soapEnvelopeElement.setAttribute( "xmlns:soap", "http://schemas.xmlsoap.org/soap/envelope/" );
+  soapEnvelopeElement.setAttribute( "soap:encoding", "http://schemas.xmlsoap.org/soap/encoding/" );
+  responseDoc.appendChild( soapEnvelopeElement );
+
+  //Body
+  QDomElement soapBodyElement = responseDoc.createElementNS( "http://schemas.xmlsoap.org/soap/envelope/", "soap:Body" );
+  soapEnvelopeElement.appendChild( soapBodyElement );
+
+  soapBodyElement.appendChild( doc.documentElement() );
+
+  //now send message
+  QByteArray ba = responseDoc.toByteArray();
+  sendHttpResponse( &ba, "text/xml" );
+}

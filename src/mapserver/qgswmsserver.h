@@ -55,6 +55,8 @@ class QgsWMSServer
     ~QgsWMSServer();
     /**Returns an XML file with the capabilities description (as described in the WMS specs)*/
     QDomDocument getCapabilities( QString version = "1.3.0" );
+    /**Returns an OGC Webmap context document with a lot of extensions*/
+    QDomDocument getProjectSettings();
     /**Returns the map legend as an image (or a null pointer in case of error). The caller takes ownership
     of the image object*/
     QImage* getLegendGraphics();

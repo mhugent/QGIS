@@ -410,7 +410,23 @@ int main( int argc, char * argv[] )
 
     QString version = parameterMap.value( "VERSION", "1.3.0" );
 
-    if ( request == "GetCapabilities" )
+    if ( request == "GetProjectSettings" )
+    {
+      try
+      {
+        QDomDocument projectDocument = theServer->getProjectSettings();
+        theRequestHandler->sendXMLResponse( projectDocument );
+      }
+      catch ( QgsMapServiceException& ex )
+      {
+        theRequestHandler->sendServiceException( ex );
+      }
+
+      delete theRequestHandler;
+      delete theServer;
+      continue;
+    }
+    else if ( request == "GetCapabilities" )
     {
       const QDomDocument* capabilitiesDocument = capabilitiesCache.searchCapabilitiesDocument( configFilePath, version );
       if ( !capabilitiesDocument ) //capabilities xml not in cache. Create a new one

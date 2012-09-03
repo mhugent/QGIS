@@ -232,6 +232,25 @@ QDomDocument QgsWMSServer::getCapabilities( QString version )
   return doc;
 }
 
+QDomDocument QgsWMSServer::getProjectSettings()
+{
+  QDomDocument doc;
+  addXMLDeclaration( doc );
+
+  QString contextNS = "http://www.opengeospatial.net/context";
+  QDomElement viewContextElem = doc.createElementNS( contextNS, "ViewContext" );
+  doc.appendChild( viewContextElem );
+
+  QDomElement generalElem = doc.createElementNS( contextNS, "General" );
+  //title, bounding box
+  viewContextElem.appendChild( generalElem );
+
+  QDomElement layerListElem = doc.createElementNS( contextNS, "LayerList" );
+  viewContextElem.appendChild( layerListElem );
+
+  return doc;
+}
+
 QImage* QgsWMSServer::getLegendGraphics()
 {
   if ( !mConfigParser || !mMapRenderer )

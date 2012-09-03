@@ -337,6 +337,12 @@ void QgsHttpRequestHandler::endGetFeatureResponse( QByteArray* ba ) const
   fwrite( ba->data(), ba->size(), 1, FCGI_stdout );
 }
 
+void QgsHttpRequestHandler::sendXMLResponse( const QDomDocument& doc ) const
+{
+  QByteArray ba = doc.toByteArray();
+  sendHttpResponse( &ba, "text/xml" );
+}
+
 void QgsHttpRequestHandler::requestStringToParameterMap( const QString& request, QMap<QString, QString>& parameters )
 {
   parameters.clear();

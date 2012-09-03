@@ -38,6 +38,9 @@ class QgsProjectParser: public QgsConfigParser
     /**Adds layer and style specific capabilities elements to the parent node. This includes the individual layers and styles, their description, native CRS, bounding boxes, etc.*/
     virtual void layersAndStylesCapabilities( QDomElement& parentElement, QDomDocument& doc ) const;
 
+    /**Adds layer tags to xml document for GetProjectSettings*/
+    void layerProjectSettings( QDomElement& parentelement, QDomDocument& doc ) const;
+
     virtual void featureTypeList( QDomElement& parentElement, QDomDocument& doc ) const;
 
     int numberOfLayers() const;

@@ -42,6 +42,9 @@ class QgsConfigParser
     /**Adds layer and style specific capabilities elements to the parent node. This includes the individual layers and styles, their description, native CRS, bounding boxes, etc.*/
     virtual void layersAndStylesCapabilities( QDomElement& parentElement, QDomDocument& doc ) const = 0;
 
+    /**Adds layer tags to xml document for GetProjectSettings*/
+    virtual void layerProjectSettings( QDomElement& parentelement, QDomDocument& doc ) const = 0;
+
     virtual void featureTypeList( QDomElement& parentElement, QDomDocument& doc ) const = 0;
 
     /**Returns one or possibly several maplayers for a given layer name and style. If there are several layers, the layers should be drawn in inverse list order.
