@@ -169,6 +169,8 @@ class QgsComposer: public QMainWindow, private Ui::QgsComposerBase
 
     void on_mActionAddHtml_triggered();
 
+    void on_mActionAddText_triggered();
+
     //! Save composer as template
     void on_mActionSaveAsTemplate_triggered();
 
@@ -248,6 +250,9 @@ class QgsComposer: public QMainWindow, private Ui::QgsComposerBase
 
     /**Adds composer html and creates a configuration widget*/
     void addComposerHtmlFrame( QgsComposerHtml* html, QgsComposerFrame* frame );
+
+    /**Adds composer text and creates a configuration widget*/
+    void addComposerTextFrame( QgsComposerText* html, QgsComposerFrame* frame );
 
     /**Removes item from the item/widget map and deletes the configuration widget. Does not delete the item itself*/
     void deleteItem( QgsComposerItem* item );

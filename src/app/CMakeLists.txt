@@ -125,8 +125,10 @@ SET(QGIS_APP_SRCS
   composer/qgscomposerlegenditemdialog.cpp
   composer/qgscomposerlegendlayersdialog.cpp
   composer/qgscomposerlegendwidget.cpp
+  composer/qgscomposertextwidget.cpp
   composer/qgscompositionwidget.cpp
   composer/qgsitempositiondialog.cpp
+
 
   legend/qgslegendgroup.cpp
   legend/qgslegend.cpp
@@ -267,6 +269,7 @@ SET (QGIS_APP_MOC_HDRS
   composer/qgscomposerscalebarwidget.h
   composer/qgscomposertablewidget.h
   composer/qgscomposershapewidget.h
+  composer/qgscomposertextwidget.h
   composer/qgscompositionwidget.h
   composer/qgsitempositiondialog.h
 

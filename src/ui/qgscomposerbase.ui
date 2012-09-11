@@ -81,6 +81,7 @@
    <addaction name="mActionAddArrow"/>
    <addaction name="mActionAddTable"/>
    <addaction name="mActionAddHtml"/>
+   <addaction name="mActionAddText"/>
    <addaction name="separator"/>
    <addaction name="mActionSelectMoveItem"/>
    <addaction name="mActionMoveItemContent"/>
@@ -453,6 +454,14 @@
    </property>
    <property name="toolTip">
     <string>Add html frame</string>
+   </property>
+  </action>
+  <action name="mActionAddText">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Add text</string>
    </property>
   </action>
  </widget>

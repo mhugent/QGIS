@@ -40,6 +40,8 @@
 #include "qgscomposershapewidget.h"
 #include "qgscomposerattributetable.h"
 #include "qgscomposertablewidget.h"
+#include "qgscomposertext.h"
+#include "qgscomposertextwidget.h"
 #include "qgsexception.h"
 #include "qgslogger.h"
 #include "qgsproject.h"
@@ -140,6 +142,7 @@ QgsComposer::QgsComposer( QgisApp *qgis, const QString& title )
   toggleActionGroup->addAction( mActionAddArrow );
   toggleActionGroup->addAction( mActionAddTable );
   toggleActionGroup->addAction( mActionAddHtml );
+  toggleActionGroup->addAction( mActionAddText );
   toggleActionGroup->setExclusive( true );
 
 
@@ -394,6 +397,7 @@ void QgsComposer::connectSlots()
   connect( mComposition, SIGNAL( composerPictureAdded( QgsComposerPicture* ) ), this, SLOT( addComposerPicture( QgsComposerPicture* ) ) );
   connect( mComposition, SIGNAL( composerShapeAdded( QgsComposerShape* ) ), this, SLOT( addComposerShape( QgsComposerShape* ) ) );
   connect( mComposition, SIGNAL( composerTableAdded( QgsComposerAttributeTable* ) ), this, SLOT( addComposerTable( QgsComposerAttributeTable* ) ) );
+  connect( mComposition, SIGNAL( composerTextFrameAdded( QgsComposerText*, QgsComposerFrame* ) ), this, SLOT( addComposerTextFrame( QgsComposerText*, QgsComposerFrame* ) ) );
   connect( mComposition, SIGNAL( itemRemoved( QgsComposerItem* ) ), this, SLOT( deleteItem( QgsComposerItem* ) ) );
 }
 
@@ -846,6 +850,14 @@ void QgsComposer::on_mActionAddHtml_triggered()
   if ( mView )
   {
     mView->setCurrentTool( QgsComposerView::AddHtml );
+  }
+}
+
+void QgsComposer::on_mActionAddText_triggered()
+{
+  if ( mView )
+  {
+    mView->setCurrentTool( QgsComposerView::AddText );
   }
 }
 
@@ -1351,6 +1363,17 @@ void QgsComposer::addComposerHtmlFrame( QgsComposerHtml* html, QgsComposerFrame*
 
   QgsComposerHtmlWidget* hWidget = new QgsComposerHtmlWidget( html, frame );
   mItemWidgetMap.insert( frame, hWidget );
+}
+
+void QgsComposer::addComposerTextFrame( QgsComposerText* text, QgsComposerFrame* frame )
+{
+  if ( !text )
+  {
+    return;
+  }
+
+  QgsComposerTextWidget* tWidget = new QgsComposerTextWidget( text, frame );
+  mItemWidgetMap.insert( frame, tWidget );
 }
 
 void QgsComposer::deleteItem( QgsComposerItem* item )

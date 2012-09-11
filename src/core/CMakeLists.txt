@@ -131,6 +131,7 @@ SET(QGIS_CORE_SRCS
   composer/qgscomposermap.cpp
   composer/qgscomposertable.cpp
   composer/qgscomposerattributetable.cpp
+  composer/qgscomposertext.cpp
   composer/qgscomposertexttable.cpp
   composer/qgscomposerscalebar.cpp
   composer/qgscomposershape.cpp

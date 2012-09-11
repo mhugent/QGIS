@@ -33,6 +33,7 @@
 #include "qgscomposerpicture.h"
 #include "qgscomposerscalebar.h"
 #include "qgscomposershape.h"
+#include "qgscomposertext.h"
 #include "qgscomposerattributetable.h"
 #include "qgslogger.h"
 #include "qgsaddremovemultiframecommand.h"
@@ -152,6 +153,22 @@ void QgsComposerView::mousePressEvent( QMouseEvent* e )
         composition()->addComposerLabel( newLabelItem );
         emit actionFinished();
         composition()->pushAddRemoveCommand( newLabelItem, tr( "Label added" ) );
+      }
+      break;
+
+    case AddText:
+      if ( composition() )
+      {
+        QgsComposerText* composerText = new QgsComposerText( composition(), true );
+        QgsAddRemoveMultiFrameCommand* command = new QgsAddRemoveMultiFrameCommand( QgsAddRemoveMultiFrameCommand::Added,
+            composerText, composition(), tr( "Composer text added" ) );
+        composition()->undoStack()->push( command );
+        QgsComposerFrame* frame = new QgsComposerFrame( composition(), composerText, snappedScenePoint.x(),
+            snappedScenePoint.y(), 100, 100 );
+        //composition()->beginMultiFrameCommand( composerText, tr( "Html frame added" ) );
+        composerText->addFrame( frame );
+        //composition()->endMultiFrameCommand();
+        emit actionFinished();
       }
       break;
 

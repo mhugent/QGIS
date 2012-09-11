@@ -41,6 +41,7 @@ class QgsComposerMap;
 class QgsComposerPicture;
 class QgsComposerScaleBar;
 class QgsComposerShape;
+class QgsComposerText;
 class QgsComposerAttributeTable;
 class QgsComposerMultiFrame;
 class QgsComposerMultiFrameCommand;
@@ -236,6 +237,8 @@ class CORE_EXPORT QgsComposition: public QGraphicsScene
     void addComposerTable( QgsComposerAttributeTable* table );
     /**Adds composer html frame and advices composer to create a widget for it (through signal)*/
     void addComposerHtmlFrame( QgsComposerHtml* html, QgsComposerFrame* frame );
+    /**Adds composer text frame and advices composer to create a widget for it (through signal)*/
+    void addComposerTextFrame( QgsComposerText* text, QgsComposerFrame* frame );
 
     /**Remove item from the graphics scene. Additionally to QGraphicsScene::removeItem, this function considers undo/redo command*/
     void removeComposerItem( QgsComposerItem* item, bool createCommand = true );
@@ -326,8 +329,6 @@ class CORE_EXPORT QgsComposition: public QGraphicsScene
     void selectedItemChanged( QgsComposerItem* selected );
     /**Is emitted when new composer arrow has been added to the view*/
     void composerArrowAdded( QgsComposerArrow* arrow );
-    /**Is emitted when a new composer html has been added to the view*/
-    void composerHtmlFrameAdded( QgsComposerHtml* html, QgsComposerFrame* frame );
     /**Is emitted when new composer label has been added to the view*/
     void composerLabelAdded( QgsComposerLabel* label );
     /**Is emitted when new composer map has been added to the view*/
@@ -342,6 +343,10 @@ class CORE_EXPORT QgsComposition: public QGraphicsScene
     void composerShapeAdded( QgsComposerShape* shape );
     /**Is emitted when a new composer table has been added*/
     void composerTableAdded( QgsComposerAttributeTable* table );
+    /**Is emitted when a new composer html has been added to the view*/
+    void composerHtmlFrameAdded( QgsComposerHtml* html, QgsComposerFrame* frame );
+    /**Is emitted when a new composer text has been added to the view*/
+    void composerTextFrameAdded( QgsComposerText*, QgsComposerFrame* frame );
     /**Is emitted when a composer item has been removed from the scene*/
     void itemRemoved( QgsComposerItem* );
 };

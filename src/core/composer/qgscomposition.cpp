@@ -1230,6 +1230,15 @@ void QgsComposition::addComposerHtmlFrame( QgsComposerHtml* html, QgsComposerFra
   emit selectedItemChanged( frame );
 }
 
+void QgsComposition::addComposerTextFrame( QgsComposerText* text, QgsComposerFrame* frame )
+{
+  addItem( frame );
+  emit composerTextFrameAdded( text, frame );
+  clearSelection();
+  frame->setSelected( true );
+  emit selectedItemChanged( frame );
+}
+
 void QgsComposition::removeComposerItem( QgsComposerItem* item, bool createCommand )
 {
   QgsComposerMap* map = dynamic_cast<QgsComposerMap *>( item );
