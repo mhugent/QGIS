@@ -51,7 +51,14 @@
           </spacer>
          </item>
          <item>
-          <widget class="QSpinBox" name="mFontSizeSpinBox"/>
+          <widget class="QSpinBox" name="mFontSizeSpinBox">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="value">
+            <number>10</number>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="mBoldPushButton">

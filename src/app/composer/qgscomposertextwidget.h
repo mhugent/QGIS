@@ -25,6 +25,10 @@ class QgsComposerTextWidget: public QWidget, private Ui::QgsComposerTextWidgetBa
     /**Text document (a clone of the annotation items document)*/
     QgsComposerText* mComposerText;
     QgsComposerFrame* mFrame;
+
+  private slots:
+    void changeCurrentFormat();
+    void on_mFontColorButton_clicked();
 };
 
 #endif // QGSCOMPOSERTEXTWIDGET_H

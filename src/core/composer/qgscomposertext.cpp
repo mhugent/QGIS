@@ -16,6 +16,7 @@
 #include "qgscomposertext.h"
 #include "qgscomposerframe.h"
 #include "qtextdocument.h"
+#include <QPainter>
 
 QgsComposerText::QgsComposerText( QgsComposition* c, bool createUndoCommands ): QgsComposerMultiFrame( c, createUndoCommands ),
     mTextDocument( new QTextDocument() )
@@ -39,7 +40,12 @@ void QgsComposerText::render( QPainter* p, const QRectF& renderExtent )
   {
     mTextDocument->setTextWidth( mFrameItems.at( 0 )->rect().width() );
   }
+
+  p->save();
+  double dpMM = mComposition->printResolution() / 96.0;
+  p->scale( 1.0 / dpMM, 1.0 / dpMM );
   mTextDocument->drawContents( p, renderExtent );
+  p->restore();
 }
 
 void QgsComposerText::addFrame( QgsComposerFrame* frame, bool recalcFrameSizes )
