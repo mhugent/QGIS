@@ -165,9 +165,9 @@ void QgsComposerView::mousePressEvent( QMouseEvent* e )
         composition()->undoStack()->push( command );
         QgsComposerFrame* frame = new QgsComposerFrame( composition(), composerText, snappedScenePoint.x(),
             snappedScenePoint.y(), 100, 100 );
-        //composition()->beginMultiFrameCommand( composerText, tr( "Html frame added" ) );
+        composition()->beginMultiFrameCommand( composerText, tr( "Html frame added" ) );
         composerText->addFrame( frame );
-        //composition()->endMultiFrameCommand();
+        composition()->endMultiFrameCommand();
         emit actionFinished();
       }
       break;

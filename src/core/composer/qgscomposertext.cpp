@@ -72,10 +72,21 @@ void QgsComposerText::setDocument( QTextDocument* doc )
 
 bool QgsComposerText::writeXML( QDomElement& elem, QDomDocument & doc, bool ignoreFrames ) const
 {
-  return false; //soon...
+  QDomElement composerTextElem = doc.createElement( "ComposerText" );
+  if ( mTextDocument )
+  {
+    composerTextElem.setAttribute( "document", mTextDocument->toHtml() );
+  }
+  bool state = _writeXML( composerTextElem, doc, ignoreFrames );
+  elem.appendChild( composerTextElem );
+  return state;
 }
 
 bool QgsComposerText::readXML( const QDomElement& itemElem, const QDomDocument& doc, bool ignoreFrames )
 {
-  return false; //soon...
+  delete mTextDocument;
+  mTextDocument = new QTextDocument();
+  mTextDocument->setUseDesignMetrics( true );
+  mTextDocument->setHtml( itemElem.attribute( "document" ) );
+  return _readXML( itemElem, doc, ignoreFrames );
 }

@@ -26,6 +26,7 @@
 #include "qgscomposerpicture.h"
 #include "qgscomposerscalebar.h"
 #include "qgscomposershape.h"
+#include "qgscomposertext.h"
 #include "qgscomposerattributetable.h"
 #include "qgsaddremovemultiframecommand.h"
 #include "qgscomposermultiframecommand.h"
@@ -526,6 +527,16 @@ void QgsComposition::addItemsFromXML( const QDomElement& elem, const QDomDocumen
     newHtml->readXML( currentHtmlElem, doc );
     newHtml->setCreateUndoCommands( true );
     this->addMultiFrame( newHtml );
+  }
+  //text
+  QDomNodeList composerTextList = elem.elementsByTagName( "ComposerText" );
+  for ( int i = 0; i < composerTextList.size(); ++i )
+  {
+    QDomElement currentTextElem = composerTextList.at( i ).toElement();
+    QgsComposerText* newText = new QgsComposerText( this, false );
+    newText->readXML( currentTextElem, doc );
+    newText->setCreateUndoCommands( true );
+    this->addMultiFrame( newText );
   }
 }
 
