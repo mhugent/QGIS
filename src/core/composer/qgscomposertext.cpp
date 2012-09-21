@@ -36,15 +36,16 @@ QSizeF QgsComposerText::totalSize() const
 
 void QgsComposerText::render( QPainter* p, const QRectF& renderExtent )
 {
+  double dpMM = mComposition->printResolution() / 96.0;
   if ( mFrameItems.size() > 0 )
   {
-    mTextDocument->setTextWidth( mFrameItems.at( 0 )->rect().width() );
+    mTextDocument->setTextWidth( mFrameItems.at( 0 )->rect().width()  * dpMM );
   }
 
   p->save();
-  double dpMM = mComposition->printResolution() / 96.0;
   p->scale( 1.0 / dpMM, 1.0 / dpMM );
-  mTextDocument->drawContents( p, renderExtent );
+  QRectF scaledExtent( 0, 0, renderExtent.width() * dpMM, renderExtent.height() * dpMM );
+  mTextDocument->drawContents( p, scaledExtent );
   p->restore();
 }
 
