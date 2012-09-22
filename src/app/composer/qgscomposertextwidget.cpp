@@ -7,6 +7,8 @@
  ***************************************************************************/
 
 #include "qgscomposertextwidget.h"
+#include "qgscomposerframe.h"
+#include "qgscomposeritemwidget.h"
 #include "qgscomposertext.h"
 #include <QColorDialog>
 
@@ -20,6 +22,22 @@ QgsComposerTextWidget::QgsComposerTextWidget( QgsComposerText* composerText, Qgs
   connect( mItalicsPushButton, SIGNAL( toggled( bool ) ), this, SLOT( changeCurrentFormat() ) );
   connect( mFontSizeSpinBox, SIGNAL( valueChanged( int ) ), this, SLOT( changeCurrentFormat() ) );
   connect( mFontComboBox, SIGNAL( currentIndexChanged( int ) ), this, SLOT( changeCurrentFormat() ) );
+
+  //options for resize mode
+  blockSignals( true );
+  mResizeModeComboBox->addItem( tr( "Use existing frames" ), QgsComposerMultiFrame::UseExistingFrames );
+  mResizeModeComboBox->addItem( tr( "Extend to next page" ), QgsComposerMultiFrame::ExtendToNextPage );
+  mResizeModeComboBox->addItem( tr( "Repeat on every page" ), QgsComposerMultiFrame::RepeatOnEveryPage );
+  mResizeModeComboBox->addItem( tr( "Repeat until finished" ), QgsComposerMultiFrame::RepeatUntilFinished );
+  blockSignals( false );
+
+  //embed widget for general options
+  if ( mFrame )
+  {
+    //add widget for general composer item properties
+    QgsComposerItemWidget* itemPropertiesWidget = new QgsComposerItemWidget( this, mFrame );
+    mToolBox->addItem( itemPropertiesWidget, tr( "General options" ) );
+  }
 }
 
 QgsComposerTextWidget::~QgsComposerTextWidget()
@@ -72,6 +90,22 @@ void QgsComposerTextWidget::on_mFontColorButton_clicked()
   }
   mFontColorButton->setColor( newColor );
   changeCurrentFormat();
+}
+
+void QgsComposerTextWidget::on_mResizeModeComboBox_currentIndexChanged( int index )
+{
+  if ( !mComposerText )
+  {
+    return;
+  }
+
+  QgsComposition* composition = mComposerText->composition();
+  if ( composition )
+  {
+    composition->beginMultiFrameCommand( mComposerText, tr( "Change resize mode" ) );
+    mComposerText->setResizeMode(( QgsComposerMultiFrame::ResizeMode )mResizeModeComboBox->itemData( index ).toInt() );
+    composition->endMultiFrameCommand();
+  }
 }
 
 

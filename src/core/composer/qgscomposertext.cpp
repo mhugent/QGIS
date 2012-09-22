@@ -44,7 +44,9 @@ void QgsComposerText::render( QPainter* p, const QRectF& renderExtent )
 
   p->save();
   p->scale( 1.0 / dpMM, 1.0 / dpMM );
-  QRectF scaledExtent( 0, 0, renderExtent.width() * dpMM, renderExtent.height() * dpMM );
+  p->translate( 0, -renderExtent.top() * dpMM );
+  QRectF scaledExtent( renderExtent.left() * dpMM, renderExtent.top() * dpMM,
+                       renderExtent.width() * dpMM, renderExtent.height() * dpMM );
   mTextDocument->drawContents( p, scaledExtent );
   p->restore();
 }
