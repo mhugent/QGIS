@@ -72,6 +72,9 @@ class CORE_EXPORT QgsComposerMultiFrame: public QObject
     int nFrames() const { return mFrameItems.size(); }
     QgsComposerFrame* frame( int i );
 
+  public slots:
+    void recalculateFrameSizes();
+
   protected:
     QgsComposition* mComposition;
     QList<QgsComposerFrame*> mFrameItems;
@@ -80,7 +83,6 @@ class CORE_EXPORT QgsComposerMultiFrame: public QObject
     bool mCreateUndoCommands;
 
   protected slots:
-    void recalculateFrameSizes();
     /**Called before a frame is going to be removed (update frame list)*/
     void handleFrameRemoval( QgsComposerItem* item );
     /**Adapts to changed number of pages if resize type is RepeatOnEveryPage*/

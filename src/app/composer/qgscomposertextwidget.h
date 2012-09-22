@@ -30,6 +30,7 @@ class QgsComposerTextWidget: public QWidget, private Ui::QgsComposerTextWidgetBa
     void changeCurrentFormat();
     void on_mFontColorButton_clicked();
     void on_mResizeModeComboBox_currentIndexChanged( int index );
+    void handleTextChange();
 };
 
 #endif // QGSCOMPOSERTEXTWIDGET_H

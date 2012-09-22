@@ -22,6 +22,7 @@ QgsComposerTextWidget::QgsComposerTextWidget( QgsComposerText* composerText, Qgs
   connect( mItalicsPushButton, SIGNAL( toggled( bool ) ), this, SLOT( changeCurrentFormat() ) );
   connect( mFontSizeSpinBox, SIGNAL( valueChanged( int ) ), this, SLOT( changeCurrentFormat() ) );
   connect( mFontComboBox, SIGNAL( currentIndexChanged( int ) ), this, SLOT( changeCurrentFormat() ) );
+  connect( mTextEdit, SIGNAL( textChanged() ), this, SLOT( handleTextChange() ) );
 
   //options for resize mode
   blockSignals( true );
@@ -105,6 +106,15 @@ void QgsComposerTextWidget::on_mResizeModeComboBox_currentIndexChanged( int inde
     composition->beginMultiFrameCommand( mComposerText, tr( "Change resize mode" ) );
     mComposerText->setResizeMode(( QgsComposerMultiFrame::ResizeMode )mResizeModeComboBox->itemData( index ).toInt() );
     composition->endMultiFrameCommand();
+  }
+}
+
+void QgsComposerTextWidget::handleTextChange()
+{
+  if ( mComposerText )
+  {
+    mComposerText->recalculateFrameSizes();
+    mComposerText->update();
   }
 }
 
