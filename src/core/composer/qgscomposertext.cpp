@@ -88,6 +88,7 @@ bool QgsComposerText::writeXML( QDomElement& elem, QDomDocument & doc, bool igno
 
 bool QgsComposerText::readXML( const QDomElement& itemElem, const QDomDocument& doc, bool ignoreFrames )
 {
+  deleteFrames();
   delete mTextDocument;
   mTextDocument = new QTextDocument();
   mTextDocument->setUseDesignMetrics( true );
