@@ -25,12 +25,16 @@ QgsComposerTextWidget::QgsComposerTextWidget( QgsComposerText* composerText, Qgs
   connect( mTextEdit, SIGNAL( textChanged() ), this, SLOT( handleTextChange() ) );
 
   //options for resize mode
-  blockSignals( true );
+  blockAllSignals( true );
   mResizeModeComboBox->addItem( tr( "Use existing frames" ), QgsComposerMultiFrame::UseExistingFrames );
   mResizeModeComboBox->addItem( tr( "Extend to next page" ), QgsComposerMultiFrame::ExtendToNextPage );
   mResizeModeComboBox->addItem( tr( "Repeat on every page" ), QgsComposerMultiFrame::RepeatOnEveryPage );
   mResizeModeComboBox->addItem( tr( "Repeat until finished" ), QgsComposerMultiFrame::RepeatUntilFinished );
-  blockSignals( false );
+  if( mComposerText )
+  {
+    mResizeModeComboBox->setCurrentIndex( mResizeModeComboBox->findData( mComposerText->resizeMode() ) );
+  }
+  blockAllSignals( false );
 
   //embed widget for general options
   if ( mFrame )
@@ -116,6 +120,18 @@ void QgsComposerTextWidget::handleTextChange()
     mComposerText->recalculateFrameSizes();
     mComposerText->update();
   }
+}
+
+void QgsComposerTextWidget::blockAllSignals( bool block )
+{
+    blockSignals( block );
+    mResizeModeComboBox->blockSignals( block );
+    mFontComboBox->blockSignals( block );
+    mFontSizeSpinBox->blockSignals( block );
+    mBoldPushButton->blockSignals( block );
+    mItalicsPushButton->blockSignals( block );
+    mFontColorButton->blockSignals( block );
+    mTextEdit->blockSignals( block );
 }
 
 

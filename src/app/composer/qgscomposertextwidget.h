@@ -26,6 +26,9 @@ class QgsComposerTextWidget: public QWidget, private Ui::QgsComposerTextWidgetBa
     QgsComposerText* mComposerText;
     QgsComposerFrame* mFrame;
 
+    /**Blocks signals from this widget and all the gui elements*/
+    void blockAllSignals( bool block );
+
   private slots:
     void changeCurrentFormat();
     void on_mFontColorButton_clicked();

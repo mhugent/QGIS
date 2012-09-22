@@ -31,7 +31,8 @@ QgsComposerText::~QgsComposerText()
 
 QSizeF QgsComposerText::totalSize() const
 {
-  return mTextDocument->size();
+  //double dpMM = mComposition->printResolution() / 96.0; //does not seem to work correctly
+  return mTextDocument->size(); /* / dpMM; */
 }
 
 void QgsComposerText::render( QPainter* p, const QRectF& renderExtent )
