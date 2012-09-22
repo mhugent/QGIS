@@ -131,6 +131,7 @@ void QgsComposerView::mousePressEvent( QMouseEvent* e )
     case AddTriangle:
     case AddEllipse:
     case AddHtml:
+    case AddText:
     {
       QTransform t;
       mRubberBandItem = new QGraphicsRectItem( 0, 0, 0, 0 );
@@ -153,22 +154,6 @@ void QgsComposerView::mousePressEvent( QMouseEvent* e )
         composition()->addComposerLabel( newLabelItem );
         emit actionFinished();
         composition()->pushAddRemoveCommand( newLabelItem, tr( "Label added" ) );
-      }
-      break;
-
-    case AddText:
-      if ( composition() )
-      {
-        QgsComposerText* composerText = new QgsComposerText( composition(), true );
-        QgsAddRemoveMultiFrameCommand* command = new QgsAddRemoveMultiFrameCommand( QgsAddRemoveMultiFrameCommand::Added,
-            composerText, composition(), tr( "Composer text added" ) );
-        composition()->undoStack()->push( command );
-        QgsComposerFrame* frame = new QgsComposerFrame( composition(), composerText, snappedScenePoint.x(),
-            snappedScenePoint.y(), 100, 100 );
-        composition()->beginMultiFrameCommand( composerText, tr( "Html frame added" ) );
-        composerText->addFrame( frame );
-        composition()->endMultiFrameCommand();
-        emit actionFinished();
       }
       break;
 
@@ -356,6 +341,27 @@ void QgsComposerView::mouseReleaseEvent( QMouseEvent* e )
         mRubberBandItem = 0;
         emit actionFinished();
       }
+      break;
+
+    case AddText:
+      if ( composition() )
+      {
+        QgsComposerText* composerText = new QgsComposerText( composition(), true );
+        QgsAddRemoveMultiFrameCommand* command = new QgsAddRemoveMultiFrameCommand( QgsAddRemoveMultiFrameCommand::Added,
+            composerText, composition(), tr( "Composer text added" ) );
+        composition()->undoStack()->push( command );
+        QgsComposerFrame* frame = new QgsComposerFrame( composition(), composerText, mRubberBandItem->transform().dx(),
+            mRubberBandItem->transform().dy(), mRubberBandItem->rect().width(), mRubberBandItem->rect().height() );
+        composition()->beginMultiFrameCommand( composerText, tr( "Text frame added" ) );
+        composerText->addFrame( frame );
+        composition()->endMultiFrameCommand();
+        scene()->removeItem( mRubberBandItem );
+        delete mRubberBandItem;
+        mRubberBandItem = 0;
+        emit actionFinished();
+      }
+      break;
+
     default:
       break;
   }
@@ -399,6 +405,7 @@ void QgsComposerView::mouseMoveEvent( QMouseEvent* e )
       case AddTriangle:
       case AddEllipse:
       case AddHtml:
+      case AddText:
         //adjust rubber band item
       {
         double x = 0;
