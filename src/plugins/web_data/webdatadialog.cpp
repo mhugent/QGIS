@@ -13,6 +13,7 @@
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
 #include <QDomDocument>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -571,6 +572,22 @@ void WebDataDialog::on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* cur
 void WebDataDialog::on_mAddNIWAServicesButton_clicked()
 {
   addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
+}
+
+void WebDataDialog::on_mAddLINZServicesButton_clicked()
+{
+  //ask user about the LINZ key
+  QString key = QInputDialog::getText( 0, tr( "Enter your personal LINZ key" ), tr( "Key:" ) );
+  if ( key.isNull() )
+  {
+    return;
+  }
+
+  //add WFS
+  setServiceSetting( "LINZ WFS", "WFS", "http://wfs.data.linz.govt.nz/" + key + "/wfs" );
+
+  //add WMS
+  setServiceSetting( "LINZ WMS", "WMS", "http://wms.data.linz.govt.nz/" + key + "/r/wms" );
 }
 
 void WebDataDialog::on_mRemoveFromListButton_clicked()

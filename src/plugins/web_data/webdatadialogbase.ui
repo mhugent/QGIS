@@ -24,10 +24,17 @@
      </property>
     </widget>
    </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="mStatusLabel">
+     <property name="text">
+      <string>Ready</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="mDatasourcesTab">
       <attribute name="title">
@@ -62,6 +69,19 @@
            </property>
            <property name="text">
             <string>Add NIWA services</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="mAddLINZServicesButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Add LDS</string>
            </property>
           </widget>
          </item>
@@ -314,13 +334,6 @@
        </item>
       </layout>
      </widget>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="mStatusLabel">
-     <property name="text">
-      <string>Ready</string>
-     </property>
     </widget>
    </item>
   </layout>

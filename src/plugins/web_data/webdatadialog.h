@@ -25,6 +25,7 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mChangeOnlineButton_clicked();
     void on_mLayerTreeWidget_currentItemChanged( QTreeWidgetItem* current, QTreeWidgetItem* previous );
     void on_mAddNIWAServicesButton_clicked();
+    void on_mAddLINZServicesButton_clicked();
     void on_mRemoveFromListButton_clicked();
     void on_mReloadButton_clicked();
     void NIWAServicesRequestFinished();
