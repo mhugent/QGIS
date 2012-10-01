@@ -21,7 +21,6 @@
 #include <QSettings>
 
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
-static const QString WMS_NAMESPACE = "http://www.opengis.net/wms";
 
 WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mCapabilitiesReply( 0 ), mIface( iface ),
     mNIWAServicesRequestFinished( false )
@@ -820,29 +819,29 @@ void WebDataDialog::wmsCapabilitiesRequestFinished()
   }
 
   //get name, title, abstract of all layers (style / CRS? )
-  QDomNodeList layerList = capabilitiesDocument.elementsByTagNameNS( WMS_NAMESPACE, "Layer" );
+  QDomNodeList layerList = capabilitiesDocument.elementsByTagName( "Layer" );
   for ( unsigned int i = 0; i < layerList.length(); ++i )
   {
     QString name, title, abstract, crs, style;
     QDomElement layerElem = layerList.at( i ).toElement();
-    QDomNodeList nameList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Name" );
+    QDomNodeList nameList = layerElem.elementsByTagName( "Name" );
     if ( nameList.size() > 0 )
     {
       name = nameList.at( 0 ).toElement().text();
     }
-    QDomNodeList titleList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Title" );
+    QDomNodeList titleList = layerElem.elementsByTagName( "Title" );
     if ( titleList.size() > 0 )
     {
       title = titleList.at( 0 ).toElement().text();
     }
-    QDomNodeList abstractList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Abstract" );
+    QDomNodeList abstractList = layerElem.elementsByTagName( "Abstract" );
     if ( abstractList.size() > 0 )
     {
       abstract = abstractList.at( 0 ).toElement().text();
     }
 
     //CRS in WMS 1.3
-    QDomNodeList crsList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "CRS" );
+    QDomNodeList crsList = layerElem.elementsByTagName( "CRS" );
     for ( int i = 0; i < crsList.size(); ++i )
     {
       QString crsName = crsList.at( i ).toElement().text();
@@ -853,7 +852,7 @@ void WebDataDialog::wmsCapabilitiesRequestFinished()
       crs.append( crsName );
     }
     //SRS in WMS 1.1.1
-    QDomNodeList srsList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "SRS" );
+    QDomNodeList srsList = layerElem.elementsByTagName( "SRS" );
     for ( int i = 0; i < srsList.size(); ++i )
     {
       QString srsName = srsList.at( i ).toElement().text();
@@ -863,7 +862,7 @@ void WebDataDialog::wmsCapabilitiesRequestFinished()
       }
       crs.append( srsName );
     }
-    QDomNodeList styleList = layerElem.elementsByTagNameNS( WMS_NAMESPACE, "Style" );
+    QDomNodeList styleList = layerElem.elementsByTagName( "Style" );
     for ( int i = 0; i < styleList.size(); ++i )
     {
       QString styleName = styleList.at( i ).toElement().firstChildElement( "Name" ).text();
