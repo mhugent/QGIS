@@ -1,6 +1,5 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 from qgis.core import *
 from qgis.analysis import *
 from ui_surveydesigndialogbase import Ui_SurveyDesignDialogBase
