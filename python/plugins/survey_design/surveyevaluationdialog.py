@@ -20,8 +20,47 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
         self.sampleLayerChanged( self.mSampleLayerComboBox.currentIndex() )
         QObject.connect( self.mSampleLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.sampleLayerChanged )
         
+#output
     def speciesVulnerability(self):
         return self.mSpeciesVulnerabilitySpinBox.value()
+        
+    def sampleLayerId(self):
+        return self.mSampleLayerComboBox.itemData( self.mSampleLayerComboBox.currentIndex() ).toString()
+        
+    def arealAvailability(self):
+        index = self.mArealAvailabilityComboBox.currentIndex()
+        if index == -1:
+            return -1
+            
+        return self.mArealAvailabilityComboBox.itemData( index ).toInt()[0]
+        
+    def catch(self):
+        index = self.mCatchComboBox.currentIndex()
+        if index == -1:
+            return -1
+        
+        return self.mCatchComboBox.itemData( index ).toInt()[0]
+        
+    def dist(self):
+        index = self.mDistComboBox.currentIndex()
+        if index == -1:
+            return -1
+            
+        return self.mDistComboBox.itemData( index ).toInt()[0]
+        
+    def width(self):
+        index = self.mWidthComboBox.currentIndex()
+        if index == -1:
+            return -1
+            
+        return self.mWidthComboBox.itemData( index ).toInt()[0]
+        
+    def verticalAvailability(self):
+        index = self.mVavailComboBox.currentIndex()
+        if index == -1:
+            return -1
+            
+        return self.mVavailComboBox.itemData( index ).toInt()[0]
         
     def sampleLayerChanged(self,  index):
         

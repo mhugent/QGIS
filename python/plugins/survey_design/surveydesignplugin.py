@@ -51,7 +51,7 @@ class SurveyDesignPlugin:
     def openSurveyEvaluationDialog(self):
         dialog = SurveyEvaluationDialog( self.iface,  self.iface.mainWindow() )
         if dialog.exec_() == QDialog.Accepted:
-            eval = SurveyEvaluation( self.iface )
+            eval = SurveyEvaluation( self.iface,  dialog.sampleLayerId(), dialog.arealAvailability(),  dialog.catch(),  dialog.dist(),  dialog.width(),  dialog.verticalAvailability() )
             eval.evaluateSurvey( dialog.speciesVulnerability() )
         
     def checkSurveyDesignPossible( self ):
