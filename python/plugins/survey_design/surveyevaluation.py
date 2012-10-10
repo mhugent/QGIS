@@ -3,9 +3,10 @@ from PyQt4.QtGui import *
 from qgis.core import *
 
 class SurveyEvaluation:
-    def __init__(self,  iface,  sampleLayerId, arealAvailability,  catch,  dist,  width,  verticalAvailability):
+    def __init__(self,  iface,  sampleLayerId, stratumId,  arealAvailability,  catch,  dist,  width,  verticalAvailability):
         self.mIface = iface
         self.mSampleLayerId = sampleLayerId
+        self.mStratumId = stratumId
         self.mArealAvailability = arealAvailability
         self.mCatch = catch
         self.mDist = dist
@@ -13,25 +14,108 @@ class SurveyEvaluation:
         self.mVerticalAvailability = verticalAvailability
     
     def evaluateSurvey(self,  speciesVulnerability):
-        print speciesVulnerability
         
         #get stratum layer from project
         strataLayerId = QgsProject.instance().readEntry( "Survey",  "StrataLayer" )[0]
         if strataLayerId.isEmpty():
             return False
         strataLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayerId )
-        if stratalayer is None or not strataLayer.isValid():
-            return
+        if strataLayer is None or not strataLayer.isValid():
+            return False
+        strataProvider = strataLayer.dataProvider()
         
-        #get station layer (should be passed as argument)
+        #get station layer
         stationLayer = QgsMapLayerRegistry.instance().mapLayer( self.mSampleLayerId )
+        stationProvider = stationLayer.dataProvider()
         if stationLayer is None or not stationLayer.isValid():
             return False
+        
+        
+        scrAttribute = self.calculateScrStationTable( stationLayer,  stationProvider,  speciesVulnerability )
+        if scrAttribute == 1:
+            return False
+            
+        #keep stratum statistics in a dict of lists (tsarea, sumscr, sumvar, bio, sclbio, cv
+        stratumInfo = {}
+        stratumFeature = QgsFeature()
+        
+        strataProvider.select( strataProvider.attributeIndexes() )
+        while strataProvider.nextFeature( stratumFeature ):
+            stratumInfo[ stratumFeature.id()] = [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0] #1. number of stations / 2. sumscr / 3. meanscr / 4. variance scr / 5. area / 6. sumvar / 7. bio
+            
+        stationProvider.select( stationProvider.attributeIndexes() )
+        stationFeature = QgsFeature()
+        while stationProvider.nextFeature( stationFeature ):
+            stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
+            stratumInfo[stratumId][0] += 1
+            stratumInfo[stratumId][1] += ( stationFeature.attributeMap()[scrAttribute].toDouble()[0] )
+            
+        #calculate scr mean per stratum
+        areaCalcFeature = QgsFeature()
+        for key in stratumInfo:
+            stratInfo = stratumInfo[key]
+            stratInfo[2] = stratInfo[1] / stratInfo[0] 
+            #add stratum area from geometry
+            if strataProvider.featureAtId( key,  areaCalcFeature,  True ):
+                stratInfo[4] = areaCalcFeature.geometry().area()
+            
+        #calculate scr variance per stratum
+        stationProvider.select( stationProvider.attributeIndexes() )
+        stationFeature = QgsFeature()
+        while stationProvider.nextFeature( stationFeature ):
+            stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
+            meanscr = stratumInfo[stratumId][2]
+            scrValue = stationFeature.attributeMap()[scrAttribute].toDouble()[0]
+            nStations = stratumInfo[stratumId][0]
+            if nStations > 1:
+                stratumInfo[stratumId][3] += ( (scrValue - meanscr)* (scrValue - meanscr) / ( nStations - 1 ) ) 
+                
+        #calculate sumvar per stratum
+        stationProvider.select( stationProvider.attributeIndexes() )
+        while stationProvider.nextFeature( stationFeature ):
+            stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
+            width = stationFeature.attributeMap()[self.mWidth].toDouble()[0]
+            aavail = stationFeature.attributeMap()[self.mArealAvailability].toDouble()[0]
+            stratumInfo[stratumId][5] += ( stratumInfo[stratumId][3] * stratumInfo[stratumId][4] ) / (  width * width * aavail * aavail * stratumInfo[stratumId][0] ) #sumvar
+            stratumInfo[stratumId][6] +=   (stratumInfo[stratumId][2] * stratumInfo[stratumId][4] ) / ( width * aavail ) #bio
+            
+        
+        #write the calculated stratum values to the datasource
+        #first create the fields if they are not already there
+        
+        
+        #debug: iterate through the stratum info and print out number of stations
+        for key in stratumInfo:
+            print stratumInfo[key][0]
+            print stratumInfo[key][1]
+            print stratumInfo[key][2]
+            print stratumInfo[key][3]
+            print stratumInfo[key][4]
+            print stratumInfo[key][5]
+            print stratumInfo[key][6]
+        
+        
+        
+        return True
+        
+    #adds scr attribute to station table and returns index of scr attribute (or -1 in case of error)
+    def calculateScrStationTable(self,  stationLayer,  stationProvider,  speciesVulnerability ):
+        #write scr attribute to station layer (or overwrite values if already there)
+        scrAttribute = stationLayer.fieldNameIndex('scr')
+        if scrAttribute == -1:
+            newScrField = QgsField( 'scr',  QVariant.Double )
+            newFieldList = [ newScrField ]
+            stationProvider.addAttributes( newFieldList )
+            stationLayer.updateFieldMap()
+            scrAttribute = stationLayer.fieldNameIndex('scr')
+            if scrAttribute == -1:
+                return -1
+            
             
         #loop over station table to calculate src
-        stationLayer.select( stationLayer.pendingAllAttributesList() )
+        stationProvider.select( stationProvider.attributeIndexes() )
         f = QgsFeature()
-        while( stationLayer.nextFeature( f ) ):
+        while( stationProvider.nextFeature( f ) ):
             #stat[stncounter].scr = catchin / (distin*widthin*vulnin*vavailin);
             featureAttributes = f.attributeMap()
             stationCatch = featureAttributes[self.mCatch].toDouble()[0]
@@ -39,17 +123,21 @@ class SurveyEvaluation:
             stationWidth = featureAttributes[self.mWidth].toDouble()[0]
             stationVavail = featureAttributes[self.mVerticalAvailability].toDouble()[0]
             
-            scr = stationCatch / ( stationDist * stationWidth / 1000.0 * speciesVlunerability * stationVavail )
+            #debug: print values
+            print stationCatch
+            print stationDist
+            print stationWidth
+            print speciesVulnerability
+            print stationVavail
             
-            #write scr into station table 
-        
-        #loop over station table to calculate strata cv, bio, ...
-        
-        print self.mSampleLayerId
-        print self.mArealAvailability
-        print self.mCatch
-        print self.mDist
-        print self.mWidth
-        print self.mVerticalAvailability
-        
-        return True
+            denominator = stationDist * stationWidth / 1000.0 * speciesVulnerability * stationVavail
+            if denominator == 0:
+                src = 0.0
+            else:
+                scr = stationCatch / denominator
+            changeAttributeMap = {}
+            changeAttribute = { scrAttribute : QVariant(scr) }
+            changeAttributeMap[f.id()] = changeAttribute
+            stationProvider.changeAttributeValues(  changeAttributeMap )
+            
+            return scrAttribute

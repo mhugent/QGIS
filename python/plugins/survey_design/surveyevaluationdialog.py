@@ -27,6 +27,9 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
     def sampleLayerId(self):
         return self.mSampleLayerComboBox.itemData( self.mSampleLayerComboBox.currentIndex() ).toString()
         
+    def stratumId(self):
+        return self.mStratumIdComboBox.itemData( self.mStratumIdComboBox.currentIndex() ).toInt()[0]
+        
     def arealAvailability(self):
         index = self.mArealAvailabilityComboBox.currentIndex()
         if index == -1:
@@ -64,6 +67,7 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
         
     def sampleLayerChanged(self,  index):
         
+        self.mStratumIdComboBox.clear()
         self.mArealAvailabilityComboBox.clear()
         self.mCatchComboBox.clear()
         self.mDistComboBox.clear()
@@ -80,6 +84,7 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
             field = fieldMap[key]
             if field.type() == QVariant.String:
                 continue
+            self.mStratumIdComboBox.addItem( field.name(),  key )
             self.mArealAvailabilityComboBox.addItem( field.name(),  key )
             self.mCatchComboBox.addItem( field.name(),  key )
             self.mDistComboBox.addItem( field.name(),  key )
