@@ -16,6 +16,12 @@ class SurveyEvaluation:
     
     def evaluateSurvey(self,  speciesVulnerability):
         
+        # Use pdb for debugging
+        import pdb
+        # These lines allow you to set a breakpoint in the app
+        pyqtRemoveInputHook()
+        pdb.set_trace()
+        
         #get stratum layer from project
         strataLayerId = QgsProject.instance().readEntry( "Survey",  "StrataLayer" )[0]
         if strataLayerId.isEmpty():
@@ -31,14 +37,11 @@ class SurveyEvaluation:
         if stationLayer is None or not stationLayer.isValid():
             return False
         
-        
         scrAttribute = self.calculateScrStationTable( stationLayer,  stationProvider,  speciesVulnerability )
         if scrAttribute == -1:
             return False
-        print 'scrAttribute'
-        print scrAttribute
             
-        #keep stratum statistics in a dict of lists (tsarea, sumscr, sumvar, bio, sclbio, cv
+        #keep stratum statistics in a dict of lists (nstations, sumscr, meanscr, varscr, area, sumvar, bio)
         stratumInfo = {}
         stratumFeature = QgsFeature()
         
@@ -50,10 +53,10 @@ class SurveyEvaluation:
         stationFeature = QgsFeature()
         while stationProvider.nextFeature( stationFeature ):
             stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
-            stratumInfo[stratumId][0] += 1
-            stratumInfo[stratumId][1] += ( stationFeature.attributeMap()[scrAttribute].toDouble()[0] )
+            stratumInfo[stratumId][0] += 1 #number of stations
+            stratumInfo[stratumId][1] += ( stationFeature.attributeMap()[scrAttribute].toDouble()[0] ) #sumscr
             
-        #calculate scr mean per stratum
+        #calculate strata area and scr mean
         areaCalcFeature = QgsFeature()
         for key in stratumInfo:
             stratInfo = stratumInfo[key]
@@ -64,7 +67,6 @@ class SurveyEvaluation:
             
         #calculate scr variance per stratum
         stationProvider.select( stationProvider.attributeIndexes() )
-        stationFeature = QgsFeature()
         while stationProvider.nextFeature( stationFeature ):
             stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
             meanscr = stratumInfo[stratumId][2]
@@ -82,7 +84,6 @@ class SurveyEvaluation:
             stratumInfo[stratumId][5] += ( stratumInfo[stratumId][3] * stratumInfo[stratumId][4] ) / (  width * width * aavail * aavail * stratumInfo[stratumId][0] ) #sumvar
             stratumInfo[stratumId][6] +=   (stratumInfo[stratumId][2] * stratumInfo[stratumId][4] ) / ( width * aavail ) #bio
             
-        
         #write the calculated stratum values to the datasource
         #first create the fields if they are not already there
         nstationsIndex = self.attributeIndex( strataProvider,  'nstations',  QVariant.Int )
@@ -115,26 +116,11 @@ class SurveyEvaluation:
             if cvIndex != -1:
                 featureAttributeMap[cvIndex] = QVariant(  100 * math.sqrt( stratumInfo[stratumId][5] ) / stratumInfo[stratumId][6]) #100.0 * sqrt( sumvar) / bio
             strataProvider.changeAttributeValues( { stratumId : featureAttributeMap} )
-            
-        
-        
-        #debug: iterate through the stratum info and print out number of stations
-        for key in stratumInfo:
-            print stratumInfo[key][0]
-            print stratumInfo[key][1]
-            print stratumInfo[key][2]
-            print stratumInfo[key][3]
-            print stratumInfo[key][4]
-            print stratumInfo[key][5]
-            print stratumInfo[key][6]
-        
-        
-        
+
         return True
         
     #adds scr attribute to station table and returns index of scr attribute (or -1 in case of error)
     def calculateScrStationTable(self,  stationLayer,  stationProvider,  speciesVulnerability ):
-        #write scr attribute to station layer (or overwrite values if already there)
         scrAttribute = self.attributeIndex( stationProvider,  'scr',  QVariant.Double )
         if scrAttribute == -1:
             return scrAttribute
@@ -142,6 +128,7 @@ class SurveyEvaluation:
         stationLayer.updateFieldMap()
             
         #loop over station table to calculate src
+        changeAttributeMap = {}
         stationProvider.select( stationProvider.attributeIndexes() )
         f = QgsFeature()
         while( stationProvider.nextFeature( f ) ):
@@ -152,24 +139,15 @@ class SurveyEvaluation:
             stationWidth = featureAttributes[self.mWidth].toDouble()[0]
             stationVavail = featureAttributes[self.mVerticalAvailability].toDouble()[0]
             
-            #debug: print values
-            print stationCatch
-            print stationDist
-            print stationWidth
-            print speciesVulnerability
-            print stationVavail
-            
             denominator = stationDist * stationWidth / 1000.0 * speciesVulnerability * stationVavail
             if denominator == 0:
                 src = 0.0
             else:
                 scr = stationCatch / denominator
-            changeAttributeMap = {}
             changeAttribute = { scrAttribute : QVariant(scr) }
             changeAttributeMap[f.id()] = changeAttribute
-            stationProvider.changeAttributeValues(  changeAttributeMap )
-            
-            return scrAttribute
+        stationProvider.changeAttributeValues(  changeAttributeMap )
+        return scrAttribute
             
     #Returns index of attribute by name. Tries to create the field if it does not yet exist
     def attributeIndex(self,  provider,  fieldName,  fieldType ):

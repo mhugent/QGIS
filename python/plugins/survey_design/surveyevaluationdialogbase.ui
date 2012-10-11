@@ -93,14 +93,20 @@
      <item>
       <widget class="QLabel" name="mSpeciesVulnerabilityLabel">
        <property name="text">
-        <string>Species vulnerability [%]</string>
+        <string>Species vulnerability</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="mSpeciesVulnerabilitySpinBox">
        <property name="maximum">
-        <double>100.000000000000000</double>
+        <double>1.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.100000000000000</double>
+       </property>
+       <property name="value">
+        <double>1.000000000000000</double>
        </property>
       </widget>
      </item>
