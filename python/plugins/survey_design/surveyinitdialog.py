@@ -169,8 +169,8 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         minDistAttribute = QgsNewVectorLayerDialog.AttributeEntry()
         minDistAttribute.name = 'minDist'
         minDistAttribute.type = 'Real'
-        minDistAttribute.width = 10
-        minDistAttribute.precision = 2
+        minDistAttribute.width = 14
+        minDistAttribute.precision = 6
         attributeList.append( minDistAttribute )
         
         filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
@@ -207,10 +207,10 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
             return
             
         d = QgsAddAttrDialog( strataLayer )
-        d.setType( 0 )
+        d.setType( 1 )
         d.setFieldName( 'min_dist' )
-        d.setWidth( 10 )
-        d.setPrecision( 0 )
+        d.setWidth( 14 )
+        d.setPrecision( 6 )
         if d.exec_() == QDialog.Accepted:
             fieldList = []
             newField = d.field()
