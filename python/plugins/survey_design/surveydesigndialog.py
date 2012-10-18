@@ -66,9 +66,14 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
         strataId = QgsProject.instance().readNumEntry( 'Survey',  'StrataId',  -1 )[0]
         
+        minDistanceUnitsString = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )[0]
+        minDistanceUnits = QgsTransectSample.StrataUnits
+        if minDistanceUnitsString == "Meters":
+            minDistanceUnits = QgsTransectSample.Meters
+        
         strataMapLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
         baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
-        transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
+        transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, minDistanceUnits,  strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
         baselineStrataId, outputPointShape, outputLineShape )
         transectSample.createSample( None )
         

@@ -51,6 +51,15 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', 0 )[0]  )  )
         self.mNSamplePointsComboBox.setCurrentIndex( self.mNSamplePointsComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', 0 )[0]  )  )
         self.mStrataIdAttributeComboBox.setCurrentIndex( self.mStrataIdAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataId',  0 ) [0] )  )
+        
+        self.mMinDistanceUnitsComboBox.addItem( self.tr( "Stratum units" ) )
+        self.mMinDistanceUnitsComboBox.addItem( self.tr( "Meters" ) )
+        
+        minDistanceUnits = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )[0]
+        if( minDistanceUnits == 'Meters'):
+            self.mMinDistanceUnitsComboBox.setCurrentIndex( 1 )
+        else:
+            self.mMinDistanceUnitsComboBox.setCurrentIndex( 0 )
      
     def fillLayerComboBox( self,  comboBox,  geometryType,  noneEntry ):
         comboBox.clear()
@@ -293,12 +302,18 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         
         
     def accept( self ):
-         #store the settings to the properties section of the project file
-         QgsProject.instance().writeEntry( 'Survey', 'SurveyAreaLayer', self.surveyAreaLayer() )
-         QgsProject.instance().writeEntry( 'Survey', 'SurveyBaselineLayer', self.surveyBaselineLayer() )
-         QgsProject.instance().writeEntry( 'Survey', 'StrataLayer', self.strataLayer() )
-         QgsProject.instance().writeEntry( 'Survey', 'BaselineStrataId', self.baselineStrataId() )
-         QgsProject.instance().writeEntry( 'Survey', 'StrataMinDistance', self.strataMinDistanceAttribute() )
-         QgsProject.instance().writeEntry( 'Survey', 'StrataNSamplePoints', self.strataNSamplePointsAttribute() )
-         QgsProject.instance().writeEntry( 'Survey', 'StrataId', self.strataId() )
-         QDialog.accept( self )
+        #store the settings to the properties section of the project file
+        QgsProject.instance().writeEntry( 'Survey', 'SurveyAreaLayer', self.surveyAreaLayer() )
+        QgsProject.instance().writeEntry( 'Survey', 'SurveyBaselineLayer', self.surveyBaselineLayer() )
+        QgsProject.instance().writeEntry( 'Survey', 'StrataLayer', self.strataLayer() )
+        QgsProject.instance().writeEntry( 'Survey', 'BaselineStrataId', self.baselineStrataId() )
+        QgsProject.instance().writeEntry( 'Survey', 'StrataMinDistance', self.strataMinDistanceAttribute() )
+        QgsProject.instance().writeEntry( 'Survey', 'StrataNSamplePoints', self.strataNSamplePointsAttribute() )
+        QgsProject.instance().writeEntry( 'Survey', 'StrataId', self.strataId() )
+        minDistanceUnitString = QString()
+        if self.mMinDistanceUnitsComboBox.currentText() == self.tr( "Meters" ) :
+            minDistanceUnitString = "Meters"
+        else:
+            minDistanceUnitString = "Stratum Units"
+        QgsProject.instance().writeEntry( 'Survey',  'StrataMinDistanceUnits',  minDistanceUnitString );
+        QDialog.accept( self )
