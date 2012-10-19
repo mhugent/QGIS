@@ -11,7 +11,7 @@ class QgsVectorLayer;
 class QProgressDialog;
 
 /**A class for the creation of transect sample lines based on a set of strata polygons and baselines*/
-class QgsTransectSample
+class ANALYSIS_EXPORT QgsTransectSample
 {
   public:
     QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute,

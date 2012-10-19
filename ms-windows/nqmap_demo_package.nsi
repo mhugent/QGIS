@@ -42,6 +42,8 @@ Section ""
 
   WriteRegStr HKEY_CURRENT_USER "Software\NIWA\NIWA Quantum Map\Plugins" "webdataplugin" "true"
 
+  WriteRegStr HKEY_CURRENT_USER "Software\NIWA\NIWA Quantum Map\PythonPlugins" "survey_design" "true"
+
   WriteRegStr HKEY_CURRENT_USER "Software\NIWA\NIWA Quantum Map\Qgis" "showTips" "false"
   
 
@@ -50,8 +52,9 @@ Section ""
   Delete "$DESKTOP\NIWA Quantum Map.lnk"
   CreateShortCut "$DESKTOP\NIWA Quantum Map.lnk" "$INSTDIR\bin\niwa_quantum_map.exe" "" "$INSTDIR\icons\nqmap.ico"
   Delete "$DESKTOP\Demo project.lnk"
-  CreateShortCut "$DESKTOP\Demo project.lnk" "$INSTDIR\bin\niwa_quantum_map.exe" "$\"$INSTDIR\data\project1.qgs$\"" "$INSTDIR\icons\nqmap.ico"
-
+  ;CreateShortCut "$DESKTOP\Demo project.lnk" "$INSTDIR\bin\niwa_quantum_map.exe" "$\"$INSTDIR\data\project1.qgs$\"" "$INSTDIR\icons\nqmap.ico"
+  Delete "$DESKTOP\NIWA Quantum Map FAQ.lnk"
+  CreateShortCut "$DESKTOP\NIWA Quantum Map FAQ.lnk" "$INSTDIR\resources\Quantum_Map_FAQ_v3.pdf"
   
 SectionEnd
 
@@ -59,5 +62,22 @@ Section "Uninstall"
   Delete $INSTDIR\uninstall.exe
   RMDir /r "$INSTDIR"
   Delete "$DESKTOP\NIWA Quantum Map.lnk"
-
+  Delete "$DESKTOP\Demo project.lnk"
+  Delete "$DESKTOP\NIWA Quantum Map FAQ.lnk"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}"
 SectionEnd
+
+Function .onInit
+  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${INSTALLATIONNAME}" "UninstallString"
+  StrCmp $R0 "" done
+  
+  MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+  "${INSTALLATIONNAME} is already installed. $\n Click 'OK' to remove the \
+  previous version or 'Cancel' to cancel this upgrade." \
+  IDOK uninst
+  Abort
+
+ uninst:
+  Exec $INSTDIR\uninstall.exe
+ done:
+FunctionEnd
