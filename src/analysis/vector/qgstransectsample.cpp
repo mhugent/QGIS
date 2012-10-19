@@ -37,17 +37,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 2;
   }
 
-  //debug code. Cleanup later
-  QgsPolyline debugPoly1; debugPoly1 << QgsPoint( 1.0, 1.0 ) << QgsPoint( 2.0, 2.0 );
-  QgsGeometry* debugGeom1 = QgsGeometry::fromPolyline( debugPoly1 );
-  QgsPolyline debugPoly2; debugPoly2 << QgsPoint( 4.0, 4.0 ) << QgsPoint( 3.0, 3.0 );
-  QgsGeometry* debugGeom2 = QgsGeometry::fromPolyline( debugPoly2 );
-
-  QgsPoint debugPt1, debugPt2;
-  double debugDist;
-
-  closestSegmentPoints( *debugGeom1, *debugGeom2, debugDist, debugPt1, debugPt2 );
-
   //create vector file writers for output
   QgsFieldMap outputPointFields;
   outputPointFields.insert( 0, QgsField( "id", QVariant::Int ) );
