@@ -8,10 +8,11 @@
 QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
                                       int baselineStrataId, const QString& outputPointLayer,
-                                      const QString& outputLineLayer ): mStrataLayer( strataLayer ),
+                                      const QString& outputLineLayer, const QString& usedBaselineLayer ): mStrataLayer( strataLayer ),
     mStrataIdAttribute( strataIdAttribute ), mMinDistanceAttribute( minDistanceAttribute ),
     mNPointsAttribute( nPointsAttribute ), mBaselineLayer( baselineLayer ), mShareBaseline( shareBaseline ),
-    mBaselineStrataId( baselineStrataId ), mOutputPointLayer( outputPointLayer ), mOutputLineLayer( outputLineLayer ), mMinDistanceUnits( minDistUnits )
+    mBaselineStrataId( baselineStrataId ), mOutputPointLayer( outputPointLayer ), mOutputLineLayer( outputLineLayer ), mUsedBaselineLayer( usedBaselineLayer ),
+    mMinDistanceUnits( minDistUnits )
 {
 }
 
@@ -54,6 +55,15 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   if ( outputLineWriter.hasError() != QgsVectorFileWriter::NoError )
   {
     return 4;
+  }
+
+  QgsFieldMap usedBaselineFields;
+  usedBaselineFields.insert( 0, QgsField( "stratum_id", QVariant::Int ) );
+  QgsVectorFileWriter usedBaselineWriter( mUsedBaselineLayer, "utf-8", usedBaselineFields, QGis::WKBLineString,
+                                          &( mStrataLayer->crs() ) );
+  if ( usedBaselineWriter.hasError() != QgsVectorFileWriter::NoError )
+  {
+    return 5;
   }
 
   //configure distanceArea depending on minDistance units and output CRS
@@ -106,6 +116,12 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       delete baselineGeom;
       continue;
     }
+
+    //save clipped baseline to file
+    QgsFeature blFeature;
+    blFeature.setGeometry( *clippedBaseline );
+    blFeature.addAttribute( 0, strataId );
+    usedBaselineWriter.addFeature( blFeature );
 
     //create line buffer and clip by strata
     QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( minDistance, 8 );

@@ -25,7 +25,7 @@ class QgsTransectSample
 
     QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                        int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
-                       int baselineStrataId, const QString& outputPointLayer, const QString& outputLineLayer );
+                       int baselineStrataId, const QString& outputPointLayer, const QString& outputLineLayer, const QString& usedBaselineLayer );
     ~QgsTransectSample();
 
     int createSample( QProgressDialog* pd );
@@ -50,6 +50,7 @@ class QgsTransectSample
 
     QString mOutputPointLayer;
     QString mOutputLineLayer;
+    QString mUsedBaselineLayer;
 
     DistanceUnits mMinDistanceUnits;
 

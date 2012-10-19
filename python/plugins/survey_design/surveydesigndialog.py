@@ -58,6 +58,10 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         outputLineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output line shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
         if outputLineShape.isEmpty():
             return
+            
+        usedBaselineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output baseline file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
+        if usedBaselineShape.isEmpty():
+            return
         
         strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
         surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
@@ -74,7 +78,7 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         strataMapLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
         baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
         transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, minDistanceUnits,  strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
-        baselineStrataId, outputPointShape, outputLineShape )
+        baselineStrataId, outputPointShape, outputLineShape,  usedBaselineShape )
         transectSample.createSample( None )
         
         s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputLineShape ).absolutePath() )
