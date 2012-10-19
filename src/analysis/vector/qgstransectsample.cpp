@@ -37,6 +37,17 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 2;
   }
 
+  //debug code. Cleanup later
+  QgsPolyline debugPoly1; debugPoly1 << QgsPoint( 1.0, 1.0 ) << QgsPoint( 2.0, 2.0 );
+  QgsGeometry* debugGeom1 = QgsGeometry::fromPolyline( debugPoly1 );
+  QgsPolyline debugPoly2; debugPoly2 << QgsPoint( 4.0, 4.0 ) << QgsPoint( 3.0, 3.0 );
+  QgsGeometry* debugGeom2 = QgsGeometry::fromPolyline( debugPoly2 );
+
+  QgsPoint debugPt1, debugPt2;
+  double debugDist;
+
+  closestSegmentPoints( *debugGeom1, *debugGeom2, debugDist, debugPt1, debugPt2 );
+
   //create vector file writers for output
   QgsFieldMap outputPointFields;
   outputPointFields.insert( 0, QgsField( "id", QVariant::Int ) );
@@ -326,22 +337,36 @@ bool QgsTransectSample::closestSegmentPoints( QgsGeometry& g1, QgsGeometry& g2, 
   if ( doubleNear( denominatorU, 0 ) || doubleNear( denominatorT, 0 ) )
   {
     //lines are parallel
-    //project p11 and p12 onto g2 and take the one with the smaller distance
+    //project all points on the other segment and take the one with the smallest distance
+    QgsPoint minDistPoint1;
+    double d1 = p11.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), minDistPoint1 );
+    QgsPoint minDistPoint2;
+    double d2 = p12.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), minDistPoint2 );
+    QgsPoint minDistPoint3;
+    double d3 = p21.sqrDistToSegment( p11.x(), p11.y(), p12.x(), p12.y(), minDistPoint3 );
+    QgsPoint minDistPoint4;
+    double d4 = p22.sqrDistToSegment( p11.x(), p11.y(), p12.x(), p12.y(), minDistPoint4 );
 
-    QgsPoint testPt1, testPt2;
-    double d1 = p11.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), testPt1 );
-    double d2 = p12.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), testPt2 );
-    if ( d1 <= d2 )
+    if ( d1 <= d2 && d1 <= d3 && d1 <= d4 )
     {
-      dist = d1;
-      pt1 = p11; pt2 = testPt1;
+      dist = sqrt( d1 ); pt1 = p11; pt2 = minDistPoint1;
+      return true;
+    }
+    else if ( d2 <= d1 && d2 <= d3 && d2 <= d4 )
+    {
+      dist = sqrt( d2 );  pt1 = p12; pt2 = minDistPoint2;
+      return true;
+    }
+    else if ( d3 <= d1 && d3 <= d2 && d3 <= d4 )
+    {
+      dist = sqrt( d3 ); pt1 = p21; pt2 = minDistPoint3;
+      return true;
     }
     else
     {
-      dist = d2;
-      pt1 = p12; pt2 = testPt2;
+      dist = sqrt( d4 ); pt1 = p21; pt2 = minDistPoint4;
+      return true;
     }
-    return true;
   }
 
   double u = ( p1x * v1y - p1y * v1x - p2x * v1y + p2y * v1x ) / denominatorU;
