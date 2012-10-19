@@ -82,8 +82,9 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         transectSample.createSample( None )
         
         s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputLineShape ).absolutePath() )
-        self.iface.addVectorLayer( outputPointShape, 'sample_point', 'ogr' )
-        self.iface.addVectorLayer( outputLineShape, 'sample_line', 'ogr' )
+        self.iface.addVectorLayer( outputPointShape, QFileInfo( outputPointShape ).baseName(), 'ogr' )
+        self.iface.addVectorLayer( outputLineShape, QFileInfo( outputLineShape ).baseName(), 'ogr' )
+        self.iface.addVectorLayer( usedBaselineShape,  QFileInfo( usedBaselineShape ).baseName(),  'ogr' )
         
     def createPointSample( self ):
         #get StrataLayer, StrataMinDistance, StrataNSamplePoints
