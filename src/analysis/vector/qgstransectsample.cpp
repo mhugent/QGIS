@@ -111,7 +111,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
     //clip baseline by strata
     QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
-    if ( !clippedBaseline )
+    if ( !clippedBaseline || clippedBaseline->wkbType() == QGis::WKBUnknown )
     {
       delete baselineGeom;
       continue;
