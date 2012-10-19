@@ -4,11 +4,14 @@ surveydesignplugin.py
 surveyinitdialog.py
 surveydesigndialog.py
 surveydigitizetool.py
+surveyevaluationdialog.py
+surveyevaluation.py
 )
 
 PYQT4_WRAP_UI(PYUI_FILES
 surveyinitdialogbase.ui
 surveydesigndialogbase.ui
+surveyevaluationdialogbase.ui
 )
 
 PYQT4_ADD_RESOURCES( PYRC_FILES resources.qrc )

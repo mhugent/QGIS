@@ -1,6 +1,5 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 from qgis.core import *
 from qgis.analysis import *
 from ui_surveydesigndialogbase import Ui_SurveyDesignDialogBase
@@ -59,6 +58,10 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         outputLineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output line shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
         if outputLineShape.isEmpty():
             return
+            
+        usedBaselineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output baseline file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
+        if usedBaselineShape.isEmpty():
+            return
         
         strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
         surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
@@ -67,10 +70,15 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
         strataId = QgsProject.instance().readNumEntry( 'Survey',  'StrataId',  -1 )[0]
         
+        minDistanceUnitsString = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )[0]
+        minDistanceUnits = QgsTransectSample.StrataUnits
+        if minDistanceUnitsString == "Meters":
+            minDistanceUnits = QgsTransectSample.Meters
+        
         strataMapLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
         baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
-        transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
-        baselineStrataId, outputPointShape, outputLineShape )
+        transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, minDistanceUnits,  strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
+        baselineStrataId, outputPointShape, outputLineShape,  usedBaselineShape )
         transectSample.createSample( None )
         
         s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputLineShape ).absolutePath() )

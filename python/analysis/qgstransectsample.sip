@@ -5,9 +5,16 @@ class QgsTransectSample
 %End
 
 public:
+
+    enum DistanceUnits
+    {
+        Meters,
+        StrataUnits //units are the same as stratum layer
+    };
+
     QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute,
-                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
-                       int baselineStrataId, const QString& outputPointLayer, const QString& outputLineLayer );
+                       DistanceUnits minDistUnits, int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
+                       int baselineStrataId, const QString& outputPointLayer, const QString& outputLineLayer, const QString& usedBaselineLayer );
     ~QgsTransectSample();
 
     int createSample( QProgressDialog* pd );

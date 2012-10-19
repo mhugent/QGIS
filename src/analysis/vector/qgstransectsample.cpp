@@ -1,16 +1,18 @@
 #include "qgstransectsample.h"
+#include "qgsdistancearea.h"
 #include "qgsgeometry.h"
 #include "qgsspatialindex.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
 
-QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute,
+QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
                                       int baselineStrataId, const QString& outputPointLayer,
-                                      const QString& outputLineLayer ): mStrataLayer( strataLayer ),
+                                      const QString& outputLineLayer, const QString& usedBaselineLayer ): mStrataLayer( strataLayer ),
     mStrataIdAttribute( strataIdAttribute ), mMinDistanceAttribute( minDistanceAttribute ),
     mNPointsAttribute( nPointsAttribute ), mBaselineLayer( baselineLayer ), mShareBaseline( shareBaseline ),
-    mBaselineStrataId( baselineStrataId ), mOutputPointLayer( outputPointLayer ), mOutputLineLayer( outputLineLayer )
+    mBaselineStrataId( baselineStrataId ), mOutputPointLayer( outputPointLayer ), mOutputLineLayer( outputLineLayer ), mUsedBaselineLayer( usedBaselineLayer ),
+    mMinDistanceUnits( minDistUnits )
 {
 }
 
@@ -55,6 +57,27 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 4;
   }
 
+  QgsFieldMap usedBaselineFields;
+  usedBaselineFields.insert( 0, QgsField( "stratum_id", QVariant::Int ) );
+  QgsVectorFileWriter usedBaselineWriter( mUsedBaselineLayer, "utf-8", usedBaselineFields, QGis::WKBLineString,
+                                          &( mStrataLayer->crs() ) );
+  if ( usedBaselineWriter.hasError() != QgsVectorFileWriter::NoError )
+  {
+    return 5;
+  }
+
+  //configure distanceArea depending on minDistance units and output CRS
+  QgsDistanceArea distanceArea;
+  distanceArea.setSourceCrs( mStrataLayer->crs().srsid() );
+  if ( mMinDistanceUnits == Meters )
+  {
+    distanceArea.setProjectionsEnabled( true );
+  }
+  else
+  {
+    distanceArea.setProjectionsEnabled( false );
+  }
+
   //init random number generator
   srand( QTime::currentTime().msec() );
 
@@ -88,11 +111,17 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
     //clip baseline by strata
     QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
-    if ( !clippedBaseline )
+    if ( !clippedBaseline || clippedBaseline->wkbType() == QGis::WKBUnknown )
     {
       delete baselineGeom;
       continue;
     }
+
+    //save clipped baseline to file
+    QgsFeature blFeature;
+    blFeature.setGeometry( *clippedBaseline );
+    blFeature.addAttribute( 0, strataId );
+    usedBaselineWriter.addFeature( blFeature );
 
     //create line buffer and clip by strata
     QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( minDistance, 8 );
@@ -165,7 +194,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       }
 
       //search closest existing profile. Cancel if dist < minDist
-      if ( otherTransectWithinDistance( lineClipStratum, minDistance, sIndex, lineFeatureMap ) )
+      if ( otherTransectWithinDistance( lineClipStratum, minDistance, sIndex, lineFeatureMap, distanceArea ) )
       {
         delete lineFarAwayGeom; delete lineClipStratum;
         continue;
@@ -222,7 +251,7 @@ QgsGeometry* QgsTransectSample::findBaselineGeometry( int strataId )
 }
 
 bool QgsTransectSample::otherTransectWithinDistance( QgsGeometry* geom, double minDistance, QgsSpatialIndex& sIndex,
-    const QMap< QgsFeatureId, QgsGeometry* >& lineFeatureMap )
+    const QMap< QgsFeatureId, QgsGeometry* >& lineFeatureMap, QgsDistanceArea& da )
 {
   if ( !geom )
   {
@@ -243,7 +272,23 @@ bool QgsTransectSample::otherTransectWithinDistance( QgsGeometry* geom, double m
     const QMap< QgsFeatureId, QgsGeometry* >::const_iterator idMapIt = lineFeatureMap.find( *lineIdIt );
     if ( idMapIt != lineFeatureMap.constEnd() )
     {
-      if ( geom->distance( *( idMapIt.value() ) ) < minDistance )
+      //debug code
+#if 0
+      QgsPoint debugPoint1, debugPoint2;
+      double dist1 = 0.0;
+      closestSegmentPoints( *geom, *( idMapIt.value() ), dist1, debugPoint1, debugPoint2 );
+      double dist2 = geom->distance( *( idMapIt.value() ) );
+      if ( !doubleNear( dist1, dist2 ) )
+      {
+        closestSegmentPoints( *geom, *( idMapIt.value() ), dist1, debugPoint1, debugPoint2 );
+      }
+#endif //0
+      double dist = 0;
+      QgsPoint pt1, pt2;
+      closestSegmentPoints( *geom, *( idMapIt.value() ), dist, pt1, pt2 );
+      dist = da.measureLine( pt1, pt2 ); //convert degrees to meters if necessary
+
+      if ( dist < minDistance )
       {
         delete buffer;
         return true;
@@ -253,4 +298,126 @@ bool QgsTransectSample::otherTransectWithinDistance( QgsGeometry* geom, double m
 
   delete buffer;
   return false;
+}
+
+bool QgsTransectSample::closestSegmentPoints( QgsGeometry& g1, QgsGeometry& g2, double& dist, QgsPoint& pt1, QgsPoint& pt2 )
+{
+  QGis::WkbType t1 = g1.wkbType();
+  if ( t1 != QGis::WKBLineString && t1 != QGis::WKBLineString25D )
+  {
+    return false;
+  }
+
+  QGis::WkbType t2 = g2.wkbType();
+  if ( t2 != QGis::WKBLineString && t2 != QGis::WKBLineString25D )
+  {
+    return false;
+  }
+
+  QgsPolyline pl1 = g1.asPolyline();
+  QgsPolyline pl2 = g2.asPolyline();
+
+  if ( pl1.size() < 2 || pl2.size() < 2 )
+  {
+    return false;
+  }
+
+  QgsPoint p11 = pl1.at( 0 );
+  QgsPoint p12 = pl1.at( 1 );
+  QgsPoint p21 = pl2.at( 0 );
+  QgsPoint p22 = pl2.at( 1 );
+
+  double p1x = p11.x();
+  double p1y = p11.y();
+  double v1x = p12.x() - p11.x();
+  double v1y = p12.y() - p11.y();
+  double p2x = p21.x();
+  double p2y = p21.y();
+  double v2x = p22.x() - p21.x();
+  double v2y = p22.y() - p21.y();
+
+  double denominatorU = v2x * v1y - v2y * v1x;
+  double denominatorT = v1x * v2y - v1y * v2x;
+
+  if ( doubleNear( denominatorU, 0 ) || doubleNear( denominatorT, 0 ) )
+  {
+    //lines are parallel
+    //project all points on the other segment and take the one with the smallest distance
+    QgsPoint minDistPoint1;
+    double d1 = p11.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), minDistPoint1 );
+    QgsPoint minDistPoint2;
+    double d2 = p12.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), minDistPoint2 );
+    QgsPoint minDistPoint3;
+    double d3 = p21.sqrDistToSegment( p11.x(), p11.y(), p12.x(), p12.y(), minDistPoint3 );
+    QgsPoint minDistPoint4;
+    double d4 = p22.sqrDistToSegment( p11.x(), p11.y(), p12.x(), p12.y(), minDistPoint4 );
+
+    if ( d1 <= d2 && d1 <= d3 && d1 <= d4 )
+    {
+      dist = sqrt( d1 ); pt1 = p11; pt2 = minDistPoint1;
+      return true;
+    }
+    else if ( d2 <= d1 && d2 <= d3 && d2 <= d4 )
+    {
+      dist = sqrt( d2 );  pt1 = p12; pt2 = minDistPoint2;
+      return true;
+    }
+    else if ( d3 <= d1 && d3 <= d2 && d3 <= d4 )
+    {
+      dist = sqrt( d3 ); pt1 = p21; pt2 = minDistPoint3;
+      return true;
+    }
+    else
+    {
+      dist = sqrt( d4 ); pt1 = p21; pt2 = minDistPoint4;
+      return true;
+    }
+  }
+
+  double u = ( p1x * v1y - p1y * v1x - p2x * v1y + p2y * v1x ) / denominatorU;
+  double t = ( p2x * v2y - p2y * v2x - p1x * v2y + p1y * v2x ) / denominatorT;
+
+  if ( u >= 0 && u <= 1.0 && t >= 0 && t <= 1.0 )
+  {
+    dist = 0;
+    pt1.setX( p2x + u * v2x );
+    pt1.setY( p2y + u * v2y );
+    pt2 = pt1;
+    dist = 0;
+    return true;
+  }
+
+  if ( t > 1.0 )
+  {
+    pt1.setX( p12.x() );
+    pt1.setY( p12.y() );
+  }
+  else if ( t < 0.0 )
+  {
+    pt1.setX( p11.x() );
+    pt1.setY( p11.y() );
+  }
+  if ( u > 1.0 )
+  {
+    pt2.setX( p22.x() );
+    pt2.setY( p22.y() );
+  }
+  if ( u < 0.0 )
+  {
+    pt2.setX( p21.x() );
+    pt2.setY( p21.y() );
+  }
+  if ( t >= 0.0 && t <= 1.0 )
+  {
+    //project pt2 onto g1
+    pt2.sqrDistToSegment( p11.x(), p11.y(), p12.x(), p12.y(), pt1 );
+  }
+  if ( u >= 0.0 && u <= 1.0 )
+  {
+    //project pt1 onto g2
+    pt1.sqrDistToSegment( p21.x(), p21.y(), p22.x(), p22.y(), pt2 );
+  }
+
+  dist = sqrt( pt1.sqrDist( pt2 ) );
+  return true;
 }
