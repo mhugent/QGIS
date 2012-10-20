@@ -124,7 +124,15 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     usedBaselineWriter.addFeature( blFeature );
 
     //create line buffer and clip by strata
-    QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( minDistance, 8 );
+
+    //if minDistance is in meters and the data in degrees, we need to apply a rough conversion for the buffer distance
+    double bufferDist = minDistance;
+    if ( mMinDistanceUnits == Meters && mStrataLayer->crs().mapUnits() == QGis::DecimalDegrees )
+    {
+      bufferDist = minDistance / 111319.9;
+    }
+
+    QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( bufferDist, 8 );
     if ( !clipBaselineBuffer && !( clipBaselineBuffer->wkbType() == QGis::WKBPolygon ||
                                    clipBaselineBuffer->wkbType() == QGis::WKBPolygon25D ) )
     {
@@ -272,17 +280,6 @@ bool QgsTransectSample::otherTransectWithinDistance( QgsGeometry* geom, double m
     const QMap< QgsFeatureId, QgsGeometry* >::const_iterator idMapIt = lineFeatureMap.find( *lineIdIt );
     if ( idMapIt != lineFeatureMap.constEnd() )
     {
-      //debug code
-#if 0
-      QgsPoint debugPoint1, debugPoint2;
-      double dist1 = 0.0;
-      closestSegmentPoints( *geom, *( idMapIt.value() ), dist1, debugPoint1, debugPoint2 );
-      double dist2 = geom->distance( *( idMapIt.value() ) );
-      if ( !doubleNear( dist1, dist2 ) )
-      {
-        closestSegmentPoints( *geom, *( idMapIt.value() ), dist1, debugPoint1, debugPoint2 );
-      }
-#endif //0
       double dist = 0;
       QgsPoint pt1, pt2;
       closestSegmentPoints( *geom, *( idMapIt.value() ), dist, pt1, pt2 );
