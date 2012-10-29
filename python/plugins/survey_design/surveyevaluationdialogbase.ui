@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>286</width>
-    <height>236</height>
+    <height>252</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,10 +16,13 @@
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="1">
-      <widget class="QComboBox" name="mSampleLayerComboBox"/>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="mStratumIdComboBox"/>
      </item>
-     <item row="4" column="0">
+     <item row="7" column="1">
+      <widget class="QComboBox" name="mVavailComboBox"/>
+     </item>
+     <item row="5" column="0">
       <widget class="QLabel" name="mDistLabel">
        <property name="text">
         <string>Dist</string>
@@ -27,37 +30,11 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="mVavailLabel">
-       <property name="text">
-        <string>Vertical availability</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QComboBox" name="mWidthComboBox"/>
-     </item>
-     <item row="4" column="1">
-      <widget class="QComboBox" name="mDistComboBox"/>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="mArealAvailabliltyLabel">
-       <property name="text">
-        <string>Areal availability</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QComboBox" name="mVavailComboBox"/>
-     </item>
-     <item row="5" column="0">
       <widget class="QLabel" name="mWidthLabel">
        <property name="text">
         <string>Width</string>
        </property>
       </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QComboBox" name="mArealAvailabilityComboBox"/>
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="mSampleLayerLabel">
@@ -66,23 +43,56 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="5" column="1">
+      <widget class="QComboBox" name="mDistComboBox"/>
+     </item>
+     <item row="4" column="0">
       <widget class="QLabel" name="mCatchLabel">
        <property name="text">
         <string>Catch</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="mCatchComboBox"/>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="mSampleLayerComboBox"/>
      </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="mStratumIdComboBox"/>
-     </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="mStratumIdLabel">
        <property name="text">
         <string>Stratum id</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="mVavailLabel">
+       <property name="text">
+        <string>Vertical availability</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QComboBox" name="mWidthComboBox"/>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="mCatchComboBox"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="mArealAvailabliltyLabel">
+       <property name="text">
+        <string>Areal availability</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="mArealAvailabilityComboBox"/>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="mBaselineLayerClipComboBox"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="mBaselineClipLayerLabel">
+       <property name="text">
+        <string>Baseline clip layer</string>
        </property>
       </widget>
      </item>

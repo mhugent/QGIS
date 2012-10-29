@@ -59,6 +59,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
   QgsFieldMap usedBaselineFields;
   usedBaselineFields.insert( 0, QgsField( "stratum_id", QVariant::Int ) );
+  usedBaselineFields.insert( 1, QgsField( "ok", QVariant::String ) );
   QgsVectorFileWriter usedBaselineWriter( mUsedBaselineLayer, "utf-8", usedBaselineFields, QGis::WKBLineString,
                                           &( mStrataLayer->crs() ) );
   if ( usedBaselineWriter.hasError() != QgsVectorFileWriter::NoError )
@@ -121,6 +122,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     QgsFeature blFeature;
     blFeature.setGeometry( *clippedBaseline );
     blFeature.addAttribute( 0, strataId );
+    blFeature.addAttribute( 1, "f" );
     usedBaselineWriter.addFeature( blFeature );
 
     //create line buffer and clip by strata
@@ -177,7 +179,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       samplePointFeature.setGeometry( samplePoint );
       samplePointFeature.addAttribute( 0, nTotalTransects );
       samplePointFeature.addAttribute( 1, nCreatedTransects );
-      samplePointFeature.addAttribute( 2, fet.id() );
+      samplePointFeature.addAttribute( 2, strataId );
 
       //find closest point on clipped buffer line
       QgsPoint minDistPoint;
@@ -213,7 +215,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       sampleLineFeature.setGeometry( lineClipStratum );
       sampleLineFeature.addAttribute( 0, nTotalTransects );
       sampleLineFeature.addAttribute( 1, nCreatedTransects );
-      sampleLineFeature.addAttribute( 2, fet.id() );
+      sampleLineFeature.addAttribute( 2, strataId );
       outputLineWriter.addFeature( sampleLineFeature );
 
       //add point to file writer here.

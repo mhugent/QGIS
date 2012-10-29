@@ -15,7 +15,9 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
         layers = QgsMapLayerRegistry.instance().mapLayers()
         for key in layers:
             layer = layers[key]
-            self.mSampleLayerComboBox.addItem( layer.name(),  key )
+            if layer.type() == QgsMapLayer.VectorLayer:
+                self.mSampleLayerComboBox.addItem( layer.name(),  key )
+                self.mBaselineLayerClipComboBox.addItem( layer.name(),  key )
         
         self.sampleLayerChanged( self.mSampleLayerComboBox.currentIndex() )
         QObject.connect( self.mSampleLayerComboBox, SIGNAL('currentIndexChanged( int )'), self.sampleLayerChanged )
@@ -26,6 +28,9 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
         
     def sampleLayerId(self):
         return self.mSampleLayerComboBox.itemData( self.mSampleLayerComboBox.currentIndex() ).toString()
+        
+    def baselineClipLayerId(self):
+        return self.mBaselineLayerClipComboBox.itemData( self.mBaselineLayerClipComboBox.currentIndex() ).toString()
         
     def stratumId(self):
         return self.mStratumIdComboBox.itemData( self.mStratumIdComboBox.currentIndex() ).toInt()[0]

@@ -50,9 +50,30 @@ class SurveyDesignPlugin:
         
     def openSurveyEvaluationDialog(self):
         dialog = SurveyEvaluationDialog( self.iface,  self.iface.mainWindow() )
-        if dialog.exec_() == QDialog.Accepted:
-            eval = SurveyEvaluation( self.iface,  dialog.sampleLayerId(), dialog.stratumId(),  dialog.arealAvailability(),  dialog.catch(),  dialog.dist(),  dialog.width(),  dialog.verticalAvailability() )
-            eval.evaluateSurvey( dialog.speciesVulnerability() )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+        
+        #check for which strata to run the analysis (the user has to change the 'ok' attribute of the baselines to something different than 'f')
+        strataExcludeSet = set()
+        baselineClipLayerId = dialog.baselineClipLayerId()
+        if not baselineClipLayerId.isEmpty():
+            baselineClipLayer = QgsMapLayerRegistry.instance().mapLayers()[ baselineClipLayerId ]
+            okAttribute = baselineClipLayer.fieldNameIndex("ok" )
+            strataIdAttribute = baselineClipLayer.fieldNameIndex( "stratum_id" )
+            
+            if okAttribute != -1 and strataIdAttribute != 1:
+                attList = [okAttribute,  strataIdAttribute]
+                baselineClipLayer.select( attList,  QgsRectangle(),  False )
+                
+                f = QgsFeature()
+                while baselineClipLayer.nextFeature( f ):
+                    okString = f.attributeMap()[okAttribute].toString()[0]
+                    stratumId = f.attributeMap()[strataIdAttribute].toInt()[0]
+                    if okString == 'f' or okString == 'F':
+                        strataExcludeSet.add( stratumId )
+                        
+        eval = SurveyEvaluation( self.iface,  dialog.sampleLayerId(), dialog.stratumId(),  dialog.arealAvailability(),  dialog.catch(),  dialog.dist(),  dialog.width(),  dialog.verticalAvailability(),  strataExcludeSet )
+        eval.evaluateSurvey( dialog.speciesVulnerability() )
         
     def checkSurveyDesignPossible( self ):
             projectContainsDesign = self.projectContainsSurveyDesign()
