@@ -134,7 +134,7 @@ class SurveyEvaluation:
             if cvIndex != -1:
                 if stratumInfo[stratumId][6] != 0:
                     featureAttributeMap[cvIndex] = QVariant(  100 * math.sqrt( stratumInfo[stratumId][5] ) / stratumInfo[stratumId][6]) #100.0 * sqrt( sumvar) / bio
-            strataProvider.changeAttributeValues( { stratumId : featureAttributeMap} )
+            strataProvider.changeAttributeValues( { stratumFeature.id() : featureAttributeMap} )
 
         return True
         
