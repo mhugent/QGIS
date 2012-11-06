@@ -2,6 +2,20 @@
 #define WEBDATADIALOG_H
 
 #include "ui_webdatadialogbase.h"
+#include "webdatamodel.h"
+
+class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
+{
+    Q_OBJECT
+  public:
+    WebDataDialog( QWidget* parent = 0, Qt::WindowFlags f = 0 );
+    ~WebDataDialog();
+
+  private:
+    WebDataModel mModel;
+};
+
+#if 0
 class QgisInterface;
 class QgsMapLayer;
 class QNetworkReply;
@@ -63,5 +77,6 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void saveToSettings();
     void handleDownloadProgress( qint64 progress, qint64 total );
 };
+#endif //0
 
 #endif // WEBDATADIALOG_H

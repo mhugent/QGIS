@@ -6,15 +6,215 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>513</width>
-    <height>466</height>
+    <width>553</width>
+    <height>421</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Web data plugin</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2">
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="mServiceGroupBox">
+     <property name="title">
+      <string>Service</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="mServicesLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Services</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="6">
+       <widget class="QComboBox" name="mServicesComboBox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="mAddPushButton">
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="mRemovePushButton">
+        <property name="text">
+         <string>Remove</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="mEditPushButton">
+        <property name="text">
+         <string>Edit</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="mConnectPushButton">
+        <property name="text">
+         <string>Connect</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>81</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="5">
+       <widget class="QPushButton" name="mAddNIWAServicesButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Add NIWA services</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="6">
+       <widget class="QPushButton" name="mAddLINZServicesButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Add LDS</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item row="1" column="0">
+    <widget class="QGroupBox" name="mLayerGroupBox">
+     <property name="title">
+      <string>Layer</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="mChangeOfflineButton">
+          <property name="toolTip">
+           <string>Change to offline</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/niwa/icons/offline.png</normaloff>:/niwa/icons/offline.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="mChangeOnlineButton">
+          <property name="toolTip">
+           <string>Change to online</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/niwa/icons/online.png</normaloff>:/niwa/icons/online.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="mReloadButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Refresh data</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/niwa/icons/refresh.png</normaloff>:/niwa/icons/refresh.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="mAddToMapButton">
+          <property name="toolTip">
+           <string>Add layer to map</string>
+          </property>
+          <property name="text">
+           <string>Add to map</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="mRemoveFromMapButton">
+          <property name="toolTip">
+           <string>Remove layer from map</string>
+          </property>
+          <property name="text">
+           <string>Remove from map</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="mRemoveFromListButton">
+          <property name="toolTip">
+           <string>Remove layer from list</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/niwa/icons/remove_from_list.png</normaloff>:/niwa/icons/remove_from_list.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>238</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QTreeView" name="mLayersTreeView"/>
+   </item>
+   <item row="3" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -24,316 +224,11 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="4" column="0">
     <widget class="QLabel" name="mStatusLabel">
      <property name="text">
       <string>Ready</string>
      </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QTabWidget" name="tabWidget">
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <widget class="QWidget" name="mDatasourcesTab">
-      <attribute name="title">
-       <string>Datasources</string>
-      </attribute>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0" colspan="2">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="mServicesLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Services</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="mServicesComboBox"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mAddNIWAServicesButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Add NIWA services</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mAddLINZServicesButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Add LDS</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QPushButton" name="mAddPushButton">
-           <property name="text">
-            <string>Add</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mRemovePushButton">
-           <property name="text">
-            <string>Remove</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mEditPushButton">
-           <property name="text">
-            <string>Edit</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mConnectPushButton">
-           <property name="text">
-            <string>Connect</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mAddLayerToListButton">
-           <property name="toolTip">
-            <string>Add selected entry to layer list</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/niwa/icons/add_to_list.png</normaloff>:/niwa/icons/add_to_list.png</iconset>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="1" column="1">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>235</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="2" column="0" colspan="2">
-        <widget class="QTreeWidget" name="mDatasourceLayersTreeWidget">
-         <column>
-          <property name="text">
-           <string>Name</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Title</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Type</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Abstract</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>CRS</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Style</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Formats</string>
-          </property>
-         </column>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="mLabersTab">
-      <attribute name="title">
-       <string>Layers</string>
-      </attribute>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
-          <widget class="QPushButton" name="mChangeOfflineButton">
-           <property name="toolTip">
-            <string>Change to offline</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/niwa/icons/offline.png</normaloff>:/niwa/icons/offline.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mChangeOnlineButton">
-           <property name="toolTip">
-            <string>Change to online</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/niwa/icons/online.png</normaloff>:/niwa/icons/online.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mReloadButton">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="toolTip">
-            <string>Refresh data</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/niwa/icons/refresh.png</normaloff>:/niwa/icons/refresh.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mAddToMapButton">
-           <property name="toolTip">
-            <string>Add layer to map</string>
-           </property>
-           <property name="text">
-            <string>Add to map</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mRemoveFromMapButton">
-           <property name="toolTip">
-            <string>Remove layer from map</string>
-           </property>
-           <property name="text">
-            <string>Remove from map</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="mRemoveFromListButton">
-           <property name="toolTip">
-            <string>Remove layer from list</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/niwa/icons/remove_from_list.png</normaloff>:/niwa/icons/remove_from_list.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>238</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item row="1" column="0">
-        <widget class="QTreeWidget" name="mLayerTreeWidget">
-         <column>
-          <property name="text">
-           <string>Layer</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Service</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Status</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>In map</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Abstract</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>CRS</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Styles</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Formats</string>
-          </property>
-         </column>
-        </widget>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
   </layout>

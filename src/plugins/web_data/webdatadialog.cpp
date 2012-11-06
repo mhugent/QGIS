@@ -1,4 +1,17 @@
 #include "webdatadialog.h"
+
+WebDataDialog::WebDataDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f )
+{
+  setupUi( this );
+  mLayersTreeView->setModel( &mModel );
+}
+
+WebDataDialog::~WebDataDialog()
+{
+
+}
+
+#if 0
 #include "addservicedialog.h"
 #include "qgisinterface.h"
 #include "qgsapplication.h"
@@ -1224,3 +1237,4 @@ QString WebDataDialog::layerIdFromUrl( const QString& url, const QString& servic
   }
   return QString();
 }
+#endif //0
