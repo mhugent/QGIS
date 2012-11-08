@@ -42,7 +42,7 @@ void WebDataPlugin::unload()
 
 void WebDataPlugin::showWebDataDialog()
 {
-  WebDataDialog d;
+  WebDataDialog d( mIface );
   d.exec();
 }
 

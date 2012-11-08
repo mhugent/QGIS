@@ -1,8 +1,9 @@
 #include "webdatadialog.h"
 #include "addservicedialog.h"
+#include <QItemSelectionModel>
 #include <QSettings>
 
-WebDataDialog::WebDataDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f )
+WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mIface( iface ), mModel( iface )
 {
   setupUi( this );
   insertServices();
@@ -11,7 +12,6 @@ WebDataDialog::WebDataDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( par
 
 WebDataDialog::~WebDataDialog()
 {
-
 }
 
 void WebDataDialog::on_mConnectPushButton_clicked()
@@ -21,41 +21,152 @@ void WebDataDialog::on_mConnectPushButton_clicked()
   QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
   QString serviceTitle = mServicesComboBox->currentText();
   mModel.addService( serviceTitle, url, serviceType );
+}
 
+void WebDataDialog::on_mAddToMapButton_clicked()
+{
+  //const QItemSelection debug = mSelectionModel.selection();
+  //QModelIndexList selectList = mSelectionModel->selectedRows( 0 );
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
+  {
+    mModel.addEntryToMap( selectList.at( 0 ) );
+  }
 #if 0
-  QString url = serviceURLFromComboBox();
-  url.append( "REQUEST=GetCapabilities&SERVICE=" );
-
-  int currentIndex = mServicesComboBox->currentIndex();
-  if ( currentIndex == -1 )
+  if ( !mIface )
   {
     return;
   }
-  QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
-  url.append( serviceType );
-  if ( serviceType == "WFS" )
+
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
   {
-    url.append( "&VERSION=1.0.0" );
+    return;
   }
 
-  QNetworkRequest request( url );
-  request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
-  request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork );
-  mCapabilitiesReply = QgsNetworkAccessManager::instance()->get( request );
+  //WMS/WFS?
+  QString serviceType = item->text( 1 );
+  QString url = item->data( 0, Qt::UserRole ).toString();
+  QString layerName = item->text( 0 );
+  bool online = ( item->text( 2 ) == tr( "online" ) );
 
+  //online / offline
   if ( serviceType == "WFS" )
   {
-    connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( wfsCapabilitiesRequestFinished() ) );
+    QString requestURL = wfsUrlFromLayerItem( item );
+    QgsVectorLayer* vl = 0;
+    if ( online )
+    {
+      vl = mIface->addVectorLayer( requestURL, layerName, "WFS" );
+    }
+    else
+    {
+      QString filePath = item->data( 2, Qt::UserRole ).toString();
+      vl = mIface->addVectorLayer( item->data( 2, Qt::UserRole ).toString(), layerName, "ogr" );
+    }
+
+    if ( !vl )
+    {
+      return;
+    }
+    item->setData( 3, Qt::UserRole, vl->id() );
   }
   else if ( serviceType == "WMS" )
   {
-    connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( wmsCapabilitiesRequestFinished() ) );
+    QgsRasterLayer* rl = 0;
+    if ( online )
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromItem( item, url, format, crs, layers, styles );
+
+      //add to map
+      rl = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
+    }
+    else
+    {
+      rl = mIface->addRasterLayer( item->data( 2, Qt::UserRole ).toString(), layerName );
+      rl->setRedBandName( rl->bandName( 1 ) );
+      rl->setGreenBandName( rl->bandName( 2 ) );
+      rl->setBlueBandName( rl->bandName( 3 ) );
+      rl->setTransparentBandName( rl->bandName( 4 ) );
+    }
+
+    if ( !rl )
+    {
+      return;
+    }
+    item->setData( 3, Qt::UserRole, rl->id() );
   }
-  else if ( serviceType == "WCS" )
-  {
-    //todo...
+
+  item->setCheckState( 3, Qt::Checked );
+  mAddToMapButton->setEnabled( false );
+  mRemoveFromMapButton->setEnabled( true );
 #endif //0
+}
+
+void WebDataDialog::on_mRemoveFromMapButton_clicked()
+{
+#if 0
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
   }
+
+  QString layerId = item->data( 3, Qt::UserRole ).toString();
+  if ( layerId.isEmpty() )
+  {
+    return;
+  }
+
+  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
+  item->setCheckState( 3, Qt::Unchecked );
+  item->setData( 3, Qt::UserRole, "" );
+  mAddToMapButton->setEnabled( true );
+  mRemoveFromMapButton->setEnabled( false );
+#endif //0
+}
+
+
+
+
+#if 0
+QString url = serviceURLFromComboBox();
+url.append( "REQUEST=GetCapabilities&SERVICE=" );
+
+int currentIndex = mServicesComboBox->currentIndex();
+if ( currentIndex == -1 )
+{
+  return;
+}
+QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
+url.append( serviceType );
+if ( serviceType == "WFS" )
+{
+  url.append( "&VERSION=1.0.0" );
+}
+
+QNetworkRequest request( url );
+request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
+request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork );
+mCapabilitiesReply = QgsNetworkAccessManager::instance()->get( request );
+
+if ( serviceType == "WFS" )
+{
+  connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( wfsCapabilitiesRequestFinished() ) );
+}
+else if ( serviceType == "WMS" )
+{
+  connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( wmsCapabilitiesRequestFinished() ) );
+}
+else if ( serviceType == "WCS" )
+{
+  //todo...
+#endif //0
 
   QString WebDataDialog::serviceURLFromComboBox()
   {

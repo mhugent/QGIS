@@ -4,11 +4,13 @@
 #include "ui_webdatadialogbase.h"
 #include "webdatamodel.h"
 
+class QgisInterface;
+
 class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
 {
     Q_OBJECT
   public:
-    WebDataDialog( QWidget* parent = 0, Qt::WindowFlags f = 0 );
+    WebDataDialog( QgisInterface* iface, QWidget* parent = 0, Qt::WindowFlags f = 0 );
     ~WebDataDialog();
 
   private slots:
@@ -16,8 +18,11 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mAddPushButton_clicked();
     void on_mRemovePushButton_clicked();
     void on_mEditPushButton_clicked();
+    void on_mAddToMapButton_clicked();
+    void on_mRemoveFromMapButton_clicked();
 
   private:
+    QgisInterface* mIface;
     WebDataModel mModel;
 
     QString serviceURLFromComboBox();

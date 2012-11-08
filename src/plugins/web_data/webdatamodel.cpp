@@ -1,4 +1,8 @@
 #include "webdatamodel.h"
+#include "qgisinterface.h"
+#include "qgscoordinatereferencesystem.h"
+#include "qgsmapcanvas.h"
+#include "qgsmaprenderer.h"
 #include "qgsnetworkaccessmanager.h"
 #include <QDomDocument>
 #include <QDomElement>
@@ -6,7 +10,7 @@
 #include <QNetworkRequest>
 #include <QTreeWidgetItem>
 
-WebDataModel::WebDataModel(): QStandardItemModel(), mCapabilitiesReply( 0 )
+WebDataModel::WebDataModel( QgisInterface* iface ): QStandardItemModel(), mCapabilitiesReply( 0 ), mIface( iface )
 {
   QStringList headerLabels;
   headerLabels << tr( "Name" );
@@ -34,6 +38,7 @@ void WebDataModel::addService( const QString& title, const QString& url, const Q
   request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork );
   mCapabilitiesReply = QgsNetworkAccessManager::instance()->get( request );
   mCapabilitiesReply->setProperty( "title", title );
+  mCapabilitiesReply->setProperty( "url", url );
 
   if ( service.compare( "WMS", Qt::CaseInsensitive ) == 0 )
   {
@@ -106,6 +111,8 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
   }
   wmsTitleItem->setFlags( Qt::ItemIsEnabled );
 
+  QString url = mCapabilitiesReply->property( "url" ).toString();
+
   for ( unsigned int i = 0; i < layerList.length(); ++i )
   {
     QString name, title, abstract, crs, style;
@@ -162,6 +169,7 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
     QList<QStandardItem*> childItemList;
     //name
     QStandardItem* nameItem = new QStandardItem( name );
+    nameItem->setData( url );
     childItemList.push_back( nameItem );
     //favorite
     QStandardItem* favoriteItem = new QStandardItem();
@@ -195,3 +203,143 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
 
   //mStatusLabel->setText( tr( "Ready" ) );
 }
+
+void WebDataModel::addEntryToMap( const QModelIndex& index )
+{
+  if ( !mIface )
+  {
+    return;
+  }
+
+  QString layerName;
+  QStandardItem* nameItem = itemFromIndex( index );
+  if ( nameItem )
+  {
+    layerName = nameItem->text();
+  }
+
+  //is entry already in map
+  QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
+  bool inMap = ( inMapItem && inMapItem->checkState() == Qt::Checked );
+  if ( inMap )
+  {
+    return;
+  }
+
+  //wms / wfs ?
+  QString type;
+  QStandardItem* typeItem = itemFromIndex( index.sibling( index.row(), 2 ) );
+  if ( typeItem )
+  {
+    type = typeItem->text();
+  }
+
+  if ( type == "WMS" )
+  {
+    QString url, format, crs;
+    QStringList layers, styles;
+    wmsParameterFromIndex( index, url, format, crs, layers, styles );
+    mIface->addRasterLayer( url, layerName, "wms", layers, styles, format, crs );
+  }
+
+  //wmsParameterFromIndex
+
+  //
+}
+
+void WebDataModel::removeEntryFromMap( const QModelIndex& index )
+{
+
+}
+
+void WebDataModel::changeEntryToOffline( const QModelIndex& index )
+{
+
+}
+
+void WebDataModel::changeEntryToOnline( const QModelIndex& index )
+{
+
+}
+
+QString WebDataModel::wfsUrlFromLayerIndex( const QModelIndex& index ) const
+{
+  return QString( "" ); //soon...
+}
+
+void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const
+{
+  QStandardItem* nameItem = itemFromIndex( index );
+  if ( !nameItem )
+  {
+    return;
+  }
+
+  url = nameItem->data().toString();
+  layers.clear();
+  layers.append( nameItem->text() );
+  url.prepend( "ignoreUrl=GetMap;GetFeatureInfo,url=" ); //ignore advertised urls per default
+
+  //format: prefer png
+  format.clear();
+  QStandardItem* formatItem = itemFromIndex( index.sibling( index.row(), 6 ) );
+  if ( formatItem )
+  {
+    QStringList formatList = formatItem->text().split( "," );
+    if ( formatList.size() > 0 )
+    {
+      if ( formatList.contains( "image/png" ) )
+      {
+        format = "image/png";
+      }
+      else
+      {
+        format = formatList.at( 0 );
+      }
+    }
+  }
+
+  crs.clear();
+  QStandardItem* crsItem = itemFromIndex( index.sibling( index.row(), 5 ) );
+  if ( crsItem && mIface )
+  {
+    //CRS: prefer map crs
+    QStringList crsList = crsItem->text().split( "," );
+    if ( crsList.size() > 0 )
+    {
+      crs = crsList.at( 0 );
+      QgsMapCanvas* canvas = mIface->mapCanvas();
+      if ( canvas )
+      {
+        QgsMapRenderer* renderer = canvas->mapRenderer();
+        if ( renderer )
+        {
+          const QgsCoordinateReferenceSystem& destCRS = renderer->destinationCrs();
+          QString authId = destCRS.authid();
+          if ( crsList.contains( authId ) )
+          {
+            crs = authId;
+          }
+        }
+      }
+    }
+  }
+
+  styles.clear();
+  QStandardItem* stylesItem = itemFromIndex( index.sibling( index.row(), 7 ) );
+  if ( stylesItem )
+  {
+    //take first style
+    QString stylesString = stylesItem->text();
+    if ( stylesString.isEmpty() )
+    {
+      styles.append( "" );
+    }
+    else
+    {
+      styles.append( stylesString.split( "," ).at( 0 ) );
+    }
+  }
+}
+
+
