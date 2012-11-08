@@ -6,7 +6,7 @@
 #include <QNetworkRequest>
 #include <QTreeWidgetItem>
 
-WebDataModel::WebDataModel(): QStandardItemModel()
+WebDataModel::WebDataModel(): QStandardItemModel(), mCapabilitiesReply( 0 )
 {
   QStringList headerLabels;
   headerLabels << tr( "Name" );
@@ -33,6 +33,7 @@ void WebDataModel::addService( const QString& title, const QString& url, const Q
   request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
   request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork );
   mCapabilitiesReply = QgsNetworkAccessManager::instance()->get( request );
+  mCapabilitiesReply->setProperty( "title", title );
 
   if ( service.compare( "WMS", Qt::CaseInsensitive ) == 0 )
   {
@@ -42,6 +43,11 @@ void WebDataModel::addService( const QString& title, const QString& url, const Q
 
 void WebDataModel::wmsCapabilitiesRequestFinished()
 {
+  if ( !mCapabilitiesReply )
+  {
+    return;
+  }
+
   if ( mCapabilitiesReply->error() != QNetworkReply::NoError )
   {
     //QMessageBox::critical( 0, tr( "Error" ), tr( "Capabilities could not be retrieved from the server" ) );
@@ -84,7 +90,7 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
   }
 
   //add parentItem
-  QStandardItem* wmsTitleItem = new QStandardItem( "wms" );
+  QStandardItem* wmsTitleItem = new QStandardItem( mCapabilitiesReply->property( "title" ).toString() );
   wmsTitleItem->setFlags( Qt::ItemIsEnabled );
   invisibleRootItem()->setChild( invisibleRootItem()->rowCount(), wmsTitleItem );
 
