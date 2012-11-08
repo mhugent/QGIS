@@ -90,9 +90,21 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
   }
 
   //add parentItem
-  QStandardItem* wmsTitleItem = new QStandardItem( mCapabilitiesReply->property( "title" ).toString() );
+
+  QString serviceTitle = mCapabilitiesReply->property( "title" ).toString();
+  QList<QStandardItem*> serviceTitleItems = findItems( serviceTitle );
+  QStandardItem* wmsTitleItem = 0;
+  if ( serviceTitleItems.size() < 1 )
+  {
+    wmsTitleItem = new QStandardItem( serviceTitle );
+    invisibleRootItem()->setChild( invisibleRootItem()->rowCount(), wmsTitleItem );
+  }
+  else
+  {
+    wmsTitleItem = serviceTitleItems.at( 0 );
+    wmsTitleItem->removeRows( 0, wmsTitleItem->rowCount() );
+  }
   wmsTitleItem->setFlags( Qt::ItemIsEnabled );
-  invisibleRootItem()->setChild( invisibleRootItem()->rowCount(), wmsTitleItem );
 
   for ( unsigned int i = 0; i < layerList.length(); ++i )
   {
