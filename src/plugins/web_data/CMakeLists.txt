@@ -16,6 +16,7 @@ SET (WEB_DATA_UIS
 SET (WEB_DATA_MOC_HDRS
      webdataplugin.h
      webdatadialog.h
+     webdatamodel.h
 )
 
 SET (WEB_DATA_RCCS  resources.qrc)

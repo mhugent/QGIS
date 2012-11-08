@@ -11,8 +11,21 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     WebDataDialog( QWidget* parent = 0, Qt::WindowFlags f = 0 );
     ~WebDataDialog();
 
+  private slots:
+    void on_mConnectPushButton_clicked();
+    void on_mAddPushButton_clicked();
+    void on_mRemovePushButton_clicked();
+    void on_mEditPushButton_clicked();
+
   private:
     WebDataModel mModel;
+
+    QString serviceURLFromComboBox();
+    void insertServices();
+    void setServiceSetting( const QString& name, const QString& serviceType, const QString& url );
+    /**Insert services into combo box
+        @param service ("WMS","WFS","WCS")*/
+    void insertServices( const QString& service );
 };
 
 #if 0
