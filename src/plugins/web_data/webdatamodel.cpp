@@ -27,6 +27,8 @@ WebDataModel::WebDataModel( QgisInterface* iface ): QStandardItemModel(), mCapab
   headerLabels << tr( "Formats" );
   headerLabels << tr( "Styles" );
   setHorizontalHeaderLabels( headerLabels );
+
+  connect( this, SIGNAL( itemChanged( QStandardItem* ) ), this, SLOT( handleItemChange( QStandardItem* ) ) );
 }
 
 WebDataModel::~WebDataModel()
@@ -319,6 +321,23 @@ void WebDataModel::wfsCapabilitiesRequestFinished()
     childItemList.push_back( srsItem );
     wfsTitleItem->appendRow( childItemList );
   }
+}
+
+void WebDataModel::handleItemChange( QStandardItem* item )
+{
+  blockSignals( true );
+  if ( item->column() == 1 )
+  {
+    if ( item->checkState() == Qt::Checked )
+    {
+      item->setIcon( QIcon( ":/niwa/icons/favourite.png" ) );
+    }
+    else
+    {
+      item->setIcon( QIcon() ); //unset icon
+    }
+  }
+  blockSignals( false );
 }
 
 void WebDataModel::addEntryToMap( const QModelIndex& index )
