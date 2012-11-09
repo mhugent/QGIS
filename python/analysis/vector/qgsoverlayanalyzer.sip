@@ -21,4 +21,16 @@ class QgsOverlayAnalyzer
     bool intersection( QgsVectorLayer* layerA, QgsVectorLayer* layerB,
                        const QString& shapefileName, bool onlySelectedFeatures = false,
                        QProgressDialog* p = 0 );
+
+    /**Clip a vector layer based on the boundary of another vector layer and
+       write output to a new shape file
+      @param layerA input vector layer
+      @param layerB input vector layer
+      @param shapefileName path to the output shp
+      @param onlySelectedFeatures if true, only selected features are considered, else all the features
+      @param p progress dialog (or 0 if no progress dialog is to be shown)
+      @note: added in version 1.4*/
+    bool clip( QgsVectorLayer* layerA, QgsVectorLayer* layerB,
+               const QString& shapefileName, bool onlySelectedFeatures = false,
+               QProgressDialog* p = 0 );
 };

@@ -138,6 +138,62 @@ bool QgsOverlayAnalyzer::intersection( QgsVectorLayer* layerA, QgsVectorLayer* l
   return true;
 }
 
+bool QgsOverlayAnalyzer::clip( QgsVectorLayer* layerA, QgsVectorLayer* layerB,
+                               const QString& shapefileName, bool onlySelectedFeatures,
+                               QProgressDialog* p )
+{
+  if ( !layerA || !layerB )
+  {
+    return false;
+  }
+
+  QgsVectorDataProvider* dpA = layerA->dataProvider();
+  QgsVectorDataProvider* dpB = layerB->dataProvider();
+  if ( !dpA && !dpB )
+  {
+    return false;
+  }
+
+  //create output layer
+  QgsCoordinateReferenceSystem outputCrs = dpA->crs();
+  QgsVectorFileWriter vWriter( shapefileName, dpA->encoding(), dpA->fields(), dpA->geometryType(), &outputCrs );
+
+  //read all the features of layerB into list (keep in memory)
+  QgsFeatureList clipFeatureList;
+  QgsFeature clipFeature;
+  dpB->select( QgsAttributeList(), QgsRectangle(), true, false );
+  while ( dpB->nextFeature( clipFeature ) )
+  {
+    clipFeatureList.push_back( clipFeature );
+  }
+
+  //loop over features in layer A and add to filewriter if there is an intersection
+  QgsFeature inputFeature;
+  dpA->select( dpA->attributeIndexes(), dpB->extent(), true, false );
+  while ( dpA->nextFeature( inputFeature ) )
+  {
+    qWarning( QString::number( inputFeature.id() ).toLocal8Bit().data() ); //debug
+    QgsGeometry* outputGeom = inputFeature.geometry();
+    QgsFeatureList::iterator clipFeatureIt = clipFeatureList.begin();
+    for ( ; clipFeatureIt != clipFeatureList.end(); ++clipFeatureIt )
+    {
+      outputGeom = clipFeatureIt->geometry()->intersection( outputGeom );
+      if ( !outputGeom || outputGeom->wkbType() == QGis::WKBUnknown )
+      {
+        break;
+      }
+    }
+
+    //add to output file writer
+    if ( outputGeom && outputGeom->wkbType() != QGis::WKBUnknown )
+    {
+      inputFeature.setGeometry( outputGeom );
+      vWriter.addFeature( inputFeature );
+    }
+  }
+  return true;
+}
+
 void QgsOverlayAnalyzer::intersectFeature( QgsFeature& f, QgsVectorFileWriter* vfw,
     QgsVectorLayer* vl, QgsSpatialIndex* index )
 {
