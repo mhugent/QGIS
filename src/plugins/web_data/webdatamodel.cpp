@@ -2,8 +2,11 @@
 #include "qgisinterface.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsmapcanvas.h"
+#include "qgsmaplayerregistry.h"
 #include "qgsmaprenderer.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgsrasterlayer.h"
+#include "qgsvectorlayer.h"
 #include <QDomDocument>
 #include <QDomElement>
 #include <QNetworkReply>
@@ -348,25 +351,68 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     type = typeItem->text();
   }
 
+  QgsMapLayer* mapLayer = 0;
   if ( type == "WMS" )
   {
     QString url, format, crs;
     QStringList layers, styles;
     wmsParameterFromIndex( index, url, format, crs, layers, styles );
-    mIface->addRasterLayer( url, layerName, "wms", layers, styles, format, crs );
+    mapLayer = mIface->addRasterLayer( url, layerName, "wms", layers, styles, format, crs );
     inMapItem->setCheckState( Qt::Checked );
   }
   else if ( type == "WFS" )
   {
     QString url = wfsUrlFromLayerIndex( index );
-    mIface->addVectorLayer( url, layerName, "WFS" );
+    mapLayer = mIface->addVectorLayer( url, layerName, "WFS" );
     inMapItem->setCheckState( Qt::Checked );
+  }
+
+  if ( mapLayer )
+  {
+    inMapItem->setData( mapLayer->id() );
   }
 }
 
 void WebDataModel::removeEntryFromMap( const QModelIndex& index )
 {
+  QString layerName;
+  QStandardItem* nameItem = itemFromIndex( index );
+  if ( nameItem )
+  {
+    layerName = nameItem->text();
+  }
 
+  //is entry already in map
+  QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
+  bool inMap = ( inMapItem && inMapItem->checkState() == Qt::Checked );
+  if ( !inMap )
+  {
+    return;
+  }
+
+  QString layerId = inMapItem->data().toString();
+  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
+  inMapItem->setCheckState( Qt::Unchecked );
+
+#if 0
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
+
+  QString layerId = item->data( 3, Qt::UserRole ).toString();
+  if ( layerId.isEmpty() )
+  {
+    return;
+  }
+
+  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
+  item->setCheckState( 3, Qt::Unchecked );
+  item->setData( 3, Qt::UserRole, "" );
+  mAddToMapButton->setEnabled( true );
+  mRemoveFromMapButton->setEnabled( false );
+#endif //0
 }
 
 void WebDataModel::changeEntryToOffline( const QModelIndex& index )

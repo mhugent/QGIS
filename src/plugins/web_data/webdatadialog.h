@@ -24,6 +24,8 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mAddLINZServicesButton_clicked();
     void NIWAServicesRequestFinished();
     void handleDownloadProgress( qint64 progress, qint64 total );
+    void on_mChangeOfflineButton_clicked();
+    void on_mChangeOnlineButton_clicked();
 
   private:
     QgisInterface* mIface;

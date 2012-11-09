@@ -32,8 +32,6 @@ void WebDataDialog::on_mConnectPushButton_clicked()
 
 void WebDataDialog::on_mAddToMapButton_clicked()
 {
-  //const QItemSelection debug = mSelectionModel.selection();
-  //QModelIndexList selectList = mSelectionModel->selectedRows( 0 );
   QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
@@ -44,25 +42,12 @@ void WebDataDialog::on_mAddToMapButton_clicked()
 
 void WebDataDialog::on_mRemoveFromMapButton_clicked()
 {
-#if 0
-  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
-  if ( !item )
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
   {
-    return;
+    mModel.removeEntryFromMap( selectList.at( 0 ) );
   }
-
-  QString layerId = item->data( 3, Qt::UserRole ).toString();
-  if ( layerId.isEmpty() )
-  {
-    return;
-  }
-
-  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
-  item->setCheckState( 3, Qt::Unchecked );
-  item->setData( 3, Qt::UserRole, "" );
-  mAddToMapButton->setEnabled( true );
-  mRemoveFromMapButton->setEnabled( false );
-#endif //0
 }
 
 QString WebDataDialog::serviceURLFromComboBox()
@@ -268,7 +253,175 @@ void WebDataDialog::handleDownloadProgress( qint64 progress, qint64 total )
   mStatusLabel->setText( progressMessage );
 }
 
+void WebDataDialog::on_mChangeOnlineButton_clicked()
+{
+#if 0
+  //get current entry
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
 
+  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
+  QString serviceType = item->text( 1 );
+  QString layername = item->text( 0 );
+
+  if ( layerInMap )
+  {
+    //generate new wfs/wms layer
+    //exchange with layer in map
+    QgsMapLayer* onlineLayer = 0;
+    if ( serviceType == "WFS" )
+    {
+      QString wfsUrl = wfsUrlFromLayerItem( item );
+      onlineLayer = mIface->addVectorLayer( wfsUrl, layername, "WFS" );
+    }
+    else if ( serviceType == "WMS" )
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromItem( item, url, format, crs, layers, styles );
+
+      //add to map
+      onlineLayer = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
+    }
+
+    if ( onlineLayer )
+    {
+      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), onlineLayer );
+      item->setData( 3, Qt::UserRole, onlineLayer->id() );
+    }
+  }
+
+  QString offlineFileName = item->data( 2, Qt::UserRole ).toString();
+  deleteOfflineDatasource( serviceType, offlineFileName );
+
+  item->setText( 2, "online" );
+  item->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
+  item->setData( 2, Qt::UserRole, "" );
+  mChangeOfflineButton->setEnabled( true );
+  mChangeOnlineButton->setEnabled( false );
+#endif //0
+}
+
+void WebDataDialog::on_mChangeOfflineButton_clicked()
+{
+#if 0
+  //get current entry
+  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
+  if ( !item )
+  {
+    return;
+  }
+
+  //get current layer details
+  QString layername = item->text( 0 );
+  QString url = item->data( 0, Qt::UserRole ).toString();
+  QString serviceType = item->text( 1 );
+  QString saveFilePath = QgsApplication::qgisSettingsDirPath() + "/cachelayers/";
+  QDateTime dt = QDateTime::currentDateTime();
+  QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
+  QString filePath;
+
+  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
+  bool offlineOk = false;
+
+  if ( serviceType == "WFS" )
+  {
+    //create table <layername//url>
+    QgsVectorLayer* wfsLayer = 0;
+    if ( layerInMap )
+    {
+      wfsLayer = static_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( item->data( 3, Qt::UserRole ).toString() ) );
+    }
+    else
+    {
+      QString wfsUrl = wfsUrlFromLayerItem( item );
+      wfsLayer = new QgsVectorLayer( wfsUrl, layername, "WFS" );
+    }
+
+    filePath = saveFilePath + layerId + ".shp";
+    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
+    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
+                  "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
+    if ( offlineOk && layerInMap )
+    {
+      QgsVectorLayer* offlineLayer = mIface->addVectorLayer( filePath, layername, "ogr" );
+      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+      item->setData( 3, Qt::UserRole, offlineLayer->id() );
+    }
+
+    if ( !layerInMap )
+    {
+      delete wfsLayer;
+    }
+  }
+  else if ( serviceType == "WMS" )
+  {
+    //get raster layer
+    QgsRasterLayer* wmsLayer = 0;
+    if ( layerInMap )
+    {
+      wmsLayer = static_cast<QgsRasterLayer*>( QgsMapLayerRegistry::instance()->mapLayer( item->data( 3, Qt::UserRole ).toString() ) );
+    }
+    else
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromItem( item, url, format, crs, layers, styles );
+      wmsLayer = new QgsRasterLayer( 0, url, layername, "wms", layers, styles, format, crs );
+    }
+
+    //call save as dialog
+    filePath = saveFilePath + "/" + layerId;
+    QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    d.hideFormat();
+    d.hideOutput();
+    if ( d.exec() == QDialog::Accepted )
+    {
+      QgsRasterFileWriter fileWriter( filePath /*d.outputFileName()*/ );
+      if ( d.tileMode() )
+      {
+        fileWriter.setTiledMode( true );
+        fileWriter.setMaxTileWidth( d.maximumTileSizeX() );
+        fileWriter.setMaxTileHeight( d.maximumTileSizeY() );
+      }
+
+      QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
+      pd.setWindowModality( Qt::WindowModal );
+      fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
+
+      filePath += ( "/" + layerId + ".vrt" );
+      offlineOk = true;
+      if ( layerInMap )
+      {
+        QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath, layername );
+        exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
+        item->setData( 3, Qt::UserRole, offlineLayer->id() );
+      }
+      else
+      {
+        delete wmsLayer;
+      }
+    }
+  }
+
+  if ( offlineOk )
+  {
+    item->setText( 2, "offline" );
+    item->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
+    item->setData( 2, Qt::UserRole, filePath );
+    mChangeOfflineButton->setEnabled( false );
+    mChangeOnlineButton->setEnabled( true );
+    mReloadButton->setEnabled( true );
+  }
+#endif //0
+}
 
 #if 0
 #include "addservicedialog.h"
@@ -579,171 +732,7 @@ void WebDataDialog::on_mRemoveFromMapButton_clicked()
   mRemoveFromMapButton->setEnabled( false );
 }
 
-void WebDataDialog::on_mChangeOfflineButton_clicked()
-{
-  //get current entry
-  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
-  if ( !item )
-  {
-    return;
-  }
 
-  //get current layer details
-  QString layername = item->text( 0 );
-  QString url = item->data( 0, Qt::UserRole ).toString();
-  QString serviceType = item->text( 1 );
-  QString saveFilePath = QgsApplication::qgisSettingsDirPath() + "/cachelayers/";
-  QDateTime dt = QDateTime::currentDateTime();
-  QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
-  QString filePath;
-
-  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
-  bool offlineOk = false;
-
-  if ( serviceType == "WFS" )
-  {
-    //create table <layername//url>
-    QgsVectorLayer* wfsLayer = 0;
-    if ( layerInMap )
-    {
-      wfsLayer = static_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( item->data( 3, Qt::UserRole ).toString() ) );
-    }
-    else
-    {
-      QString wfsUrl = wfsUrlFromLayerItem( item );
-      wfsLayer = new QgsVectorLayer( wfsUrl, layername, "WFS" );
-    }
-
-    filePath = saveFilePath + layerId + ".shp";
-    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
-    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
-                  "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
-    if ( offlineOk && layerInMap )
-    {
-      QgsVectorLayer* offlineLayer = mIface->addVectorLayer( filePath, layername, "ogr" );
-      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
-      item->setData( 3, Qt::UserRole, offlineLayer->id() );
-    }
-
-    if ( !layerInMap )
-    {
-      delete wfsLayer;
-    }
-  }
-  else if ( serviceType == "WMS" )
-  {
-    //get raster layer
-    QgsRasterLayer* wmsLayer = 0;
-    if ( layerInMap )
-    {
-      wmsLayer = static_cast<QgsRasterLayer*>( QgsMapLayerRegistry::instance()->mapLayer( item->data( 3, Qt::UserRole ).toString() ) );
-    }
-    else
-    {
-      //get preferred style, crs, format
-      QString url, format, crs;
-      QString providerKey = "wms";
-      QStringList layers, styles;
-      wmsParameterFromItem( item, url, format, crs, layers, styles );
-      wmsLayer = new QgsRasterLayer( 0, url, layername, "wms", layers, styles, format, crs );
-    }
-
-    //call save as dialog
-    filePath = saveFilePath + "/" + layerId;
-    QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
-    d.hideFormat();
-    d.hideOutput();
-    if ( d.exec() == QDialog::Accepted )
-    {
-      QgsRasterFileWriter fileWriter( filePath /*d.outputFileName()*/ );
-      if ( d.tileMode() )
-      {
-        fileWriter.setTiledMode( true );
-        fileWriter.setMaxTileWidth( d.maximumTileSizeX() );
-        fileWriter.setMaxTileHeight( d.maximumTileSizeY() );
-      }
-
-      QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
-      pd.setWindowModality( Qt::WindowModal );
-      fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
-
-      filePath += ( "/" + layerId + ".vrt" );
-      offlineOk = true;
-      if ( layerInMap )
-      {
-        QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath, layername );
-        exchangeLayer( item->data( 3, Qt::UserRole ).toString(), offlineLayer );
-        item->setData( 3, Qt::UserRole, offlineLayer->id() );
-      }
-      else
-      {
-        delete wmsLayer;
-      }
-    }
-  }
-
-  if ( offlineOk )
-  {
-    item->setText( 2, "offline" );
-    item->setIcon( 2, QIcon( ":/niwa/icons/offline.png" ) );
-    item->setData( 2, Qt::UserRole, filePath );
-    mChangeOfflineButton->setEnabled( false );
-    mChangeOnlineButton->setEnabled( true );
-    mReloadButton->setEnabled( true );
-  }
-}
-
-void WebDataDialog::on_mChangeOnlineButton_clicked()
-{
-  //get current entry
-  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
-  if ( !item )
-  {
-    return;
-  }
-
-  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
-  QString serviceType = item->text( 1 );
-  QString layername = item->text( 0 );
-
-  if ( layerInMap )
-  {
-    //generate new wfs/wms layer
-    //exchange with layer in map
-    QgsMapLayer* onlineLayer = 0;
-    if ( serviceType == "WFS" )
-    {
-      QString wfsUrl = wfsUrlFromLayerItem( item );
-      onlineLayer = mIface->addVectorLayer( wfsUrl, layername, "WFS" );
-    }
-    else if ( serviceType == "WMS" )
-    {
-      //get preferred style, crs, format
-      QString url, format, crs;
-      QString providerKey = "wms";
-      QStringList layers, styles;
-      wmsParameterFromItem( item, url, format, crs, layers, styles );
-
-      //add to map
-      onlineLayer = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
-    }
-
-    if ( onlineLayer )
-    {
-      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), onlineLayer );
-      item->setData( 3, Qt::UserRole, onlineLayer->id() );
-    }
-  }
-
-  QString offlineFileName = item->data( 2, Qt::UserRole ).toString();
-  deleteOfflineDatasource( serviceType, offlineFileName );
-
-  item->setText( 2, "online" );
-  item->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
-  item->setData( 2, Qt::UserRole, "" );
-  mChangeOfflineButton->setEnabled( true );
-  mChangeOnlineButton->setEnabled( false );
-}
 
 void WebDataDialog::deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath )
 {
