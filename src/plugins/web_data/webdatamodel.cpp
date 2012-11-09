@@ -10,6 +10,8 @@
 #include <QNetworkRequest>
 #include <QTreeWidgetItem>
 
+static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
+
 WebDataModel::WebDataModel( QgisInterface* iface ): QStandardItemModel(), mCapabilitiesReply( 0 ), mIface( iface )
 {
   QStringList headerLabels;
@@ -33,6 +35,10 @@ void WebDataModel::addService( const QString& title, const QString& url, const Q
   QString requestUrl = url;
   requestUrl.append( "REQUEST=GetCapabilities&SERVICE=" );
   requestUrl.append( service );
+  if ( service.compare( "WFS", Qt::CaseInsensitive ) == 0 )
+  {
+    requestUrl.append( "&VERSION=1.0.0" );
+  }
   QNetworkRequest request( requestUrl );
   request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
   request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferNetwork );
@@ -43,6 +49,10 @@ void WebDataModel::addService( const QString& title, const QString& url, const Q
   if ( service.compare( "WMS", Qt::CaseInsensitive ) == 0 )
   {
     connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( wmsCapabilitiesRequestFinished() ) );
+  }
+  else if ( service.compare( "WFS", Qt::CaseInsensitive ) == 0 )
+  {
+    connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( wfsCapabilitiesRequestFinished() ) );
   }
 }
 
@@ -204,6 +214,110 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
   //mStatusLabel->setText( tr( "Ready" ) );
 }
 
+void WebDataModel::wfsCapabilitiesRequestFinished()
+{
+  if ( !mCapabilitiesReply )
+  {
+    return;
+  }
+
+  if ( mCapabilitiesReply->error() != QNetworkReply::NoError )
+  {
+    //QMessageBox::critical( 0, tr( "Error" ), tr( "Capabilities could not be retrieved from the server" ) );
+    return;
+  }
+
+  QByteArray buffer = mCapabilitiesReply->readAll();
+
+  QString capabilitiesDocError;
+  QDomDocument capabilitiesDocument;
+  if ( !capabilitiesDocument.setContent( buffer, true, &capabilitiesDocError ) )
+  {
+    //QMessageBox::critical( 0, tr( "Error parsing capabilities document" ), capabilitiesDocError );
+    return;
+  }
+
+  QDomNodeList featureTypeList = capabilitiesDocument.elementsByTagNameNS( WFS_NAMESPACE, "FeatureType" );
+  if ( featureTypeList.size() < 1 )
+  {
+    return;
+  }
+
+  //add parentItem
+  QString serviceTitle = mCapabilitiesReply->property( "title" ).toString();
+  QList<QStandardItem*> serviceTitleItems = findItems( serviceTitle );
+  QStandardItem* wfsTitleItem = 0;
+  if ( serviceTitleItems.size() < 1 )
+  {
+    wfsTitleItem = new QStandardItem( serviceTitle );
+    invisibleRootItem()->setChild( invisibleRootItem()->rowCount(), wfsTitleItem );
+  }
+  else
+  {
+    wfsTitleItem = serviceTitleItems.at( 0 );
+    wfsTitleItem->removeRows( 0, wfsTitleItem->rowCount() );
+  }
+  wfsTitleItem->setFlags( Qt::ItemIsEnabled );
+  QString url = mCapabilitiesReply->property( "url" ).toString();
+
+  for ( unsigned int i = 0; i < featureTypeList.length(); ++i )
+  {
+    QString name, title, abstract, srs;
+    QDomElement featureTypeElem = featureTypeList.at( i ).toElement();
+
+    //Name
+    QDomNodeList nameList = featureTypeElem.elementsByTagNameNS( WFS_NAMESPACE, "Name" );
+    if ( nameList.length() > 0 )
+    {
+      name = nameList.at( 0 ).toElement().text();
+    }
+    //Title
+    QDomNodeList titleList = featureTypeElem.elementsByTagNameNS( WFS_NAMESPACE, "Title" );
+    if ( titleList.length() > 0 )
+    {
+      title = titleList.at( 0 ).toElement().text();
+    }
+    //Abstract
+    QDomNodeList abstractList = featureTypeElem.elementsByTagNameNS( WFS_NAMESPACE, "Abstract" );
+    if ( abstractList.length() > 0 )
+    {
+      abstract = abstractList.at( 0 ).toElement().text();
+    }
+    //SRS
+    QDomNodeList srsList = featureTypeElem.elementsByTagNameNS( WFS_NAMESPACE, "SRS" );
+    if ( srsList.length() > 0 )
+    {
+      srs = srsList.at( 0 ).toElement().text();
+    }
+
+    QList<QStandardItem*> childItemList;
+    //name
+    QStandardItem* nameItem = new QStandardItem( name );
+    nameItem->setData( url );
+    childItemList.push_back( nameItem );
+    //favorite
+    QStandardItem* favoriteItem = new QStandardItem();
+    favoriteItem->setCheckable( true );
+    favoriteItem->setCheckState( Qt::Unchecked );
+    childItemList.push_back( favoriteItem );
+    //type
+    QStandardItem* typeItem = new QStandardItem( "WFS" );
+    childItemList.push_back( typeItem );
+    //in map
+    QStandardItem* inMapItem = new QStandardItem();
+    inMapItem->setCheckable( true );
+    inMapItem->setCheckState( Qt::Unchecked );
+    childItemList.push_back( inMapItem );
+    //status
+    QStandardItem* statusItem = new QStandardItem( QIcon( ":/niwa/icons/online.png" ), tr( "online" ) );
+    childItemList.push_back( statusItem );
+    //crs
+    QStandardItem* srsItem = new QStandardItem( srs );
+    childItemList.push_back( srsItem );
+    wfsTitleItem->appendRow( childItemList );
+  }
+}
+
 void WebDataModel::addEntryToMap( const QModelIndex& index )
 {
   if ( !mIface )
@@ -241,10 +355,10 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     wmsParameterFromIndex( index, url, format, crs, layers, styles );
     mIface->addRasterLayer( url, layerName, "wms", layers, styles, format, crs );
   }
-
-  //wmsParameterFromIndex
-
-  //
+  else if ( type == "WFS" )
+  {
+    //todo...
+  }
 }
 
 void WebDataModel::removeEntryFromMap( const QModelIndex& index )

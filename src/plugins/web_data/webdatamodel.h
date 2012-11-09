@@ -28,6 +28,7 @@ class WebDataModel: public QStandardItemModel
 
   private slots:
     void wmsCapabilitiesRequestFinished();
+    void wfsCapabilitiesRequestFinished();
 
   private:
     QNetworkReply *mCapabilitiesReply;
