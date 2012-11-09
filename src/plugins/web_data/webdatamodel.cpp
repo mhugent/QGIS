@@ -393,26 +393,6 @@ void WebDataModel::removeEntryFromMap( const QModelIndex& index )
   QString layerId = inMapItem->data().toString();
   QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
   inMapItem->setCheckState( Qt::Unchecked );
-
-#if 0
-  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
-  if ( !item )
-  {
-    return;
-  }
-
-  QString layerId = item->data( 3, Qt::UserRole ).toString();
-  if ( layerId.isEmpty() )
-  {
-    return;
-  }
-
-  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
-  item->setCheckState( 3, Qt::Unchecked );
-  item->setData( 3, Qt::UserRole, "" );
-  mAddToMapButton->setEnabled( true );
-  mRemoveFromMapButton->setEnabled( false );
-#endif //0
 }
 
 void WebDataModel::changeEntryToOffline( const QModelIndex& index )
