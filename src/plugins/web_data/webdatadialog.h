@@ -20,10 +20,15 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mEditPushButton_clicked();
     void on_mAddToMapButton_clicked();
     void on_mRemoveFromMapButton_clicked();
+    void on_mAddNIWAServicesButton_clicked();
+    void on_mAddLINZServicesButton_clicked();
+    void NIWAServicesRequestFinished();
+    void handleDownloadProgress( qint64 progress, qint64 total );
 
   private:
     QgisInterface* mIface;
     WebDataModel mModel;
+    bool mNIWAServicesRequestFinished; //flag to make network request blocking
 
     QString serviceURLFromComboBox();
     void insertServices();
@@ -31,6 +36,9 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     /**Insert services into combo box
         @param service ("WMS","WFS","WCS")*/
     void insertServices( const QString& service );
+
+    /**Adds services to the combo box from an html page (e.g. https://www.niwa.co.nz/ei/feeds/report)*/
+    void addServicesFromHtml( const QString& url );
 };
 
 #if 0
