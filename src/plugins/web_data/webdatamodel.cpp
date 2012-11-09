@@ -354,10 +354,13 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     QStringList layers, styles;
     wmsParameterFromIndex( index, url, format, crs, layers, styles );
     mIface->addRasterLayer( url, layerName, "wms", layers, styles, format, crs );
+    inMapItem->setCheckState( Qt::Checked );
   }
   else if ( type == "WFS" )
   {
-    //todo...
+    QString url = wfsUrlFromLayerIndex( index );
+    mIface->addVectorLayer( url, layerName, "WFS" );
+    inMapItem->setCheckState( Qt::Checked );
   }
 }
 
@@ -378,7 +381,24 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
 
 QString WebDataModel::wfsUrlFromLayerIndex( const QModelIndex& index ) const
 {
-  return QString( "" ); //soon...
+  QStandardItem* nameItem = itemFromIndex( index );
+  if ( !nameItem )
+  {
+    return "";
+  }
+
+  QString url = nameItem->data().toString();
+  QString layerName = nameItem->text();
+  QStandardItem* srsItem = itemFromIndex( index.sibling( index.row(), 5 ) );
+  QString srs = srsItem->text();
+
+  url.append( "SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=" );
+  url.append( layerName );
+  if ( !srs.isEmpty() )
+  {
+    url.append( "&SRSNAME=" + srs );
+  }
+  return url;
 }
 
 void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const
