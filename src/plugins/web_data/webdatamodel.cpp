@@ -1,16 +1,22 @@
 #include "webdatamodel.h"
 #include "qgisinterface.h"
+#include "qgsapplication.h"
 #include "qgscoordinatereferencesystem.h"
+#include "qgslegendinterface.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsmaprenderer.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgsrasterfilewriter.h"
 #include "qgsrasterlayer.h"
+#include "qgsrasterlayersaveasdialog.h"
+#include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
 #include <QDomDocument>
 #include <QDomElement>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QProgressDialog>
 #include <QTreeWidgetItem>
 
 static const QString WFS_NAMESPACE = "http://www.opengis.net/wfs";
@@ -75,7 +81,6 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
   }
 
   QByteArray buffer = mCapabilitiesReply->readAll();
-  qWarning( buffer.data() );
 
   QString capabilitiesDocError;
   QDomDocument capabilitiesDocument;
@@ -347,44 +352,60 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     return;
   }
 
-  QString layerName;
-  QStandardItem* nameItem = itemFromIndex( index );
-  if ( nameItem )
-  {
-    layerName = nameItem->text();
-  }
-
-  //is entry already in map
+  QString layername = layerName( index );
+  QString type = serviceType( index );//wms / wfs ?
   QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
-  bool inMap = ( inMapItem && inMapItem->checkState() == Qt::Checked );
-  if ( inMap )
+  if ( !inMapItem || !inMapItem->checkState() == Qt::Checked )
   {
     return;
   }
-
-  //wms / wfs ?
-  QString type;
-  QStandardItem* typeItem = itemFromIndex( index.sibling( index.row(), 2 ) );
-  if ( typeItem )
+  bool offline = layerStatus( index ).compare( "offline", Qt::CaseInsensitive ) == 0;
+  QStandardItem* statusItem = itemFromIndex( index.sibling( index.row(), 4 ) );
+  if ( !statusItem )
   {
-    type = typeItem->text();
+    return;
   }
 
   QgsMapLayer* mapLayer = 0;
   if ( type == "WMS" )
   {
-    QString url, format, crs;
-    QStringList layers, styles;
-    wmsParameterFromIndex( index, url, format, crs, layers, styles );
-    mapLayer = mIface->addRasterLayer( url, layerName, "wms", layers, styles, format, crs );
-    inMapItem->setCheckState( Qt::Checked );
+    if ( offline )
+    {
+      mapLayer = mIface->addRasterLayer( statusItem->data().toString(), layername );
+      QgsRasterLayer* rl = dynamic_cast<QgsRasterLayer*>( mapLayer );
+      if ( rl )
+      {
+        rl->setRedBandName( rl->bandName( 1 ) );
+        rl->setGreenBandName( rl->bandName( 2 ) );
+        rl->setBlueBandName( rl->bandName( 3 ) );
+        rl->setTransparentBandName( rl->bandName( 4 ) );
+      }
+    }
+    else
+    {
+      QString url, format, crs;
+      QStringList layers, styles;
+      wmsParameterFromIndex( index, url, format, crs, layers, styles );
+      mapLayer = mIface->addRasterLayer( url, layername, "wms", layers, styles, format, crs );
+    }
   }
   else if ( type == "WFS" )
   {
     QString url = wfsUrlFromLayerIndex( index );
-    mapLayer = mIface->addVectorLayer( url, layerName, "WFS" );
-    inMapItem->setCheckState( Qt::Checked );
+    if ( offline )
+    {
+      mapLayer =  mIface->addVectorLayer( statusItem->data().toString(), layername, "ogr" );
+    }
+    else
+    {
+      mapLayer = mIface->addVectorLayer( url, layername, "WFS" );
+    }
+    if ( !mapLayer )
+    {
+      return;
+    }
   }
+  inMapItem->setCheckState( Qt::Checked );
 
   if ( mapLayer )
   {
@@ -394,13 +415,6 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
 
 void WebDataModel::removeEntryFromMap( const QModelIndex& index )
 {
-  QString layerName;
-  QStandardItem* nameItem = itemFromIndex( index );
-  if ( nameItem )
-  {
-    layerName = nameItem->text();
-  }
-
   //is entry already in map
   QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
   bool inMap = ( inMapItem && inMapItem->checkState() == Qt::Checked );
@@ -416,12 +430,178 @@ void WebDataModel::removeEntryFromMap( const QModelIndex& index )
 
 void WebDataModel::changeEntryToOffline( const QModelIndex& index )
 {
+  //bail out if entry already has offline status
+  QString status = layerStatus( index );
+  if ( status.compare( "offline", Qt::CaseInsensitive ) == 0 )
+  {
+    return;
+  }
 
+  //wms / wfs ?
+  QString type = serviceType( index );
+  QString layername = layerName( index );
+
+  QString saveFilePath = QgsApplication::qgisSettingsDirPath() + "/cachelayers/";
+  QDateTime dt = QDateTime::currentDateTime();
+  QString layerId = layername + dt.toString( "yyyyMMddhhmmsszzz" );
+  bool inMap = layerInMap( index );
+  QString filePath;
+  QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
+  bool offlineOk = false;
+
+  if ( type == "WFS" )
+  {
+    //create table <layername//url>
+    QgsVectorLayer* wfsLayer = 0;
+    if ( inMap )
+    {
+      if ( inMapItem )
+      {
+        wfsLayer = static_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( inMapItem->data().toString() ) );
+      }
+    }
+    else
+    {
+      QString wfsUrl = wfsUrlFromLayerIndex( index );
+      wfsLayer = new QgsVectorLayer( wfsUrl, layername, "WFS" );
+    }
+
+    filePath = saveFilePath + layerId + ".shp";
+    const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
+    offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
+                  "UTF-8", &layerCRS, "ESRI Shapefile" ) == QgsVectorFileWriter::NoError );
+    if ( offlineOk && inMap )
+    {
+      QgsVectorLayer* offlineLayer = mIface->addVectorLayer( filePath, layername, "ogr" );
+      if ( inMapItem )
+      {
+        exchangeLayer( inMapItem->data().toString(), offlineLayer );
+        inMapItem->setData( offlineLayer->id() );
+      }
+    }
+
+    if ( !inMap )
+    {
+      delete wfsLayer;
+    }
+  }
+  else if ( type == "WMS" )
+  {
+    //get raster layer
+    QgsRasterLayer* wmsLayer = 0;
+    if ( inMap )
+    {
+      wmsLayer = static_cast<QgsRasterLayer*>( QgsMapLayerRegistry::instance()->mapLayer( inMapItem->data().toString() ) );
+    }
+    else
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromIndex( index, url, format, crs, layers, styles );
+      wmsLayer = new QgsRasterLayer( 0, url, layername, "wms", layers, styles, format, crs );
+    }
+
+    //call save as dialog
+    filePath = saveFilePath + "/" + layerId;
+    QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    d.hideFormat();
+    d.hideOutput();
+    if ( d.exec() == QDialog::Accepted )
+    {
+      QgsRasterFileWriter fileWriter( filePath );
+      if ( d.tileMode() )
+      {
+        fileWriter.setTiledMode( true );
+        fileWriter.setMaxTileWidth( d.maximumTileSizeX() );
+        fileWriter.setMaxTileHeight( d.maximumTileSizeY() );
+      }
+
+      QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
+      pd.setWindowModality( Qt::WindowModal );
+      fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
+
+      filePath += ( "/" + layerId + ".vrt" );
+      offlineOk = true;
+      if ( inMap )
+      {
+        QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath, layername );
+        exchangeLayer( inMapItem->data().toString(), offlineLayer );
+        inMapItem->setData( offlineLayer->id() );
+      }
+      else
+      {
+        delete wmsLayer;
+      }
+    }
+  }
+
+  if ( offlineOk )
+  {
+    QStandardItem* statusItem = itemFromIndex( index.sibling( index.row(), 4 ) );
+    if ( statusItem )
+    {
+      statusItem->setText( "offline" );
+      statusItem->setIcon( QIcon( ":/niwa/icons/offline.png" ) );
+      statusItem->setData( filePath );
+    }
+  }
 }
 
 void WebDataModel::changeEntryToOnline( const QModelIndex& index )
 {
+  bool inMap = layerInMap( index );
+  QString type = serviceType( index );
+  QString layername = layerName( index );
 
+  QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
+  if ( !inMapItem )
+  {
+    return;
+  }
+
+  if ( inMap )
+  {
+    //generate new wfs/wms layer
+    //exchange with layer in map
+    QgsMapLayer* onlineLayer = 0;
+    if ( type == "WFS" )
+    {
+      QString wfsUrl = wfsUrlFromLayerIndex( index );
+      onlineLayer = mIface->addVectorLayer( wfsUrl, layername, "WFS" );
+    }
+    else if ( type == "WMS" )
+    {
+      //get preferred style, crs, format
+      QString url, format, crs;
+      QString providerKey = "wms";
+      QStringList layers, styles;
+      wmsParameterFromIndex( index, url, format, crs, layers, styles );
+
+      //add to map
+      onlineLayer = mIface->addRasterLayer( url, layername, providerKey, layers, styles, format, crs );
+    }
+
+    if ( onlineLayer )
+    {
+      exchangeLayer( inMapItem->data().toString(), onlineLayer );
+      inMapItem->setData( onlineLayer->id() );
+    }
+  }
+
+  QStandardItem* statusItem = itemFromIndex( index.sibling( index.row(), 4 ) );
+  if ( !statusItem )
+  {
+    return;
+  }
+
+  QString offlineFileName = statusItem->data().toString();
+  deleteOfflineDatasource( type, offlineFileName );
+
+  statusItem->setText( "online" );
+  statusItem->setIcon( QIcon( ":/niwa/icons/online.png" ) );
+  statusItem->setData( "" );
 }
 
 QString WebDataModel::wfsUrlFromLayerIndex( const QModelIndex& index ) const
@@ -521,4 +701,121 @@ void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url
   }
 }
 
+QString WebDataModel::layerName( const QModelIndex& index ) const
+{
+  QStandardItem* nameItem = itemFromIndex( index );
+  if ( nameItem )
+  {
+    return nameItem->text();
+  }
+  return QString();
+}
+
+QString WebDataModel::serviceType( const QModelIndex& index ) const
+{
+  //wms / wfs ?
+  QStandardItem* typeItem = itemFromIndex( index.sibling( index.row(), 2 ) );
+  if ( typeItem )
+  {
+    return typeItem->text();
+  }
+  return QString();
+}
+
+QString WebDataModel::layerStatus( const QModelIndex& index ) const
+{
+  QStandardItem* statusItem = itemFromIndex( index.sibling( index.row(), 4 ) );
+  if ( statusItem )
+  {
+    return statusItem->text();
+  }
+  return QString();
+}
+
+bool WebDataModel::layerInMap( const QModelIndex& index ) const
+{
+  QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
+  return ( inMapItem && inMapItem->checkState() == Qt::Checked );
+}
+
+bool WebDataModel::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer )
+{
+  if ( !mIface )
+  {
+    return false;
+  }
+
+  QgsMapLayer* oldLayer = QgsMapLayerRegistry::instance()->mapLayer( layerId );
+  if ( !oldLayer || !newLayer )
+  {
+    return false;
+  }
+
+  if ( newLayer->type() == QgsMapLayer::VectorLayer )
+  {
+    QgsVectorLayer* newVectorLayer = static_cast<QgsVectorLayer*>( newLayer );
+    QgsVectorLayer* oldVectorLayer = static_cast<QgsVectorLayer*>( oldLayer );
+
+    //write old style
+    QDomDocument vectorQMLDoc;
+    QDomElement qmlRootElem = vectorQMLDoc.createElement( "qgis" );
+    vectorQMLDoc.appendChild( qmlRootElem );
+    QString errorMessage;
+    if ( !oldVectorLayer->writeSymbology( qmlRootElem, vectorQMLDoc, errorMessage ) )
+    {
+      return false;
+    }
+
+    //set old style to new layer
+    if ( !newVectorLayer->readSymbology( qmlRootElem, errorMessage ) )
+    {
+      return false;
+    }
+  }
+  else if ( newLayer->type() == QgsMapLayer::RasterLayer )
+  {
+    //set Red/Green/Blue/Alpha channels
+    QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
+    if ( newRasterLayer->dataProvider() && newRasterLayer->dataProvider()->name() != "wms" )
+    {
+      newRasterLayer->setRedBandName( newRasterLayer->bandName( 1 ) );
+      newRasterLayer->setGreenBandName( newRasterLayer->bandName( 2 ) );
+      newRasterLayer->setBlueBandName( newRasterLayer->bandName( 3 ) );
+      newRasterLayer->setTransparentBandName( newRasterLayer->bandName( 4 ) );
+    }
+  }
+
+  //move new layer next to the old one
+  //remove old layer
+  QgsLegendInterface* legendIface = mIface->legendInterface();
+  if ( legendIface )
+  {
+    legendIface->moveLayer( newLayer, oldLayer );
+    legendIface->refreshLayerSymbology( newLayer );
+  }
+
+  QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
+
+  return false;
+}
+
+void WebDataModel::deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath )
+{
+  if ( serviceType == "WFS" )
+  {
+    QgsVectorFileWriter::deleteShapeFile( offlinePath );
+  }
+  else if ( serviceType == "WMS" )
+  {
+    //remove directory and content
+    QDir rasterFileDir( offlinePath );
+    QFileInfoList rasterFileList = rasterFileDir.entryInfoList( QDir::Files | QDir::NoDotAndDotDot );
+    QFileInfoList::iterator it = rasterFileList.begin();
+    for ( ; it != rasterFileList.end(); ++it )
+    {
+      QFile::remove( it->absoluteFilePath() );
+    }
+    rasterFileDir.rmdir( offlinePath );
+  }
+}
 

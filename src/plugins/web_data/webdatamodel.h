@@ -4,6 +4,7 @@
 #include <QStandardItemModel>
 
 class QgisInterface;
+class QgsMapLayer;
 class QNetworkReply;
 
 
@@ -37,6 +38,14 @@ class WebDataModel: public QStandardItemModel
 
     QString wfsUrlFromLayerIndex( const QModelIndex& index ) const;
     void wmsParameterFromIndex( const QModelIndex& index, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const;
+    QString layerName( const QModelIndex& index ) const;
+    QString serviceType( const QModelIndex& index ) const;
+    QString layerStatus( const QModelIndex& index ) const ;
+    bool layerInMap( const QModelIndex& index ) const;
+
+    /**Exchanges a layer in the map canvas (and copies the style of the new layer to the old one)*/
+    bool exchangeLayer( const QString& layerId, QgsMapLayer* newLayer );
+    void deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath );
 };
 
 #endif //WEBDATAMODEL_H
