@@ -26,6 +26,8 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void handleDownloadProgress( qint64 progress, qint64 total );
     void on_mChangeOfflineButton_clicked();
     void on_mChangeOnlineButton_clicked();
+    /**Enable / disable layer buttons depending if selected item changes*/
+    void adaptLayerButtonStates();
 
   private:
     QgisInterface* mIface;

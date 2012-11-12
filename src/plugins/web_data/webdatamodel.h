@@ -27,6 +27,9 @@ class WebDataModel: public QStandardItemModel
     void changeEntryToOffline( const QModelIndex& index );
     void changeEntryToOnline( const QModelIndex& index );
 
+    QString layerStatus( const QModelIndex& index ) const ;
+    bool layerInMap( const QModelIndex& index ) const;
+
   private slots:
     void wmsCapabilitiesRequestFinished();
     void wfsCapabilitiesRequestFinished();
@@ -40,8 +43,7 @@ class WebDataModel: public QStandardItemModel
     void wmsParameterFromIndex( const QModelIndex& index, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const;
     QString layerName( const QModelIndex& index ) const;
     QString serviceType( const QModelIndex& index ) const;
-    QString layerStatus( const QModelIndex& index ) const ;
-    bool layerInMap( const QModelIndex& index ) const;
+
 
     /**Exchanges a layer in the map canvas (and copies the style of the new layer to the old one)*/
     bool exchangeLayer( const QString& layerId, QgsMapLayer* newLayer );

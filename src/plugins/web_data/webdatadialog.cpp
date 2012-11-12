@@ -15,6 +15,8 @@ WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowF
   setupUi( this );
   insertServices();
   mLayersTreeView->setModel( &mModel );
+  connect( mLayersTreeView->selectionModel(), SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
+           this, SLOT( adaptLayerButtonStates() ) );
 }
 
 WebDataDialog::~WebDataDialog()
@@ -38,6 +40,7 @@ void WebDataDialog::on_mAddToMapButton_clicked()
   {
     mModel.addEntryToMap( selectList.at( 0 ) );
   }
+  adaptLayerButtonStates();
 }
 
 void WebDataDialog::on_mRemoveFromMapButton_clicked()
@@ -48,6 +51,7 @@ void WebDataDialog::on_mRemoveFromMapButton_clicked()
   {
     mModel.removeEntryFromMap( selectList.at( 0 ) );
   }
+  adaptLayerButtonStates();
 }
 
 QString WebDataDialog::serviceURLFromComboBox()
@@ -255,56 +259,13 @@ void WebDataDialog::handleDownloadProgress( qint64 progress, qint64 total )
 
 void WebDataDialog::on_mChangeOnlineButton_clicked()
 {
-#if 0
-  //get current entry
-  QTreeWidgetItem* item = mLayerTreeWidget->currentItem();
-  if ( !item )
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
   {
-    return;
+    mModel.changeEntryToOnline( selectList.at( 0 ) );
   }
-
-  bool layerInMap = ( item->checkState( 3 ) == Qt::Checked );
-  QString serviceType = item->text( 1 );
-  QString layername = item->text( 0 );
-
-  if ( layerInMap )
-  {
-    //generate new wfs/wms layer
-    //exchange with layer in map
-    QgsMapLayer* onlineLayer = 0;
-    if ( serviceType == "WFS" )
-    {
-      QString wfsUrl = wfsUrlFromLayerItem( item );
-      onlineLayer = mIface->addVectorLayer( wfsUrl, layername, "WFS" );
-    }
-    else if ( serviceType == "WMS" )
-    {
-      //get preferred style, crs, format
-      QString url, format, crs;
-      QString providerKey = "wms";
-      QStringList layers, styles;
-      wmsParameterFromItem( item, url, format, crs, layers, styles );
-
-      //add to map
-      onlineLayer = mIface->addRasterLayer( url, item->text( 0 ), providerKey, layers, styles, format, crs );
-    }
-
-    if ( onlineLayer )
-    {
-      exchangeLayer( item->data( 3, Qt::UserRole ).toString(), onlineLayer );
-      item->setData( 3, Qt::UserRole, onlineLayer->id() );
-    }
-  }
-
-  QString offlineFileName = item->data( 2, Qt::UserRole ).toString();
-  deleteOfflineDatasource( serviceType, offlineFileName );
-
-  item->setText( 2, "online" );
-  item->setIcon( 2, QIcon( ":/niwa/icons/online.png" ) );
-  item->setData( 2, Qt::UserRole, "" );
-  mChangeOfflineButton->setEnabled( true );
-  mChangeOnlineButton->setEnabled( false );
-#endif //0
+  adaptLayerButtonStates();
 }
 
 void WebDataDialog::on_mChangeOfflineButton_clicked()
@@ -314,6 +275,22 @@ void WebDataDialog::on_mChangeOfflineButton_clicked()
   if ( selectList.size() > 0 )
   {
     mModel.changeEntryToOffline( selectList.at( 0 ) );
+  }
+  adaptLayerButtonStates();
+}
+
+void WebDataDialog::adaptLayerButtonStates()
+{
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
+  {
+    QString status = mModel.layerStatus( selectList.at( 0 ) );
+    mChangeOfflineButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive ) != 0 );
+    mChangeOnlineButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive )  == 0 );
+    bool inMap = mModel.layerInMap( selectList.at( 0 ) );
+    mAddToMapButton->setEnabled( !inMap );
+    mRemoveFromMapButton->setEnabled( inMap );
   }
 }
 
