@@ -48,6 +48,15 @@ class WebDataModel: public QStandardItemModel
     /**Exchanges a layer in the map canvas (and copies the style of the new layer to the old one)*/
     bool exchangeLayer( const QString& layerId, QgsMapLayer* newLayer );
     void deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath );
+
+    /**Returns id of layer in current map with given url (or empty string if no such layer)*/
+    static QString layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName );
+
+    void loadFromXML();
+    void saveToXML() const;
+
+    /**Returns path to web.xml. Creates the file if not there*/
+    QString xmlFilePath() const;
 };
 
 #endif //WEBDATAMODEL_H

@@ -35,10 +35,20 @@ WebDataModel::WebDataModel( QgisInterface* iface ): QStandardItemModel(), mCapab
   setHorizontalHeaderLabels( headerLabels );
 
   connect( this, SIGNAL( itemChanged( QStandardItem* ) ), this, SLOT( handleItemChange( QStandardItem* ) ) );
+
+  //create cache layer directory if not already there
+  QDir cacheDirectory = QDir( QgsApplication::qgisSettingsDirPath() + "/cachelayers" );
+  if ( !cacheDirectory.exists() )
+  {
+    cacheDirectory.mkpath( QgsApplication::qgisSettingsDirPath() + "/cachelayers" );
+  }
+
+  loadFromXML();
 }
 
 WebDataModel::~WebDataModel()
 {
+  saveToXML();
 }
 
 void WebDataModel::addService( const QString& title, const QString& url, const QString& service )
@@ -817,5 +827,256 @@ void WebDataModel::deleteOfflineDatasource( const QString& serviceType, const QS
     }
     rasterFileDir.rmdir( offlinePath );
   }
+}
+
+QString WebDataModel::layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName )
+{
+  const QMap<QString, QgsMapLayer*>& layerMap = QgsMapLayerRegistry::instance()->mapLayers();
+  QMap<QString, QgsMapLayer*>::const_iterator layerIt = layerMap.constBegin();
+  for ( ; layerIt != layerMap.constEnd(); ++layerIt )
+  {
+    const QgsMapLayer* layer = layerIt.value();
+    if ( !online )
+    {
+      if ( layer && QFileInfo( layer->source() ) == QFileInfo( url ) )
+      {
+        return layer->id();
+      }
+    }
+    else if ( serviceType == "WFS" )
+    {
+      QString layerSource = layer->source();
+      QString layerUrl = url;
+      if ( layerSource.startsWith( layerUrl )
+           && layerSource.contains( "TYPENAME=" + layerName, Qt::CaseInsensitive ) )
+      {
+        return layer->id();
+      }
+    }
+    else //for online WMS, we need to additionally consider the layer name
+    {
+      QString testUrl = url;
+      testUrl.chop( 1 );
+      if ( layer->source().contains( testUrl ) ) //sometimes url contains '?' or '&' at the end
+      {
+        const QgsRasterLayer* rlayer = dynamic_cast<const QgsRasterLayer*>( layer );
+        if ( rlayer )
+        {
+          if ( rlayer->layers().join( "" ) == layerName )
+          {
+            return layer->id();
+          }
+        }
+      }
+    }
+  }
+  return QString();
+}
+
+void WebDataModel::loadFromXML()
+{
+  QFile xmlFile( xmlFilePath() );
+  if ( !xmlFile.exists() )
+  {
+    return;
+  }
+
+  if ( !xmlFile.open( QIODevice::ReadOnly ) )
+  {
+    return;
+  }
+
+  QDomDocument doc;
+  if ( !doc.setContent( &xmlFile ) )
+  {
+    return;
+  }
+
+  QDomNodeList serviceNodeList = doc.elementsByTagName( "service" );
+  for ( int i = 0; i < serviceNodeList.size(); ++i )
+  {
+    QDomElement serviceElem = serviceNodeList.at( i ).toElement();
+    QStandardItem* serviceItem = new QStandardItem( serviceElem.attribute( "serviceName" ) );
+    invisibleRootItem()->setChild( invisibleRootItem()->rowCount(), serviceItem );
+
+    QDomNodeList layerNodeList = serviceElem.elementsByTagName( "layer" );
+    QDomElement layerElem;
+    QList<QStandardItem*> childItemList;
+
+    for ( int j = 0; j < layerNodeList.size(); ++j )
+    {
+      childItemList.clear();
+      layerElem = layerNodeList.at( j ).toElement();
+      //name
+      QString layername = layerElem.attribute( "name" );
+      QStandardItem* nameItem = new QStandardItem( layername );
+      nameItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+      QString url = layerElem.attribute( "url" );
+      nameItem->setData( url );
+      childItemList.push_back( nameItem );
+      //favourite
+      QStandardItem* favItem = new QStandardItem();
+      bool favChecked = layerElem.attribute( "favourite" ).compare( "1" ) == 0;
+      favItem->setCheckState( favChecked ? Qt::Checked : Qt::Unchecked );
+      favItem->setIcon( favChecked ? QIcon( ":/niwa/icons/favourite.png" ) : QIcon() );
+      favItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable );
+      childItemList.push_back( favItem );
+      //type
+      QString type = layerElem.attribute( "type" );
+      QStandardItem* typeItem = new QStandardItem( type );
+      typeItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+      childItemList.push_back( typeItem );
+      //in map
+      QStandardItem* inMapItem = new QStandardItem();
+      inMapItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+      childItemList.push_back( inMapItem );
+      //status
+      QStandardItem* statusItem = new QStandardItem( layerElem.attribute( "status" ) );
+      bool online = statusItem->text().compare( "online", Qt::CaseInsensitive ) == 0;
+      QString filePath = layerElem.attribute( "filePath" );
+      statusItem->setIcon( online ? QIcon( ":/niwa/icons/online.png" ) : QIcon( ":/niwa/icons/offline.png" ) );
+      statusItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+      statusItem->setData( filePath );
+      childItemList.push_back( statusItem );
+      if ( !online )
+      {
+        url = filePath;
+      }
+      QString layerId = layerIdFromUrl( url, type, online, layername );
+      if ( !layerId.isEmpty() )
+      {
+        inMapItem->setCheckState( Qt::Checked );
+        inMapItem->setData( layerId );
+      }
+      else
+      {
+        inMapItem->setCheckState( Qt::Unchecked );
+      }
+      //crs
+      QStandardItem* crsItem = new QStandardItem( layerElem.attribute( "crs" ) );
+      crsItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+      childItemList.push_back( crsItem );
+      //formats
+      if ( layerElem.hasAttribute( "formats" ) )
+      {
+        QStandardItem* formatsItem = new QStandardItem( layerElem.attribute( "formats" ) );
+        formatsItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+        childItemList.push_back( formatsItem );
+      }
+      //styles
+      if ( layerElem.hasAttribute( "styles" ) )
+      {
+        QStandardItem* stylesItem = new QStandardItem( layerElem.attribute( "styles" ) );
+        stylesItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+        childItemList.push_back( stylesItem );
+      }
+      //layers
+      if ( layerElem.hasAttribute( "layers" ) )
+      {
+        QStandardItem* layersItem = new QStandardItem( layerElem.attribute( "layers" ) );
+        layersItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+        childItemList.push_back( layersItem );
+      }
+      serviceItem->appendRow( childItemList );
+    }
+  }
+}
+
+void WebDataModel::saveToXML() const
+{
+  QDomDocument doc;
+  QDomElement webDataElem = doc.createElement( "webdata" );
+  doc.appendChild( webDataElem );
+
+  QStandardItem* rootItem = invisibleRootItem();
+  QStandardItem* serviceItem = 0;
+  for ( int i = 0; i < rootItem->rowCount(); ++i )
+  {
+    serviceItem = rootItem->child( i );
+    if ( !serviceItem )
+    {
+      continue;
+    }
+    QDomElement serviceElem = doc.createElement( "service" );
+    serviceElem.setAttribute( "serviceName", serviceItem->text() );
+    webDataElem.appendChild( serviceElem );
+
+    for ( int j = 0; j < serviceItem->rowCount(); ++j )
+    {
+      QDomElement layerElem = doc.createElement( "layer" );
+      serviceElem.appendChild( layerElem );
+      //name
+      QStandardItem* nameItem = serviceItem->child( j, 0 );
+      if ( nameItem )
+      {
+        layerElem.setAttribute( "name", nameItem->text() );
+        layerElem.setAttribute( "url", nameItem->data().toString() );
+      }
+      //favourite
+      QStandardItem* favItem = serviceItem->child( j, 1 );
+      if ( favItem )
+      {
+        layerElem.setAttribute( "favourite", ( favItem->checkState() == Qt::Checked ) ? "1" : "0" );
+      }
+      //type
+      QStandardItem* typeItem = serviceItem->child( j, 2 );
+      if ( typeItem )
+      {
+        layerElem.setAttribute( "type", typeItem->text() );
+      }
+      //in map
+      QStandardItem* inMapItem = serviceItem->child( j, 3 );
+      if ( inMapItem )
+      {
+        layerElem.setAttribute( "layerId", inMapItem->data().toString() );
+      }
+      //status
+      QStandardItem* statusItem = serviceItem->child( j, 4 );
+      if ( statusItem )
+      {
+        layerElem.setAttribute( "status", statusItem->text() );
+        layerElem.setAttribute( "filePath", statusItem->data().toString() );
+      }
+      //crs
+      QStandardItem* crsItem = serviceItem->child( j, 5 );
+      if ( crsItem )
+      {
+        layerElem.setAttribute( "crs", crsItem->text() );
+      }
+      //formats
+      QStandardItem* formatsItem = serviceItem->child( j, 6 );
+      if ( formatsItem )
+      {
+        layerElem.setAttribute( "formats", formatsItem->text() );
+      }
+      //styles
+      QStandardItem* stylesItem = serviceItem->child( j, 7 );
+      if ( stylesItem )
+      {
+        layerElem.setAttribute( "styles", stylesItem->text() );
+      }
+      //layers
+      QStandardItem* layersItem = serviceItem->child( j, 8 );
+      if ( layersItem )
+      {
+        layerElem.setAttribute( "layers", layersItem->text() );
+      }
+    }
+
+  }
+
+  QFile outFile( xmlFilePath() );
+  if ( outFile.open( QIODevice::WriteOnly ) )
+  {
+    QTextStream outStream( &outFile );
+    doc.save( outStream, 2 );
+  }
+}
+
+QString WebDataModel::xmlFilePath() const
+{
+  QFileInfo fi( QgsApplication::qgisUserDbFilePath() );
+  QString path = fi.absolutePath() + "/webdata.xml";
+  return path;
 }
 
