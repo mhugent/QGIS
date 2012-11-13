@@ -6,6 +6,7 @@ SET (WEB_DATA_SRCS
      webdatadialog.cpp
      addservicedialog.cpp
      webdatamodel.cpp
+     webdatafiltermodel.cpp
 )
 
 SET (WEB_DATA_UIS 

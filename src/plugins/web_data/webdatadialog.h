@@ -2,6 +2,7 @@
 #define WEBDATADIALOG_H
 
 #include "ui_webdatadialogbase.h"
+#include "webdatafiltermodel.h"
 #include "webdatamodel.h"
 
 class QgisInterface;
@@ -28,10 +29,13 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mChangeOnlineButton_clicked();
     /**Enable / disable layer buttons depending if selected item changes*/
     void adaptLayerButtonStates();
+    void on_mOnlyFavouritesCheckBox_stateChanged( int state );
+    void on_mSearchTableEdit_textChanged( const QString&  text );
 
   private:
     QgisInterface* mIface;
     WebDataModel mModel;
+    WebDataFilterModel mFilterModel;
     bool mNIWAServicesRequestFinished; //flag to make network request blocking
 
     QString serviceURLFromComboBox();

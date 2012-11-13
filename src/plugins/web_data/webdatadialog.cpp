@@ -14,7 +14,11 @@ WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowF
 {
   setupUi( this );
   insertServices();
-  mLayersTreeView->setModel( &mModel );
+  mFilterModel.setParent( this );
+  mFilterModel.setSourceModel( &mModel );
+  mFilterModel.setFilterKeyColumn( -1 );
+  mFilterModel.setFilterCaseSensitivity( Qt::CaseInsensitive );
+  mLayersTreeView->setModel( &mFilterModel );
   connect( mLayersTreeView->selectionModel(), SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
            this, SLOT( adaptLayerButtonStates() ) );
 }
@@ -38,7 +42,7 @@ void WebDataDialog::on_mAddToMapButton_clicked()
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
   {
-    mModel.addEntryToMap( selectList.at( 0 ) );
+    mModel.addEntryToMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
   }
   adaptLayerButtonStates();
 }
@@ -49,7 +53,7 @@ void WebDataDialog::on_mRemoveFromMapButton_clicked()
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
   {
-    mModel.removeEntryFromMap( selectList.at( 0 ) );
+    mModel.removeEntryFromMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
   }
   adaptLayerButtonStates();
 }
@@ -263,7 +267,7 @@ void WebDataDialog::on_mChangeOnlineButton_clicked()
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
   {
-    mModel.changeEntryToOnline( selectList.at( 0 ) );
+    mModel.changeEntryToOnline( mFilterModel.mapToSource( selectList.at( 0 ) ) );
   }
   adaptLayerButtonStates();
 }
@@ -274,7 +278,7 @@ void WebDataDialog::on_mChangeOfflineButton_clicked()
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
   {
-    mModel.changeEntryToOffline( selectList.at( 0 ) );
+    mModel.changeEntryToOffline( mFilterModel.mapToSource( selectList.at( 0 ) ) );
   }
   adaptLayerButtonStates();
 }
@@ -285,11 +289,21 @@ void WebDataDialog::adaptLayerButtonStates()
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
   {
-    QString status = mModel.layerStatus( selectList.at( 0 ) );
+    QString status = mModel.layerStatus( mFilterModel.mapToSource( selectList.at( 0 ) ) );
     mChangeOfflineButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive ) != 0 );
     mChangeOnlineButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive )  == 0 );
-    bool inMap = mModel.layerInMap( selectList.at( 0 ) );
+    bool inMap = mModel.layerInMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
     mAddToMapButton->setEnabled( !inMap );
     mRemoveFromMapButton->setEnabled( inMap );
   }
+}
+
+void WebDataDialog::on_mOnlyFavouritesCheckBox_stateChanged( int state )
+{
+  mFilterModel.setShowOnlyFavourites( state == Qt::Checked );
+}
+
+void WebDataDialog::on_mSearchTableEdit_textChanged( const QString&  text )
+{
+  mFilterModel._setFilterWildcard( text );
 }
