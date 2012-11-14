@@ -335,3 +335,17 @@ void WebDataDialog::on_mSearchTableEdit_textChanged( const QString&  text )
 {
   mFilterModel._setFilterWildcard( text );
 }
+
+void WebDataDialog::on_mRemoveFromListButton_clicked()
+{
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
+  {
+    QModelIndex idx = mFilterModel.mapToSource( selectList.at( 0 ) );
+    if ( idx.isValid() )
+    {
+      mModel.removeRow( idx.row(), idx.parent() );
+    }
+  }
+}
