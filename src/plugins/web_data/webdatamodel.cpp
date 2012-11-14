@@ -476,6 +476,7 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
       wfsLayer = new QgsVectorLayer( wfsUrl, layername, "WFS" );
     }
 
+    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
     filePath = saveFilePath + layerId + ".shp";
     const QgsCoordinateReferenceSystem& layerCRS = wfsLayer->crs();
     offlineOk = ( QgsVectorFileWriter::writeAsVectorFormat( wfsLayer, filePath,
@@ -489,6 +490,7 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
         inMapItem->setData( offlineLayer->id() );
       }
     }
+    QApplication::restoreOverrideCursor();
 
     if ( !inMap )
     {
@@ -520,6 +522,7 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
     d.hideOutput();
     if ( d.exec() == QDialog::Accepted )
     {
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
       QgsRasterFileWriter fileWriter( filePath );
       if ( d.tileMode() )
       {
@@ -544,6 +547,7 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
       {
         delete wmsLayer;
       }
+      QApplication::restoreOverrideCursor();
     }
   }
 

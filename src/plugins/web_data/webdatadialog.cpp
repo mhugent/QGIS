@@ -58,15 +58,21 @@ WebDataDialog::~WebDataDialog()
 
 void WebDataDialog::on_mConnectPushButton_clicked()
 {
+  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+  mStatusLabel->setText( tr( "Retrieving service capabilities..." ) );
   QString url = serviceURLFromComboBox();
   int currentIndex = mServicesComboBox->currentIndex();
   QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
   QString serviceTitle = mServicesComboBox->currentText();
   mModel.addService( serviceTitle, url, serviceType );
+  mStatusLabel->setText( tr( "Ready" ) );
+  QApplication::restoreOverrideCursor();
 }
 
 void WebDataDialog::on_mAddToMapButton_clicked()
 {
+  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+  mStatusLabel->setText( tr( "Add layer to map..." ) );
   QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
@@ -74,6 +80,8 @@ void WebDataDialog::on_mAddToMapButton_clicked()
     mModel.addEntryToMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
   }
   adaptLayerButtonStates();
+  mStatusLabel->setText( tr( "Ready" ) );
+  QApplication::restoreOverrideCursor();
 }
 
 void WebDataDialog::on_mRemoveFromMapButton_clicked()
@@ -302,6 +310,7 @@ void WebDataDialog::on_mChangeOnlineButton_clicked()
 
 void WebDataDialog::on_mChangeOfflineButton_clicked()
 {
+  mStatusLabel->setText( tr( "Saving layer offline..." ) );
   QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
@@ -309,6 +318,7 @@ void WebDataDialog::on_mChangeOfflineButton_clicked()
     mModel.changeEntryToOffline( mFilterModel.mapToSource( selectList.at( 0 ) ) );
   }
   adaptLayerButtonStates();
+  mStatusLabel->setText( tr( "Ready" ) );
 }
 
 void WebDataDialog::adaptLayerButtonStates()
