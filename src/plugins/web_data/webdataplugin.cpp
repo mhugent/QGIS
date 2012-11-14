@@ -11,7 +11,7 @@ static const QString version_ = QObject::tr( "Version 1.0" );
 static const QString icon_ = ":/niwa/icons/nqmap.png";
 static const QString category_ = QObject::tr( "Web" );
 
-WebDataPlugin::WebDataPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 )
+WebDataPlugin::WebDataPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 ), mDialog( 0 )
 {
 
 }
@@ -19,6 +19,7 @@ WebDataPlugin::WebDataPlugin( QgisInterface* iface ): mIface( iface ), mAction( 
 WebDataPlugin::~WebDataPlugin()
 {
   delete mAction;
+  delete mDialog;
 }
 
 void WebDataPlugin::initGui()
@@ -42,8 +43,11 @@ void WebDataPlugin::unload()
 
 void WebDataPlugin::showWebDataDialog()
 {
-  WebDataDialog d( mIface );
-  d.exec();
+  if ( !mDialog )
+  {
+    mDialog = new WebDataDialog( mIface, 0, Qt::WindowStaysOnTopHint );
+  }
+  mDialog->show();
 }
 
 
