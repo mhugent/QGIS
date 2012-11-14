@@ -21,10 +21,39 @@ WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowF
   mLayersTreeView->setModel( &mFilterModel );
   connect( mLayersTreeView->selectionModel(), SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
            this, SLOT( adaptLayerButtonStates() ) );
+  QSettings s;
+  mOnlyFavouritesCheckBox->setCheckState( s.value( "/NIWA/showOnlyFavourites", "false" ).toBool() ? Qt::Checked : Qt::Unchecked );
+
+  //expand items
+  QStringList expandedServices = s.value( "/NIWA/expandedServices" ).toStringList();
+  QSet<QString> expanded = expandedServices.toSet();
+  int nChildren = mFilterModel.rowCount();
+  for ( int i = 0; i < nChildren; ++i )
+  {
+    QModelIndex idx = mFilterModel.index( i, 0 );
+    if ( expanded.contains( mModel.itemFromIndex( mFilterModel.mapToSource( idx ) )->text() ) )
+    {
+      mLayersTreeView->setExpanded( idx, true );
+    }
+  }
 }
 
 WebDataDialog::~WebDataDialog()
 {
+  QSettings s;
+  s.setValue( "/NIWA/showOnlyFavourites", mOnlyFavouritesCheckBox->isChecked() );
+
+  //store names of expanded items
+  QStringList expandedServices;
+  int nChildren = mFilterModel.rowCount();
+  for ( int i = 0; i < nChildren; ++i )
+  {
+    if ( mLayersTreeView->isExpanded( mFilterModel.index( i, 0 ) ) )
+    {
+      expandedServices.append( mModel.itemFromIndex( mFilterModel.mapToSource( mFilterModel.index( i, 0 ) ) )->text() );
+    }
+  }
+  s.setValue( "/NIWA/expandedServices", expandedServices );
 }
 
 void WebDataDialog::on_mConnectPushButton_clicked()
@@ -111,7 +140,6 @@ void WebDataDialog::on_mEditPushButton_clicked()
   QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
   QString name = mServicesComboBox->itemText( currentIndex );
 
-  QSettings s;
   QString url = serviceURLFromComboBox();
 
   AddServiceDialog d;
