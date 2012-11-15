@@ -125,7 +125,6 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
   }
 
   //add parentItem
-
   QString serviceTitle = mCapabilitiesReply->property( "title" ).toString();
   QList<QStandardItem*> serviceTitleItems = findItems( serviceTitle );
   QStandardItem* wmsTitleItem = 0;
@@ -139,9 +138,12 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
     wmsTitleItem = serviceTitleItems.at( 0 );
     wmsTitleItem->removeRows( 0, wmsTitleItem->rowCount() );
   }
-  wmsTitleItem->setFlags( Qt::ItemIsEnabled );
-
   QString url = mCapabilitiesReply->property( "url" ).toString();
+  wmsTitleItem->setFlags( Qt::ItemIsEnabled );
+  wmsTitleItem->setData( url );
+  QStandardItem* wmsTitleServiceItem = new QStandardItem( "WMS" );
+  invisibleRootItem()->setChild( invisibleRootItem()->rowCount() - 1 , 2, wmsTitleServiceItem );
+  wmsTitleItem->setFlags( Qt::ItemIsEnabled );
 
   for ( unsigned int i = 0; i < layerList.length(); ++i )
   {
@@ -277,8 +279,12 @@ void WebDataModel::wfsCapabilitiesRequestFinished()
     wfsTitleItem = serviceTitleItems.at( 0 );
     wfsTitleItem->removeRows( 0, wfsTitleItem->rowCount() );
   }
-  wfsTitleItem->setFlags( Qt::ItemIsEnabled );
   QString url = mCapabilitiesReply->property( "url" ).toString();
+  wfsTitleItem->setFlags( Qt::ItemIsEnabled );
+  wfsTitleItem->setData( url );
+  QStandardItem* wfsTitleServiceItem = new QStandardItem( "WFS" );
+  invisibleRootItem()->setChild( invisibleRootItem()->rowCount() - 1 , 2, wfsTitleServiceItem );
+  wfsTitleItem->setFlags( Qt::ItemIsEnabled );
 
   for ( unsigned int i = 0; i < featureTypeList.length(); ++i )
   {
@@ -620,19 +626,31 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
 
 void WebDataModel::reload( const QModelIndex& index )
 {
-  //service or layer?
+  QStandardItem* nameItem = itemFromIndex( index );
+  if ( !nameItem )
+  {
+    return;
+  }
+
+  QString name = layerName( index );
+  QString status = layerStatus( index );
   QString type = serviceType( index );
-  if ( type.isEmpty() ) //service
-  {
 
+  if ( status.isEmpty() ) //update service
+  {
+    addService( name, nameItem->data().toString(), type );
   }
-  else if ( type.compare( "WMS", Qt::CaseInsensitive ) == 0 )
+  else if ( type.compare( "WMS", Qt::CaseInsensitive ) == 0
+            || type.compare( "WFS", Qt::CaseInsensitive ) == 0 ) //update WMS layer
   {
-
-  }
-  else if ( type.compare( "WFS", Qt::CaseInsensitive ) == 0 )
-  {
-
+    if ( mIface && mIface->mapCanvas() )
+    {
+      bool bkRenderFlag = mIface->mapCanvas()->renderFlag();
+      mIface->mapCanvas()->setRenderFlag( false );
+      changeEntryToOnline( index );
+      changeEntryToOffline( index );
+      mIface->mapCanvas()->setRenderFlag( bkRenderFlag );
+    }
   }
 }
 
