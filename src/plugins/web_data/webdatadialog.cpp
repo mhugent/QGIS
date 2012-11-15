@@ -1,5 +1,7 @@
 #include "webdatadialog.h"
 #include "addservicedialog.h"
+#include "qgisinterface.h"
+#include "qgsmapcanvas.h"
 #include "qgsnetworkaccessmanager.h"
 #include <QDomDocument>
 #include <QInputDialog>
@@ -71,6 +73,10 @@ void WebDataDialog::on_mConnectPushButton_clicked()
 
 void WebDataDialog::on_mAddToMapButton_clicked()
 {
+  if ( mapCanvasDrawing() )
+  {
+    return;
+  }
   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
   mStatusLabel->setText( tr( "Add layer to map..." ) );
   QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
@@ -86,6 +92,10 @@ void WebDataDialog::on_mAddToMapButton_clicked()
 
 void WebDataDialog::on_mRemoveFromMapButton_clicked()
 {
+  if ( mapCanvasDrawing() )
+  {
+    return;
+  }
   QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
@@ -364,6 +374,10 @@ void WebDataDialog::on_mRemoveFromListButton_clicked()
 
 void WebDataDialog::on_mReloadButton_clicked()
 {
+  if ( mapCanvasDrawing() )
+  {
+    return;
+  }
   QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
   QModelIndexList selectList = selectModel->selectedRows( 0 );
   if ( selectList.size() > 0 )
@@ -374,4 +388,20 @@ void WebDataDialog::on_mReloadButton_clicked()
       mModel.reload( idx );
     }
   }
+}
+
+bool WebDataDialog::mapCanvasDrawing() const
+{
+  if ( !mIface )
+  {
+    return false;
+  }
+
+  QgsMapCanvas* canvas = mIface->mapCanvas();
+  if ( !canvas )
+  {
+    return false;
+  }
+
+  return canvas->isDrawing();
 }

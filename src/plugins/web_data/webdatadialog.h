@@ -49,6 +49,9 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
 
     /**Adds services to the combo box from an html page (e.g. https://www.niwa.co.nz/ei/feeds/report)*/
     void addServicesFromHtml( const QString& url );
+
+    /**Returns true if main canvas is drawing*/
+    bool mapCanvasDrawing() const;
 };
 
 #endif // WEBDATADIALOG_H
