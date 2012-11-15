@@ -35,6 +35,7 @@ class WebDataModel: public QStandardItemModel
     void wmsCapabilitiesRequestFinished();
     void wfsCapabilitiesRequestFinished();
     void handleItemChange( QStandardItem* item );
+    void syncLayerRemove( QStringList theLayerIds );
 
   private:
     QNetworkReply *mCapabilitiesReply;

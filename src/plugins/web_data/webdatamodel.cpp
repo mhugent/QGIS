@@ -35,6 +35,8 @@ WebDataModel::WebDataModel( QgisInterface* iface ): QStandardItemModel(), mCapab
   setHorizontalHeaderLabels( headerLabels );
 
   connect( this, SIGNAL( itemChanged( QStandardItem* ) ), this, SLOT( handleItemChange( QStandardItem* ) ) );
+  connect( QgsMapLayerRegistry::instance(), SIGNAL( layersWillBeRemoved( QStringList ) ), this,
+           SLOT( syncLayerRemove( QStringList ) ) );
 
   //create cache layer directory if not already there
   QDir cacheDirectory = QDir( QgsApplication::qgisSettingsDirPath() + "/cachelayers" );
@@ -359,6 +361,43 @@ void WebDataModel::handleItemChange( QStandardItem* item )
     }
   }
   blockSignals( false );
+}
+
+void WebDataModel::syncLayerRemove( QStringList theLayerIds )
+{
+  QSet<QString> idSet = theLayerIds.toSet();
+
+  //iterate the layer items
+  int serviceCount = invisibleRootItem()->rowCount();
+  QStandardItem* serviceItem = 0;
+
+  for ( int i = 0; i < serviceCount; ++i )
+  {
+    serviceItem = invisibleRootItem()->child( i, 0 );
+    if ( serviceItem )
+    {
+      int nLayers = serviceItem->rowCount();
+      for ( int j = 0; j < nLayers; ++j )
+      {
+        QStandardItem* inMapItem = serviceItem->child( j, 3 );
+        if ( !inMapItem )
+        {
+          continue;
+        }
+
+        if ( inMapItem->checkState() != Qt::Checked )
+        {
+          continue;
+        }
+
+        QString debug = inMapItem->data().toString();
+        if ( idSet.contains( inMapItem->data().toString() ) )
+        {
+          inMapItem->setCheckState( Qt::Unchecked );
+        }
+      }
+    }
+  }
 }
 
 void WebDataModel::addEntryToMap( const QModelIndex& index )
