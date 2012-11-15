@@ -333,6 +333,8 @@ void WebDataDialog::adaptLayerButtonStates()
     bool inMap = mModel.layerInMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
     mAddToMapButton->setEnabled( !inMap );
     mRemoveFromMapButton->setEnabled( inMap );
+    //enable update for offline datasources and services
+    mReloadButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive )  == 0 || status.isEmpty() );
   }
 }
 
@@ -356,6 +358,20 @@ void WebDataDialog::on_mRemoveFromListButton_clicked()
     if ( idx.isValid() )
     {
       mModel.removeRow( idx.row(), idx.parent() );
+    }
+  }
+}
+
+void WebDataDialog::on_mReloadButton_clicked()
+{
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
+  {
+    QModelIndex idx = mFilterModel.mapToSource( selectList.at( 0 ) );
+    if ( idx.isValid() )
+    {
+      mModel.reload( idx );
     }
   }
 }

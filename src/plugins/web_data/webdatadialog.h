@@ -32,6 +32,7 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mOnlyFavouritesCheckBox_stateChanged( int state );
     void on_mSearchTableEdit_textChanged( const QString&  text );
     void on_mRemoveFromListButton_clicked();
+    void on_mReloadButton_clicked();
 
   private:
     QgisInterface* mIface;

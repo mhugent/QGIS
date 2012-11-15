@@ -26,6 +26,7 @@ class WebDataModel: public QStandardItemModel
     void removeEntryFromMap( const QModelIndex& index );
     void changeEntryToOffline( const QModelIndex& index );
     void changeEntryToOnline( const QModelIndex& index );
+    void reload( const QModelIndex& index );
 
     QString layerStatus( const QModelIndex& index ) const ;
     bool layerInMap( const QModelIndex& index ) const;

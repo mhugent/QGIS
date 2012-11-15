@@ -618,6 +618,24 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
   statusItem->setData( "" );
 }
 
+void WebDataModel::reload( const QModelIndex& index )
+{
+  //service or layer?
+  QString type = serviceType( index );
+  if ( type.isEmpty() ) //service
+  {
+
+  }
+  else if ( type.compare( "WMS", Qt::CaseInsensitive ) == 0 )
+  {
+
+  }
+  else if ( type.compare( "WFS", Qt::CaseInsensitive ) == 0 )
+  {
+
+  }
+}
+
 QString WebDataModel::wfsUrlFromLayerIndex( const QModelIndex& index ) const
 {
   QStandardItem* nameItem = itemFromIndex( index );
