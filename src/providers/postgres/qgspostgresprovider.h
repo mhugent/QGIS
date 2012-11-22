@@ -326,7 +326,8 @@ class QgsPostgresProvider : public QgsVectorDataProvider
     bool declareCursor( const QString &cursorName,
                         const QgsAttributeList &fetchAttributes,
                         bool fetchGeometry,
-                        QString whereClause );
+                        QString whereClause,
+                        QString qbox );
 
     bool getFeature( QgsPostgresResult &queryResult,
                      int row,

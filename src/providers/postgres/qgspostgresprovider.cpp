@@ -238,7 +238,8 @@ bool QgsPostgresProvider::declareCursor(
   const QString &cursorName,
   const QgsAttributeList &fetchAttributes,
   bool fetchGeometry,
-  QString whereClause )
+  QString whereClause,
+        QString qbox )
 {
   if ( fetchGeometry && mGeometryColumn.isNull() )
   {
@@ -251,9 +252,9 @@ bool QgsPostgresProvider::declareCursor(
 
     if ( fetchGeometry )
     {
-      query += QString( "%1(%2(%3%4),'%5')" )
+      query += QString( "%1(st_intersection(%2, %3%4 ),'%5')" )
                .arg( mConnectionRO->majorVersion() < 2 ? "asbinary" : "st_asbinary" )
-               .arg( mConnectionRO->majorVersion() < 2 ? "force_2d" : "st_force_2d" )
+              .arg( qbox )
                .arg( quotedIdentifier( mGeometryColumn ) )
                .arg( mSpatialColType == sctGeography ? "::geometry" : "" )
                .arg( endianString() );
@@ -520,6 +521,7 @@ void QgsPostgresProvider::select( QgsAttributeList fetchAttributes, QgsRectangle
   }
 
   QString whereClause;
+  QString qBox;
 
   if ( !rect.isEmpty() && !mGeometryColumn.isNull() )
   {
@@ -532,7 +534,6 @@ void QgsPostgresProvider::select( QgsAttributeList fetchAttributes, QgsRectangle
 
     if ( whereClause.isEmpty() )
     {
-      QString qBox;
       if ( mConnectionRO->majorVersion() < 2 )
       {
         qBox = QString( "setsrid('BOX3D(%1)'::box3d,%2)" )
@@ -587,7 +588,7 @@ void QgsPostgresProvider::select( QgsAttributeList fetchAttributes, QgsRectangle
 
   mFetchGeom = fetchGeometry;
   mAttributesToFetch = fetchAttributes;
-  if ( !declareCursor( cursorName, fetchAttributes, fetchGeometry, whereClause ) )
+  if ( !declareCursor( cursorName, fetchAttributes, fetchGeometry, whereClause, qBox ) )
     return;
 
   mFetching = true;
@@ -861,7 +862,7 @@ bool QgsPostgresProvider::featureAtId( QgsFeatureId featureId, QgsFeature& featu
 
   QString cursorName = QString( "qgisfid%1" ).arg( mProviderId );
 
-  if ( !declareCursor( cursorName, fetchAttributes, fetchGeometry, whereClause( featureId ) ) )
+  if ( !declareCursor( cursorName, fetchAttributes, fetchGeometry, whereClause( featureId ), "" ) )
     return false;
 
   QgsPostgresResult queryResult = mConnectionRO->PQexec( QString( "FETCH FORWARD 1 FROM %1" ).arg( cursorName ) );
