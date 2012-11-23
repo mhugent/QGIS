@@ -201,6 +201,22 @@ void WebDataDialog::on_mAddLINZServicesButton_clicked()
   setServiceSetting( "LINZ WMS", "WMS", "http://wms.data.linz.govt.nz/" + key + "/r/wms" );
 }
 
+void WebDataDialog::on_mAddLRISButton_clicked()
+{
+  //ask user about the LRIS key
+  QString key = QInputDialog::getText( 0, tr( "Enter your personal LRIS key" ), tr( "Key:" ) );
+  if ( !key.isNull() )
+  {
+    //add WFS
+    setServiceSetting( "LRIS WFS", "WFS", "http://wfs.lris.scinfo.org.nz/" + key + "/wfs" );
+  }
+
+  //add WMS
+  setServiceSetting( "LRIS Basemaps", "WMS", "http://maps.scinfo.org.nz/basemaps/wms" );
+  setServiceSetting( "LRIS Land ressource inventory", "WMS", "http://maps.scinfo.org.nz/lri/wms" );
+  setServiceSetting( "LRIS Land cover", "WMS", "http://maps.scinfo.org.nz/lcdb/wms" );
+}
+
 
 void WebDataDialog::setServiceSetting( const QString& name, const QString& serviceType, const QString& url )
 {
