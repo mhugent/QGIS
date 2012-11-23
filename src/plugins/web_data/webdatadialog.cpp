@@ -188,7 +188,8 @@ void WebDataDialog::on_mAddNIWAServicesButton_clicked()
 void WebDataDialog::on_mAddLINZServicesButton_clicked()
 {
   //ask user about the LINZ key
-  QString key = QInputDialog::getText( 0, tr( "Enter your personal LINZ key" ), tr( "Key:" ) );
+  QString key = QInputDialog::getText( 0, tr( "Enter your personal LINZ key" ), tr( "Key:" ), QLineEdit::Normal, QString(), 0,
+                                       Qt::Dialog | Qt::WindowStaysOnTopHint );
   if ( key.isNull() )
   {
     return;
@@ -204,7 +205,8 @@ void WebDataDialog::on_mAddLINZServicesButton_clicked()
 void WebDataDialog::on_mAddLRISButton_clicked()
 {
   //ask user about the LRIS key
-  QString key = QInputDialog::getText( 0, tr( "Enter your personal LRIS key" ), tr( "Key:" ) );
+  QString key = QInputDialog::getText( 0, tr( "Enter your personal LRIS key" ), tr( "Key:" ), QLineEdit::Normal, QString(), 0,
+                                       Qt::Dialog | Qt::WindowStaysOnTopHint );
   if ( !key.isNull() )
   {
     //add WFS
