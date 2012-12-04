@@ -34,6 +34,7 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mSearchTableEdit_textChanged( const QString&  text );
     void on_mRemoveFromListButton_clicked();
     void on_mReloadButton_clicked();
+    void on_mLayersTreeView_clicked( const QModelIndex& index );
 
   private:
     QgisInterface* mIface;

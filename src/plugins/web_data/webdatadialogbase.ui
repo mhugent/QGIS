@@ -156,34 +156,6 @@
       <item row="0" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QPushButton" name="mChangeOfflineButton">
-          <property name="toolTip">
-           <string>Change to offline</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset resource="resources.qrc">
-            <normaloff>:/niwa/icons/offline.png</normaloff>:/niwa/icons/offline.png</iconset>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="mChangeOnlineButton">
-          <property name="toolTip">
-           <string>Change to online</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset resource="resources.qrc">
-            <normaloff>:/niwa/icons/online.png</normaloff>:/niwa/icons/online.png</iconset>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="mReloadButton">
           <property name="enabled">
            <bool>false</bool>
@@ -197,26 +169,6 @@
           <property name="icon">
            <iconset resource="resources.qrc">
             <normaloff>:/niwa/icons/refresh.png</normaloff>:/niwa/icons/refresh.png</iconset>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="mAddToMapButton">
-          <property name="toolTip">
-           <string>Add layer to map</string>
-          </property>
-          <property name="text">
-           <string>Add to map</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="mRemoveFromMapButton">
-          <property name="toolTip">
-           <string>Remove layer from map</string>
-          </property>
-          <property name="text">
-           <string>Remove from map</string>
           </property>
          </widget>
         </item>

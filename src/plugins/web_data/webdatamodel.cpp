@@ -360,6 +360,22 @@ void WebDataModel::handleItemChange( QStandardItem* item )
       item->setIcon( QIcon() ); //unset icon
     }
   }
+  else if ( item->column() == 3 ) //in map
+  {
+    if ( item->checkState() == Qt::Checked )
+    {
+
+      addEntryToMap( item->index().sibling( item->row(), 0 ) );
+    }
+    else
+    {
+      removeEntryFromMap( item->index().sibling( item->row(), 0 ) );
+    }
+  }
+  else if ( item->column() == 4 ) //online / offline
+  {
+
+  }
   blockSignals( false );
 }
 
@@ -472,11 +488,11 @@ void WebDataModel::removeEntryFromMap( const QModelIndex& index )
 {
   //is entry already in map
   QStandardItem* inMapItem = itemFromIndex( index.sibling( index.row(), 3 ) );
-  bool inMap = ( inMapItem && inMapItem->checkState() == Qt::Checked );
+  /*bool inMap = ( inMapItem && inMapItem->checkState() == Qt::Checked );
   if ( !inMap )
   {
     return;
-  }
+  }*/
 
   QString layerId = inMapItem->data().toString();
   QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
@@ -883,8 +899,11 @@ bool WebDataModel::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer 
     legendIface->refreshLayerSymbology( newLayer );
   }
 
+  disconnect( QgsMapLayerRegistry::instance(), SIGNAL( layersWillBeRemoved( QStringList ) ), this,
+              SLOT( syncLayerRemove( QStringList ) ) );
   QgsMapLayerRegistry::instance()->removeMapLayers( QStringList() << layerId );
-
+  connect( QgsMapLayerRegistry::instance(), SIGNAL( layersWillBeRemoved( QStringList ) ), this,
+           SLOT( syncLayerRemove( QStringList ) ) );
   return false;
 }
 
@@ -1007,7 +1026,7 @@ void WebDataModel::loadFromXML()
       childItemList.push_back( typeItem );
       //in map
       QStandardItem* inMapItem = new QStandardItem();
-      inMapItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+      inMapItem->setFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable );
       childItemList.push_back( inMapItem );
       //status
       QStandardItem* statusItem = new QStandardItem( layerElem.attribute( "status" ) );

@@ -356,11 +356,6 @@ void WebDataDialog::adaptLayerButtonStates()
   if ( selectList.size() > 0 )
   {
     QString status = mModel.layerStatus( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-    mChangeOfflineButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive ) != 0 );
-    mChangeOnlineButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive )  == 0 );
-    bool inMap = mModel.layerInMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-    mAddToMapButton->setEnabled( !inMap );
-    mRemoveFromMapButton->setEnabled( inMap );
     //enable update for offline datasources and services
     mReloadButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive )  == 0 || status.isEmpty() );
   }
@@ -405,6 +400,25 @@ void WebDataDialog::on_mReloadButton_clicked()
     {
       mModel.reload( idx );
     }
+  }
+}
+
+void WebDataDialog::on_mLayersTreeView_clicked( const QModelIndex& index )
+{
+  QModelIndex srcIndex = mFilterModel.mapToSource( index );
+  QStandardItem* item = mModel.itemFromIndex( srcIndex );
+  if ( !item || item->column() != 4 )
+  {
+    return;
+  }
+
+  if ( item->text().compare( "online", Qt::CaseInsensitive ) == 0 )
+  {
+    mModel.changeEntryToOffline( srcIndex.sibling( srcIndex.row(), 0 ) );
+  }
+  else if ( item->text().compare( "offline", Qt::CaseInsensitive ) == 0 )
+  {
+    mModel.changeEntryToOnline( srcIndex.sibling( srcIndex.row(), 0 ) );
   }
 }
 
