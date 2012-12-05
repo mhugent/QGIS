@@ -548,7 +548,9 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
       if ( inMapItem )
       {
         exchangeLayer( inMapItem->data().toString(), offlineLayer );
+        blockSignals( true );
         inMapItem->setData( offlineLayer->id() );
+        blockSignals( false );
       }
     }
     QApplication::restoreOverrideCursor();
@@ -602,7 +604,9 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
       {
         QgsRasterLayer* offlineLayer = mIface->addRasterLayer( filePath, layername );
         exchangeLayer( inMapItem->data().toString(), offlineLayer );
+        blockSignals( true );
         inMapItem->setData( offlineLayer->id() );
+        blockSignals( false );
       }
       else
       {
@@ -661,7 +665,9 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
     if ( onlineLayer )
     {
       exchangeLayer( inMapItem->data().toString(), onlineLayer );
+      blockSignals( true );
       inMapItem->setData( onlineLayer->id() );
+      blockSignals( false );
     }
   }
 
