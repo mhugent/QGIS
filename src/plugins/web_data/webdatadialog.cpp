@@ -6,6 +6,7 @@
 #include <QDomDocument>
 #include <QInputDialog>
 #include <QItemSelectionModel>
+#include <QKeyEvent>
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -69,40 +70,6 @@ void WebDataDialog::on_mConnectPushButton_clicked()
   mModel.addService( serviceTitle, url, serviceType );
   mStatusLabel->setText( tr( "Ready" ) );
   QApplication::restoreOverrideCursor();
-}
-
-void WebDataDialog::on_mAddToMapButton_clicked()
-{
-  if ( mapCanvasDrawing() )
-  {
-    return;
-  }
-  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-  mStatusLabel->setText( tr( "Add layer to map..." ) );
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    mModel.addEntryToMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-  }
-  adaptLayerButtonStates();
-  mStatusLabel->setText( tr( "Ready" ) );
-  QApplication::restoreOverrideCursor();
-}
-
-void WebDataDialog::on_mRemoveFromMapButton_clicked()
-{
-  if ( mapCanvasDrawing() )
-  {
-    return;
-  }
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    mModel.removeEntryFromMap( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-  }
-  adaptLayerButtonStates();
 }
 
 QString WebDataDialog::serviceURLFromComboBox()
@@ -325,42 +292,6 @@ void WebDataDialog::handleDownloadProgress( qint64 progress, qint64 total )
   mStatusLabel->setText( progressMessage );
 }
 
-void WebDataDialog::on_mChangeOnlineButton_clicked()
-{
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    mModel.changeEntryToOnline( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-  }
-  adaptLayerButtonStates();
-}
-
-void WebDataDialog::on_mChangeOfflineButton_clicked()
-{
-  mStatusLabel->setText( tr( "Saving layer offline..." ) );
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    mModel.changeEntryToOffline( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-  }
-  adaptLayerButtonStates();
-  mStatusLabel->setText( tr( "Ready" ) );
-}
-
-void WebDataDialog::adaptLayerButtonStates()
-{
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    QString status = mModel.layerStatus( mFilterModel.mapToSource( selectList.at( 0 ) ) );
-    //enable update for offline datasources and services
-    mReloadButton->setEnabled( status.compare( "offline", Qt::CaseInsensitive )  == 0 || status.isEmpty() );
-  }
-}
-
 void WebDataDialog::on_mOnlyFavouritesCheckBox_stateChanged( int state )
 {
   mFilterModel.setShowOnlyFavourites( state == Qt::Checked );
@@ -369,38 +300,6 @@ void WebDataDialog::on_mOnlyFavouritesCheckBox_stateChanged( int state )
 void WebDataDialog::on_mSearchTableEdit_textChanged( const QString&  text )
 {
   mFilterModel._setFilterWildcard( text );
-}
-
-void WebDataDialog::on_mRemoveFromListButton_clicked()
-{
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    QModelIndex idx = mFilterModel.mapToSource( selectList.at( 0 ) );
-    if ( idx.isValid() )
-    {
-      mModel.removeRow( idx.row(), idx.parent() );
-    }
-  }
-}
-
-void WebDataDialog::on_mReloadButton_clicked()
-{
-  if ( mapCanvasDrawing() )
-  {
-    return;
-  }
-  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
-  QModelIndexList selectList = selectModel->selectedRows( 0 );
-  if ( selectList.size() > 0 )
-  {
-    QModelIndex idx = mFilterModel.mapToSource( selectList.at( 0 ) );
-    if ( idx.isValid() )
-    {
-      mModel.reload( idx );
-    }
-  }
 }
 
 void WebDataDialog::on_mLayersTreeView_clicked( const QModelIndex& index )
@@ -420,6 +319,42 @@ void WebDataDialog::on_mLayersTreeView_clicked( const QModelIndex& index )
   {
     mModel.changeEntryToOnline( srcIndex.sibling( srcIndex.row(), 0 ) );
   }
+}
+
+void WebDataDialog::keyPressEvent( QKeyEvent* event )
+{
+  if ( event->key() != Qt::Key_Delete && event->key() != Qt::Key_F5 )
+  {
+    return;
+  }
+
+  //find selected model index
+  QModelIndex srcIndex;
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
+  {
+    srcIndex = mFilterModel.mapToSource( selectList.at( 0 ) );
+  }
+
+  if ( !srcIndex.isValid() )
+  {
+    return;
+  }
+
+  if ( event->key() == Qt::Key_Delete )
+  {
+    mModel.removeRow( srcIndex.row(), srcIndex.parent() );
+  }
+  else if ( event->key() == Qt::Key_F5 )
+  {
+    if ( mapCanvasDrawing() )
+    {
+      return;
+    }
+    mModel.reload( srcIndex );
+  }
+
 }
 
 bool WebDataDialog::mapCanvasDrawing() const

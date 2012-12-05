@@ -19,22 +19,15 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mAddPushButton_clicked();
     void on_mRemovePushButton_clicked();
     void on_mEditPushButton_clicked();
-    void on_mAddToMapButton_clicked();
-    void on_mRemoveFromMapButton_clicked();
     void on_mAddNIWAServicesButton_clicked();
     void on_mAddLINZServicesButton_clicked();
     void on_mAddLRISButton_clicked();
     void NIWAServicesRequestFinished();
     void handleDownloadProgress( qint64 progress, qint64 total );
-    void on_mChangeOfflineButton_clicked();
-    void on_mChangeOnlineButton_clicked();
-    /**Enable / disable layer buttons depending if selected item changes*/
-    void adaptLayerButtonStates();
     void on_mOnlyFavouritesCheckBox_stateChanged( int state );
     void on_mSearchTableEdit_textChanged( const QString&  text );
-    void on_mRemoveFromListButton_clicked();
-    void on_mReloadButton_clicked();
     void on_mLayersTreeView_clicked( const QModelIndex& index );
+    void keyPressEvent( QKeyEvent* event );
 
   private:
     QgisInterface* mIface;
