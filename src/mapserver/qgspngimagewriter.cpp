@@ -202,7 +202,7 @@ bool QgsPNGImageWriter::writeImage( const QImage& image, int quality_in, const Q
     }
     png_set_compression_level( png_ptr, quality );
   }
-  //png_set_filter (png_ptr,0, PNG_FILTER_NONE);
+  png_set_filter (png_ptr,0, PNG_FILTER_NONE);
   png_set_write_fn( png_ptr, ( void* )this, qpiw_write_fn, qpiw_flush_fn );
 
 
