@@ -699,7 +699,11 @@ void WebDataModel::reload( const QModelIndex& index )
   QString status = layerStatus( index );
   QString type = serviceType( index );
 
-  if ( status.isEmpty() ) //update service
+  if ( status.compare( "online", Qt::CaseInsensitive ) == 0 )
+  {
+    return;
+  }
+  else if ( status.isEmpty() ) //update service
   {
     addService( name, nameItem->data().toString(), type );
   }

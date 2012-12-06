@@ -7,6 +7,7 @@
 #include <QInputDialog>
 #include <QItemSelectionModel>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -22,8 +23,7 @@ WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowF
   mFilterModel.setFilterKeyColumn( -1 );
   mFilterModel.setFilterCaseSensitivity( Qt::CaseInsensitive );
   mLayersTreeView->setModel( &mFilterModel );
-  connect( mLayersTreeView->selectionModel(), SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
-           this, SLOT( adaptLayerButtonStates() ) );
+  connect( mLayersTreeView, SIGNAL( customContextMenuRequested( const QPoint& ) ), this, SLOT( showContextMenu( const QPoint& ) ) );
   connect( &mModel, SIGNAL( serviceAdded() ), this, SLOT( resetStateAndCursor() ) );
   QSettings s;
   mOnlyFavouritesCheckBox->setCheckState( s.value( "/NIWA/showOnlyFavourites", "false" ).toBool() ? Qt::Checked : Qt::Unchecked );
@@ -40,6 +40,10 @@ WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowF
       mLayersTreeView->setExpanded( idx, true );
     }
   }
+
+  mContextMenu = new QMenu();
+  mContextMenu->addAction( QIcon( ":/niwa/icons/remove_from_list.png" ), tr( "Delete" ), this, SLOT( deleteEntry( ) ) );
+  mContextMenu->addAction( QIcon( ":/niwa/icons/refresh.png" ), tr( "Update" ), this, SLOT( updateEntry() ) );
 }
 
 WebDataDialog::~WebDataDialog()
@@ -58,6 +62,7 @@ WebDataDialog::~WebDataDialog()
     }
   }
   s.setValue( "/NIWA/expandedServices", expandedServices );
+  delete mContextMenu;
 }
 
 void WebDataDialog::on_mConnectPushButton_clicked()
@@ -362,7 +367,10 @@ void WebDataDialog::keyPressEvent( QKeyEvent* event )
     {
       return;
     }
+    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+    mStatusLabel->setText( tr( "Reloading..." ) );
     mModel.reload( srcIndex );
+    resetStateAndCursor();
   }
 
 }
@@ -381,4 +389,48 @@ bool WebDataDialog::mapCanvasDrawing() const
   }
 
   return canvas->isDrawing();
+}
+
+void WebDataDialog::deleteEntry()
+{
+  QModelIndex srcIndex = selectedModelIndex();
+  if ( !srcIndex.isValid() )
+  {
+    return;
+  }
+  mModel.removeRow( srcIndex.row(), srcIndex.parent() );
+}
+
+void WebDataDialog::updateEntry()
+{
+  QModelIndex srcIndex = selectedModelIndex();
+  if ( !srcIndex.isValid() )
+  {
+    return;
+  }
+  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+  mStatusLabel->setText( tr( "Reloading..." ) );
+  mModel.reload( srcIndex );
+  resetStateAndCursor();
+}
+
+void WebDataDialog::showContextMenu( const QPoint&  point )
+{
+  if ( mContextMenu )
+  {
+    mContextMenu->exec( QCursor::pos() );
+  }
+}
+
+QModelIndex WebDataDialog::selectedModelIndex() const
+{
+  //find selected model index
+  QModelIndex srcIndex;
+  QItemSelectionModel * selectModel = mLayersTreeView->selectionModel();
+  QModelIndexList selectList = selectModel->selectedRows( 0 );
+  if ( selectList.size() > 0 )
+  {
+    return mFilterModel.mapToSource( selectList.at( 0 ) );
+  }
+  return QModelIndex(); //return invalid index in case of error
 }

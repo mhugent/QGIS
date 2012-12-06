@@ -29,12 +29,16 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mLayersTreeView_clicked( const QModelIndex& index );
     void keyPressEvent( QKeyEvent* event );
     void resetStateAndCursor(); //set status text to ready and restore cursor
+    void deleteEntry();
+    void updateEntry();
+    void showContextMenu( const QPoint& point );
 
   private:
     QgisInterface* mIface;
     WebDataModel mModel;
     WebDataFilterModel mFilterModel;
     bool mNIWAServicesRequestFinished; //flag to make network request blocking
+    QMenu* mContextMenu;
 
     QString serviceURLFromComboBox();
     void insertServices();
@@ -48,6 +52,8 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
 
     /**Returns true if main canvas is drawing*/
     bool mapCanvasDrawing() const;
+
+    QModelIndex selectedModelIndex() const;
 };
 
 #endif // WEBDATADIALOG_H
