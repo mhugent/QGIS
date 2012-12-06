@@ -44,6 +44,7 @@ SET ( qgis_mapserv_SRCS
   qgsremotedatasourcebuilder.cpp
   qgssentdatasourcebuilder.cpp
   qgsmsutils.cpp
+  qgspngimagewriter.cpp
 
   ../plugins/diagram_overlay/qgsdiagramcategory.cpp
   ../plugins/diagram_overlay/qgsdiagramfactory.cpp
