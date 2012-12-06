@@ -37,6 +37,9 @@ class WebDataModel: public QStandardItemModel
     void handleItemChange( QStandardItem* item );
     void syncLayerRemove( QStringList theLayerIds );
 
+  signals:
+    void serviceAdded();
+
   private:
     QNetworkReply *mCapabilitiesReply;
     QgisInterface* mIface;

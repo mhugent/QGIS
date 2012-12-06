@@ -24,6 +24,7 @@ WebDataDialog::WebDataDialog( QgisInterface* iface, QWidget* parent, Qt::WindowF
   mLayersTreeView->setModel( &mFilterModel );
   connect( mLayersTreeView->selectionModel(), SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
            this, SLOT( adaptLayerButtonStates() ) );
+  connect( &mModel, SIGNAL( serviceAdded() ), this, SLOT( resetStateAndCursor() ) );
   QSettings s;
   mOnlyFavouritesCheckBox->setCheckState( s.value( "/NIWA/showOnlyFavourites", "false" ).toBool() ? Qt::Checked : Qt::Unchecked );
 
@@ -68,8 +69,6 @@ void WebDataDialog::on_mConnectPushButton_clicked()
   QString serviceType = mServicesComboBox->itemData( currentIndex ).toString();
   QString serviceTitle = mServicesComboBox->currentText();
   mModel.addService( serviceTitle, url, serviceType );
-  mStatusLabel->setText( tr( "Ready" ) );
-  QApplication::restoreOverrideCursor();
 }
 
 QString WebDataDialog::serviceURLFromComboBox()
@@ -311,14 +310,25 @@ void WebDataDialog::on_mLayersTreeView_clicked( const QModelIndex& index )
     return;
   }
 
+  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
   if ( item->text().compare( "online", Qt::CaseInsensitive ) == 0 )
   {
+    mStatusLabel->setText( tr( "Saving layer offline..." ) );
     mModel.changeEntryToOffline( srcIndex.sibling( srcIndex.row(), 0 ) );
   }
   else if ( item->text().compare( "offline", Qt::CaseInsensitive ) == 0 )
   {
+    mStatusLabel->setText( tr( "Changing layer to online..." ) );
     mModel.changeEntryToOnline( srcIndex.sibling( srcIndex.row(), 0 ) );
   }
+
+  resetStateAndCursor();
+}
+
+void WebDataDialog::resetStateAndCursor()
+{
+  mStatusLabel->setText( tr( "Ready" ) );
+  QApplication::restoreOverrideCursor();
 }
 
 void WebDataDialog::keyPressEvent( QKeyEvent* event )

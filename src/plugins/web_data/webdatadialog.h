@@ -28,6 +28,7 @@ class WebDataDialog: public QDialog, private Ui::WebDataDialogBase
     void on_mSearchTableEdit_textChanged( const QString&  text );
     void on_mLayersTreeView_clicked( const QModelIndex& index );
     void keyPressEvent( QKeyEvent* event );
+    void resetStateAndCursor(); //set status text to ready and restore cursor
 
   private:
     QgisInterface* mIface;

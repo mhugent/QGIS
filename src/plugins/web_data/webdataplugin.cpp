@@ -43,9 +43,9 @@ void WebDataPlugin::unload()
 
 void WebDataPlugin::showWebDataDialog()
 {
-  if ( !mDialog )
+  if ( !mDialog && mIface )
   {
-    mDialog = new WebDataDialog( mIface, 0, Qt::WindowStaysOnTopHint );
+    mDialog = new WebDataDialog( mIface, mIface->mainWindow() );
   }
   mDialog->show();
 }

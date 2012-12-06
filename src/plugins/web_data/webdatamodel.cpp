@@ -232,6 +232,7 @@ void WebDataModel::wmsCapabilitiesRequestFinished()
     childItemList.push_back( stylesItem );
 
     wmsTitleItem->appendRow( childItemList );
+    emit serviceAdded();
   }
 
 
@@ -344,6 +345,7 @@ void WebDataModel::wfsCapabilitiesRequestFinished()
     childItemList.push_back( srsItem );
     wfsTitleItem->appendRow( childItemList );
   }
+  emit serviceAdded();
 }
 
 void WebDataModel::handleItemChange( QStandardItem* item )
