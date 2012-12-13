@@ -465,8 +465,8 @@ void QgsGdalProvider::readBlock( int theBandNo, QgsRectangle  const & theExtent,
   int srcBottom = ySize() - 1;
   int srcRight = xSize() - 1;
 
-  QTime time;
-  time.start();
+  //QTime time;
+  //time.start();
   // Note: original approach for xRes < srcXRes || yRes < qAbs( srcYRes ) was to avoid
   // second resampling and read with GDALRasterIO to another temporary data block
   // extended to fit src grid. The problem was that with src resolution much bigger
@@ -559,13 +559,13 @@ void QgsGdalProvider::readBlock( int theBandNo, QgsRectangle  const & theExtent,
   }
 
   QgsDebugMsg( QString( "GDALRasterIO time (ms): %1" ).arg( time.elapsed() ) );
-  time.start();
+  //time.start();
 
   double tmpXRes = srcWidth * srcXRes / tmpWidth;
   double tmpYRes = srcHeight * srcYRes / tmpHeight; // negative
 
   double y = myRasterExtent.yMaximum() - 0.5 * yRes;
-  for ( int row = 0; row < height; row++ )
+  for ( int row = 0; row < height; ++row )
   {
     int tmpRow = static_cast<int>( floor( -1. * ( tmpYMax - y ) / tmpYRes ) );
 

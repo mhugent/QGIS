@@ -48,10 +48,10 @@ QgsCoordinateTransform::QgsCoordinateTransform( const QgsCoordinateReferenceSyst
     , mSourceProjection( 0 )
     , mDestinationProjection( 0 )
 {
-  setFinder();
-  mSourceCRS = source;
-  mDestCRS = dest;
-  initialise();
+  //setFinder();
+  //mSourceCRS = source;
+  //mDestCRS = dest;
+  //initialise();
 }
 
 QgsCoordinateTransform::QgsCoordinateTransform( long theSourceSrsId, long theDestSrsId )

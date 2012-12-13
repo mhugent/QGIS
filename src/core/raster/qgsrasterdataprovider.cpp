@@ -90,8 +90,8 @@ QgsRasterBlock * QgsRasterDataProvider::block( int theBandNo, QgsRectangle  cons
     tmpYRes = yRes;
   }
 
-  if ( tmpExtent != theExtent ||
-       tmpXRes > xRes || tmpYRes > yRes )
+  if ( 0 /*tmpExtent != theExtent ||
+       tmpXRes > xRes || tmpYRes > yRes*/ )
   {
     // Read smaller extent or lower resolution
 

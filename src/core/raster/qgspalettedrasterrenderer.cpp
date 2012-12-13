@@ -174,19 +174,23 @@ QgsRasterBlock * QgsPalettedRasterRenderer::block( int bandNo, QgsRectangle  con
   //use direct data access instead of QgsRasterBlock::setValue
   //because of performance
   unsigned int* outputData = ( unsigned int* )( outputBlock->data() );
+  GInt16* inputData = ( GInt16* )( inputBlock->data() );
 
   size_t rasterSize = ( size_t )width * height;
+  int val = 0;
   for ( size_t i = 0; i < rasterSize; ++i )
   {
-    int val = ( int ) inputBlock->value( i );
-    if ( inputBlock->isNoDataValue( val ) )
+    //int val = (int)( inputData[i] ); //( int ) inputBlock->value( i );
+    //int val = ( int ) inputBlock->value( i );
+    /*if ( inputBlock->isNoDataValue( val ) )
     {
       outputBlock->setColor( i, myDefaultColor );
       continue;
-    }
+    }*/
     if ( !hasTransparency )
     {
-      outputData[i] = mColors[ val ];
+      // outputData[i] = mColors[ val ];
+      outputData[i] = mColors[inputData[i]];
     }
     else
     {
