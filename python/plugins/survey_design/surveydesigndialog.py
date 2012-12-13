@@ -19,8 +19,7 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )[0]
         strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
         strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
-        if surveyBaselineLayer.isEmpty() or baselineStrataId == -1 or strataMinDistance == -1 or strataNSamplePoints == -1:
-           self.mTransectSurveyRadioButton.setEnabled( False )
+        self.setTransectButtonState()
            
         QObject.connect( self.mCreateSampleButton, SIGNAL('clicked()'), self.createSample )
     
@@ -29,6 +28,7 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         self.stratumDigiTool = SurveyDigitizeTool( strataLayerId,  self.iface.mapCanvas(), strataLayerId,  20,  True  )
         self.stratumDigiTool.setButton( self.mAddStratumToolButton )
         QObject.connect( self.mAddStratumToolButton,  SIGNAL('clicked( bool )'),  self.addStratumToggled )
+        QObject.connect( self.mShareBaselineCheckBox,  SIGNAL( 'stateChanged( int )'),  self.setTransectButtonState )
         
         if not surveyBaselineLayer.isEmpty():
             self.baselineDigiTool = SurveyDigitizeTool( surveyBaselineLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  False )
@@ -40,6 +40,17 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
             self.surveyAreaTool = SurveyDigitizeTool( surveyAreaLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  True )
             self.surveyAreaTool.setButton( self.mAddSurveyAreaToolButton )
             QObject.connect( self.mAddSurveyAreaToolButton,  SIGNAL('clicked( bool )'),  self.addSurveyAreaToggled )
+            
+    def setTransectButtonState(self):
+        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
+        baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )[0]
+        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
+        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
+        if surveyBaselineLayer.isEmpty() or ( baselineStrataId == -1 and not self.mShareBaselineCheckBox.isChecked() ) or strataMinDistance == -1 or strataNSamplePoints == -1:
+            self.mTransectSurveyRadioButton.setEnabled( False )
+            self.mPointSurveyRadioButton.setChecked( True )
+        else:
+            self.mTransectSurveyRadioButton.setEnabled( True )
            
     def createSample( self ):
         if self.mPointSurveyRadioButton.isChecked():
