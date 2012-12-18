@@ -43,6 +43,10 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   outputPointFields.insert( 0, QgsField( "id", QVariant::Int ) );
   outputPointFields.insert( 1, QgsField( "station_id", QVariant::Int ) );
   outputPointFields.insert( 2, QgsField( "stratum_id", QVariant::Int ) );
+  outputPointFields.insert( 3, QgsField( "station_code", QVariant::String ) );
+  outputPointFields.insert( 4, QgsField( "start_lat", QVariant::Double ) );
+  outputPointFields.insert( 5, QgsField( "start_long", QVariant::Double ) );
+
   QgsVectorFileWriter outputPointWriter( mOutputPointLayer, "utf-8", outputPointFields, QGis::WKBPoint,
                                          &( mStrataLayer->crs() ) );
   if ( outputPointWriter.hasError() != QgsVectorFileWriter::NoError )
@@ -50,6 +54,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 3;
   }
 
+  outputPointFields.insert( 6, QgsField( "bearing", QVariant::Double ) ); //add bearing attribute for lines
   QgsVectorFileWriter outputLineWriter( mOutputLineLayer, "utf-8", outputPointFields, QGis::WKBLineString,
                                         &( mStrataLayer->crs() ) );
   if ( outputLineWriter.hasError() != QgsVectorFileWriter::NoError )
@@ -78,6 +83,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   {
     distanceArea.setProjectionsEnabled( false );
   }
+
+  //possibility to transform output points to lat/long
+  QgsCoordinateTransform toLatLongTransform( mStrataLayer->crs(), QgsCoordinateReferenceSystem( 4326, QgsCoordinateReferenceSystem::EpsgCrsId ) );
 
   //init random number generator
   srand( QTime::currentTime().msec() );
@@ -174,21 +182,29 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       {
         continue;
       }
+      QgsPoint sampleQgsPoint = samplePoint->asPoint();
+      QgsPoint latLongSamplePoint = toLatLongTransform.transform( sampleQgsPoint );
 
       QgsFeature samplePointFeature;
       samplePointFeature.setGeometry( samplePoint );
       samplePointFeature.addAttribute( 0, nTotalTransects );
       samplePointFeature.addAttribute( 1, nCreatedTransects );
       samplePointFeature.addAttribute( 2, strataId );
+      samplePointFeature.addAttribute( 3, QString::number( strataId ) + "_" + QString::number( nCreatedTransects ) );
+      samplePointFeature.addAttribute( 4, latLongSamplePoint.y() );
+      samplePointFeature.addAttribute( 5, latLongSamplePoint.x() );
 
       //find closest point on clipped buffer line
       QgsPoint minDistPoint;
-      QgsPoint sampleQgsPoint = samplePoint->asPoint();
+
       int afterVertex;
       if ( bufferLineClipped->closestSegmentWithContext( sampleQgsPoint, minDistPoint, afterVertex ) < 0 )
       {
         continue;
       }
+
+      //bearing between sample point and min dist point (transect direction)
+      double bearing = distanceArea.bearing( sampleQgsPoint, minDistPoint ) / 400.0 * 360;
 
       QgsPolyline sampleLinePolyline;
       QgsPoint ptFarAway( sampleQgsPoint.x() + ( minDistPoint.x() - sampleQgsPoint.x() ) * 1000000,
@@ -216,6 +232,10 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       sampleLineFeature.addAttribute( 0, nTotalTransects );
       sampleLineFeature.addAttribute( 1, nCreatedTransects );
       sampleLineFeature.addAttribute( 2, strataId );
+      sampleLineFeature.addAttribute( 3, QString::number( strataId ) + "_" + QString::number( nCreatedTransects ) );
+      sampleLineFeature.addAttribute( 4, latLongSamplePoint.y() );
+      sampleLineFeature.addAttribute( 5, latLongSamplePoint.x() );
+      sampleLineFeature.addAttribute( 6, bearing );
       outputLineWriter.addFeature( sampleLineFeature );
 
       //add point to file writer here.
