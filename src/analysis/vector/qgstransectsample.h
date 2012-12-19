@@ -62,6 +62,8 @@ class ANALYSIS_EXPORT QgsTransectSample
         @param pt2 out: closest point on secont geometry
         @return true in case of success*/
     static bool closestSegmentPoints( QgsGeometry& g1, QgsGeometry& g2, double& dist, QgsPoint& pt1, QgsPoint& pt2 );
+    /**Returns a copy of the multiline element closest to a point (caller takes ownership)*/
+    static QgsGeometry* closestMultilineElement( const QgsPoint& pt, QgsGeometry* multiLine );
 };
 
 #endif // QGSTRANSECTSAMPLE_H

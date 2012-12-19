@@ -204,7 +204,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       }
 
       //bearing between sample point and min dist point (transect direction)
-      double bearing = distanceArea.bearing( sampleQgsPoint, minDistPoint ) / 400.0 * 360;
+      double bearing = distanceArea.bearing( sampleQgsPoint, minDistPoint ) / M_PI * 180.0;
 
       QgsPolyline sampleLinePolyline;
       QgsPoint ptFarAway( sampleQgsPoint.x() + ( minDistPoint.x() - sampleQgsPoint.x() ) * 1000000,
@@ -217,6 +217,18 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       {
         delete lineFarAwayGeom; delete lineClipStratum;
         continue;
+      }
+
+      //if lineClipStratum is a multiline, take the part line closest to sampleQgsPoint
+      if ( lineClipStratum->wkbType() == QGis::WKBMultiLineString
+           || lineClipStratum->wkbType() == QGis::WKBMultiLineString25D )
+      {
+        QgsGeometry* singleLine = closestMultilineElement( sampleQgsPoint, lineClipStratum );
+        if ( singleLine )
+        {
+          delete lineClipStratum;
+          lineClipStratum = singleLine;
+        }
       }
 
       //search closest existing profile. Cancel if dist < minDist
@@ -439,4 +451,39 @@ bool QgsTransectSample::closestSegmentPoints( QgsGeometry& g1, QgsGeometry& g2, 
 
   dist = sqrt( pt1.sqrDist( pt2 ) );
   return true;
+}
+
+QgsGeometry* QgsTransectSample::closestMultilineElement( const QgsPoint& pt, QgsGeometry* multiLine )
+{
+  if ( !multiLine || ( multiLine->wkbType() != QGis::WKBMultiLineString
+                       && multiLine->wkbType() != QGis::WKBMultiLineString25D ) )
+  {
+    return 0;
+  }
+
+  double minDist = DBL_MAX;
+  double currentDist = 0;
+  QgsGeometry* currentLine = 0;
+  QgsGeometry* closestLine = 0;
+  QgsGeometry* pointGeom = QgsGeometry::fromPoint( pt );
+
+  QgsMultiPolyline multiPolyline = multiLine->asMultiPolyline();
+  QgsMultiPolyline::const_iterator it = multiPolyline.constBegin();
+  for ( ; it != multiPolyline.constEnd(); ++it )
+  {
+    currentLine = QgsGeometry::fromPolyline( *it );
+    currentDist = pointGeom->distance( *currentLine );
+    if ( currentDist < minDist )
+    {
+      minDist = currentDist;
+      closestLine = currentLine;
+    }
+    else
+    {
+      delete currentLine;
+    }
+  }
+
+  delete pointGeom;
+  return closestLine;
 }
