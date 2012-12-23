@@ -45,9 +45,9 @@ class QgsDiagramLayerSettings;
 class CORE_EXPORT QgsLabelPosition
 {
   public:
-    QgsLabelPosition( int id, double r, const QVector< QgsPoint >& corners, const QgsRectangle& rect, double w, double h, const QString& layer, bool upside_down, bool diagram = false, bool pinned = false ):
-        featureId( id ), rotation( r ), cornerPoints( corners ), labelRect( rect ), width( w ), height( h ), layerID( layer ), upsideDown( upside_down ), isDiagram( diagram ), isPinned( pinned ) {}
-    QgsLabelPosition(): featureId( -1 ), rotation( 0 ), labelRect( QgsRectangle() ), width( 0 ), height( 0 ), layerID( "" ), upsideDown( false ), isDiagram( false ), isPinned( false ) {}
+    QgsLabelPosition( int id, double r, const QVector< QgsPoint >& corners, const QgsRectangle& rect, double w, double h, const QString& layer, const QString& labeltext, bool upside_down, bool diagram = false, bool pinned = false ):
+        featureId( id ), rotation( r ), cornerPoints( corners ), labelRect( rect ), width( w ), height( h ), layerID( layer ), labelText( labeltext ), upsideDown( upside_down ), isDiagram( diagram ), isPinned( pinned ) {}
+    QgsLabelPosition(): featureId( -1 ), rotation( 0 ), labelRect( QgsRectangle() ), width( 0 ), height( 0 ), layerID( "" ), labelText( "" ), upsideDown( false ), isDiagram( false ), isPinned( false ) {}
     int featureId;
     double rotation;
     QVector< QgsPoint > cornerPoints;
@@ -55,6 +55,7 @@ class CORE_EXPORT QgsLabelPosition
     double width;
     double height;
     QString layerID;
+    QString labelText;
     bool upsideDown;
     bool isDiagram;
     bool isPinned;
@@ -264,12 +265,6 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     //! called by signal from layer current being drawn
     void onDrawingProgress( int current, int total );
 
-    //! invalidate cached layer CRS
-    void invalidateCachedLayerCrs();
-
-    //! cached layer was destroyed
-    void cachedLayerDestroyed();
-
   protected:
 
     //! adjust extent to fit the pixmap size
@@ -342,9 +337,7 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     QMutex mRenderMutex;
 
   private:
-    QgsCoordinateTransform *tr( QgsMapLayer *layer );
-    QgsCoordinateTransform *mCachedTr;
-    QgsMapLayer *mCachedTrForLayer;
+    const QgsCoordinateTransform* tr( QgsMapLayer *layer );
 };
 
 #endif

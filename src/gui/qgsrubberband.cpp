@@ -29,6 +29,7 @@
 */
 QgsRubberBand::QgsRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geometryType )
     : QgsMapCanvasItem( mapCanvas )
+    , mWidth( 1 )
     , mGeometryType( geometryType )
     , mTranslationOffsetX( 0.0 )
     , mTranslationOffsetY( 0.0 )
@@ -39,8 +40,12 @@ QgsRubberBand::QgsRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geomet
 
 QgsRubberBand::QgsRubberBand( QgsMapCanvas* mapCanvas, bool isPolygon )
     : QgsMapCanvasItem( mapCanvas )
+    , mWidth( 1 )
+    , mTranslationOffsetX( 0.0 )
+    , mTranslationOffsetY( 0.0 )
 {
-  QgsRubberBand( mapCanvas, isPolygon ? QGis::Polygon : QGis::Line );
+  reset( isPolygon ? QGis::Polygon : QGis::Line );
+  setColor( QColor( Qt::lightGray ) );
 }
 
 QgsRubberBand::QgsRubberBand(): QgsMapCanvasItem( 0 )
@@ -406,9 +411,9 @@ void QgsRubberBand::paint( QPainter* p )
           mPen.setWidth( 1 );
           p->setPen( mPen );
           QVector<QPointF>::const_iterator ptIt = pts.constBegin();
-          for( ; ptIt != pts.constEnd(); ++ptIt )
+          for ( ; ptIt != pts.constEnd(); ++ptIt )
           {
-            p->drawEllipse( (*ptIt).x() - mWidth/2, (*ptIt).y() - mWidth/2, mWidth, mWidth );
+            p->drawEllipse(( *ptIt ).x() - mWidth / 2, ( *ptIt ).y() - mWidth / 2, mWidth, mWidth );
           }
         }
         break;
@@ -495,7 +500,7 @@ QgsGeometry *QgsRubberBand::asGeometry()
 {
   QgsGeometry *geom = NULL;
 
-  switch( mGeometryType )
+  switch ( mGeometryType )
   {
     case QGis::Polygon:
     {

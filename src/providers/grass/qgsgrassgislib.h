@@ -20,7 +20,6 @@
 extern "C"
 {
 #include <grass/gis.h>
-#include <grass/form.h>
 }
 
 #include <stdexcept>
@@ -70,7 +69,7 @@ class GRASS_LIB_EXPORT QgsGrassGisLib
 
     };
 
-    static GRASS_LIB_EXPORT QgsGrassGisLib* instance();
+    static QgsGrassGisLib* instance();
 
     QgsGrassGisLib();
 
@@ -78,6 +77,7 @@ class GRASS_LIB_EXPORT QgsGrassGisLib
     char *G_find_cell2( const char * name, const char * mapset );
     int G_open_cell_old( const char *name, const char *mapset );
     int G_open_raster_new( const char *name, RASTER_MAP_TYPE wr_type );
+    int G_open_fp_cell_new( const char *name );
     int G_close_cell( int fd );
     RASTER_MAP_TYPE G_raster_map_type( const char *name, const char *mapset );
     RASTER_MAP_TYPE G_get_raster_map_type( int fd );
@@ -85,17 +85,27 @@ class GRASS_LIB_EXPORT QgsGrassGisLib
     int G_read_fp_range( const char *name, const char *mapset, struct FPRange *drange );
 
     int readRasterRow( int fd, void * buf, int row, RASTER_MAP_TYPE data_type, bool noDataAsZero = false );
-    int G_put_raster_row( int fd, const void *buf, RASTER_MAP_TYPE data_type );
+    int G_get_null_value_row( int fd, char *flags, int row );
+    int putRasterRow( int fd, const void *buf, RASTER_MAP_TYPE data_type );
     int G_get_cellhd( const char *name, const char *mapset, struct Cell_head *cellhd );
 
+    double G_area_of_cell_at_row( int row );
+    double G_area_of_polygon( const double *x, const double *y, int n );
     double G_database_units_to_meters_factor( void );
-    double G_distance( double e1, double n1, double e2, double n2 );
+    int beginCalculations( void );
+    double distance( double e1, double n1, double e2, double n2 );
+
+    int G_set_geodesic_distance_lat1( double lat1 );
+    int G_set_geodesic_distance_lat2( double lat2 );
+    double G_geodesic_distance_lon_to_lon( double lon1, double lon2 );
+
+    int G_get_ellipsoid_parameters( double *a, double *e2 );
 
     /** Get QGIS raster type for GRASS raster type */
-    QgsRasterBlock::DataType qgisRasterType( RASTER_MAP_TYPE grassType );
+    QGis::DataType qgisRasterType( RASTER_MAP_TYPE grassType );
 
     /** Get GRASS raster type for QGIS raster type */
-    RASTER_MAP_TYPE grassRasterType( QgsRasterBlock::DataType qgisType );
+    RASTER_MAP_TYPE grassRasterType( QGis::DataType qgisType );
 
     /** Grass does not seem to have any function to init Cell_head,
      * initialisation is done in G__read_Cell_head_array */
@@ -107,7 +117,7 @@ class GRASS_LIB_EXPORT QgsGrassGisLib
     void * resolve( const char * symbol );
 
     // Print error function set to be called by GRASS lib
-    static GRASS_LIB_EXPORT int errorRoutine( const char *msg, int fatal );
+    static int errorRoutine( const char *msg, int fatal );
 
     // Error called by fake lib
     void fatal( QString msg );
@@ -132,9 +142,15 @@ class GRASS_LIB_EXPORT QgsGrassGisLib
     int mRows;
     /** Current region columns */
     int mColumns;
+    /** X resolution */
+    double mXRes;
+    /** Y resolution */
+    double mYRes;
     /** Current coordinate reference system */
     QgsCoordinateReferenceSystem mCrs;
     QgsDistanceArea mDistanceArea;
+    /** lat1, lat2 used for geodesic distance calculation */
+    double mLat1, mLat2;
 };
 
 #endif // QGSGRASSGISLIB_H

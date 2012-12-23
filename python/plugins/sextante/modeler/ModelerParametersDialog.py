@@ -16,8 +16,6 @@
 *                                                                         *
 ***************************************************************************
 """
-from sextante.parameters.ParameterCrs import ParameterCrs
-from sextante.outputs.OutputString import OutputString
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -25,12 +23,11 @@ __copyright__ = '(C) 2012, Victor Olaya'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-import os.path
-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import QtCore, QtGui, QtWebKit
-
+from sextante.parameters.ParameterCrs import ParameterCrs
+from sextante.outputs.OutputString import OutputString
 from sextante.parameters.ParameterRaster import ParameterRaster
 from sextante.parameters.ParameterVector import ParameterVector
 from sextante.parameters.ParameterBoolean import ParameterBoolean
@@ -60,6 +57,7 @@ class ModelerParametersDialog(QtGui.QDialog):
 
     ENTER_NAME = "[Enter name if this is a final result]"
     NOT_SELECTED = "[Not selected]"
+    USE_MIN_COVERING_EXTENT = "[Use min covering extent]"
 
     def __init__(self, alg, model, algIndex = None):
         QtGui.QDialog.__init__(self)
@@ -139,10 +137,10 @@ class ModelerParametersDialog(QtGui.QDialog):
         self.verticalLayout2.setSpacing(2)
         self.verticalLayout2.setMargin(0)
         self.tabWidget = QtGui.QTabWidget()
-        self.tabWidget.setMinimumWidth(300)        
+        self.tabWidget.setMinimumWidth(300)
         self.paramPanel = QtGui.QWidget()
         self.paramPanel.setLayout(self.verticalLayout)
-        self.scrollArea = QtGui.QScrollArea()        
+        self.scrollArea = QtGui.QScrollArea()
         self.scrollArea.setWidget(self.paramPanel)
         self.scrollArea.setWidgetResizable(True)
         self.tabWidget.addTab(self.scrollArea, "Parameters")
@@ -182,7 +180,7 @@ class ModelerParametersDialog(QtGui.QDialog):
             if param.isAdvanced:
                 self.labels[param.name].setVisible(self.showAdvanced)
                 self.widgets[param.name].setVisible(self.showAdvanced)
- 
+
     def getRasterLayers(self):
         layers = []
         params = self.model.parameters
@@ -257,7 +255,7 @@ class ModelerParametersDialog(QtGui.QDialog):
         params = self.model.parameters
         for param in params:
             if isinstance(param, ParameterExtent):
-                extents.append(AlgorithmAndParameter(AlgorithmAndParameter.PARENT_MODEL_ALGORITHM, param.name, "", param.description))
+                extents.append(AlgorithmAndParameter(AlgorithmAndParameter.PARENT_MODEL_ALGORITHM, param.name, "", param.description))                    
         return extents
 
     def getNumbers(self):
@@ -324,14 +322,14 @@ class ModelerParametersDialog(QtGui.QDialog):
         else:
             dependent = self.model.getDependentAlgorithms(self.algIndex)
             dependent.append(self.algIndex)
-            
+
         i=0
         for alg in self.model.algs:
             if i not in dependent:
                 for out in alg.outputs:
                     if isinstance(out, OutputString):
                         strings.append(AlgorithmAndParameter(i, out.name, alg.name, out.description))
-            i+=1                
+            i+=1
         return strings
 
     def getTableFields(self):
@@ -414,9 +412,12 @@ class ModelerParametersDialog(QtGui.QDialog):
             item = QtGui.QComboBox()
             item.setEditable(True)
             extents = self.getExtents()
+            if self.canUseAutoExtent(): 
+                item.addItem(self.USE_MIN_COVERING_EXTENT, None)
             for ex in extents:
-                item.addItem(ex.name(), ex)
-            item.setEditText(str(param.default))
+                item.addItem(ex.name(), ex)            
+            if not self.canUseAutoExtent():
+                item.setEditText(str(param.default))
         elif isinstance(param, ParameterFile):
             item = QtGui.QComboBox()
             item.setEditable(True)
@@ -431,6 +432,13 @@ class ModelerParametersDialog(QtGui.QDialog):
                 pass
         return item
 
+    def canUseAutoExtent(self):
+        for param in self.alg.parameters:
+            if isinstance(param, (ParameterRaster, ParameterVector)):
+                return True
+            if isinstance(param, ParameterMultipleInput):
+                return True
+            
     def setTableContent(self):
         params = self.alg.parameters
         outputs = self.alg.outputs
@@ -518,10 +526,10 @@ class ModelerParametersDialog(QtGui.QDialog):
                     else:
                         options = self.getRasterLayers()
                     for i in range(len(options)):
-                        option = options[i] 
-                        for aap in (values):                                                                                
+                        option = options[i]
+                        for aap in (values):
                             if str(option) == aap:
-                                selectedoptions.append(i)        
+                                selectedoptions.append(i)
                     widget.setSelectedItems(selectedoptions)
                 else:
                     pass
@@ -549,7 +557,7 @@ class ModelerParametersDialog(QtGui.QDialog):
                 return False
         for output in outputs:
             if output.hidden:
-               self.outputs[output.name] = None
+                self.outputs[output.name] = None
             else:
                 name= unicode(self.valueItems[output.name].text())
                 if name.strip()!="" and name != ModelerParametersDialog.ENTER_NAME:
@@ -570,12 +578,6 @@ class ModelerParametersDialog(QtGui.QDialog):
         else:
             value = widget.itemData(widget.currentIndex()).toPyObject()
             self.params[param.name] = value
-        return True
-
-        if widget.currentIndex() < 0:
-            return False
-        value = widget.itemData(widget.currentIndex()).toPyObject()
-        self.params[param.name] = value
         return True
 
     def setParamBooleanValue(self, param, widget):

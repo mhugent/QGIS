@@ -60,6 +60,14 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1800
+#define TO8F(x) (x).toUtf8().constData()
+#define FROM8(x) QString::fromUtf8(x)
+#else
+#define TO8F(x) QFile::encodeName( x ).constData()
+#define FROM8(x) QString::fromLocal8Bit(x)
+#endif
+
 #define ERR(message) QGS_ERROR_MESSAGE(message,"WCS provider")
 #define SRVERR(message) QGS_ERROR_MESSAGE(message,"WCS server")
 
@@ -311,23 +319,23 @@ QgsWcsProvider::QgsWcsProvider( QString const &uri )
     double myInternalNoDataValue;
     switch ( srcDataType( i ) )
     {
-      case QgsRasterBlock::Byte:
+      case QGis::Byte:
         myInternalNoDataValue = -32768.0;
         myInternalGdalDataType = GDT_Int16;
         break;
-      case QgsRasterBlock::Int16:
+      case QGis::Int16:
         myInternalNoDataValue = -2147483648.0;
         myInternalGdalDataType = GDT_Int32;
         break;
-      case QgsRasterBlock::UInt16:
+      case QGis::UInt16:
         myInternalNoDataValue = -2147483648.0;
         myInternalGdalDataType = GDT_Int32;
         break;
-      case QgsRasterBlock::Int32:
+      case QGis::Int32:
         // We believe that such values is no used in real data
         myInternalNoDataValue = -2147483648.0;
         break;
-      case QgsRasterBlock::UInt32:
+      case QGis::UInt32:
         // We believe that such values is no used in real data
         myInternalNoDataValue = 4294967295.0;
         break;
@@ -1132,21 +1140,21 @@ void QgsWcsProvider::cacheReplyFinished()
 }
 
 // This could be shared with GDAL provider
-QgsRasterBlock::DataType QgsWcsProvider::srcDataType( int bandNo ) const
+QGis::DataType QgsWcsProvider::srcDataType( int bandNo ) const
 {
   if ( bandNo < 0 || bandNo > mSrcGdalDataType.size() )
   {
-    return QgsRasterBlock::UnknownDataType;
+    return QGis::UnknownDataType;
   }
 
   return dataTypeFromGdal( mSrcGdalDataType[bandNo-1] );
 }
 
-QgsRasterBlock::DataType QgsWcsProvider::dataType( int bandNo ) const
+QGis::DataType QgsWcsProvider::dataType( int bandNo ) const
 {
   if ( bandNo < 0 || bandNo > mGdalDataType.size() )
   {
-    return QgsRasterBlock::UnknownDataType;
+    return QGis::UnknownDataType;
   }
 
   return dataTypeFromGdal( mGdalDataType[bandNo-1] );

@@ -16,6 +16,7 @@
 *                                                                         *
 ***************************************************************************
 """
+
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
 __copyright__ = '(C) 2012, Victor Olaya'
@@ -29,7 +30,7 @@ from sextante.core.QGisLayers import QGisLayers
 from sextante.core.SextanteConfig import SextanteConfig
 from sextante.core.GeoAlgorithm import GeoAlgorithm
 from sextante.core.SextanteLog import SextanteLog
-
+from sextante.core.AlgorithmClassification import AlgorithmDecorator
 from sextante.gui.AlgorithmExecutor import AlgorithmExecutor
 from sextante.gui.RenderingStyles import RenderingStyles
 from sextante.gui.SextantePostprocessing import SextantePostprocessing
@@ -39,15 +40,12 @@ from sextante.gui.UnthreadedAlgorithmExecutor import UnthreadedAlgorithmExecutor
 from sextante.modeler.Providers import Providers
 from sextante.modeler.ModelerAlgorithmProvider import ModelerAlgorithmProvider
 from sextante.modeler.ModelerOnlyAlgorithmProvider import ModelerOnlyAlgorithmProvider
-from sextante.algs.SextanteAlgorithmProvider import SextanteAlgorithmProvider
+from sextante.algs.QGISAlgorithmProvider import QGISAlgorithmProvider
 from sextante.parameters.ParameterSelection import ParameterSelection
-from sextante.ftools.FToolsAlgorithmProvider import FToolsAlgorithmProvider
 from sextante.grass.GrassAlgorithmProvider import GrassAlgorithmProvider
 from sextante.lidar.LidarToolsAlgorithmProvider import LidarToolsAlgorithmProvider
 from sextante.gdal.GdalOgrAlgorithmProvider import GdalOgrAlgorithmProvider
-from sextante.mmqgisx.MMQGISXAlgorithmProvider import MMQGISXAlgorithmProvider
 from sextante.otb.OTBAlgorithmProvider import OTBAlgorithmProvider
-#from sextante.pymorph.PymorphAlgorithmProvider import PymorphAlgorithmProvider
 from sextante.r.RAlgorithmProvider import RAlgorithmProvider
 from sextante.saga.SagaAlgorithmProvider import SagaAlgorithmProvider
 from sextante.script.ScriptAlgorithmProvider import ScriptAlgorithmProvider
@@ -115,12 +113,9 @@ class Sextante:
     @staticmethod
     def initialize():
         #add the basic providers
-        Sextante.addProvider(SextanteAlgorithmProvider())
-        Sextante.addProvider(MMQGISXAlgorithmProvider())
-        Sextante.addProvider(FToolsAlgorithmProvider())
+        Sextante.addProvider(QGISAlgorithmProvider())
         Sextante.addProvider(ModelerOnlyAlgorithmProvider())
-        Sextante.addProvider(GdalOgrAlgorithmProvider())        
-        #Sextante.addProvider(PymorphAlgorithmProvider())
+        Sextante.addProvider(GdalOgrAlgorithmProvider())
         Sextante.addProvider(LidarToolsAlgorithmProvider())
         Sextante.addProvider(OTBAlgorithmProvider())
         Sextante.addProvider(RAlgorithmProvider())
@@ -135,6 +130,7 @@ class Sextante:
         SextanteConfig.initialize()
         SextanteConfig.loadSettings()
         RenderingStyles.loadStyles()
+        AlgorithmDecorator.loadClassification()
         Sextante.loadFromProviders()
 
     @staticmethod
@@ -298,10 +294,10 @@ class Sextante:
         # it will still be a wait cursor
         cursor = QApplication.overrideCursor()
         if cursor == None or cursor == 0:
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor)) 
+            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         elif cursor.shape() != Qt.WaitCursor:
             QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        
+
         if SextanteConfig.getSetting(SextanteConfig.USE_THREADS):
             algEx = AlgorithmExecutor(alg)
             progress = QProgressDialog()
@@ -376,14 +372,14 @@ def alghelp(name):
 def runalg(algOrName, *args):
     alg = Sextante.runAlgorithm(algOrName, None, *args)
     return alg.getOutputValuesAsDictionary()
-    
+
 def runandload(name, *args):
     Sextante.runAlgorithm(name, SextantePostprocessing.handleAlgorithmResults, *args)
 
 
-def extent(layers):    
+def extent(layers):
     first = True
-    for layer in layers:        
+    for layer in layers:
         if not isinstance(layer, (QgsRasterLayer, QgsVectorLayer)):
             layer = QGisLayers.getObjectFromUri(layer)
         if first:
@@ -396,7 +392,7 @@ def extent(layers):
             xmax = max(xmax, layer.extent().xMaximum())
             ymin = min(ymin, layer.extent().yMinimum())
             ymax = max(ymax, layer.extent().yMaximum())
-        first = False                
+        first = False
     return str(xmin) + "," + str(xmax) + "," + str(ymin) + "," + str(ymax)
 
 def getObjectFromName(name):
@@ -404,7 +400,7 @@ def getObjectFromName(name):
     for layer in layers:
         if layer.name() == name:
             return layer
-        
+
 def getObjectFromUri(uri):
     return QGisLayers.getObjectFromUri(uri, False)
 

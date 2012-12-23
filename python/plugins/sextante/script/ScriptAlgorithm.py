@@ -16,9 +16,6 @@
 *                                                                         *
 ***************************************************************************
 """
-from sextante.outputs.OutputNumber import OutputNumber
-from sextante.outputs.OutputString import OutputString
-
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
 __copyright__ = '(C) 2012, Victor Olaya'
@@ -36,6 +33,8 @@ from sextante.script.WrongScriptException import WrongScriptException
 from sextante.outputs.OutputTable import OutputTable
 from sextante.outputs.OutputVector import OutputVector
 from sextante.outputs.OutputRaster import OutputRaster
+from sextante.outputs.OutputNumber import OutputNumber
+from sextante.outputs.OutputString import OutputString
 from sextante.parameters.ParameterString import ParameterString
 from sextante.parameters.ParameterNumber import ParameterNumber
 from sextante.parameters.ParameterBoolean import ParameterBoolean
@@ -169,11 +168,11 @@ class ScriptAlgorithm(GeoAlgorithm):
         elif tokens[1].lower().strip().startswith("output html"):
             out = OutputHTML()
         elif tokens[1].lower().strip().startswith("output file"):
-            out = OutputFile()          
+            out = OutputFile()
         elif tokens[1].lower().strip().startswith("output number"):
             out = OutputNumber()
         elif tokens[1].lower().strip().startswith("output string"):
-            out = OutputString()                        
+            out = OutputString()
 
         if param != None:
             self.addParameter(param)
@@ -183,7 +182,7 @@ class ScriptAlgorithm(GeoAlgorithm):
             self.addOutput(out)
         else:
             raise WrongScriptException("Could not load script:" + self.descriptionFile + ".\n Problem with line \"" + line + "\"")
-        
+
     def processDescriptionParameterLine(self, line):
         try:
             if line.startswith("Parameter"):
@@ -200,10 +199,10 @@ class ScriptAlgorithm(GeoAlgorithm):
     def processAlgorithm(self, progress):
 
         script = "import sextante\n"
-        
+
         ns = {}
         ns['progress'] = progress
-    
+
         for param in self.parameters:
             #script += param.name + "=" + param.getValueAsCommandLineParameter() + "\n"
             ns[param.name] = param.value
@@ -212,8 +211,8 @@ class ScriptAlgorithm(GeoAlgorithm):
             ns[out.name] = out.value
             #script += out.name + "=" + out.getValueAsCommandLineParameter() + "\n"
 
-        script+=self.script        
-        exec(script) in ns        
+        script+=self.script
+        exec(script) in ns
         for out in self.outputs:
             out.setValue(ns[out.name])
 

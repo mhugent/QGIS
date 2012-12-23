@@ -35,13 +35,6 @@ class ResultsDialog(QDialog, Ui_DlgResults):
         QDialog.__init__(self)
         self.setupUi(self)
 
-        # seems not used and can be removed
-        #self.groupIcon = QIcon()
-        #self.groupIcon.addPixmap(self.style().standardPixmap(QStyle.SP_DirClosedIcon),
-        #        QIcon.Normal, QIcon.Off)
-        #self.groupIcon.addPixmap(self.style().standardPixmap(QStyle.SP_DirOpenIcon),
-        #        QIcon.Normal, QIcon.On)
-
         self.keyIcon = QIcon()
         self.keyIcon.addPixmap(self.style().standardPixmap(QStyle.SP_FileIcon))
 

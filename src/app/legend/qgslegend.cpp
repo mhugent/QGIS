@@ -212,12 +212,7 @@ int QgsLegend::addGroup( QString name, bool expand, QTreeWidgetItem* parent )
   {
     if ( nameEmpty )
       name = getUniqueGroupName( tr( "group" ), groups() );
-    group = new QgsLegendGroup( this, name );
-
-    if ( currentItem() )
-    {
-      moveItem( group, currentItem() );
-    }
+    group = new QgsLegendGroup( parent, name );
   }
 
   QModelIndex groupIndex = indexFromItem( group );
@@ -230,7 +225,18 @@ int QgsLegend::addGroup( QString name, bool expand, QTreeWidgetItem* parent )
 
   emit itemAdded( groupIndex );
 
-  return groupIndex.row();
+  // TODO: use QModelIndex::iternalId for an identifier instead of this mess ?
+  int itemCount = 0;
+  for ( QTreeWidgetItem* theItem = firstItem(); theItem; theItem = nextItem( theItem ) )
+  {
+    QgsLegendItem* legendItem = dynamic_cast<QgsLegendItem *>( theItem );
+    if ( legendItem->type() == QgsLegendItem::LEGEND_GROUP )
+    {
+      if ( legendItem == group ) return itemCount;
+      else itemCount++;
+    }
+  }
+  return itemCount; // bogus return
 }
 
 int QgsLegend::addGroup( QString name, bool expand, int groupIndex )

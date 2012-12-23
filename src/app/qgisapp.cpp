@@ -3585,6 +3585,9 @@ bool QgisApp::openLayer( const QString & fileName, bool allowInteractive )
   }
   // TODO - should we really call isValidRasterFileName() before addRasterLayer()
   //        this results in 2 calls to GDALOpen()
+  // I think (Radim) that it is better to test only first if valid,
+  // addRasterLayer() is really trying to add layer and gives error if fails
+  //
   // if ( addRasterLayer( fileName, fileInfo.completeBaseName() ) )
   // {
   //   ok  = true );
@@ -4128,7 +4131,14 @@ void QgisApp::saveAsRasterFile()
     fileWriter.setPyramidsResampling( d.pyramidsResampling() );
     fileWriter.setPyramidsFormat( d.pyramidsFormat() );
 
-    fileWriter.writeRaster( pipe, d.nColumns(), d.nRows(), d.outputRectangle(), d.outputCrs(), &pd );
+    QgsRasterFileWriter::WriterError err = fileWriter.writeRaster( pipe, d.nColumns(), d.nRows(), d.outputRectangle(), d.outputCrs(), &pd );
+    if ( err != QgsRasterFileWriter::NoError )
+    {
+      QMessageBox::warning( this, tr( "Error" ),
+                            tr( "Cannot write raster error code: %1" ).arg( err ),
+                            QMessageBox::Ok );
+
+    }
     delete pipe;
   }
 }
@@ -5238,7 +5248,8 @@ bool QgisApp::toggleEditing( QgsMapLayer *layer, bool allowCancel )
           res = false;
         }
 
-        vlayer->triggerRepaint();
+        // canvas refreshes handled in QgsUndoWidget::indexChanged
+        //vlayer->triggerRepaint();
         break;
 
       default:
@@ -7215,11 +7226,16 @@ void QgisApp::activateDeactivateLayerRelatedActions( QgsMapLayer* layer )
         mActionToggleEditing->setEnabled( canChangeAttributes && !vlayer->isReadOnly() );
         mActionToggleEditing->setChecked( vlayer->isEditable() );
         mActionSaveEdits->setEnabled( canChangeAttributes && vlayer->isEditable() );
+        mUndoWidget->dockContents()->setEnabled( vlayer->isEditable() );
+        updateUndoActions();
       }
       else
       {
         mActionToggleEditing->setEnabled( false );
         mActionSaveEdits->setEnabled( false );
+        mUndoWidget->dockContents()->setEnabled( false );
+        mActionUndo->setEnabled( false );
+        mActionRedo->setEnabled( false );
       }
 
       if ( dprovider->capabilities() & QgsVectorDataProvider::AddFeatures )
@@ -7349,8 +7365,8 @@ void QgisApp::activateDeactivateLayerRelatedActions( QgsMapLayer* layer )
   else if ( layer->type() == QgsMapLayer::RasterLayer )
   {
     const QgsRasterLayer *rlayer = qobject_cast<const QgsRasterLayer *>( layer );
-    if ( rlayer->dataProvider()->dataType( 1 ) != QgsRasterBlock::ARGB32
-         && rlayer->dataProvider()->dataType( 1 ) != QgsRasterBlock::ARGB32_Premultiplied )
+    if ( rlayer->dataProvider()->dataType( 1 ) != QGis::ARGB32
+         && rlayer->dataProvider()->dataType( 1 ) != QGis::ARGB32_Premultiplied )
     {
       if ( rlayer->dataProvider()->capabilities() & QgsRasterDataProvider::Size )
       {
@@ -7540,8 +7556,6 @@ QgsRasterLayer* QgisApp::addRasterLayer( QString const & rasterFile, QString con
 
       // The first layer loaded is not useful in that case. The user can select it in
       // the list if he wants to load it.
-      // TODO fix this - provider is not deleted in ~QgsRasterLayer()
-      delete layer->dataProvider();
       delete layer;
       layer = 0;
     }
@@ -7717,8 +7731,6 @@ bool QgisApp::addRasterLayers( QStringList const &theFileNameQStringList, bool g
 
           // The first layer loaded is not useful in that case. The user can select it in
           // the list if he wants to load it.
-          // TODO fix this - provider is not deleted in ~QgsRasterLayer()
-          delete layer->dataProvider();
           delete layer;
           layer = 0;
         }

@@ -40,7 +40,7 @@ class SextanteUtils:
         if not QDir(userDir).exists():
             QDir().mkpath(userDir)
 
-        return unicode(userDir)
+        return unicode(QDir.toNativeSeparators(userDir))
 
     @staticmethod
     def isWindows():
@@ -52,11 +52,11 @@ class SextanteUtils:
 
     @staticmethod
     def tempFolder():
-        tempDir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/sextante/tempdata"
+        tempDir = os.path.join(unicode(QDir.tempPath()), "sextante")
         if not QDir(tempDir).exists():
             QDir().mkpath(tempDir)
 
-        return unicode(tempDir)
+        return unicode(os.path.abspath(tempDir))
 
     @staticmethod
     def setTempOutput(out, alg):
@@ -65,7 +65,7 @@ class SextanteUtils:
         safeCmdName = ''.join(c for c in alg.commandLineName() if c in validChars)
         uniqueSufix = str(uuid.uuid4()).replace("-","");
         filename = SextanteUtils.tempFolder() + os.sep + safeCmdName + uniqueSufix + "." + ext
-        out.value = filename                
+        out.value = filename
 
     @staticmethod
     def getTempFilename(ext):

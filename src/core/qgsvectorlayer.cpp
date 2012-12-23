@@ -4256,10 +4256,9 @@ bool QgsVectorLayer::rollBack()
 
   if ( isModified() )
   {
-    while ( undoStack()->canUndo() )
-    {
-      undoStack()->undo();
-    }
+    // new undo stack roll back method
+    // old method of calling every undo could cause many canvas refreshes
+    undoStack()->setIndex( 0 );
 
     Q_ASSERT( mAddedAttributeIds.isEmpty() );
     Q_ASSERT( mDeletedAttributeIds.isEmpty() );
@@ -5191,7 +5190,7 @@ void QgsVectorLayer::redoEditCommand( QgsUndoCommand* cmd )
       if ( !FID_IS_NEW( fid ) )
       {
         // existing feature
-        if ( attrChIt.value().target.isNull() )
+        if ( !attrChIt.value().target.isValid() )
         {
           mChangedAttributeValues[fid].remove( attrChIt.key() );
           if ( mChangedAttributeValues[fid].isEmpty() )
@@ -5240,7 +5239,8 @@ void QgsVectorLayer::redoEditCommand( QgsUndoCommand* cmd )
   setModified( true );
 
   // it's not ideal to trigger refresh from here
-  triggerRepaint();
+  // canvas refreshes handled in QgsUndoWidget::indexChanged
+  //triggerRepaint();
 }
 
 void QgsVectorLayer::undoEditCommand( QgsUndoCommand* cmd )
@@ -5363,7 +5363,8 @@ void QgsVectorLayer::undoEditCommand( QgsUndoCommand* cmd )
   setModified( true );
 
   // it's not ideal to trigger refresh from here
-  triggerRepaint();
+  // canvas refreshes handled in QgsUndoWidget::indexChanged
+  //triggerRepaint();
 }
 
 void QgsVectorLayer::setCheckedState( int idx, QString checked, QString unchecked )
