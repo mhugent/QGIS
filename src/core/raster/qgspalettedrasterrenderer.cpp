@@ -188,19 +188,63 @@ QgsRasterBlock * QgsPalettedRasterRenderer::block( int bandNo, QgsRectangle  con
   //use direct data access instead of QgsRasterBlock::setValue
   //because of performance
   unsigned int* outputData = ( unsigned int* )( outputBlock->data() );
-  GInt16* inputData = ( GInt16* )( inputBlock->data() );
-
   size_t rasterSize = ( size_t )width * height;
-  int val = 0;
-  for ( size_t i = 0; i < rasterSize; ++i )
+
+  if ( !hasTransparency )
   {
-    int val = ( int ) inputBlock->value( i );
-    if ( !hasTransparency )
+    //use also direct access to input value for the sake of performance
+    void* inputData = inputBlock->data();
+    switch ( inputBlock->dataType() )
     {
-      outputData[i] = colorTable[ val ];
+      case QGis::Byte:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[(( quint8* )inputData )[i]];
+        }
+        break;
+      case QGis::UInt16:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[(( quint16* )inputData )[i]];
+        }
+        break;
+      case QGis::Int16:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[(( qint16* )inputData )[i]];
+        }
+        break;
+      case QGis::UInt32:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[(( quint32* )inputData )[i]];
+        }
+        break;
+      case QGis::Int32:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[(( qint32* )inputData )[i]];
+        }
+        break;
+      case QGis::Float32:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[static_cast<int>( ( ( float* )inputData )[i])];
+        }
+        break;
+    case QGis::Float64:
+        for ( size_t i = 0; i < rasterSize; ++i )
+        {
+          outputData[i] = colorTable[static_cast<int>( ( ( double* )inputData )[i])];
+        }
+        break;
     }
-    else
+  }
+  else
+  {
+    for ( size_t i = 0; i < rasterSize; ++i )
     {
+      int val = ( int ) inputBlock->value( i );
       currentOpacity = mOpacity;
       if ( mRasterTransparency )
       {
