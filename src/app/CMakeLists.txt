@@ -419,6 +419,7 @@ INCLUDE_DIRECTORIES(
   ${QEXTSERIALPORT_INCLUDE_DIR}
   ../analysis/raster
   ../core
+  ../core/geometry
   ../core/gps
   ../core/composer ../core/raster ../core/renderer ../core/symbology ../core/symbology-ng
   ../gui ../gui/symbology-ng ../gui/attributetable ../gui/raster

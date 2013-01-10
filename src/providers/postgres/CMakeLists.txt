@@ -29,6 +29,7 @@ QT4_WRAP_CPP(PG_MOC_SRCS ${PG_MOC_HDRS})
 
 INCLUDE_DIRECTORIES(
   ../../core
+  ../../core/geometry
   ${POSTGRES_INCLUDE_DIR}
   ${GEOS_INCLUDE_DIR}
   ../../core

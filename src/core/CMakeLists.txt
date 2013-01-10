@@ -64,7 +64,6 @@ SET(QGIS_CORE_SRCS
   qgsexpression.cpp
   qgsfeature.cpp
   qgsfield.cpp
-  qgsgeometry.cpp
   qgsgeometryvalidator.cpp
   qgshttptransaction.cpp
   qgslabel.cpp
@@ -145,6 +144,9 @@ SET(QGIS_CORE_SRCS
   composer/qgscomposerhtml.cpp
   composer/qgscomposermultiframe.cpp
   composer/qgscomposition.cpp
+
+  geometry/qgsgeometry.cpp
+  geometry/qgslinestring.cpp
 
   pal/costcalculator.cpp
   pal/feature.cpp
@@ -366,7 +368,6 @@ SET(QGIS_CORE_HDRS
   qgsexpression.h
   qgsfeature.h
   qgsfield.h
-  qgsgeometry.h
   qgshttptransaction.h
   qgslabel.h
   qgslabelattributes.h
@@ -494,6 +495,7 @@ ENDIF (QT_MOBILITY_LOCATION_FOUND)
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
   composer
+  geometry
   pal
   raster
   renderer

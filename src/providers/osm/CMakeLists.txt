@@ -19,6 +19,7 @@ QT4_WRAP_CPP(OSM_MOC_SRCS ${OSM_MOC_HDRS})
 
 INCLUDE_DIRECTORIES (
   ../../core
+  ../../core/geometry
   ../../core/renderer
   ${GEOS_INCLUDE_DIR}
 )

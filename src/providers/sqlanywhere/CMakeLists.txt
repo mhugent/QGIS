@@ -15,7 +15,8 @@ QT4_WRAP_CPP (SA_MOC_SRCS  ${SA_MOC_HDRS})
 
 INCLUDE_DIRECTORIES(
      ${GEOS_INCLUDE_DIR}
-     ../../core 
+     ../../core
+     ../../core/geometry
      sqlanyconnection
 )
 

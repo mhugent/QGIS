@@ -15,6 +15,7 @@ email                : jef at norbit dot de
 
 #include "qgis.h"
 #include "qgsgeometryvalidator.h"
+#include "qgsexception.h"
 #include "qgsgeometry.h"
 #include "qgslogger.h"
 

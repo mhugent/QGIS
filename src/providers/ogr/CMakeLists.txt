@@ -11,6 +11,7 @@ QT4_WRAP_CPP(OGR_MOC_SRCS ${OGR_MOC_HDRS})
 INCLUDE_DIRECTORIES(
   .
   ../../core
+  ../../core/geometry
   ${GDAL_INCLUDE_DIR}
   ${GEOS_INCLUDE_DIR}
 )
