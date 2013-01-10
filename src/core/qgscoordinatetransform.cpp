@@ -332,11 +332,9 @@ void QgsCoordinateTransform::transformInPlace(
   // array of the vectors data, and hence easily interface with code
   // that wants C-style arrays.
 
-  double* zPointer = z.size() > 0 ? &z[0] : 0;
-
   try
   {
-    transformCoords( x.size(), &x[0], &y[0], 0, direction );
+    transformCoords( x.size(), &x[0], &y[0], &z[0], direction );
   }
   catch ( QgsCsException &cse )
   {

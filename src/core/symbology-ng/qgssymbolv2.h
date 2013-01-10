@@ -32,6 +32,7 @@ class QDomElement;
 //class
 
 class QgsFeature;
+class QgsGeometry;
 class QgsSymbolLayerV2;
 class QgsRenderContext;
 class QgsVectorLayer;
@@ -249,6 +250,7 @@ class CORE_EXPORT QgsLineSymbolV2 : public QgsSymbolV2
     double width();
 
     void renderPolyline( const QPolygonF& points, const QgsFeature* f, QgsRenderContext& context, int layer = -1, bool selected = false );
+    void renderPolyline( const QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer = -1, bool selected = false );
 
     virtual QgsSymbolV2* clone() const;
 };

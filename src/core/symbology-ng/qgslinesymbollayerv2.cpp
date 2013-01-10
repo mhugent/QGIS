@@ -15,7 +15,7 @@
 
 #include "qgslinesymbollayerv2.h"
 #include "qgssymbollayerv2utils.h"
-
+#include "qgsgeometry.h"
 #include "qgsrendercontext.h"
 #include "qgslogger.h"
 
@@ -113,8 +113,13 @@ void QgsSimpleLineSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   Q_UNUSED( context );
 }
 
-void QgsSimpleLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+void QgsSimpleLineSymbolLayerV2::renderPolyline( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+  if ( !geom )
+  {
+    return;
+  }
+
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -131,12 +136,13 @@ void QgsSimpleLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSym
   p->setPen( context.selected() ? mSelPen : mPen );
   if ( mOffset == 0 )
   {
-    p->drawPolyline( points );
+    geom->draw( p );
+    //p->drawPolyline( points );
   }
   else
   {
-    double scaledOffset = context.outputLineWidth( mOffset );
-    p->drawPolyline( ::offsetLine( points, scaledOffset ) );
+    //double scaledOffset = context.outputLineWidth( mOffset );
+    //p->drawPolyline( ::offsetLine( points, scaledOffset ) );
   }
 }
 
@@ -380,8 +386,9 @@ void QgsMarkerLineSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   mMarker->stopRender( context.renderContext() );
 }
 
-void QgsMarkerLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+void QgsMarkerLineSymbolLayerV2::renderPolyline( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0 //todo: fix
   if ( mOffset == 0 )
   {
     if ( mPlacement == Interval )
@@ -401,6 +408,7 @@ void QgsMarkerLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSym
     else
       renderPolylineVertex( points2, context );
   }
+#endif //0
 }
 
 void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points, QgsSymbolV2RenderContext& context )
@@ -868,10 +876,10 @@ void QgsLineDecorationSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& conte
   Q_UNUSED( context );
 }
 
-void QgsLineDecorationSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+void QgsLineDecorationSymbolLayerV2::renderPolyline( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
   // draw arrow at the end of line
-
+#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -905,6 +913,7 @@ void QgsLineDecorationSymbolLayerV2::renderPolyline( const QPolygonF& points, Qg
   p->setPen( context.selected() ? mSelPen : mPen );
   p->drawLine( p2, p2_1 );
   p->drawLine( p2, p2_2 );
+#endif //0
 }
 
 QgsStringMap QgsLineDecorationSymbolLayerV2::properties() const

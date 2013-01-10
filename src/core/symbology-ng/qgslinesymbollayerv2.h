@@ -48,7 +48,7 @@ class CORE_EXPORT QgsSimpleLineSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
-    void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context );
+    void renderPolyline( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
 
     QgsStringMap properties() const;
 
@@ -124,7 +124,7 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
-    void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context );
+    void renderPolyline( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
 
     QgsStringMap properties() const;
 
@@ -192,7 +192,7 @@ class CORE_EXPORT QgsLineDecorationSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
-    void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context );
+    void renderPolyline( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
 
     QgsStringMap properties() const;
 

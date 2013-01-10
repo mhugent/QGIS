@@ -15,6 +15,7 @@
 
 #include "qgssymbollayerv2.h"
 #include "qgsclipper.h"
+#include "qgsgeometry.h"
 #include "qgsrenderer.h"
 #include "qgsrendercontext.h"
 
@@ -45,6 +46,20 @@ void QgsMarkerSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context,
   startRender( context );
   renderPoint( QPointF( size.width() / 2, size.height() / 2 ), context );
   stopRender( context );
+}
+
+void QgsLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+{
+  int size = points.size();
+  QgsPolyline line( size );
+  for ( int i = 0; i < size; ++i )
+  {
+    const QPointF& p = points[i];
+    line[i] = QgsPoint( p.x(), p.y() );
+  }
+  QgsGeometry* geom = QgsGeometry::fromPolyline( line );
+  renderPolyline( geom, context );
+  delete geom;
 }
 
 void QgsLineSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size )

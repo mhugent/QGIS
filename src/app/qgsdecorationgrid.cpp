@@ -228,6 +228,7 @@ void QgsDecorationGrid::render( QPainter * p )
   // p->setClipRect( thisPaintRect );
 
   //simpler approach: draw vertical lines first, then horizontal ones
+
   if ( mGridStyle == QgsDecorationGrid::Line )
   {
     if ( ! mLineSymbol )
@@ -257,6 +258,7 @@ void QgsDecorationGrid::render( QPainter * p )
 
     mLineSymbol->stopRender( context );
   }
+
 #if 0
   else if ( mGridStyle == QgsDecorationGrid::Cross )
   {

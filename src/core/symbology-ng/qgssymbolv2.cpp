@@ -20,7 +20,7 @@
 #include "qgslinesymbollayerv2.h"
 #include "qgsmarkersymbollayerv2.h"
 #include "qgsfillsymbollayerv2.h"
-
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsrendercontext.h" // for bigSymbolPreview
 
@@ -573,18 +573,32 @@ double QgsLineSymbolV2::width()
 
 void QgsLineSymbolV2::renderPolyline( const QPolygonF& points, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
 {
+  int size = points.size();
+  QgsPolyline line( size );
+  for ( int i = 0; i < size; ++i )
+  {
+    const QPointF& p = points[i];
+    line[i] = QgsPoint( p.x(), p.y() );
+  }
+  QgsGeometry* geom = QgsGeometry::fromPolyline( line );
+  renderPolyline( geom, f, context, layer, selected );
+  delete geom;
+}
+
+void QgsLineSymbolV2::renderPolyline( const QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
+{
   QgsSymbolV2RenderContext symbolContext( context, mOutputUnit, mAlpha, selected, mRenderHints, f );
   if ( layer != -1 )
   {
     if ( layer >= 0 && layer < mLayers.count() )
-      (( QgsLineSymbolLayerV2* ) mLayers[layer] )->renderPolyline( points, symbolContext );
+      (( QgsLineSymbolLayerV2* ) mLayers[layer] )->renderPolyline( geom, symbolContext );
     return;
   }
 
   for ( QgsSymbolLayerV2List::iterator it = mLayers.begin(); it != mLayers.end(); ++it )
   {
     QgsLineSymbolLayerV2* layer = ( QgsLineSymbolLayerV2* ) * it;
-    layer->renderPolyline( points, symbolContext );
+    layer->renderPolyline( geom, symbolContext );
   }
 }
 

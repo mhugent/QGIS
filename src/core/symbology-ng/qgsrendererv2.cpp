@@ -244,12 +244,27 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         QgsDebugMsg( "linestring can be drawn only with line symbol!" );
         break;
       }
+
+      QgsGeometry* lineGeom = feature.geometry();
+      if ( lineGeom )
+      {
+        const QgsCoordinateTransform* ct = context.coordinateTransform();
+        if ( ct )
+        {
+          lineGeom->coordinateTransform( *ct );
+        }
+        lineGeom->pixelTransform( context.mapToPixel() );
+        (( QgsLineSymbolV2* )symbol )->renderPolyline( lineGeom, &feature, context, layer, selected );
+      }
+
+#if 0
       QPolygonF pts;
       _getLineString( pts, context, geom->asWkb() );
       (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
 
       if ( drawVertexMarker )
         renderVertexMarkerPolyline( pts, context );
+#endif //0
     }
     break;
 
