@@ -579,12 +579,12 @@ class QgsAbstractGeometry
     bool isGeosValid() const;
 
     QgsPoint closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist ) const;
-    QgsGeometry* buffer( double distance, int segments ) const;
-    QgsGeometry* simplify( double tolerance ) const;
-    QgsGeometry* centroid() const;
-    QgsGeometry* convexHull() const;
-    QgsGeometry* intersection( QgsGeometry* geometry ) const;
-    QgsGeometry* combine( QgsGeometry* geometry ) const;
+    QgsAbstractGeometry* buffer( double distance, int segments ) const;
+    QgsAbstractGeometry* simplify( double tolerance ) const;
+    QgsAbstractGeometry* centroid() const;
+    QgsAbstractGeometry* convexHull() const;
+    QgsAbstractGeometry* intersection( const QgsAbstractGeometry* geometry ) const;
+    QgsAbstractGeometry* combine( const QgsAbstractGeometry* geometry ) const;
 
     //edit
     virtual bool insertVertex( double x, double y, int beforeVertex ) = 0; //m and z?
@@ -659,6 +659,15 @@ class QgsCurve: public QgsAbstractGeometry
   public:
     virtual double length() const = 0;
     virtual bool isClosed() const = 0;
+
+  protected:
+    virtual void addToPainterPath( QPainterPath& path ) const = 0;
+};
+
+class QgsSurface: public QgsAbstractGeometry
+{
+  public:
+    virtual double area() const = 0;
 
   protected:
     virtual void addToPainterPath( QPainterPath& path ) const = 0;

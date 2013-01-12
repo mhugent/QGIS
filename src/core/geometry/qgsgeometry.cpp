@@ -406,22 +406,22 @@ bool QgsGeometry::crosses( QgsGeometry* geometry )
 
 QgsGeometry* QgsGeometry::buffer( double distance, int segments )
 {
-  return ( mGeometry ? mGeometry->buffer( distance, segments ) : 0 );
+  return ( mGeometry ? new QgsGeometry( mGeometry->buffer( distance, segments ) ) : 0 );
 }
 
 QgsGeometry* QgsGeometry::simplify( double tolerance )
 {
-  return ( mGeometry ? mGeometry->simplify( tolerance ) : 0 );
+  return ( mGeometry ? new QgsGeometry( mGeometry->simplify( tolerance ) ) : 0 );
 }
 
 QgsGeometry* QgsGeometry::centroid()
 {
-  return ( mGeometry ? mGeometry->centroid() : 0 );
+  return ( mGeometry ? new QgsGeometry( mGeometry->centroid() ) : 0 );
 }
 
 QgsGeometry* QgsGeometry::convexHull()
 {
-  return ( mGeometry ? mGeometry->convexHull() : 0 );
+  return ( mGeometry ? new QgsGeometry( mGeometry->convexHull() ) : 0 );
 }
 
 QgsGeometry* QgsGeometry::interpolate( double distance )
@@ -432,12 +432,12 @@ QgsGeometry* QgsGeometry::interpolate( double distance )
 
 QgsGeometry* QgsGeometry::intersection( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->intersection( geometry ) : 0 );
+  return ( mGeometry ? new QgsGeometry( mGeometry->intersection( geometry->geometry() ) ) : 0 );
 }
 
 QgsGeometry* QgsGeometry::combine( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->combine( geometry ) : 0 );
+  return ( mGeometry ? new QgsGeometry( mGeometry->combine( geometry->geometry() ) ) : 0 );
 }
 
 QgsGeometry* QgsGeometry::difference( QgsGeometry* geometry )
@@ -520,7 +520,7 @@ QgsAbstractGeometry::QgsAbstractGeometry(): refs( 0 ), mGeosGeom( 0 )
 
 QgsAbstractGeometry::~QgsAbstractGeometry()
 {
-
+  GEOSGeom_destroy( mGeosGeom );
 }
 
 void QgsAbstractGeometry::ref()
@@ -680,7 +680,7 @@ bool QgsAbstractGeometry::intersects( const QgsAbstractGeometry* geometry ) cons
     return false;
   }
 
-  GEOSIntersects( thisGeos, otherGeos ) == 1;
+  return ( GEOSIntersects( thisGeos, otherGeos ) == 1 );
 }
 
 /** Test for containment of a point (uses GEOS) */
@@ -753,32 +753,32 @@ QgsPoint QgsAbstractGeometry::closestVertex( const QgsPoint& point, int& atVerte
   return QgsPoint(); //soon...
 }
 
-QgsGeometry* QgsAbstractGeometry::buffer( double distance, int segments ) const
+QgsAbstractGeometry* QgsAbstractGeometry::buffer( double distance, int segments ) const
 {
   return 0;
 }
 
-QgsGeometry* QgsAbstractGeometry::simplify( double tolerance ) const
+QgsAbstractGeometry* QgsAbstractGeometry::simplify( double tolerance ) const
 {
   return 0;
 }
 
-QgsGeometry* QgsAbstractGeometry::centroid() const
+QgsAbstractGeometry* QgsAbstractGeometry::centroid() const
 {
   return 0;
 }
 
-QgsGeometry* QgsAbstractGeometry::convexHull() const
+QgsAbstractGeometry* QgsAbstractGeometry::convexHull() const
 {
   return 0;
 }
 
-QgsGeometry* QgsAbstractGeometry::intersection( QgsGeometry* geometry ) const
+QgsAbstractGeometry* QgsAbstractGeometry::intersection( const QgsAbstractGeometry* geometry ) const
 {
   return 0;
 }
 
-QgsGeometry* QgsAbstractGeometry::combine( QgsGeometry* geometry ) const
+QgsAbstractGeometry* QgsAbstractGeometry::combine( const QgsAbstractGeometry* geometry ) const
 {
   return 0;
 }
