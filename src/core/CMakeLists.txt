@@ -146,6 +146,7 @@ SET(QGIS_CORE_SRCS
   composer/qgscomposition.cpp
 
   geometry/qgsgeometry.cpp
+  geometry/qgsgeometryutils.cpp
   geometry/qgslinestring.cpp
 
   pal/costcalculator.cpp

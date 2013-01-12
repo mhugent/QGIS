@@ -1,6 +1,7 @@
 #include "qgslinestring.h"
 #include "qgsapplication.h"
 #include "qgscoordinatetransform.h"
+#include "qgsgeometryutils.h"
 #include "qgsmaptopixel.h"
 #include <QPainter>
 #include <QVector>
@@ -20,30 +21,30 @@ QgsLineString::~QgsLineString()
 
 void QgsLineString::draw( QPainter* p ) const
 {
-    int size = mXValues->size();
-    QPolygonF poly( size );
-    for( int i = 0; i < size; ++i )
-    {
-        poly[i] = QPointF( (*mXValues)[i], (*mYValues)[i] );
-    }
-    p->drawPolyline( poly );
+  int size = mXValues->size();
+  QPolygonF poly( size );
+  for ( int i = 0; i < size; ++i )
+  {
+    poly[i] = QPointF(( *mXValues )[i], ( *mYValues )[i] );
+  }
+  p->drawPolyline( poly );
 }
 
 void QgsLineString::coordinateTransform( const QgsCoordinateTransform& t )
 {
-    int nPoints = mXValues->size();
-    QVector<double> z( nPoints, 0.0 );
-    t.transformInPlace( *mXValues, *mYValues, z );
+  int nPoints = mXValues->size();
+  QVector<double> z( nPoints, 0.0 );
+  t.transformInPlace( *mXValues, *mYValues, z );
 }
 
 void QgsLineString::pixelTransform( const QgsMapToPixel& mtp )
 {
-    mtp.transformInPlace( *mXValues, *mYValues );
+  mtp.transformInPlace( *mXValues, *mYValues );
 }
 
 int QgsLineString::translate( double dx, double dy )
 {
-    //soon...
+  //soon...
 }
 
 double QgsLineString::length() const
@@ -73,12 +74,12 @@ QgsAbstractGeometry* QgsLineString::fromWkb( unsigned char * wkb )
   double* y = 0;
   for ( uint i = 0; i < nPoints; ++i )
   {
-       (*xVector)[i] = *( double * )( ptr );
-       ptr += sizeof( double );
-       (*yVector)[i] = *( double * )( ptr );
-       ptr += sizeof( double );
-          /*if (wkbType == QGis::WKBLineString25D)
-                  ptr += sizeof( double );*/
+    ( *xVector )[i] = *( double * )( ptr );
+    ptr += sizeof( double );
+    ( *yVector )[i] = *( double * )( ptr );
+    ptr += sizeof( double );
+    /*if (wkbType == QGis::WKBLineString25D)
+            ptr += sizeof( double );*/
   }
   return new QgsLineString( xVector, yVector );
 }
@@ -90,7 +91,27 @@ QgsAbstractGeometry* QgsLineString::fromWkt( const QString& wkt )
 
 QgsAbstractGeometry* QgsLineString::fromGeos( const GEOSGeometry* geos )
 {
-  return 0;
+  if ( !geos || !GEOSGeomTypeId( geos ) == 1 )
+  {
+    return 0;
+  }
+
+  const GEOSCoordSequence* seq = GEOSGeom_getCoordSeq( geos );
+  if ( !seq )
+  {
+    return 0;
+  }
+
+  QVector<double>* xVector = new QVector<double>();
+  QVector<double>* yVector = new QVector<double>();
+  QVector<double>* zVector = new QVector<double>();
+  QVector<double>* mVector = new QVector<double>();
+  if ( !QgsGeometryUtils::createCoordinateVectors( seq, xVector, yVector, zVector, mVector ) )
+  {
+    return 0;
+  }
+
+  return new QgsLineString( xVector, yVector, zVector->size() > 0 ? zVector : 0, mVector->size() > 0 ? mVector : 0 );
 }
 
 //export
@@ -99,7 +120,7 @@ unsigned char* QgsLineString::asWkb( int& wkbSize ) const
   wkbSize = 0;
   unsigned char* wkb = 0;
 
-  if( !mXValues )
+  if ( !mXValues )
   {
     return wkb;
   }
@@ -107,32 +128,32 @@ unsigned char* QgsLineString::asWkb( int& wkbSize ) const
   unsigned int numPoints = mXValues->size();
 
   // allocate space for the WKB
-  int geometrySize = 	1 + // sizeof(byte)
-                          sizeof(int) + // type
-                          sizeof(int) + // numPoints
-                          ((sizeof(double) +
-                          sizeof(double)) * numPoints);
+  int geometrySize =  1 + // sizeof(byte)
+                      sizeof( int ) + // type
+                      sizeof( int ) + // numPoints
+                      (( sizeof( double ) +
+                         sizeof( double ) ) * numPoints );
 
   wkb = new unsigned char[geometrySize];
   unsigned char* ptr = wkb;
 
   // set up byteOrder
-  memset(ptr, QgsApplication::endian(), 1);
+  memset( ptr, QgsApplication::endian(), 1 );
   ptr += 1;
 
   // assign wkbType
   int wkbType = QGis::WKBLineString;
-  memcpy( ptr, &wkbType, sizeof(int) );
-  ptr += sizeof(int);
+  memcpy( ptr, &wkbType, sizeof( int ) );
+  ptr += sizeof( int );
 
   // assign numPoints
-  memcpy( ptr, &numPoints, sizeof(int) );
-  ptr += sizeof(int);
+  memcpy( ptr, &numPoints, sizeof( int ) );
+  ptr += sizeof( int );
 
   double x, y;
   QVector<double>::const_iterator xIt = mXValues->constBegin();
   QVector<double>::const_iterator yIt = mYValues->constBegin();
-  for(; xIt != mXValues->constEnd(); ++xIt, ++yIt )
+  for ( ; xIt != mXValues->constEnd(); ++xIt, ++yIt )
   {
     x = *xIt;
     memcpy( ptr, &x, sizeof( double ) );
@@ -147,7 +168,7 @@ unsigned char* QgsLineString::asWkb( int& wkbSize ) const
 
 GEOSGeometry* QgsLineString::asGeos() const
 {
-  return 0;
+  return QgsGeometryUtils::createGeosLineString( mXValues, mYValues, mZValues );
 }
 
 QString QgsLineString::asWkt() const
@@ -157,7 +178,7 @@ QString QgsLineString::asWkt() const
 
 QDomElement QgsLineString::asGML2( QDomDocument& doc ) const
 {
-    return QDomElement();
+  return QDomElement();
 }
 
 QgsGeometry* QgsLineString::clone() const
@@ -222,9 +243,9 @@ bool QgsLineString::addPart( const QList<QgsPoint> &points )
 }
 
 bool QgsLineString::splitGeometry( const QList<QgsPoint>& splitLine,
-                            QList<QgsGeometry*>&newGeometries,
-                            bool topological,
-                            QList<QgsPoint> &topologyTestPoints )
+                                   QList<QgsGeometry*>&newGeometries,
+                                   bool topological,
+                                   QList<QgsPoint> &topologyTestPoints )
 {
   return false;
 }
@@ -256,7 +277,7 @@ double QgsLineString::closestVertexWithContext( const QgsPoint& point, int& atVe
 }
 
 double QgsLineString::closestSegmentWithContext( const QgsPoint& point, QgsPoint& minDistPoint, int& afterVertex,
-                                                 double* leftOf, double epsilon ) const
+    double* leftOf, double epsilon ) const
 {
   return 0; //soon...
 }
