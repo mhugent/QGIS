@@ -159,8 +159,6 @@ class QgsGeometry
       */
     GEOSGeometry* asGeos();
 
-    const GEOSGeometry* geosGeom();
-
     /** Returns type of wkb (point / linestring / polygon etc.) */
     QGis::WkbType wkbType();
 
@@ -482,6 +480,8 @@ class QgsGeometry
      **/
     void validateGeometry( QList<Error> &errors );
 
+    const QgsAbstractGeometry* geometry() { return mGeometry; }
+
   private:
     QgsAbstractGeometry* mGeometry;
 };
@@ -542,38 +542,38 @@ class QgsAbstractGeometry
     bool intersects( const QgsRectangle& r ) const;
 
     /** Test for intersection with a geometry (uses GEOS) */
-    bool intersects( QgsGeometry* geometry ) const;
+    bool intersects( const QgsAbstractGeometry* geometry ) const;
 
     /** Test for containment of a point (uses GEOS) */
     bool contains( QgsPoint* p );
 
     /** Test for if geometry is contained in an other (uses GEOS)
      *  @note added in 1.5 */
-    bool contains( QgsGeometry* geometry );
+    bool contains( const QgsAbstractGeometry* geometry );
 
     /** Test for if geometry is disjoint of an other (uses GEOS)
      *  @note added in 1.5 */
-    bool disjoint( QgsGeometry* geometry );
+    bool disjoint( const QgsAbstractGeometry* geometry );
 
     /** Test for if geometry equals an other (uses GEOS)
      *  @note added in 1.5 */
-    bool equals( QgsGeometry* geometry );
+    bool equals( const QgsAbstractGeometry* geometry );
 
     /** Test for if geometry touch an other (uses GEOS)
      *  @note added in 1.5 */
-    bool touches( QgsGeometry* geometry );
+    bool touches( const QgsAbstractGeometry* geometry );
 
     /** Test for if geometry overlaps an other (uses GEOS)
      *  @note added in 1.5 */
-    bool overlaps( QgsGeometry* geometry );
+    bool overlaps( const QgsAbstractGeometry* geometry );
 
     /** Test for if geometry is within an other (uses GEOS)
      *  @note added in 1.5 */
-    bool within( QgsGeometry* geometry );
+    bool within( const QgsAbstractGeometry* geometry );
 
     /** Test for if geometry crosses an other (uses GEOS)
      *  @note added in 1.5 */
-    bool crosses( QgsGeometry* geometry );
+    bool crosses( const QgsAbstractGeometry* geometry );
 
     bool isGeosEqual( QgsGeometry & ) const;
     bool isGeosValid() const;

@@ -177,11 +177,6 @@ GEOSGeometry* QgsGeometry::asGeos()
   return 0;
 }
 
-const GEOSGeometry* QgsGeometry::geosGeom()
-{
-  return ( mGeometry ? mGeometry->geosGeom() : 0 );
-}
-
 size_t QgsGeometry::wkbSize()
 {
   if ( !mGeometry )
@@ -366,7 +361,7 @@ bool QgsGeometry::intersects( const QgsRectangle& r )
 
 bool QgsGeometry::intersects( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->intersects( geometry ) : false );
+  return ( mGeometry ? mGeometry->intersects( geometry->mGeometry ) : false );
 }
 
 bool QgsGeometry::contains( QgsPoint* p )
@@ -376,37 +371,37 @@ bool QgsGeometry::contains( QgsPoint* p )
 
 bool QgsGeometry::contains( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->contains( geometry ) : false );
+  return ( mGeometry ? mGeometry->contains( geometry->mGeometry ) : false );
 }
 
 bool QgsGeometry::disjoint( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->disjoint( geometry ) : true );
+  return ( mGeometry ? mGeometry->disjoint( geometry->mGeometry ) : true );
 }
 
 bool QgsGeometry::equals( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->equals( geometry ) : false );
+  return ( mGeometry ? mGeometry->equals( geometry->mGeometry ) : false );
 }
 
 bool QgsGeometry::touches( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->touches( geometry ) : false );
+  return ( mGeometry ? mGeometry->touches( geometry->mGeometry ) : false );
 }
 
 bool QgsGeometry::overlaps( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->overlaps( geometry ) : false );
+  return ( mGeometry ? mGeometry->overlaps( geometry->mGeometry ) : false );
 }
 
 bool QgsGeometry::within( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->within( geometry ) : false );
+  return ( mGeometry ? mGeometry->within( geometry->mGeometry ) : false );
 }
 
 bool QgsGeometry::crosses( QgsGeometry* geometry )
 {
-  return ( mGeometry ? mGeometry->crosses( geometry ) : false );
+  return ( mGeometry ? mGeometry->crosses( geometry->mGeometry ) : false );
 }
 
 QgsGeometry* QgsGeometry::buffer( double distance, int segments )
@@ -665,13 +660,13 @@ bool QgsAbstractGeometry::intersects( const QgsRectangle& r ) const
   ring << QgsPoint( r.xMinimum(), r.yMinimum() );
   poly.append( ring );
   QgsGeometry* geom = QgsGeometry::fromPolygon( poly );
-  bool result = intersects( geom );
+  bool result = intersects( geom->geometry() );
   delete geom;
   return result;
 }
 
 /** Test for intersection with a geometry (uses GEOS) */
-bool QgsAbstractGeometry::intersects( QgsGeometry* geometry ) const
+bool QgsAbstractGeometry::intersects( const QgsAbstractGeometry* geometry ) const
 {
   if ( !geometry )
   {
@@ -696,49 +691,49 @@ bool QgsAbstractGeometry::contains( QgsPoint* p )
 
 /** Test for if geometry is contained in an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::contains( QgsGeometry* geometry )
+bool QgsAbstractGeometry::contains( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
 
 /** Test for if geometry is disjoint of an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::disjoint( QgsGeometry* geometry )
+bool QgsAbstractGeometry::disjoint( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
 
 /** Test for if geometry equals an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::equals( QgsGeometry* geometry )
+bool QgsAbstractGeometry::equals( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
 
 /** Test for if geometry touch an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::touches( QgsGeometry* geometry )
+bool QgsAbstractGeometry::touches( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
 
 /** Test for if geometry overlaps an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::overlaps( QgsGeometry* geometry )
+bool QgsAbstractGeometry::overlaps( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
 
 /** Test for if geometry is within an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::within( QgsGeometry* geometry )
+bool QgsAbstractGeometry::within( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
 
 /** Test for if geometry crosses an other (uses GEOS)
  *  @note added in 1.5 */
-bool QgsAbstractGeometry::crosses( QgsGeometry* geometry )
+bool QgsAbstractGeometry::crosses( const QgsAbstractGeometry* geometry )
 {
   return false;
 }
