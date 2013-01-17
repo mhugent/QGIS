@@ -148,6 +148,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgsgeometry.cpp
   geometry/qgsgeometryutils.cpp
   geometry/qgslinestring.cpp
+  geometry/qgspolygonv2.cpp
 
   pal/costcalculator.cpp
   pal/feature.cpp
