@@ -623,6 +623,11 @@ QgsFillSymbolV2::QgsFillSymbolV2( QgsSymbolLayerV2List layers )
 
 void QgsFillSymbolV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
 {
+  //todo...
+}
+
+void QgsFillSymbolV2::renderPolygon( const QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
+{
   QgsSymbolV2RenderContext symbolContext( context, mOutputUnit, mAlpha, selected, mRenderHints, f );
   if ( layer != -1 )
   {
@@ -630,9 +635,11 @@ void QgsFillSymbolV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* 
     {
       QgsSymbolV2::SymbolType layertype = mLayers.at( layer )->type();
       if ( layertype == QgsSymbolV2::Fill )
-        (( QgsFillSymbolLayerV2* ) mLayers[layer] )->renderPolygon( points, rings, symbolContext );
+        (( QgsFillSymbolLayerV2* ) mLayers[layer] )->renderPolygon( geom, symbolContext );
+#if 0 //todo: fix
       else if ( layertype == QgsSymbolV2::Line )
         (( QgsLineSymbolLayerV2* ) mLayers[layer] )->renderPolygonOutline( points, rings, symbolContext );
+#endif //0
     }
     return;
   }
@@ -643,13 +650,15 @@ void QgsFillSymbolV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* 
     if ( layertype == QgsSymbolV2::Fill )
     {
       QgsFillSymbolLayerV2* layer = ( QgsFillSymbolLayerV2* ) * it;
-      layer->renderPolygon( points, rings, symbolContext );
+      layer->renderPolygon( geom, symbolContext );
     }
+#if 0
     else if ( layertype == QgsSymbolV2::Line )
     {
       QgsLineSymbolLayerV2* layer = ( QgsLineSymbolLayerV2* ) * it;
       layer->renderPolygonOutline( points, rings, symbolContext );
     }
+#endif //0
   }
 }
 

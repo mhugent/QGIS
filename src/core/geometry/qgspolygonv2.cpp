@@ -1,4 +1,7 @@
 #include "qgspolygonv2.h"
+#include "qgscoordinatetransform.h"
+#include "qgsmaptopixel.h"
+#include <QPainter>
 
 QgsPolygonV2::QgsPolygonV2( QVector< QVector< double > >* ringsX, QVector< QVector< double > >* ringsY,
                             QVector< QVector< double > >* ringsZ, QVector< QVector< double > >* ringsM )
@@ -17,7 +20,21 @@ QgsPolygonV2::~QgsPolygonV2()
 
 void QgsPolygonV2::draw( QPainter* p ) const
 {
-  //todo...
+  int nRings = mRingsX->size();
+  if ( nRings == 1 )
+  {
+    int nPoints = ( *mRingsX )[0].size();
+    QPolygonF polygon( nPoints );
+    for ( int i = 0; i < nPoints; ++i )
+    {
+      polygon[i] = QPointF(( *mRingsX )[0][i], ( *mRingsY )[0][i] );
+    }
+    p->drawPolygon( polygon );
+  }
+  else //use painterpath
+  {
+
+  }
 }
 
 void QgsPolygonV2::addToPainterPath( QPainterPath& path ) const
@@ -27,12 +44,23 @@ void QgsPolygonV2::addToPainterPath( QPainterPath& path ) const
 
 void QgsPolygonV2::coordinateTransform( const QgsCoordinateTransform& t )
 {
-  //todo...
+  int nRings = mRingsX->size();
+  int nPoints;
+  for ( int i = 0; i < nRings; ++i )
+  {
+    nPoints = ( *mRingsX )[i].size();
+    QVector<double> z( nPoints, 0.0 );
+    t.transformInPlace(( *mRingsX )[i], ( *mRingsY )[i], z );
+  }
 }
 
 void QgsPolygonV2::pixelTransform( const QgsMapToPixel& mtp )
 {
-  //todo...
+  int nRings = mRingsX->size();
+  for ( int i = 0; i < nRings; ++i )
+  {
+    mtp.transformInPlace(( *mRingsX )[i], ( *mRingsY )[i] );
+  }
 }
 
 int QgsPolygonV2::translate( double dx, double dy )
@@ -47,7 +75,85 @@ double QgsPolygonV2::area() const
 
 QgsAbstractGeometry* QgsPolygonV2::fromWkb( unsigned char * wkb )
 {
-  return 0;
+  unsigned char* geometry = wkb;
+  geometry += 1; //skip endian
+
+  int type = *(( int* )geometry );
+  bool hasZ = false;
+  bool hasM = false;
+  //0003  1003  2003  3003
+  if ( type == 1003 || type == 3003 )
+  {
+    hasZ = true;
+  }
+  if ( type == 2003 || type == 3003 )
+  {
+    hasM = true;
+  }
+  geometry += sizeof( int );
+
+  int* nRings = ( int* )geometry;
+  geometry += sizeof( int );
+
+  QVector< QVector< double > >* ringsX = new QVector< QVector< double > >( *nRings );
+  QVector< QVector< double > >* ringsY = new QVector< QVector< double > >( *nRings );
+  QVector< QVector< double > >* ringsZ = 0;
+  if ( hasZ )
+  {
+    ringsZ = new QVector< QVector< double > >( *nRings );
+  }
+  QVector< QVector< double > >* ringsM = 0;
+  if ( hasM )
+  {
+    ringsM = new QVector< QVector< double > >( *nRings );
+  }
+
+  int* nPoints = 0;
+  double* x = 0;
+  double* y = 0;
+  double* z = 0;
+  double* m = 0;
+
+  for ( int i = 0; i < *nRings; ++i )
+  {
+    nPoints = ( int* )geometry;
+    ( *ringsX )[i] = QVector< double >( *nPoints );
+    ( *ringsY )[i] = QVector< double >( *nPoints );
+    if ( hasZ )
+    {
+      ( *ringsZ )[i] = QVector< double >( *nPoints );
+    }
+    if ( hasM )
+    {
+      ( *ringsM )[i] = QVector< double >( *nPoints );
+    }
+
+
+    geometry += sizeof( int );
+    for ( int j = 0; j < *nPoints; ++j )
+    {
+      x = ( double* )geometry;
+      ( *ringsX )[i][j] = *x;
+      geometry += sizeof( double );
+      y = ( double* )geometry;
+      ( *ringsY )[i][j] = *y;
+      geometry += sizeof( double );
+      if ( hasZ )
+      {
+        z = ( double* )geometry;
+        ( *ringsZ )[i][j] = *y;
+        geometry += sizeof( double );
+      }
+      if ( hasM )
+      {
+        m = ( double* )geometry;
+        ( *ringsM )[i][j] = *y;
+        geometry += sizeof( double );
+      }
+    }
+  }
+
+  return new QgsPolygonV2( ringsX, ringsY, ringsM, ringsZ );
 }
 
 QgsAbstractGeometry* QgsPolygonV2::fromWkt( const QString& wkt )

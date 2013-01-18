@@ -276,6 +276,19 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         QgsDebugMsg( "polygon can be drawn only with fill symbol!" );
         break;
       }
+
+      QgsGeometry* polygonGeom = feature.geometry();
+      if ( polygonGeom )
+      {
+        const QgsCoordinateTransform* ct = context.coordinateTransform();
+        if ( ct )
+        {
+          polygonGeom->coordinateTransform( *ct );
+        }
+        polygonGeom->pixelTransform( context.mapToPixel() );
+        (( QgsFillSymbolV2* )symbol )->renderPolygon( polygonGeom, &feature, context, layer, selected );
+      }
+#if 0
       QPolygonF pts;
       QList<QPolygonF> holes;
       _getPolygon( pts, holes, context, geom->asWkb() );
@@ -283,6 +296,7 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
 
       if ( drawVertexMarker )
         renderVertexMarkerPolygon( pts, ( holes.count() ? &holes : NULL ), context );
+#endif //0
     }
     break;
 

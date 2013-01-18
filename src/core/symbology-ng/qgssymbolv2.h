@@ -269,6 +269,7 @@ class CORE_EXPORT QgsFillSymbolV2 : public QgsSymbolV2
     QgsFillSymbolV2( QgsSymbolLayerV2List layers = QgsSymbolLayerV2List() );
     void setAngle( double angle );
     void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, const QgsFeature* f, QgsRenderContext& context, int layer = -1, bool selected = false );
+    void renderPolygon( const QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer = -1, bool selected = false );
 
     virtual QgsSymbolV2* clone() const;
 };

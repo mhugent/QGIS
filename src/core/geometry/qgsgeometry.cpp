@@ -18,6 +18,7 @@
 
 #include "qgsgeometry.h"
 #include "qgslinestring.h"
+#include "qgspolygonv2.h"
 
 /*************************geometry wrapper*****************************************/
 QgsGeometry::QgsGeometry(): mGeometry( 0 )
@@ -566,6 +567,11 @@ QgsAbstractGeometry* QgsAbstractGeometry::fromWkb( unsigned char * wkb, size_t l
     case QGis::WKBLineString:
     case QGis::WKBLineString25D:
       return QgsLineString::fromWkb( wkb );
+
+    case QGis::WKBPolygon:
+    case QGis::WKBPolygon25D:
+      return QgsPolygonV2::fromWkb( wkb );
+
     default:
       return 0;
   }

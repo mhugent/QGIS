@@ -87,10 +87,12 @@ void QgsLineSymbolLayerV2::renderPolygonOutline( const QPolygonF& points, QList<
 
 void QgsFillSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size )
 {
+#if 0
   QPolygonF poly = QRectF( QPointF( 0, 0 ), QPointF( size.width() - 1, size.height() - 1 ) );
   startRender( context );
   renderPolygon( poly, NULL, context );
   stopRender( context );
+#endif //0
 }
 
 void QgsFillSymbolLayerV2::_renderPolygon( QPainter* p, const QPolygonF& points, const QList<QPolygonF>* rings )

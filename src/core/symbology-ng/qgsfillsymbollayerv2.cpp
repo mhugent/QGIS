@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsfillsymbollayerv2.h"
+#include "qgsgeometry.h"
 #include "qgsmarkersymbollayerv2.h"
 #include "qgssymbollayerv2utils.h"
 
@@ -102,7 +103,7 @@ void QgsSimpleFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   Q_UNUSED( context );
 }
 
-void QgsSimpleFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsSimpleFillSymbolLayerV2::renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
   QPainter* p = context.renderContext().painter();
   if ( !p )
@@ -117,7 +118,8 @@ void QgsSimpleFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<Q
   if ( !mOffset.isNull() )
     p->translate( mOffset );
 
-  _renderPolygon( p, points, rings );
+  geom->draw( p );
+  //_renderPolygon( p, points, rings );
 
   if ( !mOffset.isNull() )
     p->translate( -mOffset );
@@ -210,8 +212,9 @@ QgsImageFillSymbolLayer::~QgsImageFillSymbolLayer()
 {
 }
 
-void QgsImageFillSymbolLayer::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -253,6 +256,7 @@ void QgsImageFillSymbolLayer::renderPolygon( const QPolygonF& points, QList<QPol
       }
     }
   }
+#endif //0
 }
 
 bool QgsImageFillSymbolLayer::setSubSymbol( QgsSymbolV2* symbol )
@@ -1210,8 +1214,9 @@ void QgsCentroidFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context
   mMarker->stopRender( context.renderContext() );
 }
 
-void QgsCentroidFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsCentroidFillSymbolLayerV2::renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   Q_UNUSED( rings );
 
   // calculate centroid
@@ -1231,6 +1236,7 @@ void QgsCentroidFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList
   cy /= sum;
 
   mMarker->renderPoint( QPointF( cx, cy ), context.feature(), context.renderContext(), -1, context.selected() );
+#endif //0
 }
 
 QgsStringMap QgsCentroidFillSymbolLayerV2::properties() const

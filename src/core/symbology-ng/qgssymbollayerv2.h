@@ -148,7 +148,7 @@ class CORE_EXPORT QgsLineSymbolLayerV2 : public QgsSymbolLayerV2
 class CORE_EXPORT QgsFillSymbolLayerV2 : public QgsSymbolLayerV2
 {
   public:
-    virtual void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context ) = 0;
+    virtual void renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
 
     void drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size );
 

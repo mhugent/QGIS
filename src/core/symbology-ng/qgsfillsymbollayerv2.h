@@ -49,7 +49,7 @@ class CORE_EXPORT QgsSimpleFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
-    void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
+    void renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
 
     QgsStringMap properties() const;
 
@@ -91,7 +91,7 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayerV2
   public:
     QgsImageFillSymbolLayer();
     virtual ~QgsImageFillSymbolLayer();
-    void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
+    void renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
 
     virtual QgsSymbolV2* subSymbol() { return mOutline; }
     virtual bool setSubSymbol( QgsSymbolV2* symbol );
@@ -277,7 +277,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
     void stopRender( QgsSymbolV2RenderContext& context );
 
-    void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
+    void renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
 
     QgsStringMap properties() const;
 
