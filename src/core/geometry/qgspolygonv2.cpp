@@ -1,5 +1,6 @@
 #include "qgspolygonv2.h"
 #include "qgscoordinatetransform.h"
+#include "qgsgeometryutils.h"
 #include "qgsmaptopixel.h"
 #include <QPainter>
 
@@ -20,18 +21,13 @@ QgsPolygonV2::~QgsPolygonV2()
 
 void QgsPolygonV2::draw( QPainter* p ) const
 {
-  int nRings = mRingsX->size();
+  int nRings = qMin( mRingsX->size(), mRingsY->size() );
   if ( nRings == 1 )
   {
-    int nPoints = ( *mRingsX )[0].size();
-    QPolygonF polygon( nPoints );
-    for ( int i = 0; i < nPoints; ++i )
-    {
-      polygon[i] = QPointF(( *mRingsX )[0][i], ( *mRingsY )[0][i] );
-    }
-    p->drawPolygon( polygon );
+    QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( &( *mRingsX )[0], &( *mRingsY )[0] );
+    p->drawPolygon( poly );
   }
-  else //use painterpath
+  else if ( nRings > 1 )//use painterpath
   {
 
   }

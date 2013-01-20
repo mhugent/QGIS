@@ -21,12 +21,7 @@ QgsLineString::~QgsLineString()
 
 void QgsLineString::draw( QPainter* p ) const
 {
-  int size = mXValues->size();
-  QPolygonF poly( size );
-  for ( int i = 0; i < size; ++i )
-  {
-    poly[i] = QPointF(( *mXValues )[i], ( *mYValues )[i] );
-  }
+  QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( mXValues, mYValues );
   p->drawPolyline( poly );
 }
 

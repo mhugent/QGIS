@@ -2,6 +2,7 @@
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
 #include <QObject>
+#include <QPolygon>
 #include <QString>
 #include <cstdio>
 
@@ -193,7 +194,7 @@ bool QgsGeometryUtils::createCoordinateVectors( const GEOSCoordSequence* seq, QV
   double zCoord = 0;
   double mCoord = 0;
 
-  for ( int i = 0; i < nVertices; ++i )
+  for ( unsigned int i = 0; i < nVertices; ++i )
   {
     GEOSCoordSeq_getX( seq, i, &xCoord );
     GEOSCoordSeq_getY( seq, i, &yCoord );
@@ -211,4 +212,17 @@ bool QgsGeometryUtils::createCoordinateVectors( const GEOSCoordSequence* seq, QV
     }
   }
   return true;
+}
+
+QPolygonF QgsGeometryUtils::polygonFromCoordinates( const QVector<double>* x, const QVector<double>* y )
+{
+  int size = qMin( x->size(), y->size() );
+  QPolygonF polygon( size );
+  for ( int i = 0; i < size; ++i )
+  {
+    QPointF& pt = polygon[i];
+    pt.rx() = ( *x )[i];
+    pt.ry() = ( *y )[i];
+  }
+  return polygon;
 }

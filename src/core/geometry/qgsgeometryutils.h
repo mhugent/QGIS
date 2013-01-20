@@ -4,6 +4,8 @@
 #include <QVector>
 #include <geos_c.h>
 
+class QPolygonF;
+
 class QgsGeometryUtils
 {
   public:
@@ -13,6 +15,8 @@ class QgsGeometryUtils
     static GEOSCoordSequence* createGeosCoordSequence( QVector<double>* x, QVector<double>* y, QVector<double>* z = 0, QVector<double>* m = 0 );
     /**Create coordinate vectors from sequence. If z and m are not present, the vectors have size 0*/
     static bool createCoordinateVectors( const GEOSCoordSequence* seq, QVector<double>* x, QVector<double>* y, QVector<double>* z, QVector<double>* m );
+    /**Creates QPolygon from x- and y- coordinate vectors*/
+    static QPolygonF polygonFromCoordinates( const QVector<double>* x, const QVector<double>* y );
 };
 
 
