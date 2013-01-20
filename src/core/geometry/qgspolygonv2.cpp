@@ -21,26 +21,37 @@ QgsPolygonV2::~QgsPolygonV2()
 
 void QgsPolygonV2::draw( QPainter* p ) const
 {
-  int nRings = qMin( mRingsX->size(), mRingsY->size() );
+  int nRings = ringCount();
+  if ( nRings < 1 )
+  {
+    return;
+  }
+
   if ( nRings == 1 )
   {
     QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( &( *mRingsX )[0], &( *mRingsY )[0] );
     p->drawPolygon( poly );
   }
-  else if ( nRings > 1 )//use painterpath
+  else //use painterpath
   {
-
+    QPainterPath path;
+    addToPainterPath( path );
+    p->drawPath( path );
   }
 }
 
 void QgsPolygonV2::addToPainterPath( QPainterPath& path ) const
 {
-  //todo...
+  int nRings = ringCount();
+  for ( int i = 0; i < nRings; ++i )
+  {
+    path.addPolygon( QgsGeometryUtils::polygonFromCoordinates( &( *mRingsX )[i], &( *mRingsY )[i] ) );
+  }
 }
 
 void QgsPolygonV2::coordinateTransform( const QgsCoordinateTransform& t )
 {
-  int nRings = mRingsX->size();
+  int nRings = ringCount();
   int nPoints;
   for ( int i = 0; i < nRings; ++i )
   {
@@ -52,7 +63,7 @@ void QgsPolygonV2::coordinateTransform( const QgsCoordinateTransform& t )
 
 void QgsPolygonV2::pixelTransform( const QgsMapToPixel& mtp )
 {
-  int nRings = mRingsX->size();
+  int nRings = ringCount();
   for ( int i = 0; i < nRings; ++i )
   {
     mtp.transformInPlace(( *mRingsX )[i], ( *mRingsY )[i] );
@@ -67,6 +78,16 @@ int QgsPolygonV2::translate( double dx, double dy )
 double QgsPolygonV2::area() const
 {
   return 0;
+}
+
+int QgsPolygonV2::ringCount() const
+{
+  if ( !mRingsX || !mRingsY )
+  {
+    return 0;
+  }
+
+  return qMin( mRingsX->size(), mRingsY->size() );
 }
 
 QgsAbstractGeometry* QgsPolygonV2::fromWkb( unsigned char * wkb )
