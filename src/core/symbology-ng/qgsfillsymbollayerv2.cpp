@@ -245,18 +245,8 @@ void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV
   geom->draw( p );
   if ( mOutline )
   {
+    p->setPen( Qt::NoPen );
     mOutline->renderPolyline( geom, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
-    /*
-    mOutline->renderPolyline( points, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
-    if ( rings )
-    {
-    QList<QPolygonF>::const_iterator ringIt = rings->constBegin();
-    for ( ; ringIt != rings->constEnd(); ++ringIt )
-    {
-      mOutline->renderPolyline( *ringIt, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
-    }
-    }
-    */
   }
 }
 
