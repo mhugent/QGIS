@@ -119,7 +119,6 @@ void QgsSimpleFillSymbolLayerV2::renderPolygon( const QgsGeometry* geom, QgsSymb
     p->translate( mOffset );
 
   geom->draw( p );
-  //_renderPolygon( p, points, rings );
 
   if ( !mOffset.isNull() )
     p->translate( -mOffset );
@@ -214,7 +213,6 @@ QgsImageFillSymbolLayer::~QgsImageFillSymbolLayer()
 
 void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
-#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -228,7 +226,7 @@ void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV
     //if ( ! selectionIsOpaque )
     //  selColor.setAlphaF( context.alpha() );
     p->setBrush( QBrush( selColor ) );
-    _renderPolygon( p, points, rings );
+    geom->draw( p );
   }
 
   if ( doubleNear( mAngle, 0.0 ) )
@@ -243,20 +241,23 @@ void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV
     rotatedBrush.setTransform( t );
     p->setBrush( rotatedBrush );
   }
-  _renderPolygon( p, points, rings );
+
+  geom->draw( p );
   if ( mOutline )
   {
+    mOutline->renderPolyline( geom, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
+    /*
     mOutline->renderPolyline( points, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
     if ( rings )
     {
-      QList<QPolygonF>::const_iterator ringIt = rings->constBegin();
-      for ( ; ringIt != rings->constEnd(); ++ringIt )
-      {
-        mOutline->renderPolyline( *ringIt, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
-      }
+    QList<QPolygonF>::const_iterator ringIt = rings->constBegin();
+    for ( ; ringIt != rings->constEnd(); ++ringIt )
+    {
+      mOutline->renderPolyline( *ringIt, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
     }
+    }
+    */
   }
-#endif //0
 }
 
 bool QgsImageFillSymbolLayer::setSubSymbol( QgsSymbolV2* symbol )
