@@ -70,6 +70,9 @@ class QgsPolygonV2: public QgsSurface
 
     virtual int avoidIntersections( QMap<QgsVectorLayer*, QSet<QgsFeatureId> > ignoreFeatures = ( QMap<QgsVectorLayer*, QSet<QgsFeatureId> >() ) ) const;
 
+    /**Return number of rings*/
+    int ringCount() const;
+
   protected:
     void addToPainterPath( QPainterPath& path ) const;
 
