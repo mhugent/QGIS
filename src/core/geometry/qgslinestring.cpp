@@ -25,6 +25,11 @@ void QgsLineString::draw( QPainter* p ) const
   p->drawPolyline( poly );
 }
 
+void QgsLineString::addToPainterPath( QPainterPath& path ) const
+{
+  path.addPolygon( QgsGeometryUtils::polygonFromCoordinates( mXValues, mYValues ) );
+}
+
 void QgsLineString::coordinateTransform( const QgsCoordinateTransform& t )
 {
   int nPoints = mXValues->size();
@@ -179,12 +184,6 @@ QDomElement QgsLineString::asGML2( QDomDocument& doc ) const
 QgsGeometry* QgsLineString::clone() const
 {
   return 0;
-}
-
-void QgsLineString::addToPainterPath( QPainterPath& path ) const
-{
-  //move to first point
-  //line to other points
 }
 
 QgsGeometry::GeometryType QgsLineString::geometryType() const
