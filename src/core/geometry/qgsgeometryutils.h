@@ -1,6 +1,7 @@
 #ifndef QGSGEOMETRYUTILS_H
 #define QGSGEOMETRYUTILS_H
 
+#include "qgspoint.h"
 #include <QVector>
 #include <geos_c.h>
 
@@ -17,6 +18,9 @@ class QgsGeometryUtils
     static bool createCoordinateVectors( const GEOSCoordSequence* seq, QVector<double>* x, QVector<double>* y, QVector<double>* z, QVector<double>* m );
     /**Creates QPolygon from x- and y- coordinate vectors*/
     static QPolygonF polygonFromCoordinates( const QVector<double>* x, const QVector<double>* y );
+    /**Creates QgsPoint vector from polygon*/
+    static QVector<QgsPoint> pointVectorFromPolygon( const QPolygonF& polygon );
+    static QVector< QVector<QgsPoint> > convertToRings( const QPolygonF& points, QList<QPolygonF>* rings );
 };
 
 

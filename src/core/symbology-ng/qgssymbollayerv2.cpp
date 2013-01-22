@@ -16,6 +16,7 @@
 #include "qgssymbollayerv2.h"
 #include "qgsclipper.h"
 #include "qgsgeometry.h"
+#include "qgsgeometryutils.h"
 #include "qgsrenderer.h"
 #include "qgsrendercontext.h"
 
@@ -50,15 +51,11 @@ void QgsMarkerSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context,
 
 void QgsLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
 {
-  int size = points.size();
-  QgsPolyline line( size );
-  for ( int i = 0; i < size; ++i )
+  QgsGeometry* geom = QgsGeometry::fromPolyline( QgsGeometryUtils::pointVectorFromPolygon( points ) );
+  if ( geom )
   {
-    const QPointF& p = points[i];
-    line[i] = QgsPoint( p.x(), p.y() );
+    renderPolyline( geom, context );
   }
-  QgsGeometry* geom = QgsGeometry::fromPolyline( line );
-  renderPolyline( geom, context );
   delete geom;
 }
 
@@ -87,12 +84,20 @@ void QgsLineSymbolLayerV2::renderPolygonOutline( const QPolygonF& points, QList<
 
 void QgsFillSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size )
 {
-#if 0
   QPolygonF poly = QRectF( QPointF( 0, 0 ), QPointF( size.width() - 1, size.height() - 1 ) );
   startRender( context );
   renderPolygon( poly, NULL, context );
   stopRender( context );
-#endif //0
+}
+
+void QgsFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+{
+  QgsGeometry* geom = QgsGeometry::fromPolygon( QgsGeometryUtils::convertToRings( points, rings ) );
+  if ( geom )
+  {
+    renderPolygon( geom, context );
+  }
+  delete geom;
 }
 
 void QgsFillSymbolLayerV2::_renderPolygon( QPainter* p, const QPolygonF& points, const QList<QPolygonF>* rings )

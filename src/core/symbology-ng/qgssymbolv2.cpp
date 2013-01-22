@@ -16,7 +16,7 @@
 #include "qgsrenderer.h"
 #include "qgssymbolv2.h"
 #include "qgssymbollayerv2.h"
-
+#include "qgsgeometryutils.h"
 #include "qgslinesymbollayerv2.h"
 #include "qgsmarkersymbollayerv2.h"
 #include "qgsfillsymbollayerv2.h"
@@ -623,7 +623,12 @@ QgsFillSymbolV2::QgsFillSymbolV2( QgsSymbolLayerV2List layers )
 
 void QgsFillSymbolV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
 {
-  //todo...
+  QgsGeometry* geom = QgsGeometry::fromPolygon( QgsGeometryUtils::convertToRings( points, rings ) );
+  if ( geom )
+  {
+    renderPolygon( geom, f, context, layer, selected );
+  }
+  delete geom;
 }
 
 void QgsFillSymbolV2::renderPolygon( const QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
@@ -636,10 +641,8 @@ void QgsFillSymbolV2::renderPolygon( const QgsGeometry* geom, const QgsFeature* 
       QgsSymbolV2::SymbolType layertype = mLayers.at( layer )->type();
       if ( layertype == QgsSymbolV2::Fill )
         (( QgsFillSymbolLayerV2* ) mLayers[layer] )->renderPolygon( geom, symbolContext );
-#if 0 //todo: fix
-      else if ( layertype == QgsSymbolV2::Line )
-        (( QgsLineSymbolLayerV2* ) mLayers[layer] )->renderPolygonOutline( points, rings, symbolContext );
-#endif //0
+      /*else if ( layertype == QgsSymbolV2::Line ) //todo: fix
+        (( QgsLineSymbolLayerV2* ) mLayers[layer] )->renderPolygonOutline( points, rings, symbolContext );*/
     }
     return;
   }

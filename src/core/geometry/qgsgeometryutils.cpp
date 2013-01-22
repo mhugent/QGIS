@@ -226,3 +226,37 @@ QPolygonF QgsGeometryUtils::polygonFromCoordinates( const QVector<double>* x, co
   }
   return polygon;
 }
+
+QVector<QgsPoint> QgsGeometryUtils::pointVectorFromPolygon( const QPolygonF& polygon )
+{
+  int size = polygon.size();
+  QVector<QgsPoint> pointVector( size );
+  for ( int i = 0; i < size; ++i )
+  {
+    const QPointF& p = polygon[i];
+    pointVector[i] = QgsPoint( p.x(), p.y() );
+  }
+  return pointVector;
+}
+
+QVector< QVector<QgsPoint> > QgsGeometryUtils::convertToRings( const QPolygonF& points, QList<QPolygonF>* rings )
+{
+  int nRings = 1;
+  if ( rings )
+  {
+    nRings += rings->size();
+  }
+
+  QVector< QVector<QgsPoint> > polygon( nRings );
+  polygon.append( QgsGeometryUtils::pointVectorFromPolygon( points ) );
+
+  //rings
+  if ( rings )
+  {
+    for ( int i = 0; i < rings->size(); ++i )
+    {
+      polygon.append( QgsGeometryUtils::pointVectorFromPolygon(( *rings )[i] ) );
+    }
+  }
+  return polygon;
+}
