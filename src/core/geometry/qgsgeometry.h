@@ -84,6 +84,13 @@ class QgsGeometry
       NoGeometry
     };
 
+    enum VertexMarkerType
+    {
+      SemiTransparentCircle,
+      Cross,
+      NoMarker  /* added in version 1.1 */
+    };
+
     //! Constructor
     QgsGeometry();
 
@@ -101,6 +108,7 @@ class QgsGeometry
     ~QgsGeometry();
 
     void draw( QPainter* p ) const;
+    void drawVertexMarkers( QPainter* p, VertexMarkerType type, int size ) const;
     void coordinateTransform( const QgsCoordinateTransform& t );
     void pixelTransform( const QgsMapToPixel& mtp );
 
@@ -493,6 +501,7 @@ class QgsAbstractGeometry
     virtual ~QgsAbstractGeometry();
 
     virtual void draw( QPainter* p ) const = 0;
+    virtual void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const = 0;
 
     //changes the geometry in place
     virtual void coordinateTransform( const QgsCoordinateTransform& t ) = 0;
@@ -642,6 +651,7 @@ class QgsAbstractGeometry
     /**Updated cached geos*/
     void cacheGeos() const;
     const GEOSGeometry* geosGeom() const;
+    static void drawVertexMarker( double x, double y, QPainter* p, QgsGeometry::VertexMarkerType type, int size );
 
   private:
     // reference counting

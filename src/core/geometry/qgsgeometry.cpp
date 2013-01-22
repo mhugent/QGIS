@@ -19,6 +19,8 @@
 #include "qgsgeometry.h"
 #include "qgslinestring.h"
 #include "qgspolygonv2.h"
+#include <QColor>
+#include <QPainter>
 
 /*************************geometry wrapper*****************************************/
 QgsGeometry::QgsGeometry(): mGeometry( 0 )
@@ -72,6 +74,12 @@ void QgsGeometry::draw( QPainter* p ) const
 {
   if ( mGeometry )
     mGeometry->draw( p );
+}
+
+void QgsGeometry::drawVertexMarkers( QPainter* p, VertexMarkerType type, int size ) const
+{
+  if ( mGeometry )
+    mGeometry->drawVertexMarkers( p, type, size );
 }
 
 void QgsGeometry::coordinateTransform( const QgsCoordinateTransform& t )
@@ -522,6 +530,22 @@ QgsAbstractGeometry::QgsAbstractGeometry(): refs( 0 ), mGeosGeom( 0 )
 QgsAbstractGeometry::~QgsAbstractGeometry()
 {
   GEOSGeom_destroy( mGeosGeom );
+}
+
+void QgsAbstractGeometry::drawVertexMarker( double x, double y, QPainter* p, QgsGeometry::VertexMarkerType type, int size )
+{
+  if ( type == QgsGeometry::SemiTransparentCircle )
+  {
+    p->setPen( QColor( 50, 100, 120, 200 ) );
+    p->setBrush( QColor( 200, 200, 210, 120 ) );
+    p->drawEllipse( x - size, y - size, size * 2 + 1, size * 2 + 1 );
+  }
+  else if ( type == QgsGeometry::Cross )
+  {
+    p->setPen( QColor( 255, 0, 0 ) );
+    p->drawLine( x - size, y + size, x + size, y - size );
+    p->drawLine( x - size, y - size, x + size, y + size );
+  }
 }
 
 void QgsAbstractGeometry::ref()

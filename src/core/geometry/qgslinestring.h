@@ -10,6 +10,8 @@ class QgsLineString: public QgsCurve
     ~QgsLineString();
 
     void draw( QPainter* p ) const;
+    void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const;
+
     //changes the geometry in place
     void coordinateTransform( const QgsCoordinateTransform& t );
     void pixelTransform( const QgsMapToPixel& mtp );
@@ -51,9 +53,9 @@ class QgsLineString: public QgsCurve
     bool addRing( const QList<QgsPoint>& ring );
     bool addPart( const QList<QgsPoint> &points );
     bool splitGeometry( const QList<QgsPoint>& splitLine,
-                                QList<QgsGeometry*>&newGeometries,
-                                bool topological,
-                                QList<QgsPoint> &topologyTestPoints );
+                        QList<QgsGeometry*>&newGeometries,
+                        bool topological,
+                        QList<QgsPoint> &topologyTestPoints );
     bool reshapeGeometry( const QList<QgsPoint>& reshapeWithLine );
     bool makeDifference( QgsGeometry* other );
 

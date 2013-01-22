@@ -40,6 +40,23 @@ void QgsPolygonV2::draw( QPainter* p ) const
   }
 }
 
+void QgsPolygonV2::drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const
+{
+  int nRings = ringCount();
+  for ( int i = 0; i < nRings; ++i )
+  {
+    const QVector< double >& xVector = mRingsX->at( i );
+    const QVector< double >& yVector = mRingsY->at( i );
+    QVector< double >::const_iterator xIt = xVector.constBegin();
+    QVector< double >::const_iterator yIt = yVector.constBegin();
+
+    for ( ; xIt != xVector.constEnd() && yIt != yVector.constEnd(); ++xIt, ++yIt )
+    {
+      drawVertexMarker( *xIt, *yIt, p, type, size );
+    }
+  }
+}
+
 void QgsPolygonV2::addToPainterPath( QPainterPath& path ) const
 {
   int nRings = ringCount();

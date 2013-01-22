@@ -255,6 +255,12 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         }
         lineGeom->pixelTransform( context.mapToPixel() );
         (( QgsLineSymbolV2* )symbol )->renderPolyline( lineGeom, &feature, context, layer, selected );
+
+        if ( drawVertexMarker )
+        {
+          lineGeom->drawVertexMarkers( context.painter(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
+                                       mCurrentVertexMarkerSize );
+        }
       }
 
 #if 0
@@ -287,6 +293,12 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         }
         polygonGeom->pixelTransform( context.mapToPixel() );
         (( QgsFillSymbolV2* )symbol )->renderPolygon( polygonGeom, &feature, context, layer, selected );
+
+        if ( drawVertexMarker )
+        {
+          polygonGeom->drawVertexMarkers( context.painter(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
+                                          mCurrentVertexMarkerSize );
+        }
       }
 #if 0
       QPolygonF pts;
