@@ -11,9 +11,18 @@ class QgsGeometryUtils
 {
   public:
     /**Create geos linestring. Caller takes ownership*/
-    static GEOSGeometry* createGeosLineString( QVector<double>* x, QVector<double>* y, QVector<double>* z = 0, QVector<double>* m = 0 );
-    /**Creates geos coordinate sequence. Caller takes ownership*/
-    static GEOSCoordSequence* createGeosCoordSequence( QVector<double>* x, QVector<double>* y, QVector<double>* z = 0, QVector<double>* m = 0 );
+    static GEOSGeometry* createGeosLineString( const QVector<double>* x, const QVector<double>* y, const QVector<double>* z = 0,
+        const QVector<double>* m = 0 );
+    /**Create geos linear ring. Caller takes ownership*/
+    static GEOSGeometry* createGeosLinearRing( const QVector<double>* x, const QVector<double>* y, const QVector<double>* z = 0,
+        const QVector<double>* m = 0 );
+    /**Create geos polygon. Caller takes ownership*/
+    static GEOSGeometry* createGeosPolygon( const QVector< QVector< double > >* ringsX, const QVector< QVector< double > >* ringsY,
+                                            const QVector< QVector< double > >* ringsZ = 0, const QVector< QVector< double > >* ringsM = 0 );
+    /**Creates geos coordinate sequence. Caller takes ownership
+        @param close add first point at the end if true (necessary e.g. for linear ring)*/
+    static GEOSCoordSequence* createGeosCoordSequence( const QVector<double>* x, const QVector<double>* y, const QVector<double>* z = 0,
+        const QVector<double>* m = 0, bool close = false );
     /**Create coordinate vectors from sequence. If z and m are not present, the vectors have size 0*/
     static bool createCoordinateVectors( const GEOSCoordSequence* seq, QVector<double>* x, QVector<double>* y, QVector<double>* z, QVector<double>* m );
     /**Creates QPolygon from x- and y- coordinate vectors*/

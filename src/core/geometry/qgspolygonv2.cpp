@@ -208,7 +208,7 @@ unsigned char* QgsPolygonV2::asWkb( int& wkbSize ) const
 
 GEOSGeometry* QgsPolygonV2::asGeos() const
 {
-  return 0;
+  return QgsGeometryUtils::createGeosPolygon( mRingsX, mRingsY, mRingsZ, mRingsM );
 }
 
 QString QgsPolygonV2::asWkt() const

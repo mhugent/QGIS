@@ -93,7 +93,8 @@ class GEOSInit
 static GEOSInit geosinit;
 
 
-GEOSGeometry* QgsGeometryUtils::createGeosLineString( QVector<double>* x, QVector<double>* y, QVector<double>* z, QVector<double>* m )
+GEOSGeometry* QgsGeometryUtils::createGeosLineString( const QVector<double>* x, const QVector<double>* y, const QVector<double>* z,
+    const QVector<double>* m )
 {
   GEOSCoordSequence *coord = 0;
   try
@@ -104,14 +105,71 @@ GEOSGeometry* QgsGeometryUtils::createGeosLineString( QVector<double>* x, QVecto
   catch ( GEOSException &e )
   {
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-    //MH: for strange reasons, geos3 crashes when removing the coordinate sequence
-    //if ( coord )
-    //GEOSCoordSeq_destroy( coord );
     return 0;
   }
 }
 
-GEOSCoordSequence* QgsGeometryUtils::createGeosCoordSequence( QVector<double>* x, QVector<double>* y, QVector<double>* z, QVector<double>* m )
+GEOSGeometry* QgsGeometryUtils::createGeosLinearRing( const QVector<double>* x, const QVector<double>* y, const QVector<double>* z,
+    const QVector<double>* m )
+{
+  GEOSCoordSequence *coord = 0;
+  try
+  {
+    coord = createGeosCoordSequence( x, y, z, m, true );
+    return GEOSGeom_createLinearRing( coord );
+  }
+  catch ( GEOSException &e )
+  {
+    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
+    return 0;
+  }
+}
+
+GEOSGeometry* QgsGeometryUtils::createGeosPolygon( const QVector< QVector< double > >* ringsX, const QVector< QVector< double > >* ringsY,
+    const QVector< QVector< double > >* ringsZ, const QVector< QVector< double > >* ringsM )
+{
+  if ( !ringsX || !ringsY )
+  {
+    return 0;
+  }
+
+  int size = qMin( ringsX->size(), ringsY->size() );
+  if ( ringsZ )
+  {
+    size = qMin( size, ringsZ->size() );
+  }
+  if ( ringsM )
+  {
+    size = qMin( size, ringsM->size() );
+  }
+
+  if ( size < 1 )
+  {
+    return 0;
+  }
+
+  //outer ring
+  GEOSGeometry* outerRing = createGeosLinearRing( &( ringsX->at( 0 ) ), &( ringsY->at( 0 ) ), ringsZ ? &( ringsZ->at( 0 ) ) : 0,
+                            ringsM ? &( ringsM->at( 0 ) ) : 0 );
+
+  GEOSGeometry** holes = 0;
+  int nHoles = size - 1;
+  if ( nHoles > 0 )
+  {
+    holes = new GEOSGeometry*[ nHoles];
+  }
+
+  for ( int i = 0; i < nHoles; ++i )
+  {
+    holes[i] = createGeosLinearRing( &( ringsX->at( i + 1 ) ), &( ringsY->at( i + 1 ) ), ringsZ ? &( ringsZ->at( i + 1 ) ) : 0,
+                                     ringsM ? &( ringsM->at( i + 1 ) ) : 0 );
+  }
+
+  return GEOSGeom_createPolygon( outerRing, holes, nHoles );
+}
+
+GEOSCoordSequence* QgsGeometryUtils::createGeosCoordSequence( const QVector<double>* x, const QVector<double>* y,
+    const QVector<double>* z, const QVector<double>* m, bool close )
 {
   GEOSCoordSequence *coord = 0;
   try
@@ -131,7 +189,12 @@ GEOSCoordSequence* QgsGeometryUtils::createGeosCoordSequence( QVector<double>* x
     }
 
     int nVertices = x->size();
-    coord = GEOSCoordSeq_create( nVertices, nDim );
+    int nCoordSeqSize = nVertices;
+    if ( close )
+    {
+      ++nCoordSeqSize;
+    }
+    coord = GEOSCoordSeq_create( nCoordSeqSize, nDim );
 
     int i;
     for ( i = 0; i < nVertices; ++i )
@@ -146,6 +209,12 @@ GEOSCoordSequence* QgsGeometryUtils::createGeosCoordSequence( QVector<double>* x
       {
         GEOSCoordSeq_setOrdinate( coord, i, mIndex, ( *m )[i] );
       }
+    }
+
+    if ( close ) //close linear ring
+    {
+      GEOSCoordSeq_setX( coord, nCoordSeqSize - 1, ( *x )[0] );
+      GEOSCoordSeq_setY( coord, nCoordSeqSize - 1, ( *y )[0] );
     }
     return coord;
   }
