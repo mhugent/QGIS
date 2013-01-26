@@ -329,3 +329,12 @@ QVector< QVector<QgsPoint> > QgsGeometryUtils::convertToRings( const QPolygonF& 
   }
   return polygon;
 }
+
+double QgsGeometryUtils::leftOf( const double& x, const double& y, const double& x1, const double& y1, const double& x2, const double& y2 )
+{
+  double f1 = x - x1;
+  double f2 = y2 - y1;
+  double f3 = y - y1;
+  double f4 = x2 - x1;
+  return f1*f2 - f3*f4;
+}

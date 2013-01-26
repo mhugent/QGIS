@@ -568,6 +568,14 @@ void QgsAbstractGeometry::cacheGeos() const
   mGeosGeom = asGeos();
 }
 
+void QgsAbstractGeometry::updateGeos() const
+{
+  if ( mGeosGeom )
+  {
+    cacheGeos();
+  }
+}
+
 const GEOSGeometry* QgsAbstractGeometry::geosGeom() const
 {
   if ( !mGeosGeom )
@@ -665,23 +673,23 @@ QgsAbstractGeometry* QgsAbstractGeometry::fromMultiPolyline( const QgsMultiPolyl
 /** construct geometry from a polygon */
 QgsAbstractGeometry* QgsAbstractGeometry::fromPolygon( const QgsPolygon& polygon )
 {
-    //create QgsPolygonV2
-    QVector< QVector<double> >* ringsX = new QVector< QVector<double> >( polygon.size() );
-    QVector< QVector<double> >* ringsY = new QVector< QVector<double> >( polygon.size() );
+  //create QgsPolygonV2
+  QVector< QVector<double> >* ringsX = new QVector< QVector<double> >( polygon.size() );
+  QVector< QVector<double> >* ringsY = new QVector< QVector<double> >( polygon.size() );
 
-    for( int i = 0; i < polygon.size(); ++i )
+  for ( int i = 0; i < polygon.size(); ++i )
+  {
+    const QgsPolyline& ring = polygon.at( i );
+    ( *ringsX )[i].resize( ring.size() );
+    ( *ringsY )[i].resize( ring.size() );
+    for ( int j = 0; j < ring.size(); ++j )
     {
-        const QgsPolyline& ring = polygon.at( i );
-        (*ringsX)[i].resize( ring.size() );
-        (*ringsY)[i].resize( ring.size() );
-        for( int j = 0; j < ring.size(); ++j )
-        {
-            const QgsPoint& pt = ring[j];
-            (*ringsX)[i][j] = pt.x();
-            (*ringsY)[i][j] = pt.y();
-        }
+      const QgsPoint& pt = ring[j];
+      ( *ringsX )[i][j] = pt.x();
+      ( *ringsY )[i][j] = pt.y();
     }
-    return new QgsPolygonV2( ringsX, ringsY );
+  }
+  return new QgsPolygonV2( ringsX, ringsY );
 }
 
 QgsAbstractGeometry* QgsAbstractGeometry::fromMultiPolygon( const QgsMultiPolygon& multipoly )

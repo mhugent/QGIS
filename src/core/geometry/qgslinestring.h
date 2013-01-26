@@ -72,6 +72,8 @@ class QgsLineString: public QgsCurve
 
     virtual int avoidIntersections( QMap<QgsVectorLayer*, QSet<QgsFeatureId> > ignoreFeatures = ( QMap<QgsVectorLayer*, QSet<QgsFeatureId> >() ) ) const;
 
+    int vertexCount() const;
+
   protected:
     void addToPainterPath( QPainterPath& path ) const;
 

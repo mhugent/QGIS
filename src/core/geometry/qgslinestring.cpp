@@ -5,6 +5,7 @@
 #include "qgsmaptopixel.h"
 #include <QPainter>
 #include <QVector>
+#include <limits>
 
 QgsLineString::QgsLineString( QVector<double>* x, QVector<double>* y, QVector<double>* z, QVector<double>* m ):
     mXValues( x ), mYValues( y ), mZValues( z ), mMValues( m )
@@ -52,9 +53,20 @@ void QgsLineString::pixelTransform( const QgsMapToPixel& mtp )
   mtp.transformInPlace( *mXValues, *mYValues );
 }
 
+int QgsLineString::vertexCount() const
+{
+  if ( !mXValues || !mYValues )
+  {
+    return 0;
+  }
+
+  return qMin( mXValues->size(), mYValues->size() );
+}
+
 int QgsLineString::translate( double dx, double dy )
 {
   //soon...
+  return 1;
 }
 
 double QgsLineString::length() const
@@ -228,7 +240,20 @@ bool QgsLineString::insertVertex( double x, double y, int beforeVertex )
 
 bool QgsLineString::moveVertex( double x, double y, int atVertex )
 {
-  return false;
+  if ( !mXValues || !mYValues )
+  {
+    return false;
+  }
+  if ( atVertex < 0 || atVertex >= mXValues->size() || atVertex  >= mYValues->size() )
+  {
+    return false; //out ot range
+  }
+
+  ( *mXValues )[ atVertex ] = x;
+  ( *mYValues )[ atVertex ] = y;
+
+  updateGeos(); //keep cached geos object in sync if present
+  return true;
 }
 
 bool QgsLineString::deleteVertex( int atVertex )
@@ -267,7 +292,13 @@ bool QgsLineString::makeDifference( QgsGeometry* other )
 //analysis
 QgsPoint QgsLineString::vertexAt( int atVertex ) const
 {
-  return QgsPoint(); //soon...
+  int nVertices = vertexCount();
+  if ( atVertex < 0 && atVertex >= nVertices )
+  {
+    return QgsPoint();
+  }
+
+  return QgsPoint( mXValues->at( atVertex ), mYValues->at( atVertex ) );
 }
 
 double QgsLineString::sqrDistToVertexAt( QgsPoint& point, int atVertex ) const
@@ -277,13 +308,67 @@ double QgsLineString::sqrDistToVertexAt( QgsPoint& point, int atVertex ) const
 
 double QgsLineString::closestVertexWithContext( const QgsPoint& point, int& atVertex ) const
 {
-  return 0; //soon...
+  int nVertices = vertexCount();
+  if ( nVertices < 1 )
+  {
+    return -1;
+  }
+
+  double sqrDist = std::numeric_limits<double>::max();
+  double currentDist = 0;
+
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    currentDist = point.sqrDist( mXValues->at( i ), mYValues->at( i ) );
+    if ( currentDist < sqrDist )
+    {
+      atVertex = i;
+      sqrDist = currentDist;
+    }
+  }
+  return sqrDist;
 }
 
 double QgsLineString::closestSegmentWithContext( const QgsPoint& point, QgsPoint& minDistPoint, int& afterVertex,
     double* leftOf, double epsilon ) const
 {
-  return 0; //soon...
+  int nVertices = vertexCount();
+  if ( nVertices < 1 )
+  {
+    return -1;
+  }
+
+  double sqrDist = std::numeric_limits<double>::max();
+  double currentDist = 0;
+  QgsPoint distPoint;
+  double thisX = 0;
+  double thisY = 0;
+  double prevX = 0;
+  double prevY = 0;
+
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    if ( i > 0 )
+    {
+      prevX = thisX;
+      prevY = thisY;
+    }
+    thisX = mXValues->at( i );
+    thisY = mYValues->at( i );
+
+    if (( currentDist = point.sqrDistToSegment( prevX, prevY, thisX, thisY, distPoint, epsilon ) ) < sqrDist )
+    {
+      afterVertex = i;
+      sqrDist = currentDist;
+      minDistPoint = distPoint;
+      if ( leftOf )
+      {
+        *leftOf = QgsGeometryUtils::leftOf( point.x(), point.y(), prevX, prevY, thisX, thisY );
+      }
+    }
+  }
+
+  return sqrDist;
 }
 
 void QgsLineString::adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex ) const

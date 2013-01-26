@@ -30,6 +30,8 @@ class QgsGeometryUtils
     /**Creates QgsPoint vector from polygon*/
     static QVector<QgsPoint> pointVectorFromPolygon( const QPolygonF& polygon );
     static QVector< QVector<QgsPoint> > convertToRings( const QPolygonF& points, QList<QPolygonF>* rings );
+    /**Returns < 0 if point(x/y) is left of the line x1,y1 -> x1,y2*/
+    static double leftOf( const double& x, const double& y, const double& x1, const double& y1, const double& x2, const double& y2 );
 };
 
 

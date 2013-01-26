@@ -651,6 +651,7 @@ class QgsAbstractGeometry
     /**Updated cached geos*/
     void cacheGeos() const;
     const GEOSGeometry* geosGeom() const;
+    void updateGeos() const;
     static void drawVertexMarker( double x, double y, QPainter* p, QgsGeometry::VertexMarkerType type, int size );
 
   private:
