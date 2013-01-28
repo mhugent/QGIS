@@ -92,6 +92,21 @@ int QgsPolygonV2::translate( double dx, double dy )
   return 1;
 }
 
+void QgsPolygonV2::vertices( QList<QgsPoint>& vertexList ) const
+{
+    int nRings = ringCount();
+    for( int i = 0; i < nRings; ++i )
+    {
+        const QVector< double >& ringX = mRingsX->at( i );
+        const QVector< double >& ringY = mRingsY->at( i );
+        int nVertices = qMin( ringX.size(), ringY.size() );
+        for( int j = 0; j < nVertices; ++j )
+        {
+            vertexList.append( QgsPoint( ringX.at( j ), ringY.at( j ) ) );
+        }
+    }
+}
+
 double QgsPolygonV2::area() const
 {
   return 0;

@@ -508,6 +508,9 @@ class QgsAbstractGeometry
     virtual void pixelTransform( const QgsMapToPixel& mtp ) = 0;
     virtual int translate( double dx, double dy ) = 0;
 
+    //returns vertex list
+    virtual void vertices( QList<QgsPoint>& vertexList ) const = 0;
+
     //import
     static QgsAbstractGeometry* fromWkb( unsigned char * wkb, size_t length );
     static QgsAbstractGeometry* fromWkt( const QString& wkt );

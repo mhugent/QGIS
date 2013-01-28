@@ -17,6 +17,8 @@ class QgsLineString: public QgsCurve
     void pixelTransform( const QgsMapToPixel& mtp );
     int translate( double dx, double dy );
 
+    void vertices( QList<QgsPoint>& vertexList ) const;
+
     //curve methods
     double length() const;
     bool isClosed() const;

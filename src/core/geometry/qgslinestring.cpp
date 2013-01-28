@@ -69,6 +69,15 @@ int QgsLineString::translate( double dx, double dy )
   return 1;
 }
 
+void QgsLineString::vertices( QList<QgsPoint>& vertexList ) const
+{
+    int nVertices = vertexCount();
+    for( int i = 0; i < nVertices; ++i )
+    {
+        vertexList.append( QgsPoint( mXValues->at( i ), mYValues->at( i ) ) );
+    }
+}
+
 double QgsLineString::length() const
 {
   return 0;

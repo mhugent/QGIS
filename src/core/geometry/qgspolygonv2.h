@@ -17,6 +17,8 @@ class QgsPolygonV2: public QgsSurface
     void pixelTransform( const QgsMapToPixel& mtp );
     int translate( double dx, double dy );
 
+    void vertices( QList<QgsPoint>& vertexList ) const;
+
     //surface
     double area() const;
 
