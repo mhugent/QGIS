@@ -239,11 +239,6 @@ QGis::GeometryType QgsPolygonV2::type() const
   return QGis::Polygon;
 }
 
-QgsRectangle QgsPolygonV2::boundingBox() const
-{
-  return QgsRectangle();
-}
-
 bool QgsPolygonV2::convertToMultiType() const
 {
   return false;
@@ -300,11 +295,6 @@ QgsPoint QgsPolygonV2::vertexAt( int atVertex ) const //return m and z
 }
 
 double QgsPolygonV2::sqrDistToVertexAt( QgsPoint& point, int atVertex ) const
-{
-  return -1;
-}
-
-double QgsPolygonV2::closestVertexWithContext( const QgsPoint& point, int& atVertex ) const
 {
   return -1;
 }

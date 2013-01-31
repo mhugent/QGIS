@@ -21,6 +21,7 @@
 #include "qgspolygonv2.h"
 #include <QColor>
 #include <QPainter>
+#include <limits>
 
 /*************************geometry wrapper*****************************************/
 QgsGeometry::QgsGeometry(): mGeometry( 0 )
@@ -876,6 +877,72 @@ QgsMultiPolyline QgsAbstractGeometry::asMultiPolyline()
 QgsMultiPolygon QgsAbstractGeometry::asMultiPolygon()
 {
   return QgsMultiPolygon(); //soon...
+}
+
+double QgsAbstractGeometry::closestVertexWithContext( const QgsPoint& point, int& atVertex ) const
+{
+  QList<QgsPoint> vertexList;
+  vertices( vertexList );
+
+  double sqrDist = std::numeric_limits<double>::max();
+  double currentDist = 0;
+
+  QList<QgsPoint>::const_iterator vIt = vertexList.constBegin();
+  int i = 0;
+  for ( ; vIt != vertexList.constEnd(); ++vIt )
+  {
+    currentDist = point.sqrDist( *vIt );
+    if ( currentDist < sqrDist )
+    {
+      atVertex = i;
+      sqrDist = currentDist;
+    }
+    ++i;
+  }
+
+  return sqrDist;
+}
+
+QgsRectangle QgsAbstractGeometry::boundingBox() const
+{
+  QList<QgsPoint> vertexList;
+  vertices( vertexList );
+  if ( vertexList.size() < 1 )
+  {
+    return QgsRectangle();
+  }
+
+  double xmin =  std::numeric_limits<double>::max();
+  double ymin =  std::numeric_limits<double>::max();
+  double xmax = -std::numeric_limits<double>::max();
+  double ymax = -std::numeric_limits<double>::max();
+
+  QList<QgsPoint>::const_iterator vIt = vertexList.constBegin();
+  double x = 0;
+  double y = 0;
+  for ( ; vIt != vertexList.constEnd(); ++vIt )
+  {
+    x = vIt->x();
+    y = vIt->y();
+
+    if ( x < xmin )
+    {
+      xmin = x;
+    }
+    if ( x > xmax )
+    {
+      xmax = x;
+    }
+    if ( y < ymin )
+    {
+      ymin = y;
+    }
+    if ( y > ymax )
+    {
+      ymax = y;
+    }
+  }
+  return QgsRectangle( xmin, ymin, xmax, ymax );
 }
 
 #if 0

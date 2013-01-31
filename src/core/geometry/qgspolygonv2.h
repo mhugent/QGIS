@@ -40,8 +40,6 @@ class QgsPolygonV2: public QgsSurface
     QGis::WkbType wkbType() const;
     QGis::GeometryType type() const;
 
-    QgsRectangle boundingBox() const;
-
     bool isMultipart() const { return false; }
 
     virtual bool convertToMultiType() const;
@@ -62,7 +60,6 @@ class QgsPolygonV2: public QgsSurface
     //analysis
     QgsPoint vertexAt( int atVertex ) const; //return m and z
     double sqrDistToVertexAt( QgsPoint& point, int atVertex ) const;
-    double closestVertexWithContext( const QgsPoint& point, int& atVertex ) const;
     double closestSegmentWithContext( const QgsPoint& point, QgsPoint& minDistPoint, int& afterVertex,
                                       double* leftOf = 0, double epsilon = DEFAULT_SEGMENT_EPSILON ) const;
     void adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex ) const;

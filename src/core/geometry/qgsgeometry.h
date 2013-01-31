@@ -544,7 +544,7 @@ class QgsAbstractGeometry
     virtual QGis::WkbType wkbType() const = 0;
     virtual QGis::GeometryType type() const = 0;
 
-    virtual QgsRectangle boundingBox() const = 0;
+    QgsRectangle boundingBox() const;
 
     virtual bool isMultipart() const = 0;
 
@@ -614,7 +614,7 @@ class QgsAbstractGeometry
     //analysis
     virtual QgsPoint vertexAt( int atVertex ) const = 0; //return m and z
     virtual double sqrDistToVertexAt( QgsPoint& point, int atVertex ) const = 0;
-    virtual double closestVertexWithContext( const QgsPoint& point, int& atVertex ) const = 0;
+    double closestVertexWithContext( const QgsPoint& point, int& atVertex ) const;
     virtual double closestSegmentWithContext( const QgsPoint& point, QgsPoint& minDistPoint, int& afterVertex,
         double* leftOf = 0, double epsilon = DEFAULT_SEGMENT_EPSILON ) const = 0;
     virtual void adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex ) const = 0;

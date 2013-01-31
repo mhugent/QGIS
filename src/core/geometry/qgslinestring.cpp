@@ -221,11 +221,6 @@ QGis::GeometryType QgsLineString::type() const
   return QGis::Line;
 }
 
-QgsRectangle QgsLineString::boundingBox() const
-{
-  return QgsRectangle(); //soon...
-}
-
 bool QgsLineString::convertToMultiType() const
 {
   return false;
@@ -303,29 +298,6 @@ QgsPoint QgsLineString::vertexAt( int atVertex ) const
 double QgsLineString::sqrDistToVertexAt( QgsPoint& point, int atVertex ) const
 {
   return 0; //soon...
-}
-
-double QgsLineString::closestVertexWithContext( const QgsPoint& point, int& atVertex ) const
-{
-  int nVertices = vertexCount();
-  if ( nVertices < 1 )
-  {
-    return -1;
-  }
-
-  double sqrDist = std::numeric_limits<double>::max();
-  double currentDist = 0;
-
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    currentDist = point.sqrDist( mXValues->at( i ), mYValues->at( i ) );
-    if ( currentDist < sqrDist )
-    {
-      atVertex = i;
-      sqrDist = currentDist;
-    }
-  }
-  return sqrDist;
 }
 
 double QgsLineString::closestSegmentWithContext( const QgsPoint& point, QgsPoint& minDistPoint, int& afterVertex,
