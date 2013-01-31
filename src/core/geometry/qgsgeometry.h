@@ -501,7 +501,7 @@ class QgsAbstractGeometry
     virtual ~QgsAbstractGeometry();
 
     virtual void draw( QPainter* p ) const = 0;
-    virtual void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const = 0;
+    void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const;
 
     //changes the geometry in place
     virtual void coordinateTransform( const QgsCoordinateTransform& t ) = 0;

@@ -10,7 +10,6 @@ class QgsLineString: public QgsCurve
     ~QgsLineString();
 
     void draw( QPainter* p ) const;
-    void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const;
 
     //changes the geometry in place
     void coordinateTransform( const QgsCoordinateTransform& t );

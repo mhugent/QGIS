@@ -26,16 +26,6 @@ void QgsLineString::draw( QPainter* p ) const
   p->drawPolyline( poly );
 }
 
-void QgsLineString::drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const
-{
-  QVector<double>::const_iterator xIt = mXValues->constBegin();
-  QVector<double>::const_iterator yIt = mYValues->constBegin();
-  for ( ; xIt != mXValues->constEnd() && yIt != mYValues->constEnd(); ++xIt, ++yIt )
-  {
-    drawVertexMarker( *xIt, *yIt, p, type, size );
-  }
-}
-
 void QgsLineString::addToPainterPath( QPainterPath& path ) const
 {
   path.addPolygon( QgsGeometryUtils::polygonFromCoordinates( mXValues, mYValues ) );
@@ -71,11 +61,11 @@ int QgsLineString::translate( double dx, double dy )
 
 void QgsLineString::vertices( QList<QgsPoint>& vertexList ) const
 {
-    int nVertices = vertexCount();
-    for( int i = 0; i < nVertices; ++i )
-    {
-        vertexList.append( QgsPoint( mXValues->at( i ), mYValues->at( i ) ) );
-    }
+  int nVertices = vertexCount();
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    vertexList.append( QgsPoint( mXValues->at( i ), mYValues->at( i ) ) );
+  }
 }
 
 double QgsLineString::length() const

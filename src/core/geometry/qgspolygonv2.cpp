@@ -40,23 +40,6 @@ void QgsPolygonV2::draw( QPainter* p ) const
   }
 }
 
-void QgsPolygonV2::drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const
-{
-  int nRings = ringCount();
-  for ( int i = 0; i < nRings; ++i )
-  {
-    const QVector< double >& xVector = mRingsX->at( i );
-    const QVector< double >& yVector = mRingsY->at( i );
-    QVector< double >::const_iterator xIt = xVector.constBegin();
-    QVector< double >::const_iterator yIt = yVector.constBegin();
-
-    for ( ; xIt != xVector.constEnd() && yIt != yVector.constEnd(); ++xIt, ++yIt )
-    {
-      drawVertexMarker( *xIt, *yIt, p, type, size );
-    }
-  }
-}
-
 void QgsPolygonV2::addToPainterPath( QPainterPath& path ) const
 {
   int nRings = ringCount();
@@ -94,17 +77,17 @@ int QgsPolygonV2::translate( double dx, double dy )
 
 void QgsPolygonV2::vertices( QList<QgsPoint>& vertexList ) const
 {
-    int nRings = ringCount();
-    for( int i = 0; i < nRings; ++i )
+  int nRings = ringCount();
+  for ( int i = 0; i < nRings; ++i )
+  {
+    const QVector< double >& ringX = mRingsX->at( i );
+    const QVector< double >& ringY = mRingsY->at( i );
+    int nVertices = qMin( ringX.size(), ringY.size() );
+    for ( int j = 0; j < nVertices; ++j )
     {
-        const QVector< double >& ringX = mRingsX->at( i );
-        const QVector< double >& ringY = mRingsY->at( i );
-        int nVertices = qMin( ringX.size(), ringY.size() );
-        for( int j = 0; j < nVertices; ++j )
-        {
-            vertexList.append( QgsPoint( ringX.at( j ), ringY.at( j ) ) );
-        }
+      vertexList.append( QgsPoint( ringX.at( j ), ringY.at( j ) ) );
     }
+  }
 }
 
 double QgsPolygonV2::area() const

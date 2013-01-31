@@ -532,6 +532,17 @@ QgsAbstractGeometry::~QgsAbstractGeometry()
   GEOSGeom_destroy( mGeosGeom );
 }
 
+void QgsAbstractGeometry::drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const
+{
+  QList<QgsPoint> vertexList;
+  vertices( vertexList );
+  QList<QgsPoint>::const_iterator vIt = vertexList.constBegin();
+  for ( ; vIt != vertexList.constEnd(); ++vIt )
+  {
+    drawVertexMarker( vIt->x(), vIt->y(), p, type, size );
+  }
+}
+
 void QgsAbstractGeometry::drawVertexMarker( double x, double y, QPainter* p, QgsGeometry::VertexMarkerType type, int size )
 {
   if ( type == QgsGeometry::SemiTransparentCircle )

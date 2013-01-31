@@ -12,7 +12,6 @@ class QgsPolygonV2: public QgsSurface
     ~QgsPolygonV2();
 
     void draw( QPainter* p ) const;
-    void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const;
     void coordinateTransform( const QgsCoordinateTransform& t );
     void pixelTransform( const QgsMapToPixel& mtp );
     int translate( double dx, double dy );
