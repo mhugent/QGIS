@@ -28,6 +28,7 @@ class QgsLineString: public QgsCurve
     static QgsAbstractGeometry* fromGeos( const GEOSGeometry* geos );
 
     //export
+    QgsPolyline asPolyline() const;
     unsigned char* asWkb( int& wkbSize ) const;
     GEOSGeometry* asGeos() const;
     QString asWkt() const;

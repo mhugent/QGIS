@@ -635,7 +635,7 @@ class QgsAbstractGeometry
 
     /** return contents of the geometry as a polyline
         if wkbType is WKBLineString, otherwise an empty list */
-    QgsPolyline asPolyline();
+    virtual QgsPolyline asPolyline() const { return QgsPolyline(); }
 
     /** return contents of the geometry as a polygon
         if wkbType is WKBPolygon, otherwise an empty list */

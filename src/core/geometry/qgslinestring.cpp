@@ -138,6 +138,17 @@ QgsAbstractGeometry* QgsLineString::fromGeos( const GEOSGeometry* geos )
   return new QgsLineString( xVector, yVector, zVector->size() > 0 ? zVector : 0, mVector->size() > 0 ? mVector : 0 );
 }
 
+QgsPolyline QgsLineString::asPolyline() const
+{
+  QgsPolyline line;
+  int nVertices = vertexCount();
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    line.append( QgsPoint( mXValues->at( i ), mYValues->at( i ) ) );
+  }
+  return line;
+}
+
 //export
 unsigned char* QgsLineString::asWkb( int& wkbSize ) const
 {

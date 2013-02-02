@@ -838,7 +838,41 @@ bool QgsAbstractGeometry::isGeosValid() const
 
 QgsPoint QgsAbstractGeometry::closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist ) const
 {
-  return QgsPoint(); //soon...
+  double minDist = std::numeric_limits<double>::max();
+  double currDist = 0;
+
+  QList<QgsPoint> vertexList;
+  vertices( vertexList );
+
+  int nVertices = vertexList.size();
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    currDist = point.sqrDist( vertexList.at( i ) );
+    if ( currDist < minDist )
+    {
+      minDist = currDist;
+      sqrDist = currDist;
+      atVertex = i;
+      if ( i == 0 )
+      {
+        beforeVertex = -1;
+      }
+      else
+      {
+        beforeVertex = i - 1;
+      }
+
+      if ( i == ( nVertices - 1 ) )
+      {
+        afterVertex = -1;
+      }
+      else
+      {
+        afterVertex = i + 1;
+      }
+    }
+  }
+  return vertexList.at( atVertex );
 }
 
 QgsAbstractGeometry* QgsAbstractGeometry::buffer( double distance, int segments ) const
@@ -874,11 +908,6 @@ QgsAbstractGeometry* QgsAbstractGeometry::combine( const QgsAbstractGeometry* ge
 QgsPoint QgsAbstractGeometry::asPoint()
 {
   return QgsPoint(); //soon...
-}
-
-QgsPolyline QgsAbstractGeometry::asPolyline()
-{
-  return QgsPolyline(); //soon...
 }
 
 QgsPolygon QgsAbstractGeometry::asPolygon()
