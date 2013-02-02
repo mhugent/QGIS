@@ -202,9 +202,13 @@ QDomElement QgsLineString::asGML2( QDomDocument& doc ) const
   return QDomElement();
 }
 
-QgsGeometry* QgsLineString::clone() const
+QgsAbstractGeometry* QgsLineString::clone() const
 {
-  return 0;
+  QVector<double>* xVector = new QVector<double>( *mXValues );
+  QVector<double>* yVector = new QVector<double>( *mYValues );
+  QVector<double>* zVector = mZValues ? new QVector<double>( *mZValues ) : 0;
+  QVector<double>* mVector = mMValues ? new QVector<double>( *mMValues ) : 0;
+  return new QgsLineString( xVector, yVector, zVector );
 }
 
 QgsGeometry::GeometryType QgsLineString::geometryType() const

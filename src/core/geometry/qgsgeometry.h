@@ -492,6 +492,8 @@ class QgsGeometry
 
   private:
     QgsAbstractGeometry* mGeometry;
+
+    void detach(); //before non-const operations: make sure mGeometry only referenced from this instance
 };
 
 class QgsAbstractGeometry
@@ -499,6 +501,8 @@ class QgsAbstractGeometry
   public:
     QgsAbstractGeometry();
     virtual ~QgsAbstractGeometry();
+
+    int referenceCount() const { return mRefs; }
 
     virtual void draw( QPainter* p ) const = 0;
     void drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const;
@@ -536,7 +540,7 @@ class QgsAbstractGeometry
     virtual GEOSGeometry* asGeos() const = 0;
     virtual QString asWkt() const = 0;
     virtual QDomElement asGML2( QDomDocument& doc ) const = 0;
-    virtual QgsGeometry* clone() const = 0;
+    virtual QgsAbstractGeometry* clone() const = 0;
 
     virtual bool hasZ() const = 0;
     virtual bool hasM() const = 0;
@@ -659,7 +663,7 @@ class QgsAbstractGeometry
 
   private:
     // reference counting
-    int refs;
+    int mRefs;
     void ref(); // add reference
     void deref(); // remove reference, delete if refs == 0
     friend class QgsGeometry;

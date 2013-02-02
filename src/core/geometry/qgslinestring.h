@@ -32,7 +32,7 @@ class QgsLineString: public QgsCurve
     GEOSGeometry* asGeos() const;
     QString asWkt() const;
     QDomElement asGML2( QDomDocument& doc ) const;
-    QgsGeometry* clone() const;
+    QgsAbstractGeometry* clone() const;
 
     bool hasZ() const { return ( mZValues && !mZValues->isEmpty() ); }
     bool hasM() const { return ( mMValues && !mMValues->isEmpty() ); }

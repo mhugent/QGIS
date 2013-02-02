@@ -219,9 +219,13 @@ QDomElement QgsPolygonV2::asGML2( QDomDocument& doc ) const
   return QDomElement();
 }
 
-QgsGeometry* QgsPolygonV2::clone() const
+QgsAbstractGeometry* QgsPolygonV2::clone() const
 {
-  return 0;
+  QVector< QVector< double > >* ringsX = new QVector< QVector< double > >( *mRingsX );
+  QVector< QVector< double > >* ringsY = new QVector< QVector< double > >( *mRingsY );
+  QVector< QVector< double > >* ringsZ = mRingsZ ? new QVector< QVector< double > >( *mRingsZ ) : 0;
+  QVector< QVector< double > >* ringsM = mRingsM ? new QVector< QVector< double > >( *mRingsM ) : 0;
+  return new QgsPolygonV2( ringsX, ringsY, ringsZ, ringsM );
 }
 
 QgsGeometry::GeometryType QgsPolygonV2::geometryType() const

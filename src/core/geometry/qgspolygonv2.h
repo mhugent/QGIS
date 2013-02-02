@@ -31,7 +31,7 @@ class QgsPolygonV2: public QgsSurface
     GEOSGeometry* asGeos() const;
     QString asWkt() const;
     QDomElement asGML2( QDomDocument& doc ) const;
-    QgsGeometry* clone() const;
+    QgsAbstractGeometry* clone() const;
 
     bool hasZ() const { return ( mRingsZ && !mRingsZ->isEmpty() ); }
     bool hasM() const { return ( mRingsM && !mRingsM->isEmpty() ); }

@@ -70,6 +70,20 @@ QgsGeometry& QgsGeometry::operator=( QgsGeometry const & other )
   return *this;
 }
 
+void QgsGeometry::detach()
+{
+  if ( !mGeometry )
+  {
+    return;
+  }
+  if ( mGeometry->referenceCount() > 1 )
+  {
+    mGeometry->deref();
+    mGeometry = mGeometry->clone();
+    mGeometry->ref();
+  }
+}
+
 //delegate other methods to mGeometry
 void QgsGeometry::draw( QPainter* p ) const
 {
@@ -523,7 +537,7 @@ bool QgsGeometry::deletePart( int partNum )
 
 /*************************abstract geometry****************************************/
 
-QgsAbstractGeometry::QgsAbstractGeometry(): refs( 0 ), mGeosGeom( 0 )
+QgsAbstractGeometry::QgsAbstractGeometry(): mRefs( 0 ), mGeosGeom( 0 )
 {
 
 }
@@ -562,13 +576,13 @@ void QgsAbstractGeometry::drawVertexMarker( double x, double y, QPainter* p, Qgs
 
 void QgsAbstractGeometry::ref()
 {
-  ++refs;
+  ++mRefs;
 }
 
 void QgsAbstractGeometry::deref()
 {
-  --refs;
-  if ( refs <= 0 )
+  --mRefs;
+  if ( mRefs <= 0 )
   {
     delete this;
   }
