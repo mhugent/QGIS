@@ -18,6 +18,7 @@
 
 #include "qgsgeometry.h"
 #include "qgslinestring.h"
+#include "qgsmaptopixel.h"
 #include "qgspolygonv2.h"
 #include <QColor>
 #include <QPainter>
@@ -85,16 +86,16 @@ void QgsGeometry::detach()
 }
 
 //delegate other methods to mGeometry
-void QgsGeometry::draw( QPainter* p ) const
+void QgsGeometry::draw( QPainter* p, const QgsMapToPixel& mtp ) const
 {
   if ( mGeometry )
-    mGeometry->draw( p );
+    mGeometry->draw( p, mtp );
 }
 
-void QgsGeometry::drawVertexMarkers( QPainter* p, VertexMarkerType type, int size ) const
+void QgsGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel& mtp, VertexMarkerType type, int size ) const
 {
   if ( mGeometry )
-    mGeometry->drawVertexMarkers( p, type, size );
+    mGeometry->drawVertexMarkers( p, mtp, type, size );
 }
 
 void QgsGeometry::coordinateTransform( const QgsCoordinateTransform& t )
@@ -547,14 +548,21 @@ QgsAbstractGeometry::~QgsAbstractGeometry()
   GEOSGeom_destroy( mGeosGeom );
 }
 
-void QgsAbstractGeometry::drawVertexMarkers( QPainter* p, QgsGeometry::VertexMarkerType type, int size ) const
+void QgsAbstractGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel& mtp, QgsGeometry::VertexMarkerType type, int size ) const
 {
   QList<QgsPoint> vertexList;
   vertices( vertexList );
   QList<QgsPoint>::const_iterator vIt = vertexList.constBegin();
+
+  double x = 0;
+  double y = 0;
   for ( ; vIt != vertexList.constEnd(); ++vIt )
   {
-    drawVertexMarker( vIt->x(), vIt->y(), p, type, size );
+    const QgsPoint& pt = *vIt;
+    x = pt.x();
+    y = pt.y();
+    mtp.transformInPlace( x, y );
+    drawVertexMarker( x, y, p, type, size );
   }
 }
 

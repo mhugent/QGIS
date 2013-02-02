@@ -19,7 +19,7 @@ QgsPolygonV2::~QgsPolygonV2()
   delete mRingsM;
 }
 
-void QgsPolygonV2::draw( QPainter* p ) const
+void QgsPolygonV2::draw( QPainter* p, const QgsMapToPixel& mtp ) const
 {
   int nRings = ringCount();
   if ( nRings < 1 )
@@ -30,22 +30,25 @@ void QgsPolygonV2::draw( QPainter* p ) const
   if ( nRings == 1 )
   {
     QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( &( *mRingsX )[0], &( *mRingsY )[0] );
+    mtp.transformInPlace( poly );
     p->drawPolygon( poly );
   }
   else //use painterpath
   {
     QPainterPath path;
-    addToPainterPath( path );
+    addToPainterPath( path, mtp );
     p->drawPath( path );
   }
 }
 
-void QgsPolygonV2::addToPainterPath( QPainterPath& path ) const
+void QgsPolygonV2::addToPainterPath( QPainterPath& path, const QgsMapToPixel& mtp ) const
 {
   int nRings = ringCount();
   for ( int i = 0; i < nRings; ++i )
   {
-    path.addPolygon( QgsGeometryUtils::polygonFromCoordinates( &( *mRingsX )[i], &( *mRingsY )[i] ) );
+    QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( &( *mRingsX )[i], &( *mRingsY )[i] );
+    mtp.transformInPlace( poly );
+    path.addPolygon( poly );
   }
 }
 

@@ -760,14 +760,20 @@ void QgsVectorLayer::drawRendererV2( QgsRenderContext& rendererContext, bool lab
       bool sel = mSelectedFeatureIds.contains( fet.id() );
       bool drawMarker = ( mEditable && ( !vertexMarkerOnlyForSelection || sel ) );
 
-      // render feature
-      bool rendered = mRendererV2->renderFeature( fet, rendererContext, -1, sel, drawMarker );
-
       if ( mEditable )
       {
         // Cache this for the use of (e.g.) modifying the feature's uncommitted geometry.
         mCachedGeometries[fet.id()] = *fet.geometry();
       }
+
+      const QgsCoordinateTransform* ct = rendererContext.coordinateTransform();
+      if ( ct )
+      {
+        fet.geometry()->coordinateTransform( *ct );
+      }
+
+      // render feature
+      bool rendered = mRendererV2->renderFeature( fet, rendererContext, -1, sel, drawMarker );
 
       // labeling - register feature
       if ( rendered && rendererContext.labelingEngine() )

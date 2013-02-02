@@ -9,7 +9,7 @@ class QgsLineString: public QgsCurve
     QgsLineString( QVector<double>* x = 0, QVector<double>* y = 0, QVector<double>* z = 0, QVector<double>* m = 0 ); //constructor takes ownership of vertices
     ~QgsLineString();
 
-    void draw( QPainter* p ) const;
+    void draw( QPainter* p, const QgsMapToPixel& mtp ) const;
 
     //changes the geometry in place
     void coordinateTransform( const QgsCoordinateTransform& t );
@@ -73,7 +73,7 @@ class QgsLineString: public QgsCurve
     int vertexCount() const;
 
   protected:
-    void addToPainterPath( QPainterPath& path ) const;
+    void addToPainterPath( QPainterPath& path, const QgsMapToPixel& mtp ) const;
 
   private:
     QVector<double>* mXValues;

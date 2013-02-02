@@ -23,6 +23,7 @@
 #include <cassert>
 
 class QgsPoint;
+class QPolygonF;
 class QPoint;
 
 /** \ingroup core
@@ -73,6 +74,9 @@ class CORE_EXPORT QgsMapToPixel
        @note not available in python bindings
      */
     void transformInPlace( QVector<double>& x, QVector<double>& y ) const;
+
+    /**Transforms QPolygon in place*/
+    void transformInPlace( QPolygonF& p ) const;
 
 #ifdef ANDROID
     void transformInPlace( float& x, float& y ) const;

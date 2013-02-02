@@ -17,6 +17,7 @@
 #include "qgsmaptopixel.h"
 
 #include <QPoint>
+#include <QPolygonF>
 #include <QTextStream>
 #include <QVector>
 
@@ -145,6 +146,16 @@ void QgsMapToPixel::transformInPlace( QVector<double>& x,
   assert( x.size() == y.size() );
   for ( int i = 0; i < x.size(); ++i )
     transformInPlace( x[i], y[i] );
+}
+
+void QgsMapToPixel::transformInPlace( QPolygonF& p ) const
+{
+  QPolygonF::iterator it = p.begin();
+  for ( ; it != p.end(); ++it )
+  {
+    QPointF& pt = *it;
+    transformInPlace( pt.rx(), pt.ry() );
+  }
 }
 
 #ifdef ANDROID

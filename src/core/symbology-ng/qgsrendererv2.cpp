@@ -248,29 +248,14 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
       QgsGeometry* lineGeom = feature.geometry();
       if ( lineGeom )
       {
-        const QgsCoordinateTransform* ct = context.coordinateTransform();
-        if ( ct )
-        {
-          lineGeom->coordinateTransform( *ct );
-        }
-        lineGeom->pixelTransform( context.mapToPixel() );
         (( QgsLineSymbolV2* )symbol )->renderPolyline( lineGeom, &feature, context, layer, selected );
 
         if ( drawVertexMarker )
         {
-          lineGeom->drawVertexMarkers( context.painter(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
+          lineGeom->drawVertexMarkers( context.painter(), context.mapToPixel(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
                                        mCurrentVertexMarkerSize );
         }
       }
-
-#if 0
-      QPolygonF pts;
-      _getLineString( pts, context, geom->asWkb() );
-      (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
-
-      if ( drawVertexMarker )
-        renderVertexMarkerPolyline( pts, context );
-#endif //0
     }
     break;
 
@@ -286,29 +271,14 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
       QgsGeometry* polygonGeom = feature.geometry();
       if ( polygonGeom )
       {
-        const QgsCoordinateTransform* ct = context.coordinateTransform();
-        if ( ct )
-        {
-          polygonGeom->coordinateTransform( *ct );
-        }
-        polygonGeom->pixelTransform( context.mapToPixel() );
         (( QgsFillSymbolV2* )symbol )->renderPolygon( polygonGeom, &feature, context, layer, selected );
 
         if ( drawVertexMarker )
         {
-          polygonGeom->drawVertexMarkers( context.painter(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
+          polygonGeom->drawVertexMarkers( context.painter(), context.mapToPixel(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
                                           mCurrentVertexMarkerSize );
         }
       }
-#if 0
-      QPolygonF pts;
-      QList<QPolygonF> holes;
-      _getPolygon( pts, holes, context, geom->asWkb() );
-      (( QgsFillSymbolV2* )symbol )->renderPolygon( pts, ( holes.count() ? &holes : NULL ), &feature, context, layer, selected );
-
-      if ( drawVertexMarker )
-        renderVertexMarkerPolygon( pts, ( holes.count() ? &holes : NULL ), context );
-#endif //0
     }
     break;
 
