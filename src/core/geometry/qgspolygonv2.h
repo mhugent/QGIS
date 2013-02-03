@@ -11,7 +11,7 @@ class QgsPolygonV2: public QgsSurface
                   QVector< QVector< double > >* ringsZ = 0, QVector< QVector< double > >* ringsM = 0 );
     ~QgsPolygonV2();
 
-    void draw( QPainter* p, const QgsMapToPixel& mtp ) const;
+    void draw( QPainter* p, const QgsMapToPixel* mtp ) const;
     void coordinateTransform( const QgsCoordinateTransform& t );
     void pixelTransform( const QgsMapToPixel& mtp );
     int translate( double dx, double dy );
@@ -73,7 +73,7 @@ class QgsPolygonV2: public QgsSurface
     int ringCount() const;
 
   protected:
-    void addToPainterPath( QPainterPath& path, const QgsMapToPixel& mtp ) const;
+    void addToPainterPath( QPainterPath& path, const QgsMapToPixel* mtp ) const;
 
   private:
     QVector< QVector< double > >* mRingsX;

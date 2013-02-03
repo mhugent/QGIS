@@ -86,13 +86,13 @@ void QgsGeometry::detach()
 }
 
 //delegate other methods to mGeometry
-void QgsGeometry::draw( QPainter* p, const QgsMapToPixel& mtp ) const
+void QgsGeometry::draw( QPainter* p, const QgsMapToPixel* mtp ) const
 {
   if ( mGeometry )
     mGeometry->draw( p, mtp );
 }
 
-void QgsGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel& mtp, VertexMarkerType type, int size ) const
+void QgsGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel* mtp, VertexMarkerType type, int size ) const
 {
   if ( mGeometry )
     mGeometry->drawVertexMarkers( p, mtp, type, size );
@@ -548,7 +548,7 @@ QgsAbstractGeometry::~QgsAbstractGeometry()
   GEOSGeom_destroy( mGeosGeom );
 }
 
-void QgsAbstractGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel& mtp, QgsGeometry::VertexMarkerType type, int size ) const
+void QgsAbstractGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel* mtp, QgsGeometry::VertexMarkerType type, int size ) const
 {
   QList<QgsPoint> vertexList;
   vertices( vertexList );
@@ -561,7 +561,10 @@ void QgsAbstractGeometry::drawVertexMarkers( QPainter* p, const QgsMapToPixel& m
     const QgsPoint& pt = *vIt;
     x = pt.x();
     y = pt.y();
-    mtp.transformInPlace( x, y );
+    if ( mtp )
+    {
+      mtp->transformInPlace( x, y );
+    }
     drawVertexMarker( x, y, p, type, size );
   }
 }

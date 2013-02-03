@@ -252,7 +252,7 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
 
         if ( drawVertexMarker )
         {
-          lineGeom->drawVertexMarkers( context.painter(), context.mapToPixel(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
+          lineGeom->drawVertexMarkers( context.painter(), &( context.mapToPixel() ), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
                                        mCurrentVertexMarkerSize );
         }
       }
@@ -275,7 +275,7 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
 
         if ( drawVertexMarker )
         {
-          polygonGeom->drawVertexMarkers( context.painter(), context.mapToPixel(), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
+          polygonGeom->drawVertexMarkers( context.painter(), &( context.mapToPixel() ), ( QgsGeometry::VertexMarkerType ) mCurrentVertexMarkerType,
                                           mCurrentVertexMarkerSize );
         }
       }

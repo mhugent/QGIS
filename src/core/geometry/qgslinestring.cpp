@@ -20,17 +20,23 @@ QgsLineString::~QgsLineString()
   delete mMValues;
 }
 
-void QgsLineString::draw( QPainter* p, const QgsMapToPixel& mtp ) const
+void QgsLineString::draw( QPainter* p, const QgsMapToPixel* mtp ) const
 {
   QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( mXValues, mYValues );
-  mtp.transformInPlace( poly );
+  if ( mtp )
+  {
+    mtp->transformInPlace( poly );
+  }
   p->drawPolyline( poly );
 }
 
-void QgsLineString::addToPainterPath( QPainterPath& path, const QgsMapToPixel& mtp ) const
+void QgsLineString::addToPainterPath( QPainterPath& path, const QgsMapToPixel* mtp ) const
 {
   QPolygonF poly = QgsGeometryUtils::polygonFromCoordinates( mXValues, mYValues );
-  mtp.transformInPlace( poly );
+  if ( mtp )
+  {
+    mtp->transformInPlace( poly );
+  }
   path.addPolygon( poly );
 }
 

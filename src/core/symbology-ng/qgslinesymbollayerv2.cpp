@@ -136,7 +136,8 @@ void QgsSimpleLineSymbolLayerV2::renderPolyline( const QgsGeometry* geom, QgsSym
   p->setPen( context.selected() ? mSelPen : mPen );
   if ( mOffset == 0 )
   {
-    geom->draw( p, context.renderContext().mapToPixel() );
+    const QgsMapToPixel&  mtp = context.renderContext().mapToPixel();
+    geom->draw( p, doubleNear( mtp.mapUnitsPerPixel(), 0 ) ? 0 : &mtp );
   }
   else
   {

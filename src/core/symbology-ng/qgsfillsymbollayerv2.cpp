@@ -118,7 +118,7 @@ void QgsSimpleFillSymbolLayerV2::renderPolygon( const QgsGeometry* geom, QgsSymb
   if ( !mOffset.isNull() )
     p->translate( mOffset );
 
-  geom->draw( p, context.renderContext().mapToPixel() );
+  geom->draw( p, &( context.renderContext().mapToPixel() ) );
 
   if ( !mOffset.isNull() )
     p->translate( -mOffset );
@@ -226,7 +226,7 @@ void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV
     //if ( ! selectionIsOpaque )
     //  selColor.setAlphaF( context.alpha() );
     p->setBrush( QBrush( selColor ) );
-    geom->draw( p, context.renderContext().mapToPixel() );
+    geom->draw( p, &( context.renderContext().mapToPixel() ) );
   }
 
   if ( doubleNear( mAngle, 0.0 ) )
@@ -242,7 +242,7 @@ void QgsImageFillSymbolLayer::renderPolygon( const QgsGeometry* geom, QgsSymbolV
     p->setBrush( rotatedBrush );
   }
 
-  geom->draw( p, context.renderContext().mapToPixel() );
+  geom->draw( p, &( context.renderContext().mapToPixel() ) );
   if ( mOutline )
   {
     p->setPen( Qt::NoPen );

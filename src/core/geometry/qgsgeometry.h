@@ -107,8 +107,8 @@ class QgsGeometry
     //! Destructor
     ~QgsGeometry();
 
-    void draw( QPainter* p, const QgsMapToPixel& mtp ) const;
-    void drawVertexMarkers( QPainter* p, const QgsMapToPixel& mtp, VertexMarkerType type, int size ) const;
+    void draw( QPainter* p, const QgsMapToPixel* mtp ) const;
+    void drawVertexMarkers( QPainter* p, const QgsMapToPixel* mtp, VertexMarkerType type, int size ) const;
     void coordinateTransform( const QgsCoordinateTransform& t );
     void pixelTransform( const QgsMapToPixel& mtp );
 
@@ -504,8 +504,8 @@ class QgsAbstractGeometry
 
     int referenceCount() const { return mRefs; }
 
-    virtual void draw( QPainter* p, const QgsMapToPixel& mtp ) const = 0;
-    void drawVertexMarkers( QPainter* p, const QgsMapToPixel& mtp, QgsGeometry::VertexMarkerType type, int size ) const;
+    virtual void draw( QPainter* p, const QgsMapToPixel* mtp ) const = 0;
+    void drawVertexMarkers( QPainter* p, const QgsMapToPixel* mtp, QgsGeometry::VertexMarkerType type, int size ) const;
 
     //changes the geometry in place
     virtual void coordinateTransform( const QgsCoordinateTransform& t ) = 0;
@@ -679,7 +679,7 @@ class QgsCurve: public QgsAbstractGeometry
     virtual bool isClosed() const = 0;
 
   protected:
-    virtual void addToPainterPath( QPainterPath& path, const QgsMapToPixel& mtp ) const = 0;
+    virtual void addToPainterPath( QPainterPath& path, const QgsMapToPixel* mtp ) const = 0;
 };
 
 class QgsSurface: public QgsAbstractGeometry
@@ -688,7 +688,7 @@ class QgsSurface: public QgsAbstractGeometry
     virtual double area() const = 0;
 
   protected:
-    virtual void addToPainterPath( QPainterPath& path, const QgsMapToPixel& mtp ) const = 0;
+    virtual void addToPainterPath( QPainterPath& path, const QgsMapToPixel* mtp ) const = 0;
 };
 
 #if 0
