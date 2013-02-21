@@ -64,6 +64,12 @@ class ANALYSIS_EXPORT QgsTransectSample
     static bool closestSegmentPoints( QgsGeometry& g1, QgsGeometry& g2, double& dist, QgsPoint& pt1, QgsPoint& pt2 );
     /**Returns a copy of the multiline element closest to a point (caller takes ownership)*/
     static QgsGeometry* closestMultilineElement( const QgsPoint& pt, QgsGeometry* multiLine );
+    /**Returns clipped buffer line. Iteratively applies reduced tolerances if the result is not a single line
+        @param stratumGeom stratum polygon
+        @param clippedBaselineGeom base line geometry clipped to the stratum
+        @param tolerance buffer distance (in layer units)
+        @return clipped buffer line or 0 in case of error*/
+    static QgsGeometry* clipBufferLine( QgsGeometry* stratumGeom, QgsGeometry* clippedBaseline, double tolerance );
 };
 
 #endif // QGSTRANSECTSAMPLE_H

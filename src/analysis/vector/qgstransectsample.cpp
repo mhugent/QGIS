@@ -117,6 +117,12 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     }
 
     double minDistance = fet.attributeMap()[mMinDistanceAttribute].toDouble();
+    //if minDistance is in meters and the data in degrees, we need to apply a rough conversion for the buffer distance
+    double bufferDist = minDistance;
+    if ( mMinDistanceUnits == Meters && mStrataLayer->crs().mapUnits() == QGis::DecimalDegrees )
+    {
+      bufferDist = minDistance / 111319.9;
+    }
 
     //stratum could be a multipolygon, so we need another loop over the single polygon parts
     QList<QgsGeometry*> strataPolygonGeoms;
@@ -136,11 +142,16 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     for ( int i = 0; i < strataPolygonGeoms.size(); ++i )
     {
       QgsGeometry* stratumPolygonGeom = strataPolygonGeoms.at( i );
-
-      //clip baseline by strata
       QgsGeometry* clippedBaseline = stratumPolygonGeom->intersection( baselineGeom );
       if ( !clippedBaseline || clippedBaseline->wkbType() == QGis::WKBUnknown )
       {
+        delete clippedBaseline;
+        continue;
+      }
+      QgsGeometry* bufferLineClipped = clipBufferLine( stratumPolygonGeom, clippedBaseline, bufferDist );
+      if ( !bufferLineClipped )
+      {
+        delete clippedBaseline;
         continue;
       }
 
@@ -150,37 +161,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       blFeature.addAttribute( 0, strataId );
       blFeature.addAttribute( 1, "f" );
       usedBaselineWriter.addFeature( blFeature );
-
-      //create line buffer and clip by strata
-
-      //if minDistance is in meters and the data in degrees, we need to apply a rough conversion for the buffer distance
-      double bufferDist = minDistance;
-      if ( mMinDistanceUnits == Meters && mStrataLayer->crs().mapUnits() == QGis::DecimalDegrees )
-      {
-        bufferDist = minDistance / 111319.9;
-      }
-
-      QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( bufferDist, 8 );
-      if ( !clipBaselineBuffer && !( clipBaselineBuffer->wkbType() == QGis::WKBPolygon ||
-                                     clipBaselineBuffer->wkbType() == QGis::WKBPolygon25D ) )
-      {
-        delete clippedBaseline; delete clipBaselineBuffer;
-        continue;
-      }
-
-      QgsPolygon bufferPolygon = clipBaselineBuffer->asPolygon();
-      if ( bufferPolygon.size() < 1 )
-      {
-        delete clippedBaseline; delete clipBaselineBuffer;
-        continue;
-      }
-      QgsGeometry* bufferLine = QgsGeometry::fromPolyline( bufferPolygon[0] );
-      QgsGeometry* bufferLineClipped = bufferLine->intersection( stratumPolygonGeom );
-      if ( !bufferLineClipped )
-      {
-        delete clippedBaseline; delete clipBaselineBuffer; delete bufferLine;
-        continue;
-      }
 
       //start loop to create random points along the baseline
       int nTransects = fet.attributeMap()[mNPointsAttribute].toInt();
@@ -279,7 +259,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
         ++nTotalTransects;
         ++nCreatedTransects;
       }
-      delete clippedBaseline; delete clipBaselineBuffer; delete bufferLine;
+      delete clippedBaseline;
       delete bufferLineClipped;
 
       //delete all line geometries in spatial index
@@ -513,4 +493,50 @@ QgsGeometry* QgsTransectSample::closestMultilineElement( const QgsPoint& pt, Qgs
 
   delete pointGeom;
   return closestLine;
+}
+
+QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeometry* clippedBaseline, double tolerance )
+{
+  if ( !stratumGeom || !clippedBaseline || clippedBaseline->wkbType() == QGis::WKBUnknown )
+  {
+    return 0;
+  }
+
+  qWarning( stratumGeom->exportToWkt().toLocal8Bit().data() );
+  qWarning( clippedBaseline->exportToWkt().toLocal8Bit().data() );
+
+  double currentBufferDist = tolerance;
+  int maxLoops = 10;
+
+  for ( int i = 0; i < maxLoops; ++i )
+  {
+    //loop with tolerance: create buffer, convert buffer to line, clip line by stratum, test if result is (single) line
+    QgsGeometry* clipBaselineBuffer = clippedBaseline->buffer( currentBufferDist, 8 );
+    if ( !clipBaselineBuffer )
+    {
+      delete clipBaselineBuffer;
+      continue;
+    }
+    qWarning( clipBaselineBuffer->exportToWkt().toLocal8Bit().data() );
+
+    QgsPolygon bufferPolygon = clipBaselineBuffer->asPolygon();
+    if ( bufferPolygon.size() < 1 )
+    {
+      delete clipBaselineBuffer;
+      continue;
+    }
+
+    QgsGeometry* bufferLine = QgsGeometry::fromPolyline( bufferPolygon[0] );
+    QgsGeometry* bufferLineClipped = bufferLine->intersection( stratumGeom );
+
+    if ( bufferLineClipped && bufferLineClipped->type() == QGis::Line )
+    {
+      return bufferLineClipped;
+    }
+
+    delete bufferLineClipped; delete clipBaselineBuffer; delete bufferLine;
+    currentBufferDist /= 2;
+  }
+
+  return 0; //no solution found even with reduced tolerances
 }
