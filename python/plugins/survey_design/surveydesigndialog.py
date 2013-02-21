@@ -90,7 +90,12 @@ class SurveyDesignDialog( QDialog, Ui_SurveyDesignDialogBase ):
         baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
         transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, minDistanceUnits,  strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
         baselineStrataId, outputPointShape, outputLineShape,  usedBaselineShape )
-        transectSample.createSample( None )
+        pd = QProgressDialog(  'Calculating transects...', 'Abort',  0,  0,  self )
+        pd.setWindowTitle( 'Transect generation' )
+        pd.show();
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        transectSample.createSample( pd )
+        QApplication.restoreOverrideCursor()
         
         s.setValue( '/SurveyPlugin/SaveDir', QFileInfo( outputLineShape ).absolutePath() )
         self.iface.addVectorLayer( outputPointShape, QFileInfo( outputPointShape ).baseName(), 'ogr' )

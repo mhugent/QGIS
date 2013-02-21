@@ -4,6 +4,7 @@
 #include "qgsspatialindex.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
+#include <QProgressDialog>
 
 QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
@@ -98,9 +99,25 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   mStrataLayer->select( attList );
   QgsFeature fet;
   int nTotalTransects = 0;
+  int nFeatures = 0;
+
+  if ( pd )
+  {
+    pd->setMaximum( mStrataLayer->featureCount() );
+  }
 
   while ( mStrataLayer->nextFeature( fet ) )
   {
+    if ( pd )
+    {
+      pd->setValue( nFeatures );
+    }
+    if ( pd && pd->wasCanceled() )
+    {
+      break;
+    }
+
+
     QgsGeometry* strataGeom = fet.geometry();
     if ( !strataGeom )
     {
@@ -278,6 +295,13 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       delete( *delIt );
     }
     delete baselineGeom;
+
+    ++nFeatures;
+  }
+
+  if ( pd )
+  {
+    pd->setValue( mStrataLayer->featureCount() );
   }
 
   return 0;
@@ -502,9 +526,6 @@ QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeo
     return 0;
   }
 
-  qWarning( stratumGeom->exportToWkt().toLocal8Bit().data() );
-  qWarning( clippedBaseline->exportToWkt().toLocal8Bit().data() );
-
   double currentBufferDist = tolerance;
   int maxLoops = 10;
 
@@ -517,7 +538,6 @@ QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeo
       delete clipBaselineBuffer;
       continue;
     }
-    qWarning( clipBaselineBuffer->exportToWkt().toLocal8Bit().data() );
 
     QgsPolygon bufferPolygon = clipBaselineBuffer->asPolygon();
     if ( bufferPolygon.size() < 1 )
