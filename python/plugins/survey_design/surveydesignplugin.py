@@ -35,6 +35,8 @@ class SurveyDesignPlugin:
         
     def initSurveyDesign(self):
         dialog = SurveyInitDialog( self.iface.mainWindow(),  self.iface)
+        mainWindowGeom = self.iface.mainWindow().frameGeometry()
+        dialog.move( mainWindowGeom.width() / 2.0,  mainWindowGeom.top() )
         dialog.show()
         
     def openSurveyDesignWidget(self):
