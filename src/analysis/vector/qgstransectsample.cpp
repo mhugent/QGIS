@@ -234,6 +234,13 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
           continue;
         }
 
+        //cancel if distance between sample point and line is too large (line does not start at point
+        if( lineClipStratum->distance( *samplePoint ) > 0.000001 )
+        {
+            delete lineFarAwayGeom; delete lineClipStratum;
+            continue;
+        }
+
         //if lineClipStratum is a multiline, take the part line closest to sampleQgsPoint
         if ( lineClipStratum->wkbType() == QGis::WKBMultiLineString
              || lineClipStratum->wkbType() == QGis::WKBMultiLineString25D )
