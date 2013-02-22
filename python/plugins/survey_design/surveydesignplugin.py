@@ -17,19 +17,13 @@ class SurveyDesignPlugin:
         surveyDesignMenu = QMenu( QCoreApplication.translate("SurveyDesignPlugin","Survey") ,  menuBar)
         
         isSurveyProject = self.projectContainsSurveyDesign()
-
-        self.actionInitSurvey = QAction( 'Init survey',  self.iface.mainWindow() )
-        QObject.connect( self.actionInitSurvey, SIGNAL("triggered()"), self.initSurveyDesign)
       
         self.actionSurveyProperties = QAction( 'Survey design',  self.iface.mainWindow() )
-        QObject.connect( self.actionSurveyProperties, SIGNAL("triggered()"), self.openSurveyDesignWidget )
+        QObject.connect( self.actionSurveyProperties, SIGNAL("triggered()"), self.initSurveyDesign)
         
         self.actionEvaluateSurvey = QAction( 'Survey evaluation',  self.iface.mainWindow() )
         QObject.connect( self.actionEvaluateSurvey,  SIGNAL("triggered()"),  self.openSurveyEvaluationDialog )
-        
         self.checkSurveyDesignPossible()
-        
-        surveyDesignMenu.addAction( self.actionInitSurvey  )
         surveyDesignMenu.addAction(  self.actionSurveyProperties )
         surveyDesignMenu.addAction( self.actionEvaluateSurvey )
         self.surveyDesignAction = menuBar.addMenu( surveyDesignMenu )
@@ -40,9 +34,8 @@ class SurveyDesignPlugin:
         self.iface.mainWindow().menuBar().removeAction( self.surveyDesignAction )
         
     def initSurveyDesign(self):
-        dialog = SurveyInitDialog( self.iface)
-        if dialog.exec_() == QDialog.Accepted:
-            self.checkSurveyDesignPossible()
+        dialog = SurveyInitDialog( self.iface.mainWindow(),  self.iface)
+        dialog.show()
         
     def openSurveyDesignWidget(self):
         self.designDialog = SurveyDesignDialog( self.iface.mainWindow(),  self.iface )
@@ -77,8 +70,8 @@ class SurveyDesignPlugin:
         
     def checkSurveyDesignPossible( self ):
             projectContainsDesign = self.projectContainsSurveyDesign()
-            self.actionSurveyProperties.setEnabled( projectContainsDesign )
-            self.actionEvaluateSurvey.setEnabled( projectContainsDesign )
+            self.actionSurveyProperties.setEnabled( True )
+            self.actionEvaluateSurvey.setEnabled( True )
         
     def projectContainsSurveyDesign(self):
         surveyAreaLayerId = QgsProject.instance().readEntry( "Survey",  "SurveyAreaLayer" )[0]
