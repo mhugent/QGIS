@@ -141,166 +141,140 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       bufferDist = minDistance / 111319.9;
     }
 
-    //stratum could be a multipolygon, so we need another loop over the single polygon parts
-    QList<QgsGeometry*> strataPolygonGeoms;
-    if ( strataGeom->wkbType() == QGis::WKBPolygon || strataGeom->wkbType() == QGis::WKBPolygon25D )
+    QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
+    if ( !clippedBaseline || clippedBaseline->wkbType() == QGis::WKBUnknown )
     {
-      strataPolygonGeoms.push_back( new QgsGeometry( *strataGeom ) );
-    }
-    else if ( strataGeom->wkbType() ==  QGis::WKBMultiPolygon || strataGeom->wkbType() ==  QGis::WKBMultiPolygon25D )
-    {
-      QgsMultiPolygon multiPoly = strataGeom->asMultiPolygon();
-      for ( int i = 0; i < multiPoly.size(); ++i )
-      {
-        strataPolygonGeoms.push_back( QgsGeometry::fromPolygon( multiPoly[i] ) );
-      }
-    }
-
-    for ( int i = 0; i < strataPolygonGeoms.size(); ++i )
-    {
-      QgsGeometry* stratumPolygonGeom = strataPolygonGeoms.at( i );
-      QgsGeometry* clippedBaseline = stratumPolygonGeom->intersection( baselineGeom );
-      if ( !clippedBaseline || clippedBaseline->wkbType() == QGis::WKBUnknown )
-      {
-        delete clippedBaseline;
-        continue;
-      }
-      QgsGeometry* bufferLineClipped = clipBufferLine( stratumPolygonGeom, clippedBaseline, bufferDist );
-      if ( !bufferLineClipped )
-      {
-        delete clippedBaseline;
-        continue;
-      }
-
-      //save clipped baseline to file
-      QgsFeature blFeature;
-      blFeature.setGeometry( *clippedBaseline );
-      blFeature.addAttribute( 0, strataId );
-      blFeature.addAttribute( 1, "f" );
-      usedBaselineWriter.addFeature( blFeature );
-
-      //start loop to create random points along the baseline
-      int nTransects = fet.attributeMap()[mNPointsAttribute].toInt();
-      int nCreatedTransects = 0;
-      int nIterations = 0;
-      int nMaxIterations = nTransects * 50;
-
-      QgsSpatialIndex sIndex; //to check minimum distance
-      QMap< QgsFeatureId, QgsGeometry* > lineFeatureMap;
-
-      while ( nCreatedTransects < nTransects && nIterations < nMaxIterations )
-      {
-        double randomPosition = (( double )rand() / RAND_MAX ) * clippedBaseline->length();
-        QgsGeometry* samplePoint = clippedBaseline->interpolate( randomPosition );
-        ++nIterations;
-        if ( !samplePoint )
-        {
-          continue;
-        }
-        QgsPoint sampleQgsPoint = samplePoint->asPoint();
-        QgsPoint latLongSamplePoint = toLatLongTransform.transform( sampleQgsPoint );
-
-        QgsFeature samplePointFeature;
-        samplePointFeature.setGeometry( samplePoint );
-        samplePointFeature.addAttribute( 0, nTotalTransects );
-        samplePointFeature.addAttribute( 1, nCreatedTransects );
-        samplePointFeature.addAttribute( 2, strataId );
-        samplePointFeature.addAttribute( 3, QString::number( strataId ) + "_" + QString::number( nCreatedTransects ) );
-        samplePointFeature.addAttribute( 4, latLongSamplePoint.y() );
-        samplePointFeature.addAttribute( 5, latLongSamplePoint.x() );
-
-        //find closest point on clipped buffer line
-        QgsPoint minDistPoint;
-
-        int afterVertex;
-        if ( bufferLineClipped->closestSegmentWithContext( sampleQgsPoint, minDistPoint, afterVertex ) < 0 )
-        {
-          continue;
-        }
-
-        //bearing between sample point and min dist point (transect direction)
-        double bearing = distanceArea.bearing( sampleQgsPoint, minDistPoint ) / M_PI * 180.0;
-
-        QgsPolyline sampleLinePolyline;
-        QgsPoint ptFarAway( sampleQgsPoint.x() + ( minDistPoint.x() - sampleQgsPoint.x() ) * 1000000,
-                            sampleQgsPoint.y() + ( minDistPoint.y() - sampleQgsPoint.y() ) * 1000000 );
-        QgsPolyline lineFarAway;
-        lineFarAway << sampleQgsPoint << ptFarAway;
-        QgsGeometry* lineFarAwayGeom = QgsGeometry::fromPolyline( lineFarAway );
-        QgsGeometry* lineClipStratum = lineFarAwayGeom->intersection( stratumPolygonGeom );
-        if ( !lineClipStratum )
-        {
-          delete lineFarAwayGeom; delete lineClipStratum;
-          continue;
-        }
-
-        //cancel if distance between sample point and line is too large (line does not start at point
-        if( lineClipStratum->distance( *samplePoint ) > 0.000001 )
-        {
-            delete lineFarAwayGeom; delete lineClipStratum;
-            continue;
-        }
-
-        //if lineClipStratum is a multiline, take the part line closest to sampleQgsPoint
-        if ( lineClipStratum->wkbType() == QGis::WKBMultiLineString
-             || lineClipStratum->wkbType() == QGis::WKBMultiLineString25D )
-        {
-          QgsGeometry* singleLine = closestMultilineElement( sampleQgsPoint, lineClipStratum );
-          if ( singleLine )
-          {
-            delete lineClipStratum;
-            lineClipStratum = singleLine;
-          }
-        }
-
-        //search closest existing profile. Cancel if dist < minDist
-        if ( otherTransectWithinDistance( lineClipStratum, minDistance, sIndex, lineFeatureMap, distanceArea ) )
-        {
-          delete lineFarAwayGeom; delete lineClipStratum;
-          continue;
-        }
-
-        QgsFeatureId fid( nCreatedTransects );
-        QgsFeature sampleLineFeature( fid );
-        sampleLineFeature.setGeometry( lineClipStratum );
-        sampleLineFeature.addAttribute( 0, nTotalTransects );
-        sampleLineFeature.addAttribute( 1, nCreatedTransects );
-        sampleLineFeature.addAttribute( 2, strataId );
-        sampleLineFeature.addAttribute( 3, QString::number( strataId ) + "_" + QString::number( nCreatedTransects ) );
-        sampleLineFeature.addAttribute( 4, latLongSamplePoint.y() );
-        sampleLineFeature.addAttribute( 5, latLongSamplePoint.x() );
-        sampleLineFeature.addAttribute( 6, bearing );
-        outputLineWriter.addFeature( sampleLineFeature );
-
-        //add point to file writer here.
-        //It can only be written if the corresponding transect has been as well
-        outputPointWriter.addFeature( samplePointFeature );
-
-        sIndex.insertFeature( sampleLineFeature );
-        lineFeatureMap.insert( fid, sampleLineFeature.geometryAndOwnership() );
-
-        delete lineFarAwayGeom;
-        ++nTotalTransects;
-        ++nCreatedTransects;
-      }
       delete clippedBaseline;
-      delete bufferLineClipped;
-
-      //delete all line geometries in spatial index
-      QMap< QgsFeatureId, QgsGeometry* >::iterator featureMapIt = lineFeatureMap.begin();
-      for ( ; featureMapIt != lineFeatureMap.end(); ++featureMapIt )
-      {
-        delete( featureMapIt.value() );
-      }
-      lineFeatureMap.clear();
+      continue;
     }
-
-    //delete stratum geometries
-    QList<QgsGeometry*>::const_iterator delIt = strataPolygonGeoms.constBegin();
-    for ( ; delIt != strataPolygonGeoms.constEnd(); ++delIt )
+    QgsGeometry* bufferLineClipped = clipBufferLine( strataGeom, clippedBaseline, bufferDist );
+    if ( !bufferLineClipped )
     {
-      delete( *delIt );
+      delete clippedBaseline;
+      continue;
     }
+
+    //save clipped baseline to file
+    QgsFeature blFeature;
+    blFeature.setGeometry( *clippedBaseline );
+    blFeature.addAttribute( 0, strataId );
+    blFeature.addAttribute( 1, "f" );
+    usedBaselineWriter.addFeature( blFeature );
+
+    //start loop to create random points along the baseline
+    int nTransects = fet.attributeMap()[mNPointsAttribute].toInt();
+    int nCreatedTransects = 0;
+    int nIterations = 0;
+    int nMaxIterations = nTransects * 50;
+
+    QgsSpatialIndex sIndex; //to check minimum distance
+    QMap< QgsFeatureId, QgsGeometry* > lineFeatureMap;
+
+    while ( nCreatedTransects < nTransects && nIterations < nMaxIterations )
+    {
+      double randomPosition = (( double )rand() / RAND_MAX ) * clippedBaseline->length();
+      QgsGeometry* samplePoint = clippedBaseline->interpolate( randomPosition );
+      ++nIterations;
+      if ( !samplePoint )
+      {
+        continue;
+      }
+      QgsPoint sampleQgsPoint = samplePoint->asPoint();
+      QgsPoint latLongSamplePoint = toLatLongTransform.transform( sampleQgsPoint );
+
+      QgsFeature samplePointFeature;
+      samplePointFeature.setGeometry( samplePoint );
+      samplePointFeature.addAttribute( 0, nTotalTransects );
+      samplePointFeature.addAttribute( 1, nCreatedTransects );
+      samplePointFeature.addAttribute( 2, strataId );
+      samplePointFeature.addAttribute( 3, QString::number( strataId ) + "_" + QString::number( nCreatedTransects ) );
+      samplePointFeature.addAttribute( 4, latLongSamplePoint.y() );
+      samplePointFeature.addAttribute( 5, latLongSamplePoint.x() );
+
+      //find closest point on clipped buffer line
+      QgsPoint minDistPoint;
+
+      int afterVertex;
+      if ( bufferLineClipped->closestSegmentWithContext( sampleQgsPoint, minDistPoint, afterVertex ) < 0 )
+      {
+        continue;
+      }
+
+      //bearing between sample point and min dist point (transect direction)
+      double bearing = distanceArea.bearing( sampleQgsPoint, minDistPoint ) / M_PI * 180.0;
+
+      QgsPolyline sampleLinePolyline;
+      QgsPoint ptFarAway( sampleQgsPoint.x() + ( minDistPoint.x() - sampleQgsPoint.x() ) * 1000000,
+                          sampleQgsPoint.y() + ( minDistPoint.y() - sampleQgsPoint.y() ) * 1000000 );
+      QgsPolyline lineFarAway;
+      lineFarAway << sampleQgsPoint << ptFarAway;
+      QgsGeometry* lineFarAwayGeom = QgsGeometry::fromPolyline( lineFarAway );
+      QgsGeometry* lineClipStratum = lineFarAwayGeom->intersection( strataGeom );
+      if ( !lineClipStratum )
+      {
+        delete lineFarAwayGeom; delete lineClipStratum;
+        continue;
+      }
+
+      //cancel if distance between sample point and line is too large (line does not start at point
+      if ( lineClipStratum->distance( *samplePoint ) > 0.000001 )
+      {
+        delete lineFarAwayGeom; delete lineClipStratum;
+        continue;
+      }
+
+      //if lineClipStratum is a multiline, take the part line closest to sampleQgsPoint
+      if ( lineClipStratum->wkbType() == QGis::WKBMultiLineString
+           || lineClipStratum->wkbType() == QGis::WKBMultiLineString25D )
+      {
+        QgsGeometry* singleLine = closestMultilineElement( sampleQgsPoint, lineClipStratum );
+        if ( singleLine )
+        {
+          delete lineClipStratum;
+          lineClipStratum = singleLine;
+        }
+      }
+
+      //search closest existing profile. Cancel if dist < minDist
+      if ( otherTransectWithinDistance( lineClipStratum, minDistance, sIndex, lineFeatureMap, distanceArea ) )
+      {
+        delete lineFarAwayGeom; delete lineClipStratum;
+        continue;
+      }
+
+      QgsFeatureId fid( nCreatedTransects );
+      QgsFeature sampleLineFeature( fid );
+      sampleLineFeature.setGeometry( lineClipStratum );
+      sampleLineFeature.addAttribute( 0, nTotalTransects );
+      sampleLineFeature.addAttribute( 1, nCreatedTransects );
+      sampleLineFeature.addAttribute( 2, strataId );
+      sampleLineFeature.addAttribute( 3, QString::number( strataId ) + "_" + QString::number( nCreatedTransects ) );
+      sampleLineFeature.addAttribute( 4, latLongSamplePoint.y() );
+      sampleLineFeature.addAttribute( 5, latLongSamplePoint.x() );
+      sampleLineFeature.addAttribute( 6, bearing );
+      outputLineWriter.addFeature( sampleLineFeature );
+
+      //add point to file writer here.
+      //It can only be written if the corresponding transect has been as well
+      outputPointWriter.addFeature( samplePointFeature );
+
+      sIndex.insertFeature( sampleLineFeature );
+      lineFeatureMap.insert( fid, sampleLineFeature.geometryAndOwnership() );
+
+      delete lineFarAwayGeom;
+      ++nTotalTransects;
+      ++nCreatedTransects;
+    }
+    delete clippedBaseline;
+    delete bufferLineClipped;
+
+    //delete all line geometries in spatial index
+    QMap< QgsFeatureId, QgsGeometry* >::iterator featureMapIt = lineFeatureMap.begin();
+    for ( ; featureMapIt != lineFeatureMap.end(); ++featureMapIt )
+    {
+      delete( featureMapIt.value() );
+    }
+    lineFeatureMap.clear();
     delete baselineGeom;
 
     ++nFeatures;
@@ -546,15 +520,37 @@ QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeo
       continue;
     }
 
-    QgsPolygon bufferPolygon = clipBaselineBuffer->asPolygon();
-    if ( bufferPolygon.size() < 1 )
+    //it is also possible that clipBaselineBuffer is a multipolygon
+    QgsGeometry* bufferLine = 0; //buffer line or multiline
+    QgsGeometry* bufferLineClipped = 0;
+    if ( clipBaselineBuffer->isMultipart() )
     {
-      delete clipBaselineBuffer;
-      continue;
-    }
+      QgsMultiPolygon bufferMultiPolygon = clipBaselineBuffer->asMultiPolygon();
+      if ( bufferMultiPolygon.size() < 1 )
+      {
+        delete clipBaselineBuffer;
+        continue;
+      }
 
-    QgsGeometry* bufferLine = QgsGeometry::fromPolyline( bufferPolygon[0] );
-    QgsGeometry* bufferLineClipped = bufferLine->intersection( stratumGeom );
+      QgsMultiPolyline mpl;
+      for ( int j = 0; j < bufferMultiPolygon.size(); ++j )
+      {
+        mpl.append( bufferMultiPolygon.at( j ).at( 0 ) );
+      }
+      bufferLine = QgsGeometry::fromMultiPolyline( mpl );
+    }
+    else
+    {
+      QgsPolygon bufferPolygon = clipBaselineBuffer->asPolygon();
+      if ( bufferPolygon.size() < 1 )
+      {
+        delete clipBaselineBuffer;
+        continue;
+      }
+
+      bufferLine = QgsGeometry::fromPolyline( bufferPolygon[0] );
+    }
+    bufferLineClipped = bufferLine->intersection( stratumGeom );
 
     if ( bufferLineClipped && bufferLineClipped->type() == QGis::Line )
     {

@@ -51,6 +51,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         QObject.connect(self.mStratumIdToolButton, SIGNAL('clicked()'), self.createBaselineStrataAttribute )
         
         #slots for combo boxes (write to project)
+        self.blockSignals( True )
         QObject.connect( self.mSurveyAreaLayerComboBox,  SIGNAL(  'currentIndexChanged( int )' ),  self.writeToProject  )
         QObject.connect( self.mSurveyBaselineLayerComboBox,  SIGNAL(  'currentIndexChanged( int )' ),  self.writeToProject  )
         QObject.connect( self.mStratumIdComboBox,  SIGNAL(  'currentIndexChanged( int )' ),  self.writeToProject  )
@@ -66,16 +67,21 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', 0 )[0]  )  )
         self.mNSamplePointsComboBox.setCurrentIndex( self.mNSamplePointsComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', 0 )[0]  )  )
         self.mStrataIdAttributeComboBox.setCurrentIndex( self.mStrataIdAttributeComboBox.findData( QgsProject.instance().readNumEntry( 'Survey', 'StrataId',  0 ) [0] )  )
+        print 'StrataNSamplePoints'
+        print QgsProject.instance().readNumEntry('Survey','StrataNSamplePoints',  0 )[0]
+        self.mNSamplePointsComboBox.setCurrentIndex( self.mNSamplePointsComboBox.findData( QgsProject.instance().readNumEntry('Survey','StrataNSamplePoints',  0 )[0] ) )
         
         self.mMinDistanceUnitsComboBox.addItem( self.tr( "Stratum units" ) )
         self.mMinDistanceUnitsComboBox.addItem( self.tr( "Meters" ) )
-        
         minDistanceUnits = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )[0]
-        if( minDistanceUnits == 'Meters'):
+        print 'minDistanceUnits'
+        print minDistanceUnits
+        if minDistanceUnits.compare( QString('Meters') ) == 0:
             self.mMinDistanceUnitsComboBox.setCurrentIndex( 1 )
         else:
             self.mMinDistanceUnitsComboBox.setCurrentIndex( 0 )
             
+        self.blockSignals( False )
     
         #init survey design tools
         QObject.connect( self.mAddStratumToolButton,  SIGNAL('clicked( bool )'),  self.addStratumToggled )
@@ -335,11 +341,8 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         QgsProject.instance().writeEntry( 'Survey', 'StrataMinDistance', self.strataMinDistanceAttribute() )
         QgsProject.instance().writeEntry( 'Survey', 'StrataNSamplePoints', self.strataNSamplePointsAttribute() )
         QgsProject.instance().writeEntry( 'Survey', 'StrataId', self.strataId() )
-        minDistanceUnitString = QString()
-        if self.mMinDistanceUnitsComboBox.currentText() == self.tr( "Meters" ) :
-            minDistanceUnitString = "Meters"
-        else:
-            minDistanceUnitString = "Stratum Units"
+        minDistanceUnitString = self.mMinDistanceUnitsComboBox.currentText()
+        print minDistanceUnitString
         QgsProject.instance().writeEntry( 'Survey',  'StrataMinDistanceUnits',  minDistanceUnitString );
         self.setTransectButtonState()
         self.setSampleButtonState()
@@ -441,6 +444,15 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
             self.mCreateSampleButton.setEnabled( True )
         else:
             self.mCreateSampleButton.setEnabled( False )
+            
+    def blockSignals(self,  blocked ):
+        self.mSurveyBaselineLayerComboBox.blockSignals( blocked )
+        self.mStratumIdComboBox.blockSignals( blocked )
+        self.mStrataLayerComboBox.blockSignals( blocked )
+        self.mMinimumDistanceAttributeComboBox.blockSignals( blocked )
+        self.mMinDistanceUnitsComboBox.blockSignals( blocked )
+        self.mNSamplePointsComboBox.blockSignals( blocked )
+        self.mStrataIdAttributeComboBox.blockSignals( blocked )
         
     @pyqtSlot()
     def addStratumToggled(self,  toggleState ):
