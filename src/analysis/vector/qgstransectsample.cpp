@@ -139,6 +139,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     if ( mMinDistanceUnits == Meters && mStrataLayer->crs().mapUnits() == QGis::DecimalDegrees )
     {
       bufferDist = minDistance / 111319.9;
+      minDistance = bufferDist;
     }
 
     QgsGeometry* clippedBaseline = strataGeom->intersection( baselineGeom );
