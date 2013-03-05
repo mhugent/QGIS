@@ -33,10 +33,10 @@ class ANALYSIS_EXPORT QgsTransectSample
   private:
     QgsTransectSample(); //default constructor forbidden
 
-    QgsGeometry* findBaselineGeometry( int strataId );
+    QgsGeometry* findBaselineGeometry( QVariant strataId );
 
     /**Returns true if another transect is within the specified minimum distance*/
-    static bool otherTransectWithinDistance( QgsGeometry* geom, double minDistance, QgsSpatialIndex& sIndex, const QMap< QgsFeatureId, QgsGeometry* >&
+    static bool otherTransectWithinDistance( QgsGeometry* geom, double minDistLayerUnit, double minDistance, QgsSpatialIndex& sIndex, const QMap< QgsFeatureId, QgsGeometry* >&
         lineFeatureMap, QgsDistanceArea& da );
 
     QgsVectorLayer* mStrataLayer;
