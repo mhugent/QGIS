@@ -314,7 +314,7 @@ static void setTitleBarText_( QWidget & qgisApp )
   }
 #endif //0
 
-  QString caption = "NIWA Quantum Map 1.0";
+  QString caption = "NIWA Quantum Map 1.1";
   qgisApp.setWindowTitle( caption );
 } // setTitleBarText_( QWidget * qgisApp )
 
