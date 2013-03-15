@@ -253,11 +253,11 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       }
 
       //cancel if length of lineClipStratum is too small
-      if ( lineClipStratum->length() < 0.0000000001 )
+      /*if ( lineClipStratum->length() < 0.0000000001 )
       {
         delete lineFarAwayGeom; delete lineClipStratum;
         continue;
-      }
+      }*/
 
       //search closest existing profile. Cancel if dist < minDist
       if ( otherTransectWithinDistance( lineClipStratum, minDistanceLayerUnits, minDistance, sIndex, lineFeatureMap, distanceArea ) )

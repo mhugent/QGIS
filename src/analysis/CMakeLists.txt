@@ -39,6 +39,7 @@ SET(QGIS_ANALYSIS_SRCS
   vector/qgstransectsample.cpp
   vector/qgszonalstatistics.cpp
   vector/qgsoverlayanalyzer.cpp
+  vector/mersenne-twister.cpp
 )
 
 INCLUDE_DIRECTORIES(BEFORE raster)
