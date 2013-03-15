@@ -32,19 +32,20 @@ extern "C"
   /*
    * Maximum number you can get from rand().
    */
+
 #define RAND_MAX INT32_MAX
 
   /*
    * Initialize the number generator with given seed.
    * (LIBC REPLACEMENT FUNCTION)
    */
-  void srand( unsigned seed_value );
+  void mt_srand( unsigned seed_value );
 
   /*
    * Extract a pseudo-random integer in the range 0 ... RAND_MAX.
    * (LIBC REPLACEMENT FUNCTION)
    */
-  int rand();
+  int mt_rand();
 
   /*
    * Extract a pseudo-random unsigned 32-bit integer in the range 0 ... UINT32_MAX

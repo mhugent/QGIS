@@ -6,6 +6,8 @@
 #include "qgsvectorlayer.h"
 #include <QProgressDialog>
 #include <QFileInfo>
+#include <stdint.h>
+#include "mersenne-twister.h"
 
 QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
@@ -104,7 +106,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   QgsCoordinateTransform toLatLongTransform( mStrataLayer->crs(), QgsCoordinateReferenceSystem( 4326, QgsCoordinateReferenceSystem::EpsgCrsId ) );
 
   //init random number generator
-  srand( QTime::currentTime().msec() );
+  mt_srand( QTime::currentTime().msec() );
 
   //iterate over strata layer
   QgsAttributeList attList;
@@ -189,7 +191,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
     while ( nCreatedTransects < nTransects && nIterations < nMaxIterations )
     {
-      double randomPosition = (( double )rand() / RAND_MAX ) * clippedBaseline->length();
+      double randomPosition = (( double )mt_rand() / RAND_MAX ) * clippedBaseline->length();
       QgsGeometry* samplePoint = clippedBaseline->interpolate( randomPosition );
       ++nIterations;
       if ( !samplePoint )

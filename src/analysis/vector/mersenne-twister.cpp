@@ -165,7 +165,7 @@ extern "C" uint32_t rand_u32()
   return y;
 }
 
-extern "C" int rand()
+extern "C" int mt_rand()
 {
   /*
    * PORTABILITY WARNING:
@@ -185,7 +185,7 @@ extern "C" int rand()
   return static_cast<int>( 0x7FFFFFFF & rand_u32() );
 }
 
-extern "C" void srand( unsigned value )
+extern "C" void mt_srand( unsigned value )
 {
   seed( static_cast<uint32_t>( value ) );
 }
