@@ -595,7 +595,29 @@ QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeo
 
     if ( bufferLineClipped && bufferLineClipped->type() == QGis::Line )
     {
-      return bufferLineClipped;
+      //if stratumGeom is a multipolygon, bufferLineClipped must intersect each part
+      bool bufferLineClippedIntersectsStratum = true;
+      if ( stratumGeom->wkbType() == QGis::WKBMultiPolygon || stratumGeom->wkbType() == QGis::WKBMultiPolygon25D )
+      {
+        QVector<QgsPolygon> multiPoly = stratumGeom->asMultiPolygon();
+        QVector<QgsPolygon>::const_iterator multiIt = multiPoly.constBegin();
+        for ( ; multiIt != multiPoly.constEnd(); ++multiIt )
+        {
+          QgsGeometry* poly = QgsGeometry::fromPolygon( *multiIt );
+          if ( !poly->intersects( bufferLineClipped ) )
+          {
+            bufferLineClippedIntersectsStratum = false;
+            delete poly;
+            break;
+          }
+          delete poly;
+        }
+      }
+
+      if ( bufferLineClippedIntersectsStratum )
+      {
+        return bufferLineClipped;
+      }
     }
 
     delete bufferLineClipped; delete clipBaselineBuffer; delete bufferLine;
