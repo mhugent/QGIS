@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <stdint.h>
 #include "mersenne-twister.h"
+#include <limits>
 
 QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
@@ -191,7 +192,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
     while ( nCreatedTransects < nTransects && nIterations < nMaxIterations )
     {
-      double randomPosition = (( double )mt_rand() / RAND_MAX ) * clippedBaseline->length();
+      double randomPosition = (( double )mt_rand() / std::numeric_limits<int32_t>::max() ) * clippedBaseline->length();
       QgsGeometry* samplePoint = clippedBaseline->interpolate( randomPosition );
       ++nIterations;
       if ( !samplePoint )
@@ -594,7 +595,29 @@ QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeo
 
     if ( bufferLineClipped && bufferLineClipped->type() == QGis::Line )
     {
-      return bufferLineClipped;
+      //if stratumGeom is a multipolygon, bufferLineClipped must intersect each part
+      bool bufferLineClippedIntersectsStratum = true;
+      if ( stratumGeom->wkbType() == QGis::WKBMultiPolygon || stratumGeom->wkbType() == QGis::WKBMultiPolygon25D )
+      {
+        QVector<QgsPolygon> multiPoly = stratumGeom->asMultiPolygon();
+        QVector<QgsPolygon>::const_iterator multiIt = multiPoly.constBegin();
+        for ( ; multiIt != multiPoly.constEnd(); ++multiIt )
+        {
+          QgsGeometry* poly = QgsGeometry::fromPolygon( *multiIt );
+          if ( !poly->intersects( bufferLineClipped ) )
+          {
+            bufferLineClippedIntersectsStratum = false;
+            delete poly;
+            break;
+          }
+          delete poly;
+        }
+      }
+
+      if ( bufferLineClippedIntersectsStratum )
+      {
+        return bufferLineClipped;
+      }
     }
 
     delete bufferLineClipped; delete clipBaselineBuffer; delete bufferLine;
