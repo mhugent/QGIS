@@ -4504,7 +4504,7 @@ bool QgsGeometry::exportWkbToGeos()
   int *nPoints;
   int *numRings;
   int *numPolygons;
-  int numLineStrings;
+  int *numLineStrings;
   int idx, jdx, kdx;
   unsigned char *ptr;
   QgsPoint pt;
@@ -4590,9 +4590,9 @@ bool QgsGeometry::exportWkbToGeos()
       case QGis::WKBMultiLineString:
       {
         QVector<GEOSGeometry*> lines;
-        numLineStrings = ( int )( mGeometry[5] );
+        numLineStrings = ( int* )( mGeometry + 5 );
         ptr = ( mGeometry + 9 );
-        for ( jdx = 0; jdx < numLineStrings; jdx++ )
+        for ( jdx = 0; jdx < *numLineStrings; jdx++ )
         {
           QgsPolyline sequence;
 
