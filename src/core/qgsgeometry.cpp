@@ -5110,9 +5110,77 @@ bool QgsGeometry::exportGeosToWkb()
 
     case GEOS_GEOMETRYCOLLECTION:    // a collection of heterogeneus geometries
     {
-      // TODO
-      QgsDebugMsg( "geometry collection - not supported" );
-      break;
+      //Hack: assume the geometrycollection is a multiline and remove all point/polygon features from it
+      QList< const GEOSGeometry* > lineGeoms;
+      int nGeometries = GEOSGetNumGeometries( mGeos );
+      for ( int i = 0; i < nGeometries; ++i )
+      {
+        const GEOSGeometry* geom = GEOSGetGeometryN( mGeos, i );
+        if ( GEOSGeomTypeId( geom ) == GEOS_LINESTRING )
+        {
+          lineGeoms.push_back( geom );
+        }
+      }
+
+      if ( lineGeoms.size() < 1 )
+      {
+        // TODO
+        QgsDebugMsg( "geometry collection - not supported" );
+        break;
+      }
+
+      int size = 9;
+      for ( int i = 0; i < lineGeoms.size(); ++i )
+      {
+        size += 9;
+        size += getNumGeosPoints( lineGeoms.at( i ) ) * 2 * sizeof( double );
+      }
+
+      mGeometry = new unsigned char[size];
+      mGeometrySize = size;
+      int wkbPosition = 0; //current position in the byte array
+
+      memcpy( mGeometry, &byteOrder, 1 );
+      wkbPosition += 1;
+      int wkbtype = QGis::WKBMultiLineString;
+      memcpy( &mGeometry[wkbPosition], &wkbtype, sizeof( int ) );
+      wkbPosition += sizeof( int );
+      int numGeoms = lineGeoms.size();
+      memcpy( &mGeometry[wkbPosition], &numGeoms, sizeof( int ) );
+      wkbPosition += sizeof( int );
+
+      //loop over lines
+      int lineType = QGis::WKBLineString;
+      const GEOSCoordSequence *cs = 0;
+      unsigned int lineSize;
+
+      for ( int i = 0; i < lineGeoms.size(); ++i )
+      {
+        //endian and type WKBLineString
+        memcpy( &mGeometry[wkbPosition], &byteOrder, 1 );
+        wkbPosition += 1;
+        memcpy( &mGeometry[wkbPosition], &lineType, sizeof( int ) );
+        wkbPosition += sizeof( int );
+
+        cs = GEOSGeom_getCoordSeq( GEOSGetGeometryN( lineGeoms.at( i ), i ) );
+
+        //line size
+        GEOSCoordSeq_getSize( cs, &lineSize );
+        memcpy( &mGeometry[wkbPosition], &lineSize, sizeof( int ) );
+        wkbPosition += sizeof( int );
+
+        //vertex coordinates
+        for ( unsigned int j = 0; j < lineSize; ++j )
+        {
+          GEOSCoordSeq_getX( cs, j, ( double* )&mGeometry[wkbPosition] );
+          wkbPosition += sizeof( double );
+          GEOSCoordSeq_getY( cs, j, ( double* )&mGeometry[wkbPosition] );
+          wkbPosition += sizeof( double );
+        }
+      }
+
+      mDirtyWkb = false;
+      return true;
     } // case GEOS_GEOM::GEOS_GEOMETRYCOLLECTION
 
   } // switch (mGeos->getGeometryTypeId())
