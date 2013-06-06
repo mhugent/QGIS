@@ -4,6 +4,7 @@
 SET (SOS_SRCS
      qgssosplugin.cpp
      qgssossourceselect.cpp
+     qgssoscapabilities.cpp
 )
 
 SET (SOS_UIS
@@ -13,6 +14,7 @@ SET (SOS_UIS
 SET (SOS_MOC_HDRS
 qgssosplugin.h
 qgssossourceselect.h
+qgssoscapabilities.h
 )
 
 #SET (SOS_RCCS  resources.qrc)
