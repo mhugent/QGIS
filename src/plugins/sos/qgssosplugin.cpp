@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgssosplugin.h"
+#include "qgssossourceselect.h"
 #include "qgis.h"
 #include "qgisinterface.h"
 #include <QAction>
@@ -60,7 +61,8 @@ void QgsSOSPlugin::unload()
 
 void QgsSOSPlugin::showSOSDialog()
 {
-  qWarning( "Show SOS dialog" );
+  QgsSOSSourceSelect dialog;
+  dialog.exec();
 }
 
 //global methods for the plugin manager
