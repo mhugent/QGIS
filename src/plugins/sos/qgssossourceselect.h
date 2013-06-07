@@ -33,6 +33,7 @@ class QgsSOSSourceSelect: public QDialog, private Ui::QgsSOSSourceSelectBase
     void on_mNewButton_clicked();
     void on_mEditButton_clicked();
     void on_mDeleteButton_clicked();
+    void gotCapabilities();
 
   private:
     QgsSOSCapabilities* mCapabilities;

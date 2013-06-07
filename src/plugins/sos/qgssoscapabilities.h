@@ -18,8 +18,12 @@
 #ifndef QGSSOSCAPABILITIES_H
 #define QGSSOSCAPABILITIES_H
 
+#include "qgsdatasourceuri.h"
+
 #include <QObject>
 #include <QString>
+
+class QNetworkReply;
 
 class QgsSOSCapabilities: public QObject
 {
@@ -31,7 +35,13 @@ class QgsSOSCapabilities: public QObject
     void requestCapabilities();
 
   private:
-    QString mUrl;
+    QgsDataSourceURI mUrl;
+    QString mBaseUrl;
+    QNetworkReply* mCapabilitiesReply;
+
+    QString uriGetCapabilities();
+    //! Append ? or & if necessary
+    QString prepareUri( QString uri );
 
   private slots:
     void capabilitiesReplyFinished();

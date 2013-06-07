@@ -16,23 +16,68 @@
  ***************************************************************************/
 
 #include "qgssoscapabilities.h"
+#include "qgsnetworkaccessmanager.h"
+#include <QNetworkReply>
 
-QgsSOSCapabilities::QgsSOSCapabilities( const QString& serviceUrl ): QObject( 0 )
+QgsSOSCapabilities::QgsSOSCapabilities( const QString& serviceUrl ): QObject( 0 ), mCapabilitiesReply( 0 )
 {
-
+  mUrl.setEncodedUri( serviceUrl );
+  mBaseUrl = prepareUri( mUrl.param( "url" ) );
 }
 
 QgsSOSCapabilities::~QgsSOSCapabilities()
 {
-
+  delete mCapabilitiesReply;
 }
 
 void QgsSOSCapabilities::requestCapabilities()
 {
-  //soon...
+  QString url = uriGetCapabilities();
+  qWarning( url.toLocal8Bit().data() );
+  QNetworkRequest request( url );
+  request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
+  mCapabilitiesReply = QgsNetworkAccessManager::instance()->get( request );
+  QObject::connect( mCapabilitiesReply, SIGNAL( finished() ), this, SLOT( capabilitiesReplyFinished() ) );
 }
 
 void QgsSOSCapabilities::capabilitiesReplyFinished()
 {
-  //soon...
+  QNetworkReply* reply = mCapabilitiesReply;
+
+  reply->deleteLater();
+  mCapabilitiesReply = 0;
+
+  // handle network errors
+  if ( reply->error() != QNetworkReply::NoError )
+  {
+    //todo: error handling
+    //mErrorCode = QgsWFSCapabilities::NetworkError;
+    //mErrorMessage = reply->errorString();
+    emit gotCapabilities();
+    return;
+  }
+
+  QByteArray buffer = reply->readAll();
+  qWarning( QString( buffer ).toLocal8Bit().data() );
+
+  emit gotCapabilities();
+}
+
+QString QgsSOSCapabilities::uriGetCapabilities()
+{
+  return ( mBaseUrl + "SERVICE=SOS&REQUEST=GetCapabilities&DATASOURCE=0&VERSION=2.0" );
+}
+
+QString QgsSOSCapabilities::prepareUri( QString uri )
+{
+  if ( !uri.contains( "?" ) )
+  {
+    uri.append( "?" );
+  }
+  else if ( uri.right( 1 ) != "?" && uri.right( 1 ) != "&" )
+  {
+    uri.append( "&" );
+  }
+
+  return uri;
 }

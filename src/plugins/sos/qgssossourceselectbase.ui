@@ -144,5 +144,22 @@
   <tabstop>mbuttonBox</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>mbuttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>QgsSOSSourceSelectBase</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>529</x>
+     <y>422</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>426</x>
+     <y>-16</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

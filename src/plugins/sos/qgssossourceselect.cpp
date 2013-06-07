@@ -34,7 +34,10 @@ QgsSOSSourceSelect::~QgsSOSSourceSelect()
 
 void QgsSOSSourceSelect::on_mConnectButton_clicked()
 {
-
+  QgsOWSConnection connection( "SOS", mConnectionsComboBox->currentText() );
+  mCapabilities = new QgsSOSCapabilities( connection.uri().encodedUri() );
+  connect( mCapabilities, SIGNAL( gotCapabilities() ), this, SLOT( gotCapabilities() ) );
+  mCapabilities->requestCapabilities();
 }
 
 void QgsSOSSourceSelect::on_mNewButton_clicked()
@@ -95,5 +98,14 @@ void QgsSOSSourceSelect::populateConnectionList()
   {
     mConnectionsComboBox->setCurrentIndex( index );
   }
+}
+
+void QgsSOSSourceSelect::gotCapabilities()
+{
+  if ( !mCapabilities )
+  {
+    return;
+  }
+  //todo: get information about connection (offerings, observed phenomenons) from mCapabilities
 }
 
