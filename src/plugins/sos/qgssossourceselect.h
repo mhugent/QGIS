@@ -19,10 +19,23 @@
 
 #include "ui_qgssossourceselectbase.h"
 
+class QgsSOSCapabilities;
+
 class QgsSOSSourceSelect: public QDialog, private Ui::QgsSOSSourceSelectBase
 {
     Q_OBJECT
   public:
     QgsSOSSourceSelect( QWidget* parent = 0, Qt::WFlags fl = 0 );
     ~QgsSOSSourceSelect();
+
+  private slots:
+    void on_mConnectButton_clicked();
+    void on_mNewButton_clicked();
+    void on_mEditButton_clicked();
+    void on_mDeleteButton_clicked();
+
+  private:
+    QgsSOSCapabilities* mCapabilities;
+
+    void populateConnectionList();
 };

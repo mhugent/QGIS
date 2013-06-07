@@ -38,6 +38,7 @@ INCLUDE_DIRECTORIES(
      ${CMAKE_CURRENT_BINARY_DIR}
      ../../core
      ../../gui
+     ${CMAKE_CURRENT_BINARY_DIR}/../../ui
      ..
      .
 )

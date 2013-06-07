@@ -43,7 +43,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="bmEditButton">
+         <widget class="QPushButton" name="mEditButton">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -138,7 +138,7 @@
   <tabstop>mConnectionsComboBox</tabstop>
   <tabstop>mConnectButton</tabstop>
   <tabstop>mNewButton</tabstop>
-  <tabstop>bmEditButton</tabstop>
+  <tabstop>mEditButton</tabstop>
   <tabstop>mDeleteButton</tabstop>
   <tabstop>mOfferingsTreeView</tabstop>
   <tabstop>mbuttonBox</tabstop>
