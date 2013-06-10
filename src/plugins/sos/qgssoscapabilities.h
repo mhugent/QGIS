@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 
 class QNetworkReply;
 
@@ -34,10 +35,18 @@ class QgsSOSCapabilities: public QObject
 
     void requestCapabilities();
 
+
+    const QStringList* observableProperties() const { return &mObservableProperties; }
+    const QString& networkError() const { return mNetworkError; }
+    const QString& xmlError() const { return mXmlError; }
+
   private:
     QgsDataSourceURI mUrl;
     QString mBaseUrl;
     QNetworkReply* mCapabilitiesReply;
+    QString mNetworkError;
+    QString mXmlError;
+    QStringList mObservableProperties;
 
     QString uriGetCapabilities();
     //! Append ? or & if necessary

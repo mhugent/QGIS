@@ -20,9 +20,6 @@
       <string>Server connections</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QComboBox" name="mConnectionsComboBox"/>
-      </item>
       <item row="1" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
@@ -100,10 +97,22 @@
         </item>
        </layout>
       </item>
+      <item row="0" column="0">
+       <widget class="QComboBox" name="mConnectionsComboBox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QTreeWidget" name="mOfferingsTreeWidget">
+        <column>
+         <property name="text">
+          <string>Observable property</string>
+         </property>
+        </column>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="1" column="0">
     <widget class="QDialogButtonBox" name="mbuttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -111,25 +120,6 @@
      <property name="standardButtons">
       <set>QDialogButtonBox::Close|QDialogButtonBox::Help</set>
      </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QTreeView" name="mOfferingsTreeView">
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
-     </property>
-     <property name="selectionMode">
-      <enum>QAbstractItemView::ExtendedSelection</enum>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-     <attribute name="headerVisible">
-      <bool>true</bool>
-     </attribute>
     </widget>
    </item>
   </layout>
@@ -140,7 +130,6 @@
   <tabstop>mNewButton</tabstop>
   <tabstop>mEditButton</tabstop>
   <tabstop>mDeleteButton</tabstop>
-  <tabstop>mOfferingsTreeView</tabstop>
   <tabstop>mbuttonBox</tabstop>
  </tabstops>
  <resources/>

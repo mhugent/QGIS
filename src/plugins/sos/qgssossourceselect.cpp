@@ -102,10 +102,34 @@ void QgsSOSSourceSelect::populateConnectionList()
 
 void QgsSOSSourceSelect::gotCapabilities()
 {
+  mOfferingsTreeWidget->clear();
   if ( !mCapabilities )
   {
     return;
   }
-  //todo: get information about connection (offerings, observed phenomenons) from mCapabilities
+
+  //check network error
+  const QString& networkError = mCapabilities->networkError();
+  if ( !networkError.isEmpty() )
+  {
+    QMessageBox::critical( this, tr( "Network error" ), networkError );
+  }
+
+  //check xml error
+  const QString& xmlError = mCapabilities->xmlError();
+  if ( !xmlError.isEmpty() )
+  {
+
+  }
+
+  const QStringList* observablePropertyList = mCapabilities->observableProperties();
+  if ( observablePropertyList )
+  {
+    QStringList::const_iterator pIt = observablePropertyList->constBegin();
+    for ( ; pIt != observablePropertyList->constEnd(); ++pIt )
+    {
+      mOfferingsTreeWidget->addTopLevelItem( new QTreeWidgetItem( QStringList() << *pIt ) );
+    }
+  }
 }
 

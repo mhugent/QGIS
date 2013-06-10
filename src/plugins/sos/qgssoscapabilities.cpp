@@ -17,6 +17,7 @@
 
 #include "qgssoscapabilities.h"
 #include "qgsnetworkaccessmanager.h"
+#include <QDomDocument>
 #include <QNetworkReply>
 
 QgsSOSCapabilities::QgsSOSCapabilities( const QString& serviceUrl ): QObject( 0 ), mCapabilitiesReply( 0 )
@@ -44,21 +45,38 @@ void QgsSOSCapabilities::capabilitiesReplyFinished()
 {
   QNetworkReply* reply = mCapabilitiesReply;
 
+  mObservableProperties.clear();
+  mNetworkError.clear();
+  mXmlError.clear();
   reply->deleteLater();
   mCapabilitiesReply = 0;
 
   // handle network errors
   if ( reply->error() != QNetworkReply::NoError )
   {
-    //todo: error handling
-    //mErrorCode = QgsWFSCapabilities::NetworkError;
-    //mErrorMessage = reply->errorString();
+    mNetworkError = reply->errorString();
     emit gotCapabilities();
     return;
   }
 
   QByteArray buffer = reply->readAll();
-  qWarning( QString( buffer ).toLocal8Bit().data() );
+  QDomDocument doc;
+
+  QString xmlErrorMsg;
+  int errorLine = 0;
+  int errorColumn = 0;
+  if ( !doc.setContent( buffer, true, &xmlErrorMsg, &errorLine, &errorColumn ) )
+  {
+    mXmlError = QString( "XML error: %1 on line %2, column %3" ).arg( xmlErrorMsg ).arg( errorLine ).arg( errorColumn );
+    return;
+  }
+
+  //get list of observable properties
+  QDomNodeList observablePropertyList = doc.elementsByTagNameNS( "http://www.opengis.net/swes/2.0" , "observableProperty" );
+  for ( int i = 0; i < observablePropertyList.size(); ++i )
+  {
+    mObservableProperties.push_back( observablePropertyList.at( i ).toElement().text() );
+  }
 
   emit gotCapabilities();
 }
