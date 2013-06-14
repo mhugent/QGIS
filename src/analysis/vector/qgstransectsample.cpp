@@ -207,7 +207,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       samplePointFeature.addAttribute( 0, nTotalTransects + 1 );
       samplePointFeature.addAttribute( 1, nCreatedTransects + 1 );
       samplePointFeature.addAttribute( 2, strataId );
-      samplePointFeature.addAttribute( 3, strataId.toString() + "_" + QString::number( nCreatedTransects ) );
+      samplePointFeature.addAttribute( 3, strataId.toString() + "_" + QString::number( nCreatedTransects + 1 ) );
       samplePointFeature.addAttribute( 4, latLongSamplePoint.y() );
       samplePointFeature.addAttribute( 5, latLongSamplePoint.x() );
 

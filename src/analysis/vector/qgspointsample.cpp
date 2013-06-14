@@ -120,8 +120,8 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
     {
       //add feature to writer
       QgsFeature f( mNCreatedPoints );
-      f.addAttribute( 0, mNCreatedPoints );
-      f.addAttribute( 1, points );
+      f.addAttribute( 0, mNCreatedPoints + 1 );
+      f.addAttribute( 1, points + 1 );
       f.addAttribute( 2, inputFeature.id() );
       f.setGeometry( ptGeom );
       writer.addFeature( f );
