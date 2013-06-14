@@ -365,14 +365,14 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         outputPointShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output point shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
         if outputPointShape.isEmpty():
             return
-        else
+        else:
             saveDir = QFileInfo( outputPointShape ).absolutePath()
             
         
         outputLineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output line shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
         if outputLineShape.isEmpty():
             return
-        else
+        else:
             saveDir = QFileInfo( outputLineShape ).absolutePath()
             
         usedBaselineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output baseline file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
