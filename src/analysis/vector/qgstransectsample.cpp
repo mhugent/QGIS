@@ -13,11 +13,11 @@
 QgsTransectSample::QgsTransectSample( QgsVectorLayer* strataLayer, int strataIdAttribute, int minDistanceAttribute, DistanceUnits minDistUnits,
                                       int nPointsAttribute, QgsVectorLayer* baselineLayer, bool shareBaseline,
                                       int baselineStrataId, const QString& outputPointLayer,
-                                      const QString& outputLineLayer, const QString& usedBaselineLayer ): mStrataLayer( strataLayer ),
+                                      const QString& outputLineLayer, const QString& usedBaselineLayer, double minTransectLength ): mStrataLayer( strataLayer ),
     mStrataIdAttribute( strataIdAttribute ), mMinDistanceAttribute( minDistanceAttribute ),
     mNPointsAttribute( nPointsAttribute ), mBaselineLayer( baselineLayer ), mShareBaseline( shareBaseline ),
     mBaselineStrataId( baselineStrataId ), mOutputPointLayer( outputPointLayer ), mOutputLineLayer( outputLineLayer ), mUsedBaselineLayer( usedBaselineLayer ),
-    mMinDistanceUnits( minDistUnits )
+    mMinDistanceUnits( minDistUnits ), mMinTransectLength( minTransectLength )
 {
 }
 
@@ -204,8 +204,8 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
       QgsFeature samplePointFeature;
       samplePointFeature.setGeometry( samplePoint );
-      samplePointFeature.addAttribute( 0, nTotalTransects );
-      samplePointFeature.addAttribute( 1, nCreatedTransects );
+      samplePointFeature.addAttribute( 0, nTotalTransects + 1 );
+      samplePointFeature.addAttribute( 1, nCreatedTransects + 1 );
       samplePointFeature.addAttribute( 2, strataId );
       samplePointFeature.addAttribute( 3, strataId.toString() + "_" + QString::number( nCreatedTransects ) );
       samplePointFeature.addAttribute( 4, latLongSamplePoint.y() );
@@ -256,11 +256,12 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       }
 
       //cancel if length of lineClipStratum is too small
-      /*if ( lineClipStratum->length() < 0.0000000001 )
+      double transectLength = distanceArea.measure( lineClipStratum );
+      if ( transectLength < mMinTransectLength )
       {
         delete lineFarAwayGeom; delete lineClipStratum;
         continue;
-      }*/
+      }
 
       //search closest existing profile. Cancel if dist < minDist
       if ( otherTransectWithinDistance( lineClipStratum, minDistanceLayerUnits, minDistance, sIndex, lineFeatureMap, distanceArea ) )
@@ -272,10 +273,10 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       QgsFeatureId fid( nCreatedTransects );
       QgsFeature sampleLineFeature( fid );
       sampleLineFeature.setGeometry( lineClipStratum );
-      sampleLineFeature.addAttribute( 0, nTotalTransects );
-      sampleLineFeature.addAttribute( 1, nCreatedTransects );
+      sampleLineFeature.addAttribute( 0, nTotalTransects + 1 );
+      sampleLineFeature.addAttribute( 1, nCreatedTransects + 1 );
       sampleLineFeature.addAttribute( 2, strataId );
-      sampleLineFeature.addAttribute( 3, strataId.toString() + "_" + QString::number( nCreatedTransects ) );
+      sampleLineFeature.addAttribute( 3, strataId.toString() + "_" + QString::number( nCreatedTransects + 1 ) );
       sampleLineFeature.addAttribute( 4, latLongSamplePoint.y() );
       sampleLineFeature.addAttribute( 5, latLongSamplePoint.x() );
       sampleLineFeature.addAttribute( 6, bearing );

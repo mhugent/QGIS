@@ -60,6 +60,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         QObject.connect( self.mMinDistanceUnitsComboBox,  SIGNAL(  'currentIndexChanged( int )' ),  self.writeToProject  )
         QObject.connect( self.mNSamplePointsComboBox,  SIGNAL(  'currentIndexChanged( int )' ),  self.writeToProject  )
         QObject.connect( self.mStrataIdAttributeComboBox,  SIGNAL(  'currentIndexChanged( int )' ),  self.writeToProject  )
+        QObject.connect( self.mMinimumTransectLengthSpinBox,  SIGNAL( 'valueChanged( double )' ),  self.writeToProject )
         
         QObject.connect( self.mCreateSampleButton, SIGNAL('clicked()'), self.createSample )
         
@@ -80,6 +81,8 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
             self.mMinDistanceUnitsComboBox.setCurrentIndex( 1 )
         else:
             self.mMinDistanceUnitsComboBox.setCurrentIndex( 0 )
+            
+        self.mMinimumTransectLengthSpinBox.setValue( QgsProject.instance().readDoubleEntry( 'Survey',  'MinTransectLength',  0.0 )[0] )
             
         self.blockSignals( False )
     
@@ -341,6 +344,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         QgsProject.instance().writeEntry( 'Survey', 'StrataMinDistance', self.strataMinDistanceAttribute() )
         QgsProject.instance().writeEntry( 'Survey', 'StrataNSamplePoints', self.strataNSamplePointsAttribute() )
         QgsProject.instance().writeEntry( 'Survey', 'StrataId', self.strataId() )
+        QgsProject.instance().writeEntry( 'Survey',  'MinTransectLength',  self.mMinimumTransectLengthSpinBox.value() )
         minDistanceUnitString = self.mMinDistanceUnitsComboBox.currentText()
         print minDistanceUnitString
         QgsProject.instance().writeEntry( 'Survey',  'StrataMinDistanceUnits',  minDistanceUnitString );
@@ -385,7 +389,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         strataMapLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
         baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
         transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, minDistanceUnits,  strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(), 
-        baselineStrataId, outputPointShape, outputLineShape,  usedBaselineShape )
+        baselineStrataId, outputPointShape, outputLineShape,  usedBaselineShape,  self.mMinimumTransectLengthSpinBox.value() )
         pd = QProgressDialog(  'Calculating transects...', 'Abort',  0,  0,  self )
         pd.setWindowTitle( 'Transect generation' )
         pd.show();
