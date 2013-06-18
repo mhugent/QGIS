@@ -113,7 +113,7 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="mbuttonBox">
+    <widget class="QDialogButtonBox" name="mButtonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -130,12 +130,12 @@
   <tabstop>mNewButton</tabstop>
   <tabstop>mEditButton</tabstop>
   <tabstop>mDeleteButton</tabstop>
-  <tabstop>mbuttonBox</tabstop>
+  <tabstop>mButtonBox</tabstop>
  </tabstops>
  <resources/>
  <connections>
   <connection>
-   <sender>mbuttonBox</sender>
+   <sender>mButtonBox</sender>
    <signal>rejected()</signal>
    <receiver>QgsSOSSourceSelectBase</receiver>
    <slot>reject()</slot>

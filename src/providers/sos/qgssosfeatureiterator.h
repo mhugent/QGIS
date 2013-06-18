@@ -1,6 +1,6 @@
 /***************************************************************************
-                          qgssossourceselect.h  -  description
-                          ------------------------------------
+                          qgssosfeatureiterator.h  -  description
+                          ---------------------------------------
     begin                : June 2013
     copyright            : (C) 2013 by Marco Hugentobler
     email                : marco dot hugentobler at sourcepole dot ch
@@ -15,31 +15,30 @@
  *                                                                         *
  ***************************************************************************/
 
-/**Dialog to connect to sensor observation services and to load layers*/
+#ifndef QGSSOSFEATUREITERATOR_H
+#define QGSSOSFEATUREITERATOR_H
 
-#include "ui_qgssossourceselectbase.h"
+#include"qgsfeatureiterator.h"
 
-class QgsSOSCapabilities;
-class QgisInterface;
+class QgsSOSProvider;
 
-class QgsSOSSourceSelect: public QDialog, private Ui::QgsSOSSourceSelectBase
+class QgsSOSFeatureIterator: public QgsAbstractFeatureIterator
 {
-    Q_OBJECT
-  public:
-    QgsSOSSourceSelect( QgisInterface* iface, QWidget* parent = 0, Qt::WFlags fl = 0 );
-    ~QgsSOSSourceSelect();
+    public:
+        QgsSOSFeatureIterator( QgsSOSProvider* provider, const QgsFeatureRequest& request );
+        ~QgsSOSFeatureIterator();
 
-  private slots:
-    void on_mConnectButton_clicked();
-    void on_mNewButton_clicked();
-    void on_mEditButton_clicked();
-    void on_mDeleteButton_clicked();
-    void gotCapabilities();
-    void addLayer();
+        //! fetch next feature, return true on success
+        bool nextFeature( QgsFeature& f );
+        //! reset the iterator to the starting position
+        bool rewind();
+        //! end of iterating: free the resources / lock
+        bool close();
 
-  private:
-    QgsSOSCapabilities* mCapabilities;
-    QgisInterface* mIface;
-
-    void populateConnectionList();
+    private:
+        QgsSOSProvider* mProvider;
+        QList<QgsFeatureId> mSelectedFeatures;
+        QList<QgsFeatureId>::const_iterator mFeatureIterator;
 };
+
+#endif // QGSSOSFEATUREITERATOR_H

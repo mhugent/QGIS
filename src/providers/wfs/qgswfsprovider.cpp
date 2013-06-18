@@ -149,47 +149,6 @@ void QgsWFSProvider::deleteData()
   mFeatures.clear();
 }
 
-void QgsWFSProvider::copyFeature( QgsFeature* f, QgsFeature& feature, bool fetchGeometry, QgsAttributeList fetchAttributes )
-{
-  Q_UNUSED( fetchGeometry );
-
-  if ( !f )
-  {
-    return;
-  }
-
-  //copy the geometry
-  QgsGeometry* geometry = f->geometry();
-  if ( geometry && fetchGeometry )
-  {
-    unsigned char *geom = geometry->asWkb();
-    int geomSize = geometry->wkbSize();
-    unsigned char* copiedGeom = new unsigned char[geomSize];
-    memcpy( copiedGeom, geom, geomSize );
-    feature.setGeometryAndOwnership( copiedGeom, geomSize );
-  }
-  else
-  {
-    feature.setGeometry( 0 );
-  }
-
-  //and the attributes
-  const QgsAttributes& attributes = f->attributes();
-  feature.setAttributes( attributes );
-
-  int i = 0;
-  for ( QgsAttributeList::const_iterator it = fetchAttributes.begin(); it != fetchAttributes.end(); ++it )
-  {
-    feature.setAttribute( i, attributes[*it] );
-    ++i;
-  }
-
-  //id and valid
-  feature.setValid( true );
-  feature.setFeatureId( f->id() );
-  feature.setFields( &mFields ); // allow name-based attribute lookups
-}
-
 bool QgsWFSProvider::featureAtId( QgsFeatureId featureId,
                                   QgsFeature& feature,
                                   bool fetchGeometry,

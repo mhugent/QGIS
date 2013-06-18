@@ -19,12 +19,18 @@
 #include "qgsowsconnection.h"
 #include "qgssoscapabilities.h"
 #include "qgsnewhttpconnection.h"
+#include "qgisinterface.h"
 #include <QMessageBox>
 
-QgsSOSSourceSelect::QgsSOSSourceSelect( QWidget* parent, Qt::WFlags fl ): QDialog( parent, fl ), mCapabilities( 0 )
+QgsSOSSourceSelect::QgsSOSSourceSelect( QgisInterface* iface, QWidget* parent, Qt::WFlags fl ):
+    QDialog( parent, fl ), mIface( iface ), mCapabilities( 0 )
 {
   setupUi( this );
   populateConnectionList();
+
+  QPushButton* mAddButton = new QPushButton( tr( "&Add" ) );
+  mButtonBox->addButton( mAddButton, QDialogButtonBox::ActionRole );
+  connect( mAddButton, SIGNAL( clicked() ), this, SLOT( addLayer() ) );
 }
 
 QgsSOSSourceSelect::~QgsSOSSourceSelect()
@@ -131,5 +137,32 @@ void QgsSOSSourceSelect::gotCapabilities()
       mOfferingsTreeWidget->addTopLevelItem( new QTreeWidgetItem( QStringList() << *pIt ) );
     }
   }
+}
+
+void QgsSOSSourceSelect::addLayer()
+{
+  QgsOWSConnection connection( "SOS", mConnectionsComboBox->currentText() );
+  QString getFeatureOfInterestUrl = connection.uri().param( "url" ) + "SERVICE=SOS&request=GetFeatureofInterest&datasource=0&Version=2.0";
+
+  QString observedPropertiesString;
+  QList<QTreeWidgetItem*> selectedItemList = mOfferingsTreeWidget->selectedItems();
+  for ( int i = 0; i < selectedItemList.size(); ++i )
+  {
+    if ( i > 0 )
+    {
+      observedPropertiesString.append( "," );
+    }
+    observedPropertiesString.append( selectedItemList.at( i )->text( 0 ) );
+  }
+  if ( !selectedItemList.isEmpty() )
+  {
+    getFeatureOfInterestUrl += ( QString( "&observedProperty=" ) + observedPropertiesString );
+  }
+
+  if ( mIface )
+  {
+    mIface->addVectorLayer( getFeatureOfInterestUrl, "sos layer", "SOS" );
+  }
+  return;
 }
 

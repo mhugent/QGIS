@@ -61,7 +61,7 @@ void QgsSOSPlugin::unload()
 
 void QgsSOSPlugin::showSOSDialog()
 {
-  QgsSOSSourceSelect dialog;
+  QgsSOSSourceSelect dialog( mIface );
   dialog.exec();
 }
 
