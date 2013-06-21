@@ -26,7 +26,13 @@ static const QString TEXT_PROVIDER_DESCRIPTION = "SOS data provider";
 QgsSOSProvider::QgsSOSProvider( const QString& uri ): QgsVectorDataProvider( uri ), mValid( false ),
     mSpatialIndex( 0 ), mActiveIterator( 0 )
 {
-    loadData();
+  loadData();
+
+  //expect sampling spatial output
+  QgsField idField( "identifier", QVariant::String );
+  QgsField nameField( "name", QVariant::String );
+  mFields.append( idField );
+  mFields.append( nameField );
 }
 
 QgsSOSProvider::~QgsSOSProvider()
@@ -35,74 +41,74 @@ QgsSOSProvider::~QgsSOSProvider()
 
 void QgsSOSProvider::loadData()
 {
-    QgsSOSData data;
-    if( data.getFeatures( dataSourceUri(), &mFeatures, &mCrs, &mExtent ) == 0 )
-    {
-        reloadSpatialIndex();
-        mValid = true;
-    }
-    else
-    {
-        mValid = false;
-    }
+  QgsSOSData data;
+  if ( data.getFeatures( dataSourceUri(), &mFeatures, &mCrs, &mExtent ) == 0 )
+  {
+    reloadSpatialIndex();
+    mValid = true;
+  }
+  else
+  {
+    mValid = false;
+  }
 }
 
 void QgsSOSProvider::reloadSpatialIndex()
 {
-    delete mSpatialIndex;
-    mSpatialIndex = new QgsSpatialIndex();
-    QMap<QgsFeatureId, QgsFeature* >::const_iterator fIt = mFeatures.constBegin();
-    for(; fIt != mFeatures.constEnd(); ++fIt )
-    {
-        mSpatialIndex->insertFeature( *( fIt.value() ) );
-    }
+  delete mSpatialIndex;
+  mSpatialIndex = new QgsSpatialIndex();
+  QMap<QgsFeatureId, QgsFeature* >::const_iterator fIt = mFeatures.constBegin();
+  for ( ; fIt != mFeatures.constEnd(); ++fIt )
+  {
+    mSpatialIndex->insertFeature( *( fIt.value() ) );
+  }
 }
 
 QgsFeatureIterator QgsSOSProvider::getFeatures( const QgsFeatureRequest& request )
 {
-    return QgsFeatureIterator( new QgsSOSFeatureIterator( this, request ) );
+  return QgsFeatureIterator( new QgsSOSFeatureIterator( this, request ) );
 }
 
 QGis::WkbType QgsSOSProvider::geometryType() const
 {
-    return QGis::WKBPoint;
+  return QGis::WKBPoint;
 }
 
 long QgsSOSProvider::featureCount() const
 {
-    return mFeatures.size();
+  return mFeatures.size();
 }
 
 const QgsFields& QgsSOSProvider::fields() const
 {
-    return mFields;
+  return mFields;
 }
 
 QgsCoordinateReferenceSystem QgsSOSProvider::crs()
 {
-    QgsCoordinateReferenceSystem crs;
-    crs.createFromId( 4326, QgsCoordinateReferenceSystem::EpsgCrsId );
-    return crs;
+  QgsCoordinateReferenceSystem crs;
+  crs.createFromId( 4326, QgsCoordinateReferenceSystem::EpsgCrsId );
+  return crs;
 }
 
 QgsRectangle QgsSOSProvider::extent()
 {
-    return mExtent;
+  return mExtent;
 }
 
 bool QgsSOSProvider::isValid()
 {
-    return mValid;
+  return mValid;
 }
 
 QString QgsSOSProvider::name() const
 {
-    return TEXT_PROVIDER_KEY;
+  return TEXT_PROVIDER_KEY;
 }
 
 QString QgsSOSProvider::description() const
 {
-    return TEXT_PROVIDER_DESCRIPTION;
+  return TEXT_PROVIDER_DESCRIPTION;
 }
 
 QGISEXTERN QgsSOSProvider* classFactory( const QString *uri )
