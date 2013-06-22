@@ -16,6 +16,8 @@
  ***************************************************************************/
 
 #include "qgssosplugin.h"
+#include "qgsmapcanvas.h"
+#include "qgsmaptoolsensorinfo.h"
 #include "qgssossourceselect.h"
 #include "qgis.h"
 #include "qgisinterface.h"
@@ -27,7 +29,7 @@ static const QString version_ = QObject::tr( "Version 0.1" );
 //static const QString icon_ = ":/raster/dem.png";
 static const QString category_ = QObject::tr( "Vector" );
 
-QgsSOSPlugin::QgsSOSPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 )
+QgsSOSPlugin::QgsSOSPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 ), mSensorInfoAction( 0 )
 {
 
 }
@@ -43,8 +45,16 @@ void QgsSOSPlugin::initGui()
   {
     mAction = new QAction( tr( "Sensor observation service" ), 0 );
     QObject::connect( mAction, SIGNAL( triggered() ), this, SLOT( showSOSDialog() ) );
-    mIface->addVectorToolBarIcon( mAction );
-    mIface->addPluginToVectorMenu( tr( "Sensor ovservation service" ), mAction );
+    mIface->addWebToolBarIcon( mAction );
+    mIface->addPluginToWebMenu( tr( "Sensor observation service" ), mAction );
+
+    mSensorInfoAction = new QAction( tr( "Sensor info" ), 0 );
+    QObject::connect( mSensorInfoAction, SIGNAL( toggled( bool ) ), this, SLOT( toggleSensorInfo( bool ) ) );
+    mSensorInfoAction->setCheckable( true );
+    mIface->addWebToolBarIcon( mSensorInfoAction );
+
+    mMapToolSensorInfo = new QgsMapToolSensorInfo( mIface->mapCanvas() );
+    mMapToolSensorInfo->setAction( mSensorInfoAction );
   }
 }
 
@@ -52,17 +62,49 @@ void QgsSOSPlugin::unload()
 {
   if ( mAction && mIface )
   {
-    mIface->removeVectorToolBarIcon( mAction );
-    mIface->removePluginVectorMenu( tr( "Sensor ovservation service" ), mAction );
+    mIface->removeWebToolBarIcon( mAction );
+    mIface->removePluginWebMenu( tr( "Sensor ovservation service" ), mAction );
   }
   delete mAction;
   mAction = 0;
+
+  if ( mSensorInfoAction && mIface )
+  {
+    mIface->removeWebToolBarIcon( mSensorInfoAction );
+  }
+  delete mSensorInfoAction;
+  mSensorInfoAction = 0;
+
+  delete mMapToolSensorInfo;
 }
 
 void QgsSOSPlugin::showSOSDialog()
 {
   QgsSOSSourceSelect dialog( mIface );
   dialog.exec();
+}
+
+void QgsSOSPlugin::toggleSensorInfo( bool checked )
+{
+  if ( !mIface )
+  {
+    return;
+  }
+
+  QgsMapCanvas* canvas = mIface->mapCanvas();
+  if ( !canvas )
+  {
+    return;
+  }
+
+  if ( checked )
+  {
+    canvas->setMapTool( mMapToolSensorInfo );
+  }
+  else
+  {
+    canvas->unsetMapTool( mMapToolSensorInfo );
+  }
 }
 
 //global methods for the plugin manager

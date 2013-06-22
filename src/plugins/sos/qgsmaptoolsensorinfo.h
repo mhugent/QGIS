@@ -1,6 +1,6 @@
 /***************************************************************************
-                          qgssosplugin.h  -  description
-                          ------------------------------
+                          qgsmaptoolsensorinfo.h  -  description
+                          --------------------------------------
     begin                : June 2013
     copyright            : (C) 2013 by Marco Hugentobler
     email                : marco dot hugentobler at sourcepole dot ch
@@ -15,38 +15,19 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSSOSPLUGIN_H
-#define QGSSOSPLUGIN_H
+#ifndef QGSMAPTOOLSENSORINFO_H
+#define QGSMAPTOOLSENSORINFO_H
 
-#include "qgisplugin.h"
-#include <QObject>
+#include "qgsmaptool.h"
 
-class QgisInterface;
-class QgsMapToolSensorInfo;
-class QAction;
-
-/**A plugin to access Sensor Observation Services (SOS)*/
-class QgsSOSPlugin: public QObject, public QgisPlugin
+class QgsMapToolSensorInfo: public QgsMapTool
 {
-    Q_OBJECT
   public:
-    QgsSOSPlugin( QgisInterface* iface );
-    ~QgsSOSPlugin();
+    QgsMapToolSensorInfo( QgsMapCanvas* canvas );
+    ~QgsMapToolSensorInfo();
 
-    /**initialize connection to GUI*/
-    void initGui();
-    /**Unload the plugin and cleanup the GUI*/
-    void unload();
-
-  private:
-    QgisInterface* mIface;
-    QAction* mAction;
-    QAction* mSensorInfoAction;
-    QgsMapToolSensorInfo* mMapToolSensorInfo;
-
-  private slots:
-    void showSOSDialog();
-    void toggleSensorInfo( bool checked );
+    /**Get sensor information at point (observed properties and available time intervals)*/
+    void canvasReleaseEvent( QMouseEvent * e );
 };
 
-#endif // QGSSOSPLUGIN_H
+#endif // QGSMAPTOOLSENSORINFO_H

@@ -1,6 +1,6 @@
 /***************************************************************************
-                          qgssosplugin.h  -  description
-                          ------------------------------
+                          qgsmaptoolsensorinfo.cpp  -  description
+                          --------------------------------------
     begin                : June 2013
     copyright            : (C) 2013 by Marco Hugentobler
     email                : marco dot hugentobler at sourcepole dot ch
@@ -15,38 +15,25 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSSOSPLUGIN_H
-#define QGSSOSPLUGIN_H
+#include "qgsmaptoolsensorinfo.h"
 
-#include "qgisplugin.h"
-#include <QObject>
-
-class QgisInterface;
-class QgsMapToolSensorInfo;
-class QAction;
-
-/**A plugin to access Sensor Observation Services (SOS)*/
-class QgsSOSPlugin: public QObject, public QgisPlugin
+QgsMapToolSensorInfo::QgsMapToolSensorInfo( QgsMapCanvas* canvas ): QgsMapTool( canvas )
 {
-    Q_OBJECT
-  public:
-    QgsSOSPlugin( QgisInterface* iface );
-    ~QgsSOSPlugin();
 
-    /**initialize connection to GUI*/
-    void initGui();
-    /**Unload the plugin and cleanup the GUI*/
-    void unload();
+}
 
-  private:
-    QgisInterface* mIface;
-    QAction* mAction;
-    QAction* mSensorInfoAction;
-    QgsMapToolSensorInfo* mMapToolSensorInfo;
+QgsMapToolSensorInfo::~QgsMapToolSensorInfo()
+{
 
-  private slots:
-    void showSOSDialog();
-    void toggleSensorInfo( bool checked );
-};
+}
 
-#endif // QGSSOSPLUGIN_H
+void QgsMapToolSensorInfo::canvasReleaseEvent( QMouseEvent * e )
+{
+  qWarning( "***********************QgsMapToolSensorInfo canvas click******************" );
+
+  //get sensor layer (active one or the first sos layer otherwise)
+
+  //get features under the cursor
+
+  //show window with GetDataAvailability info for all features
+}

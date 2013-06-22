@@ -5,6 +5,7 @@ SET (SOS_SRCS
      qgssosplugin.cpp
      qgssossourceselect.cpp
      qgssoscapabilities.cpp
+     qgsmaptoolsensorinfo.cpp
 )
 
 SET (SOS_UIS
