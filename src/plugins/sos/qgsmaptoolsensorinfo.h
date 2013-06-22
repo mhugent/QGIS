@@ -20,14 +20,35 @@
 
 #include "qgsmaptool.h"
 
+class QgsSensorInfoDialog;
+class QgsVectorLayer;
+class QDateTime;
+
 class QgsMapToolSensorInfo: public QgsMapTool
 {
+    Q_OBJECT
   public:
     QgsMapToolSensorInfo( QgsMapCanvas* canvas );
     ~QgsMapToolSensorInfo();
 
     /**Get sensor information at point (observed properties and available time intervals)*/
     void canvasReleaseEvent( QMouseEvent * e );
+
+  private:
+    /**Returns sensor layers in the project*/
+    QList< QgsMapLayer* > sensorLayers();
+    /**Does GetDataAvailability request for station id*/
+    int getDataAvailability( const QString& serviceUrl, const QString& station_id,
+                             QStringList& observedPropertyList, QList< QDateTime >& begin,
+                             QList< QDateTime >& end );
+
+    bool mDataAvailabilityRequestFinished;
+
+    QgsSensorInfoDialog* mSensorInfoDialog;
+
+  private slots:
+    void dataAvailabilityRequestFinished();
+    void showSensorInfoDialog();
 };
 
 #endif // QGSMAPTOOLSENSORINFO_H

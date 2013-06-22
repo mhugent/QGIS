@@ -6,16 +6,19 @@ SET (SOS_SRCS
      qgssossourceselect.cpp
      qgssoscapabilities.cpp
      qgsmaptoolsensorinfo.cpp
+     qgssensorinfodialog.cpp
 )
 
 SET (SOS_UIS
     qgssossourceselectbase.ui
+    qgssensorinfodialogbase.ui
     )
 
 SET (SOS_MOC_HDRS
 qgssosplugin.h
 qgssossourceselect.h
 qgssoscapabilities.h
+qgsmaptoolsensorinfo.h
 )
 
 #SET (SOS_RCCS  resources.qrc)
