@@ -158,12 +158,12 @@ int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const 
         QDomElement beginElem = timePeriodElem.firstChildElement( "beginPosition" );
         if ( !beginElem.isNull() )
         {
-          beginTime = QDateTime::fromString( beginElem.text() );
+          beginTime = QDateTime::fromString( beginElem.text(), "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.000+00:00'" );
         }
         QDomElement endElem = timePeriodElem.firstChildElement( "endPosition" );
         if ( !endElem.isNull() )
         {
-          endTime = QDateTime::fromString( endElem.text() );
+          endTime = QDateTime::fromString( endElem.text(), "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.000+00:00'" );
         }
       }
     }

@@ -19,6 +19,7 @@ qgssosplugin.h
 qgssossourceselect.h
 qgssoscapabilities.h
 qgsmaptoolsensorinfo.h
+qgssensorinfodialog.h
 )
 
 #SET (SOS_RCCS  resources.qrc)

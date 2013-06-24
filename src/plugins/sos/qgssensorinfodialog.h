@@ -22,12 +22,16 @@
 
 class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
 {
-    public:
-        QgsSensorInfoDialog( QWidget * parent = 0, Qt::WindowFlags f = 0 );
-        ~QgsSensorInfoDialog();
+    Q_OBJECT
+  public:
+    QgsSensorInfoDialog( QWidget * parent = 0, Qt::WindowFlags f = 0 );
+    ~QgsSensorInfoDialog();
 
-        void clearObservables();
-        void addObservables( const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end );
+    void clearObservables();
+    void addObservables( const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end );
+
+  private slots:
+    void showDiagram();
 };
 
 #endif // QGSSENSORINFODIALOG_H

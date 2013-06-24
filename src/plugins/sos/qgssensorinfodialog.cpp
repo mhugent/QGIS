@@ -17,10 +17,14 @@
 
 #include "qgssensorinfodialog.h"
 #include <QDateTimeEdit>
+#include <QPushButton>
 
 QgsSensorInfoDialog::QgsSensorInfoDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f )
 {
-    setupUi( this );
+  setupUi( this );
+  QPushButton* displayButton = new QPushButton( tr( "Display" ), this );
+  connect( displayButton, SIGNAL( clicked() ), this, SLOT( showDiagram() ) );
+  mButtonBox->addButton( displayButton, QDialogButtonBox::ActionRole );
 }
 
 QgsSensorInfoDialog::~QgsSensorInfoDialog()
@@ -30,22 +34,27 @@ QgsSensorInfoDialog::~QgsSensorInfoDialog()
 
 void QgsSensorInfoDialog::clearObservables()
 {
-    mObservableTreeWidget->clear();
+  mObservableTreeWidget->clear();
 }
 
 void QgsSensorInfoDialog::addObservables( const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end )
 {
-    QTreeWidgetItem* stationIdWidget = new QTreeWidgetItem( QStringList() << stationId );
-    mObservableTreeWidget->addTopLevelItem( stationIdWidget );
+  QTreeWidgetItem* stationIdWidget = new QTreeWidgetItem( QStringList() << stationId );
+  mObservableTreeWidget->addTopLevelItem( stationIdWidget );
 
-    QStringList::const_iterator obsIt = observables.constBegin();
-    QList< QDateTime >::const_iterator bIt = begin.constBegin();
-    QList< QDateTime >::const_iterator eIt = end.constBegin();
-    for(; obsIt != observables.constEnd() && bIt != begin.constEnd() && eIt != end.constEnd(); ++obsIt )
-    {
-        QTreeWidgetItem* observableItem = new QTreeWidgetItem( stationIdWidget, QStringList() << "" << *obsIt );
-        mObservableTreeWidget->setItemWidget( observableItem, 2, new QDateTimeEdit( *bIt ) );
-        mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( *eIt ) );
-    }
-    mObservableTreeWidget->expandAll();
+  QStringList::const_iterator obsIt = observables.constBegin();
+  QList< QDateTime >::const_iterator bIt = begin.constBegin();
+  QList< QDateTime >::const_iterator eIt = end.constBegin();
+  for ( ; obsIt != observables.constEnd() && bIt != begin.constEnd() && eIt != end.constEnd(); ++obsIt )
+  {
+    QTreeWidgetItem* observableItem = new QTreeWidgetItem( stationIdWidget, QStringList() << "" << *obsIt );
+    mObservableTreeWidget->setItemWidget( observableItem, 2, new QDateTimeEdit( *bIt ) );
+    mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( *eIt ) );
+  }
+  mObservableTreeWidget->expandAll();
+}
+
+void QgsSensorInfoDialog::showDiagram()
+{
+  //todo...
 }
