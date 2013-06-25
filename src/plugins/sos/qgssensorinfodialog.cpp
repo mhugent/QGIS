@@ -16,8 +16,12 @@
  ***************************************************************************/
 
 #include "qgssensorinfodialog.h"
+#include "qgswatermldata.h"
 #include <QDateTimeEdit>
 #include <QPushButton>
+#include <QUrl>
+#include <qwt_plot.h>
+#include <qwt_plot_curve.h>
 
 QgsSensorInfoDialog::QgsSensorInfoDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f )
 {
@@ -37,9 +41,12 @@ void QgsSensorInfoDialog::clearObservables()
   mObservableTreeWidget->clear();
 }
 
-void QgsSensorInfoDialog::addObservables( const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end )
+void QgsSensorInfoDialog::addObservables( const QString& serviceUrl, const QString stationId, const QStringList& observables, const QList< QDateTime >& begin,
+    const QList< QDateTime >& end )
 {
   QTreeWidgetItem* stationIdWidget = new QTreeWidgetItem( QStringList() << stationId );
+  stationIdWidget->setData( 0, Qt::UserRole, serviceUrl );
+  stationIdWidget->setFlags( Qt::ItemIsEnabled );
   mObservableTreeWidget->addTopLevelItem( stationIdWidget );
 
   QStringList::const_iterator obsIt = observables.constBegin();
@@ -56,5 +63,53 @@ void QgsSensorInfoDialog::addObservables( const QString stationId, const QString
 
 void QgsSensorInfoDialog::showDiagram()
 {
-  //todo...
+  QList<QTreeWidgetItem*> selectedItems = mObservableTreeWidget->selectedItems();
+  if ( selectedItems.size() < 1 )
+  {
+    return;
+  }
+
+  QTreeWidgetItem* item  = selectedItems.at( 0 );
+  QTreeWidgetItem* parent = item->parent();
+  if ( !parent )
+  {
+    return;
+  }
+
+  QString featureOfInterest = parent->text( 0 );
+  QString serviceUrl = parent->data( 0, Qt::UserRole ).toString();
+  QString observedProperty = item->text( 1 );
+  QDateTimeEdit* beginEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 2 ) );
+  QDateTimeEdit* endEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 3 ) );
+  if ( !beginEdit || ! endEdit )
+  {
+    return;
+  }
+
+  QString temporalFilter = "om:phenomenonTime," + beginEdit->dateTime().toString( Qt::ISODate )
+                           + "/" + endEdit->dateTime().toString( Qt::ISODate ); //soon...temporalFilter=om:phenomenonTime,1978-01-01T00:00:00Z/1980-01-01T00:00:00Z
+  //http://hydro-sos.niwa.co.nz/KiWIS/KiWIS?service=SOS&request=getobservation&datasource=0&version=2.0&featureOfInterest=http://hydro-sos.niwa.co.nz/stations/4&observedProperty=http://hydro-sos.niwa.co.nz/parameters/Stage/Flow%20rating&temporalFilter=om:phenomenonTime,1978-01-01T00:00:00Z/1980-01-01T00:00:00Z
+
+  QUrl url( serviceUrl );
+  url.removeQueryItem( "request" );
+  url.addQueryItem( "request", "GetObservation" );
+  url.addQueryItem( "featureOfInterest", featureOfInterest );
+  url.addQueryItem( "observedProperty", observedProperty );
+  url.addQueryItem( "temporalFilter", temporalFilter );
+
+  QgsWaterMLData data;
+  QVector<double> timeVector;
+  QVector<double> valueVector;
+  qWarning( url.toString().toLocal8Bit().data() );
+  data.getData( url.toString(), &timeVector, &valueVector );
+
+  //create QWtPlot
+  QwtPlot* diagram = new QwtPlot( featureOfInterest, this );
+  QwtPlotCurve* curve = new QwtPlotCurve( observedProperty );
+  curve->setPen( QPen( Qt::red ) );
+  int dataSize = qMin( timeVector.size(), valueVector.size() );
+  curve->setData( timeVector.constData(), valueVector.constData(), dataSize );
+  curve->attach( diagram );
+  mTabWidget->addTab( diagram, featureOfInterest );
+  diagram->replot();
 }

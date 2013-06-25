@@ -72,7 +72,7 @@ void QgsMapToolSensorInfo::canvasReleaseEvent( QMouseEvent * e )
     QList< QDateTime > beginList;
     QList< QDateTime > endList;
     getDataAvailability( dp->dataSourceUri(), id, observedProperties, beginList, endList );
-    mSensorInfoDialog->addObservables( id, observedProperties, beginList, endList );
+    mSensorInfoDialog->addObservables( dp->dataSourceUri(), id, observedProperties, beginList, endList );
   }
 }
 

@@ -28,7 +28,7 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
     ~QgsSensorInfoDialog();
 
     void clearObservables();
-    void addObservables( const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end );
+    void addObservables( const QString& serviceUrl, const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end );
 
   private slots:
     void showDiagram();

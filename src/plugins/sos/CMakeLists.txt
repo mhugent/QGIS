@@ -7,6 +7,7 @@ SET (SOS_SRCS
      qgssoscapabilities.cpp
      qgsmaptoolsensorinfo.cpp
      qgssensorinfodialog.cpp
+     qgswatermldata.cpp
 )
 
 SET (SOS_UIS
@@ -20,6 +21,7 @@ qgssossourceselect.h
 qgssoscapabilities.h
 qgsmaptoolsensorinfo.h
 qgssensorinfodialog.h
+qgswatermldata.h
 )
 
 #SET (SOS_RCCS  resources.qrc)
@@ -46,11 +48,13 @@ INCLUDE_DIRECTORIES(
      ${CMAKE_CURRENT_BINARY_DIR}/../../ui
      ..
      .
+     ${QWT_INCLUDE_DIR}
 )
 
 TARGET_LINK_LIBRARIES(sosplugin
   qgis_core
   qgis_gui
+  ${QWT_LIBRARY}
 )
 
 
