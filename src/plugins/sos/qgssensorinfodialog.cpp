@@ -22,6 +22,17 @@
 #include <QUrl>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
+#include <qwt_scale_draw.h>
+
+class TimeScaleDraw: public QwtScaleDraw
+{
+  public:
+    TimeScaleDraw() {}
+    virtual QwtText label( double v ) const
+    {
+      return QDateTime::fromTime_t( v ).toString();
+    }
+};
 
 QgsSensorInfoDialog::QgsSensorInfoDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f )
 {
@@ -105,6 +116,7 @@ void QgsSensorInfoDialog::showDiagram()
 
   //create QWtPlot
   QwtPlot* diagram = new QwtPlot( featureOfInterest, this );
+  diagram->setAxisScaleDraw( QwtPlot::xBottom, new TimeScaleDraw() );
   QwtPlotCurve* curve = new QwtPlotCurve( observedProperty );
   curve->setPen( QPen( Qt::red ) );
   int dataSize = qMin( timeVector.size(), valueVector.size() );
