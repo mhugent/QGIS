@@ -129,6 +129,7 @@ SET(QGIS_CORE_SRCS
   qgsvectorlayerjoinbuffer.cpp
   qgsvectorlayerundocommand.cpp
   qgsvectoroverlay.cpp
+  qgsxmldata.cpp
 
   qgsnetworkaccessmanager.cpp
 
@@ -320,6 +321,7 @@ SET(QGIS_CORE_MOC_HDRS
   qgsvectordataprovider.h
   qgsvectorlayercache.h
   qgsgeometryvalidator.h
+  qgsxmldata.h
 
   composer/qgsaddremoveitemcommand.h
   composer/qgscomposerlegend.h
@@ -448,6 +450,7 @@ SET(QGIS_CORE_HDRS
   qgsvectorlayerundocommand.h
   qgsvectoroverlay.h
   qgstolerance.h
+  qgsxmldata.h
 
   diagram/qgsdiagram.h
   diagram/qgspiediagram.h
