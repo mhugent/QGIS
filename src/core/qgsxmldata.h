@@ -22,9 +22,11 @@
 #include <QObject>
 #include <QString>
 
+const char XML_NS_SEPARATOR = '?';
+
 class QProgressDialog;
 
-/**Base class to download and parse xml data. Handles network request, streaming, error and progress reporting*/
+/**Base class to download and parse xml data. Handles network request, streaming, error and progress handling*/
 class QgsXMLData: public QObject
 {
     Q_OBJECT
@@ -39,8 +41,6 @@ class QgsXMLData: public QObject
     virtual void startElement( const XML_Char* el, const XML_Char** attr ) = 0;
     virtual void endElement( const XML_Char* el ) = 0;
     virtual void characters( const XML_Char* chars, int len ) = 0;
-
-    QString nameSpaceSeparator();
 
   private:
     static void start( void* data, const XML_Char* el, const XML_Char** attr )

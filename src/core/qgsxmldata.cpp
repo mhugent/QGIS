@@ -23,13 +23,6 @@
 #include <QNetworkRequest>
 #include <QProgressDialog>
 
-const char NS_SEPARATOR = '?';
-
-QString QgsXMLData::nameSpaceSeparator()
-{
-  return QString( NS_SEPARATOR );
-}
-
 QgsXMLData::QgsXMLData( const QString& url ): mUrl( url ), mFinished( false )
 {
 }
@@ -40,7 +33,7 @@ QgsXMLData::~QgsXMLData()
 
 int QgsXMLData::getXMLData( QProgressDialog* progress )
 {
-  XML_Parser p = XML_ParserCreateNS( NULL, NS_SEPARATOR );
+  XML_Parser p = XML_ParserCreateNS( NULL, XML_NS_SEPARATOR );
   XML_SetUserData( p, this );
   XML_SetElementHandler( p, QgsXMLData::start, QgsXMLData::end );
   XML_SetCharacterDataHandler( p, QgsXMLData::chars );

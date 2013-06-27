@@ -19,6 +19,7 @@
 #define QGSSOSDATA_H
 
 #include "qgsfeature.h"
+#include "qgsxmldata.h"
 #include <QMap>
 #include <QObject>
 #include <QString>
@@ -27,16 +28,16 @@
 class QgsCoordinateReferenceSystem;
 class QgsRectangle;
 
-class QgsSOSData: public QObject
+class QgsSOSData: public QgsXMLData
 {
     Q_OBJECT
   public:
-    QgsSOSData();
+    QgsSOSData( const QString& uri );
     ~QgsSOSData();
     /**Load features into map
         @param uri  service url (GetFeatureOfInterest)
         @param features sensor points are added to the feature map*/
-    int getFeatures( const QString& uri, QMap<QgsFeatureId, QgsFeature* >* features,
+    int getFeatures( QMap<QgsFeatureId, QgsFeature* >* features,
                      QgsCoordinateReferenceSystem* crs, QgsRectangle* extent );
 
   private:
@@ -52,18 +53,6 @@ class QgsSOSData: public QObject
     void startElement( const XML_Char* el, const XML_Char** attr );
     void endElement( const XML_Char* el );
     void characters( const XML_Char* chars, int len );
-    static void start( void* data, const XML_Char* el, const XML_Char** attr )
-    {
-      static_cast<QgsSOSData*>( data )->startElement( el, attr );
-    }
-    static void end( void* data, const XML_Char* el )
-    {
-      static_cast<QgsSOSData*>( data )->endElement( el );
-    }
-    static void chars( void* data, const XML_Char* chars, int len )
-    {
-      static_cast<QgsSOSData*>( data )->characters( chars, len );
-    }
 
     QMap<QgsFeatureId, QgsFeature* >* mFeatures;
     QgsCoordinateReferenceSystem* mCrs;
@@ -72,15 +61,6 @@ class QgsSOSData: public QObject
     ParseMode mParseMode;
     bool mFinished;
     QString mStringCache;
-
-  private slots:
-    void setFinished();
-    void handleProgressEvent( qint64 progress, qint64 maximum );
-
-  signals:
-    void dataReadProgress( int );
-    void totalStepsUpdate( int );
-    void progressMessage( QString );
 };
 
 #endif // QGSSOSDATA_H

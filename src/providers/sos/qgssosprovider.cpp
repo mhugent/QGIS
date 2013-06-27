@@ -41,8 +41,8 @@ QgsSOSProvider::~QgsSOSProvider()
 
 void QgsSOSProvider::loadData()
 {
-  QgsSOSData data;
-  if ( data.getFeatures( dataSourceUri(), &mFeatures, &mCrs, &mExtent ) == 0 )
+  QgsSOSData data( dataSourceUri() );
+  if ( data.getFeatures( &mFeatures, &mCrs, &mExtent ) == 0 )
   {
     reloadSpatialIndex();
     mValid = true;
