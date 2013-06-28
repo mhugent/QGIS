@@ -18,37 +18,25 @@
 #ifndef QGSWATERMLDATA_H
 #define QGSWATERMLDATA_H
 
+#include "qgsxmldata.h"
 #include <QDateTime>
 #include <QObject>
 #include <QVector>
 #include <expat.h>
 
 /**A class to read water ML data from a sensor observation service*/
-class QgsWaterMLData: public QObject
+class QgsWaterMLData: public QgsXMLData
 {
-    Q_OBJECT
   public:
-    QgsWaterMLData();
+    QgsWaterMLData( const QString& url );
     ~QgsWaterMLData();
 
-    int getData( const QString& url, QVector<double>* time, QVector<double>* value );
+    int getData( QVector<double>* time, QVector<double>* value );
 
     /**XML handler methods*/
     void startElement( const XML_Char* el, const XML_Char** attr );
     void endElement( const XML_Char* el );
     void characters( const XML_Char* chars, int len );
-    static void start( void* data, const XML_Char* el, const XML_Char** attr )
-    {
-      static_cast<QgsWaterMLData*>( data )->startElement( el, attr );
-    }
-    static void end( void* data, const XML_Char* el )
-    {
-      static_cast<QgsWaterMLData*>( data )->endElement( el );
-    }
-    static void chars( void* data, const XML_Char* chars, int len )
-    {
-      static_cast<QgsWaterMLData*>( data )->characters( chars, len );
-    }
 
   private:
 
@@ -59,18 +47,12 @@ class QgsWaterMLData: public QObject
       Value,
     };
 
-
-    bool mFinished;
     QVector<double>* mTimeVector;
     QVector<double>* mValueVector;
     ParseMode mParseMode;
     QDateTime mCurrentDateTime;
     double mCurrentValue;
-    QString mStringCache;
 
-  private slots:
-    void setFinished();
-    void handleProgressEvent( qint64 progress, qint64 maximum );
     QDateTime convertTimeString( const QString& str );
 };
 

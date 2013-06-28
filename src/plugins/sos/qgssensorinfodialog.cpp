@@ -108,11 +108,10 @@ void QgsSensorInfoDialog::showDiagram()
   url.addQueryItem( "observedProperty", observedProperty );
   url.addQueryItem( "temporalFilter", temporalFilter );
 
-  QgsWaterMLData data;
+  QgsWaterMLData data( url.toString().toLocal8Bit().data() );
   QVector<double> timeVector;
   QVector<double> valueVector;
-  qWarning( url.toString().toLocal8Bit().data() );
-  data.getData( url.toString(), &timeVector, &valueVector );
+  data.getData( &timeVector, &valueVector );
 
   //create QWtPlot
   QwtPlot* diagram = new QwtPlot( featureOfInterest, this );

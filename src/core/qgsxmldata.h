@@ -42,6 +42,8 @@ class QgsXMLData: public QObject
     virtual void endElement( const XML_Char* el ) = 0;
     virtual void characters( const XML_Char* chars, int len ) = 0;
 
+    QString mStringCache;
+
   private:
     static void start( void* data, const XML_Char* el, const XML_Char** attr )
     {
@@ -57,7 +59,6 @@ class QgsXMLData: public QObject
     }
 
     QString mUrl;
-    QString mStringCache;
     bool mFinished;
 
   private slots:

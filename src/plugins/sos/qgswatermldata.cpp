@@ -29,7 +29,7 @@ const QString timeString = WML_NS + NS_SEPARATOR + "time";
 const QString valueString = WML_NS + NS_SEPARATOR + "value";
 const QString measurementString = WML_NS + NS_SEPARATOR + "MeasurementTVP";
 
-QgsWaterMLData::QgsWaterMLData(): mFinished( false ), mTimeVector( 0 ), mValueVector( 0 ), mParseMode( None )
+QgsWaterMLData::QgsWaterMLData( const QString& url ): QgsXMLData( url ), mTimeVector( 0 ), mValueVector( 0 ), mParseMode( None )
 {
 
 }
@@ -39,7 +39,7 @@ QgsWaterMLData::~QgsWaterMLData()
 
 }
 
-int QgsWaterMLData::getData( const QString& url, QVector<double>* time, QVector<double>* value )
+int QgsWaterMLData::getData( QVector<double>* time, QVector<double>* value )
 {
   if ( !time || !value )
   {
@@ -49,67 +49,27 @@ int QgsWaterMLData::getData( const QString& url, QVector<double>* time, QVector<
   mTimeVector = time;
   mValueVector = value;
 
-  XML_Parser p = XML_ParserCreateNS( NULL, NS_SEPARATOR );
-  XML_SetUserData( p, this );
-  XML_SetElementHandler( p, QgsWaterMLData::start, QgsWaterMLData::end );
-  XML_SetCharacterDataHandler( p, QgsWaterMLData::chars );
+  QWidget* mainWindow = 0;
+  QWidgetList topLevelWidgets = qApp->topLevelWidgets();
+  for ( QWidgetList::iterator it = topLevelWidgets.begin(); it != topLevelWidgets.end(); ++it )
+  {
+    if (( *it )->objectName() == "QgisApp" )
+    {
+      mainWindow = *it;
+      break;
+    }
+  }
 
-  QNetworkRequest request( url );
-  QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
-  connect( reply, SIGNAL( finished() ), this, SLOT( setFinished() ) );
-  connect( reply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( handleProgressEvent( qint64, qint64 ) ) );
-
-  //find out if there is a QGIS main window. If yes, display a progress dialog
   QProgressDialog* progressDialog = 0;
-  QWidget* mainWindow = QApplication::activeWindow();
   if ( mainWindow )
   {
-    progressDialog = new QProgressDialog( tr( "Loading data" ), tr( "Abort" ), 0, 0, mainWindow );
-    progressDialog->setWindowModality( Qt::ApplicationModal );
+    progressDialog = new QProgressDialog( tr( "Loading sensor data" ), tr( "Abort" ), 0, 0, mainWindow );
     connect( this, SIGNAL( dataReadProgress( int ) ), progressDialog, SLOT( setValue( int ) ) );
     connect( this, SIGNAL( totalStepsUpdate( int ) )    , progressDialog, SLOT( setMaximum( int ) ) );
     connect( progressDialog, SIGNAL( canceled() ), this, SLOT( setFinished() ) );
-    // connect( this, SIGNAL( progressMessage(QString) ), mainWindow, SLOT( showStatusMessage( QString ) ) );
-    progressDialog->show();
   }
 
-  int atEnd = 0;
-  int totalData = 0;
-  while ( !atEnd )
-  {
-    //sometimes, the network reply emits the finished signal even if something is still to come...
-    if ( !totalData > 0 )
-    {
-      mFinished = false;
-    }
-
-    if ( mFinished )
-    {
-      atEnd = 1;
-    }
-
-    QByteArray readData = reply->readAll();
-
-    //debug
-    //qWarning( QString( readData ).toLocal8Bit().data() );
-
-    totalData += readData.size();
-    if ( readData.size() > 0 )
-    {
-      if ( XML_Parse( p, readData.constData(), readData.size(), atEnd ) == 0 )
-      {
-        XML_Error errorCode = XML_GetErrorCode( p );
-        QString errorString = QObject::tr( "Error: %1 on line %2, column %3" )
-                              .arg( XML_ErrorString( errorCode ) )
-                              .arg( XML_GetCurrentLineNumber( p ) )
-                              .arg( XML_GetCurrentColumnNumber( p ) );
-        QgsMessageLog::instance()->logMessage( errorString, QObject::tr( "SOS" ) );
-      }
-    }
-
-    QCoreApplication::processEvents();
-  }
-  delete reply;
+  return getXMLData( progressDialog );
   delete progressDialog;
   return 0;
 }
@@ -159,16 +119,6 @@ void QgsWaterMLData::characters( const XML_Char* chars, int len )
   }
 }
 
-void QgsWaterMLData::setFinished()
-{
-  mFinished = true;
-}
-
-void QgsWaterMLData::handleProgressEvent( qint64 progress, qint64 maximum )
-{
-
-}
-
 QDateTime QgsWaterMLData::convertTimeString( const QString& str )
 {
   QStringList plusSplit = str.split( "+" );
@@ -180,7 +130,7 @@ QDateTime QgsWaterMLData::convertTimeString( const QString& str )
     //offset from UTC
   }
 
-  qWarning( time.toString( "dd.MM.yyyy" ).toLocal8Bit().data() );
-  qWarning( QString::number( time.toTime_t() ).toLocal8Bit().data() );
+  //qWarning( time.toString( "dd.MM.yyyy" ).toLocal8Bit().data() );
+  //qWarning( QString::number( time.toTime_t() ).toLocal8Bit().data() );
   return time;
 }

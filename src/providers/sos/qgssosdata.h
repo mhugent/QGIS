@@ -30,7 +30,6 @@ class QgsRectangle;
 
 class QgsSOSData: public QgsXMLData
 {
-    Q_OBJECT
   public:
     QgsSOSData( const QString& uri );
     ~QgsSOSData();
@@ -60,7 +59,6 @@ class QgsSOSData: public QgsXMLData
     QgsFeature* mCurrentFeature;
     ParseMode mParseMode;
     bool mFinished;
-    QString mStringCache;
 };
 
 #endif // QGSSOSDATA_H

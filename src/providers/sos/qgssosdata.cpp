@@ -57,9 +57,18 @@ int QgsSOSData::getFeatures( QMap<QgsFeatureId, QgsFeature* >* features,
   mExtent = extent;
   mExtent->setMinimal();
 
-  //find out if there is a QGIS main window. If yes, display a progress dialog
+  QWidget* mainWindow = 0;
+  QWidgetList topLevelWidgets = qApp->topLevelWidgets();
+  for ( QWidgetList::iterator it = topLevelWidgets.begin(); it != topLevelWidgets.end(); ++it )
+  {
+    if (( *it )->objectName() == "QgisApp" )
+    {
+      mainWindow = *it;
+      break;
+    }
+  }
+
   QProgressDialog* progressDialog = 0;
-  QWidget* mainWindow = QApplication::activeWindow();
   if ( mainWindow )
   {
     progressDialog = new QProgressDialog( tr( "Loading sensor data" ), tr( "Abort" ), 0, 0, mainWindow );
@@ -68,9 +77,9 @@ int QgsSOSData::getFeatures( QMap<QgsFeatureId, QgsFeature* >* features,
     connect( progressDialog, SIGNAL( canceled() ), this, SLOT( setFinished() ) );
   }
 
-  return getXMLData( progressDialog );
-
+  int val = getXMLData( progressDialog );
   delete progressDialog;
+  return val;
 }
 
 void QgsSOSData::startElement( const XML_Char* el, const XML_Char** attr )

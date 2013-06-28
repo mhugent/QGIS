@@ -8,14 +8,14 @@ SET(SOS_SRCS
   qgssosprovider.cpp
 )
 
-SET (SOS_MOC_HDRS
-  qgssosdata.h
-)
+#SET (SOS_MOC_HDRS
+#  qgssosdata.h
+#)
 
 ########################################################
 # Build
 
-QT4_WRAP_CPP(SOS_MOC_SRCS ${SOS_MOC_HDRS})
+#QT4_WRAP_CPP(SOS_MOC_SRCS ${SOS_MOC_HDRS})
 
 INCLUDE_DIRECTORIES (
   ../../core
@@ -26,7 +26,7 @@ INCLUDE_DIRECTORIES (
   ${EXPAT_INCLUDE_DIR}
 )
 
-ADD_LIBRARY (sosprovider MODULE ${SOS_SRCS} ${SOS_MOC_SRCS} )
+ADD_LIBRARY (sosprovider MODULE ${SOS_SRCS} ) # ${SOS_MOC_SRCS} )
 
 TARGET_LINK_LIBRARIES (sosprovider
   ${EXPAT_LIBRARY}
