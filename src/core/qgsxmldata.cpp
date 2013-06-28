@@ -49,8 +49,24 @@ int QgsXMLData::getXMLData( QProgressDialog* progress )
     connect( this, SIGNAL( dataReadProgress( int ) ), progress, SLOT( setValue( int ) ) );
     connect( this, SIGNAL( totalStepsUpdate( int ) )    , progress, SLOT( setMaximum( int ) ) );
     connect( progress, SIGNAL( canceled() ), this, SLOT( setFinished() ) );
-    // connect( this, SIGNAL( progressMessage(QString) ), mainWindow, SLOT( showStatusMessage( QString ) ) );
     progress->show();
+  }
+
+  //show loading progress in qgis main window (if it exists)
+  QWidget* mainWindow = 0;
+  QWidgetList topLevelWidgets = qApp->topLevelWidgets();
+  for ( QWidgetList::iterator it = topLevelWidgets.begin(); it != topLevelWidgets.end(); ++it )
+  {
+    if (( *it )->objectName() == "QgisApp" )
+    {
+      mainWindow = *it;
+      break;
+    }
+  }
+
+  if ( mainWindow )
+  {
+    QObject::connect( this, SIGNAL( progressMessage( QString ) ), mainWindow, SLOT( showStatusMessage( QString ) ) );
   }
 
   int atEnd = 0;
@@ -83,6 +99,11 @@ int QgsXMLData::getXMLData( QProgressDialog* progress )
       }
     }
     QCoreApplication::processEvents();
+  }
+
+  if ( mainWindow )
+  {
+    QObject::disconnect( this, SIGNAL( progressMessage( QString ) ), mainWindow, SLOT( showStatusMessage( QString ) ) );
   }
 
   delete reply;
