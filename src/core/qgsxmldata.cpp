@@ -38,7 +38,8 @@ int QgsXMLData::getXMLData( QProgressDialog* progress )
   XML_SetElementHandler( p, QgsXMLData::start, QgsXMLData::end );
   XML_SetCharacterDataHandler( p, QgsXMLData::chars );
 
-  QNetworkRequest request( mUrl );
+  QUrl url = QUrl::fromEncoded( mUrl.toLocal8Bit() ); //( mUrl );
+  QNetworkRequest request( url );
   QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
   connect( reply, SIGNAL( finished() ), this, SLOT( setFinished() ) );
   connect( reply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( handleProgressEvent( qint64, qint64 ) ) );
@@ -85,6 +86,13 @@ int QgsXMLData::getXMLData( QProgressDialog* progress )
     }
 
     QByteArray readData = reply->readAll();
+
+    //debug
+    if ( readData.size() > 0 )
+    {
+      qWarning( QString( readData ).toLocal8Bit().data() );
+    }
+
     totalData += readData.size();
     if ( readData.size() > 0 )
     {

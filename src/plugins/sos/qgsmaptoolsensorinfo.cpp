@@ -119,7 +119,8 @@ int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const 
   qWarning( debug.toLocal8Bit().data() );
 
   mDataAvailabilityRequestFinished = false;
-  QNetworkRequest request( url.toString() );
+  QUrl u = QUrl::fromEncoded( url.toString().toLocal8Bit() );
+  QNetworkRequest request( u );
   QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
   connect( reply, SIGNAL( finished() ), this, SLOT( dataAvailabilityRequestFinished() ) );
   while ( !mDataAvailabilityRequestFinished )

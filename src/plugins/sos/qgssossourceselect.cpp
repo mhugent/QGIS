@@ -142,7 +142,7 @@ void QgsSOSSourceSelect::gotCapabilities()
 void QgsSOSSourceSelect::addLayer()
 {
   QgsOWSConnection connection( "SOS", mConnectionsComboBox->currentText() );
-  QString getFeatureOfInterestUrl = connection.uri().param( "url" ) + "SERVICE=SOS&request=GetFeatureofInterest&datasource=0&Version=2.0";
+  QString getFeatureOfInterestUrl = connection.uri().param( "url" ) + "SERVICE=SOS&request=GetFeatureOfInterest&Version=2.0.0";
 
   QString observedPropertiesString;
   QList<QTreeWidgetItem*> selectedItemList = mOfferingsTreeWidget->selectedItems();
@@ -156,7 +156,7 @@ void QgsSOSSourceSelect::addLayer()
   }
   if ( !selectedItemList.isEmpty() )
   {
-    getFeatureOfInterestUrl += ( QString( "&observedProperty=" ) + observedPropertiesString );
+    getFeatureOfInterestUrl += ( QString( "&observedProperty=" ) + observedPropertiesString.replace( "#", "%23" ) );
   }
 
   if ( mIface )

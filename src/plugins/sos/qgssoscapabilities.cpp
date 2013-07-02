@@ -83,7 +83,7 @@ void QgsSOSCapabilities::capabilitiesReplyFinished()
 
 QString QgsSOSCapabilities::uriGetCapabilities()
 {
-  return ( mBaseUrl + "SERVICE=SOS&REQUEST=GetCapabilities&DATASOURCE=0&VERSION=2.0" );
+  return ( mBaseUrl + "SERVICE=SOS&REQUEST=GetCapabilities" );
 }
 
 QString QgsSOSCapabilities::prepareUri( QString uri )

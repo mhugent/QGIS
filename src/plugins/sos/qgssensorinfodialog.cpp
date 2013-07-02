@@ -109,17 +109,24 @@ void QgsSensorInfoDialog::showDiagram()
   url.addQueryItem( "temporalFilter", temporalFilter );
 
   QgsWaterMLData data( url.toString().toLocal8Bit().data() );
-  QVector<double> timeVector;
-  QVector<double> valueVector;
-  data.getData( &timeVector, &valueVector );
+  QVector<QPair< double, double > > timeValueVector;
+  data.getData( &timeValueVector );
+  qSort( timeValueVector );
+
+  QVector<double> timeVector( timeValueVector.size() );
+  QVector<double> valueVector( timeValueVector.size() );
+  for ( int i = 0; i < timeValueVector.size(); ++i )
+  {
+    timeVector[i] = timeValueVector.at( i ).first;
+    valueVector[i] = timeValueVector.at( i ).second;
+  }
 
   //create QWtPlot
   QwtPlot* diagram = new QwtPlot( featureOfInterest, this );
   diagram->setAxisScaleDraw( QwtPlot::xBottom, new TimeScaleDraw() );
   QwtPlotCurve* curve = new QwtPlotCurve( observedProperty );
   curve->setPen( QPen( Qt::red ) );
-  int dataSize = qMin( timeVector.size(), valueVector.size() );
-  curve->setData( timeVector.constData(), valueVector.constData(), dataSize );
+  curve->setData( timeVector.constData(), valueVector.constData(), timeValueVector.size() );
   curve->attach( diagram );
   mTabWidget->addTab( diagram, featureOfInterest );
   diagram->replot();

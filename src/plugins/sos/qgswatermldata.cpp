@@ -29,7 +29,7 @@ const QString timeString = WML_NS + NS_SEPARATOR + "time";
 const QString valueString = WML_NS + NS_SEPARATOR + "value";
 const QString measurementString = WML_NS + NS_SEPARATOR + "MeasurementTVP";
 
-QgsWaterMLData::QgsWaterMLData( const QString& url ): QgsXMLData( url ), mTimeVector( 0 ), mValueVector( 0 ), mParseMode( None )
+QgsWaterMLData::QgsWaterMLData( const QString& url ): QgsXMLData( url ), mTimeValueVector( 0 ), mParseMode( None )
 {
 
 }
@@ -39,15 +39,14 @@ QgsWaterMLData::~QgsWaterMLData()
 
 }
 
-int QgsWaterMLData::getData( QVector<double>* time, QVector<double>* value )
+int QgsWaterMLData::getData( QVector<QPair< double, double > >* timeValueVector )
 {
-  if ( !time || !value )
+  if ( !timeValueVector )
   {
     return 1;
   }
 
-  mTimeVector = time;
-  mValueVector = value;
+  mTimeValueVector = timeValueVector;
 
   QWidget* mainWindow = 0;
   QWidgetList topLevelWidgets = qApp->topLevelWidgets();
@@ -106,8 +105,10 @@ void QgsWaterMLData::endElement( const XML_Char* el )
   }
   else if ( el ==  measurementString )
   {
-    mTimeVector->append( mCurrentDateTime.toTime_t() );
-    mValueVector->append( mCurrentValue );
+    QPair< double, double > p;
+    p.first = mCurrentDateTime.toTime_t();
+    p.second = mCurrentValue;
+    mTimeValueVector->append( p );
   }
 }
 
@@ -121,6 +122,37 @@ void QgsWaterMLData::characters( const XML_Char* chars, int len )
 
 QDateTime QgsWaterMLData::convertTimeString( const QString& str )
 {
+  //format yyyy-mm
+  QStringList yearMonthSplit = str.split( "-" );
+
+  int day = 1;
+  int month = 1;
+  int year = 1;
+
+  if ( yearMonthSplit.size() > 0 )
+  {
+    year = yearMonthSplit.at( 0 ).toInt();
+  }
+  if ( yearMonthSplit.size() > 1 )
+  {
+    month = yearMonthSplit.at( 1 ).toInt();
+  }
+  if ( yearMonthSplit.size() > 2 )
+  {
+    day = yearMonthSplit.at( 2 ).toInt();
+  }
+
+  QDate date;
+  date.setDate( year, month, day );
+  QDateTime dateTime( date );
+
+  //debug
+  QString debug = dateTime.toString();
+  int time = dateTime.toTime_t();
+
+  return dateTime;
+
+#if 0
   QStringList plusSplit = str.split( "+" );
   QDateTime time = QDateTime::fromString( plusSplit.at( 0 ), "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'z" );
   time.setTimeSpec( Qt::OffsetFromUTC );
@@ -133,4 +165,6 @@ QDateTime QgsWaterMLData::convertTimeString( const QString& str )
   //qWarning( time.toString( "dd.MM.yyyy" ).toLocal8Bit().data() );
   //qWarning( QString::number( time.toTime_t() ).toLocal8Bit().data() );
   return time;
+#endif //0
+
 }
