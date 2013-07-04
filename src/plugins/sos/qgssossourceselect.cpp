@@ -143,7 +143,7 @@ void QgsSOSSourceSelect::gotCapabilities()
 void QgsSOSSourceSelect::addLayer()
 {
   QgsOWSConnection connection( "SOS", mConnectionsComboBox->currentText() );
-  QString getFeatureOfInterestUrl = connection.uri().param( "url" ) + "SERVICE=SOS&request=GetFeatureOfInterest&Version=2.0.0";
+  QString getFeatureOfInterestUrl = connection.uri().param( "url" ) + "SERVICE=SOS&request=GetFeatureOfInterest&Version=2.0.0&datasource=0"; //NIWA SOS needs datasource parameter
 
   QString observedPropertiesString;
   QList<QTreeWidgetItem*> selectedItemList = mOfferingsTreeWidget->selectedItems();
