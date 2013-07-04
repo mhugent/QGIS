@@ -71,7 +71,7 @@ int QgsSOSData::getFeatures( QMap<QgsFeatureId, QgsFeature* >* features,
   QProgressDialog* progressDialog = 0;
   if ( mainWindow )
   {
-    progressDialog = new QProgressDialog( tr( "Loading sensor data" ), tr( "Abort" ), 0, 0, mainWindow );
+    progressDialog = new QProgressDialog( tr( "Loading sensor data" ), tr( "Abort" ), 0, 0, 0 );
     connect( this, SIGNAL( dataReadProgress( int ) ), progressDialog, SLOT( setValue( int ) ) );
     connect( this, SIGNAL( totalStepsUpdate( int ) )    , progressDialog, SLOT( setMaximum( int ) ) );
     connect( progressDialog, SIGNAL( canceled() ), this, SLOT( setFinished() ) );

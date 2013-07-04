@@ -42,6 +42,7 @@ QgsSOSSourceSelect::~QgsSOSSourceSelect()
 void QgsSOSSourceSelect::on_mConnectButton_clicked()
 {
   QgsOWSConnection connection( "SOS", mConnectionsComboBox->currentText() );
+  delete mCapabilities;
   mCapabilities = new QgsSOSCapabilities( connection.uri().encodedUri() );
   connect( mCapabilities, SIGNAL( gotCapabilities() ), this, SLOT( gotCapabilities() ) );
   mCapabilities->requestCapabilities();
