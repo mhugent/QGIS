@@ -21,6 +21,7 @@
 #include "qgsnewhttpconnection.h"
 #include "qgisinterface.h"
 #include <QMessageBox>
+#include <QUrl>
 
 QgsSOSSourceSelect::QgsSOSSourceSelect( QgisInterface* iface, QWidget* parent, Qt::WFlags fl ):
     QDialog( parent, fl ), mIface( iface ), mCapabilities( 0 )
@@ -156,7 +157,7 @@ void QgsSOSSourceSelect::addLayer()
   }
   if ( !selectedItemList.isEmpty() )
   {
-    getFeatureOfInterestUrl += ( QString( "&observedProperty=" ) + observedPropertiesString.replace( "#", "%23" ) );
+    getFeatureOfInterestUrl += ( QString( "&observedProperty=" ) + QString( QUrl::toPercentEncoding( observedPropertiesString.toLocal8Bit() ) ) );
   }
 
   if ( mIface )
