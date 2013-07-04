@@ -44,6 +44,7 @@ void QgsSOSCapabilities::requestCapabilities()
 void QgsSOSCapabilities::capabilitiesReplyFinished()
 {
   QNetworkReply* reply = mCapabilitiesReply;
+  QSet<QString> observedPropertiesSet;
 
   mObservableProperties.clear();
   mNetworkError.clear();
@@ -75,7 +76,13 @@ void QgsSOSCapabilities::capabilitiesReplyFinished()
   QDomNodeList observablePropertyList = doc.elementsByTagNameNS( "http://www.opengis.net/swes/2.0" , "observableProperty" );
   for ( int i = 0; i < observablePropertyList.size(); ++i )
   {
-    mObservableProperties.push_back( observablePropertyList.at( i ).toElement().text() );
+    observedPropertiesSet.insert( observablePropertyList.at( i ).toElement().text() );
+  }
+
+  QSet<QString>::const_iterator propIt = observedPropertiesSet.constBegin();
+  for ( ; propIt != observedPropertiesSet.constEnd(); ++propIt )
+  {
+    mObservableProperties.push_back( *propIt );
   }
 
   emit gotCapabilities();

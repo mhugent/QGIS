@@ -138,6 +138,8 @@ int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const 
     return 2;
   }
 
+  QSet<QString> observedPropertySet; //keep track of duplicates
+
   QDomNodeList dataAvailabilityList = dataAvailabilityDocument.elementsByTagNameNS( "http://www.opengis.net/sos/2.0", "dataAvailabilityMember" );
   for ( int i = 0; i < dataAvailabilityList.size(); ++i )
   {
@@ -168,6 +170,13 @@ int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const 
         }
       }
     }
+
+    if ( observedPropertySet.contains( property ) )
+    {
+      continue;
+    }
+
+    observedPropertySet.insert( property );
     observedPropertyList.push_back( property );
     beginList.push_back( beginTime );
     endList.push_back( endTime );
