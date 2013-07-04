@@ -120,49 +120,42 @@ void QgsWaterMLData::characters( const XML_Char* chars, int len )
 
 QDateTime QgsWaterMLData::convertTimeString( const QString& str )
 {
-  //format yyyy-mm
-  QStringList yearMonthSplit = str.split( "-" );
-
-  int day = 1;
-  int month = 1;
-  int year = 1;
-
-  if ( yearMonthSplit.size() > 0 )
+  QStringList timeSplit = str.split( "T" );
+  if ( timeSplit.size() < 2 )
   {
-    year = yearMonthSplit.at( 0 ).toInt();
+    //only date given
+    int day = 1;
+    int month = 1;
+    int year = 1;
+
+    QStringList yearMonthSplit = str.split( "-" );
+    if ( yearMonthSplit.size() > 0 )
+    {
+      year = yearMonthSplit.at( 0 ).toInt();
+    }
+    if ( yearMonthSplit.size() > 1 )
+    {
+      month = yearMonthSplit.at( 1 ).toInt();
+    }
+    if ( yearMonthSplit.size() > 2 )
+    {
+      day = yearMonthSplit.at( 2 ).toInt();
+    }
+    QDate date;
+    date.setDate( year, month, day );
+    QDateTime dateTime( date );
+    return dateTime;
   }
-  if ( yearMonthSplit.size() > 1 )
+  else
   {
-    month = yearMonthSplit.at( 1 ).toInt();
+    QStringList plusSplit = str.split( "+" );
+    QDateTime dateTime = QDateTime::fromString( plusSplit.at( 0 ), "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'z" );
+    dateTime.setTimeSpec( Qt::OffsetFromUTC );
+
+    if ( plusSplit.size() > 1 )
+    {
+      //offset from UTC
+    }
+    return dateTime;
   }
-  if ( yearMonthSplit.size() > 2 )
-  {
-    day = yearMonthSplit.at( 2 ).toInt();
-  }
-
-  QDate date;
-  date.setDate( year, month, day );
-  QDateTime dateTime( date );
-
-  //debug
-  QString debug = dateTime.toString();
-  int time = dateTime.toTime_t();
-
-  return dateTime;
-
-#if 0
-  QStringList plusSplit = str.split( "+" );
-  QDateTime time = QDateTime::fromString( plusSplit.at( 0 ), "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'z" );
-  time.setTimeSpec( Qt::OffsetFromUTC );
-
-  if ( plusSplit.size() > 1 )
-  {
-    //offset from UTC
-  }
-
-  //qWarning( time.toString( "dd.MM.yyyy" ).toLocal8Bit().data() );
-  //qWarning( QString::number( time.toTime_t() ).toLocal8Bit().data() );
-  return time;
-#endif //0
-
 }
