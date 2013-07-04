@@ -19,6 +19,7 @@
 #include "qgswatermldata.h"
 #include <QCheckBox>
 #include <QDateTimeEdit>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QUrl>
 #include <qwt_plot.h>
@@ -130,6 +131,13 @@ void QgsSensorInfoDialog::showDiagram()
   QgsWaterMLData data( url.toString().toLocal8Bit().data() );
   QMap< QDateTime, double > timeValueMap;
   data.getData( &timeValueMap );
+
+  //cancel diagram if result contains no data
+  if ( timeValueMap.size() < 1 )
+  {
+    QMessageBox::information( this, tr( "No data" ), tr( "The GetObservation request returned no observation" ) );
+    return;
+  }
 
   QVector<double> timeVector( timeValueMap.size() );
   QVector<double> valueVector( timeValueMap.size() );
