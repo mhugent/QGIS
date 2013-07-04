@@ -17,6 +17,7 @@
 
 #include "qgssensorinfodialog.h"
 #include "qgswatermldata.h"
+#include <QCheckBox>
 #include <QDateTimeEdit>
 #include <QPushButton>
 #include <QUrl>
@@ -72,9 +73,11 @@ void QgsSensorInfoDialog::addObservables( const QString& serviceUrl, const QStri
   QList< QDateTime >::const_iterator eIt = end.constBegin();
   for ( ; obsIt != observables.constEnd() && bIt != begin.constEnd() && eIt != end.constEnd(); ++obsIt )
   {
+
     QTreeWidgetItem* observableItem = new QTreeWidgetItem( stationIdWidget, QStringList() << "" << *obsIt );
-    mObservableTreeWidget->setItemWidget( observableItem, 2, new QDateTimeEdit( *bIt ) );
-    mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( *eIt ) );
+    mObservableTreeWidget->setItemWidget( observableItem, 2, new QCheckBox() );
+    mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( *bIt ) );
+    mObservableTreeWidget->setItemWidget( observableItem, 4, new QDateTimeEdit( *eIt ) );
   }
   mObservableTreeWidget->expandAll();
 }
@@ -97,23 +100,32 @@ void QgsSensorInfoDialog::showDiagram()
   QString featureOfInterest = parent->text( 0 );
   QString serviceUrl = parent->data( 0, Qt::UserRole ).toString();
   QString observedProperty = item->text( 1 );
-  QDateTimeEdit* beginEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 2 ) );
-  QDateTimeEdit* endEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 3 ) );
-  if ( !beginEdit || ! endEdit )
-  {
-    return;
-  }
 
-  QString temporalFilter = "om:phenomenonTime," + beginEdit->dateTime().toString( Qt::ISODate )
-                           + "/" + endEdit->dateTime().toString( Qt::ISODate ); //soon...temporalFilter=om:phenomenonTime,1978-01-01T00:00:00Z/1980-01-01T00:00:00Z
-  //http://hydro-sos.niwa.co.nz/KiWIS/KiWIS?service=SOS&request=getobservation&datasource=0&version=2.0&featureOfInterest=http://hydro-sos.niwa.co.nz/stations/4&observedProperty=http://hydro-sos.niwa.co.nz/parameters/Stage/Flow%20rating&temporalFilter=om:phenomenonTime,1978-01-01T00:00:00Z/1980-01-01T00:00:00Z
+  bool useTemporalFilter = qobject_cast<QCheckBox*>( mObservableTreeWidget->itemWidget( item, 2 ) )->isChecked();
+  QString temporalFilter;
+
+  if ( useTemporalFilter )
+  {
+    QDateTimeEdit* beginEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 3 ) );
+    QDateTimeEdit* endEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 4 ) );
+    if ( !beginEdit || ! endEdit )
+    {
+      return;
+    }
+
+    temporalFilter = "om:phenomenonTime," + beginEdit->dateTime().toString( Qt::ISODate )
+                     + "/" + endEdit->dateTime().toString( Qt::ISODate );
+  }
 
   QUrl url( serviceUrl );
   url.removeQueryItem( "request" );
   url.addQueryItem( "request", "GetObservation" );
   url.addQueryItem( "featureOfInterest", featureOfInterest );
   url.addQueryItem( "observedProperty", observedProperty );
-  url.addQueryItem( "temporalFilter", temporalFilter );
+  if ( useTemporalFilter )
+  {
+    url.addQueryItem( "temporalFilter", temporalFilter );
+  }
 
   QgsWaterMLData data( url.toString().toLocal8Bit().data() );
   QMap< QDateTime, double > timeValueMap;
