@@ -29,7 +29,7 @@ static const QString version_ = QObject::tr( "Version 0.1" );
 //static const QString icon_ = ":/raster/dem.png";
 static const QString category_ = QObject::tr( "Vector" );
 
-QgsSOSPlugin::QgsSOSPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 ), mSensorInfoAction( 0 )
+QgsSOSPlugin::QgsSOSPlugin( QgisInterface* iface ): mIface( iface ), mAction( 0 ), mSensorInfoAction( 0 ), mMapToolSensorInfo( 0 )
 {
 
 }
@@ -76,6 +76,7 @@ void QgsSOSPlugin::unload()
   mSensorInfoAction = 0;
 
   delete mMapToolSensorInfo;
+  mMapToolSensorInfo = 0;
 }
 
 void QgsSOSPlugin::showSOSDialog()

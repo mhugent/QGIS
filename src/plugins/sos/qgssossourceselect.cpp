@@ -161,9 +161,11 @@ void QgsSOSSourceSelect::addLayer()
     getFeatureOfInterestUrl += ( QString( "&observedProperty=" ) + QString( QUrl::toPercentEncoding( observedPropertiesString.toLocal8Bit() ) ) );
   }
 
+  QString sosLayerName = observedPropertiesString.split( "/" ).last();
+
   if ( mIface )
   {
-    mIface->addVectorLayer( getFeatureOfInterestUrl, "sos layer", "SOS" );
+    mIface->addVectorLayer( getFeatureOfInterestUrl, sosLayerName, "SOS" );
   }
   return;
 }
