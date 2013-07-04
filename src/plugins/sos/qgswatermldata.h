@@ -20,9 +20,8 @@
 
 #include "qgsxmldata.h"
 #include <QDateTime>
+#include <QMap>
 #include <QObject>
-#include <QPair>
-#include <QVector>
 #include <expat.h>
 
 /**A class to read water ML data from a sensor observation service*/
@@ -32,7 +31,7 @@ class QgsWaterMLData: public QgsXMLData
     QgsWaterMLData( const QString& url );
     ~QgsWaterMLData();
 
-    int getData( QVector<QPair< double, double > >* timeValueVector );
+    int getData( QMap< QDateTime, double >* timeValueMap );
 
     /**XML handler methods*/
     void startElement( const XML_Char* el, const XML_Char** attr );
@@ -48,7 +47,7 @@ class QgsWaterMLData: public QgsXMLData
       Value,
     };
 
-    QVector< QPair< double, double > >* mTimeValueVector;
+    QMap< QDateTime, double >* mTimeValueMap;
     ParseMode mParseMode;
     QDateTime mCurrentDateTime;
     double mCurrentValue;

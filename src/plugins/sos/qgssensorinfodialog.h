@@ -32,6 +32,7 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
 
   private slots:
     void showDiagram();
+    int convertTimeToInt( const QDateTime& dt ) const;
 };
 
 #endif // QGSSENSORINFODIALOG_H

@@ -29,7 +29,7 @@ const QString timeString = WML_NS + NS_SEPARATOR + "time";
 const QString valueString = WML_NS + NS_SEPARATOR + "value";
 const QString measurementString = WML_NS + NS_SEPARATOR + "MeasurementTVP";
 
-QgsWaterMLData::QgsWaterMLData( const QString& url ): QgsXMLData( url ), mTimeValueVector( 0 ), mParseMode( None )
+QgsWaterMLData::QgsWaterMLData( const QString& url ): QgsXMLData( url ), mParseMode( None )
 {
 
 }
@@ -39,14 +39,14 @@ QgsWaterMLData::~QgsWaterMLData()
 
 }
 
-int QgsWaterMLData::getData( QVector<QPair< double, double > >* timeValueVector )
+int QgsWaterMLData::getData( QMap< QDateTime, double >* timeValueMap )
 {
-  if ( !timeValueVector )
+  if ( !timeValueMap )
   {
-    return 1;
+    return 2;
   }
-
-  mTimeValueVector = timeValueVector;
+  mTimeValueMap = timeValueMap;
+  mTimeValueMap->clear();
 
   QWidget* mainWindow = 0;
   QWidgetList topLevelWidgets = qApp->topLevelWidgets();
@@ -75,6 +75,7 @@ int QgsWaterMLData::getData( QVector<QPair< double, double > >* timeValueVector 
 
 void QgsWaterMLData::startElement( const XML_Char* el, const XML_Char** attr )
 {
+  Q_UNUSED( attr );
   if ( el == timeString )
   {
     mParseMode = Time;
@@ -105,10 +106,7 @@ void QgsWaterMLData::endElement( const XML_Char* el )
   }
   else if ( el ==  measurementString )
   {
-    QPair< double, double > p;
-    p.first = mCurrentDateTime.toTime_t();
-    p.second = mCurrentValue;
-    mTimeValueVector->append( p );
+    mTimeValueMap->insert( mCurrentDateTime, mCurrentValue );
   }
 }
 

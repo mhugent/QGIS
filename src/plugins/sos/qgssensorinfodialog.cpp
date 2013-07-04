@@ -30,7 +30,14 @@ class TimeScaleDraw: public QwtScaleDraw
     TimeScaleDraw() {}
     virtual QwtText label( double v ) const
     {
-      return QDateTime::fromTime_t( v ).toString();
+      if ( v >= 0 )
+      {
+        return QDateTime::fromTime_t( v ).toString();
+      }
+      else
+      {
+        return QDateTime::fromTime_t( 0 ).addSecs( v ).toString();
+      }
     }
 };
 
@@ -109,16 +116,18 @@ void QgsSensorInfoDialog::showDiagram()
   url.addQueryItem( "temporalFilter", temporalFilter );
 
   QgsWaterMLData data( url.toString().toLocal8Bit().data() );
-  QVector<QPair< double, double > > timeValueVector;
-  data.getData( &timeValueVector );
-  qSort( timeValueVector );
+  QMap< QDateTime, double > timeValueMap;
+  data.getData( &timeValueMap );
 
-  QVector<double> timeVector( timeValueVector.size() );
-  QVector<double> valueVector( timeValueVector.size() );
-  for ( int i = 0; i < timeValueVector.size(); ++i )
+  QVector<double> timeVector( timeValueMap.size() );
+  QVector<double> valueVector( timeValueMap.size() );
+  int i = 0;
+  QMap< QDateTime, double >::const_iterator it = timeValueMap.constBegin();
+  for ( ; it != timeValueMap.constEnd(); ++it )
   {
-    timeVector[i] = timeValueVector.at( i ).first;
-    valueVector[i] = timeValueVector.at( i ).second;
+    timeVector[i] = convertTimeToInt( it.key() );
+    valueVector[i] = it.value();
+    ++i;
   }
 
   //create QWtPlot
@@ -126,8 +135,18 @@ void QgsSensorInfoDialog::showDiagram()
   diagram->setAxisScaleDraw( QwtPlot::xBottom, new TimeScaleDraw() );
   QwtPlotCurve* curve = new QwtPlotCurve( observedProperty );
   curve->setPen( QPen( Qt::red ) );
-  curve->setData( timeVector.constData(), valueVector.constData(), timeValueVector.size() );
+  curve->setData( timeVector.constData(), valueVector.constData(), timeValueMap.size() );
   curve->attach( diagram );
   mTabWidget->addTab( diagram, featureOfInterest );
   diagram->replot();
+}
+
+int QgsSensorInfoDialog::convertTimeToInt( const QDateTime& dt ) const
+{
+  int i = dt.toTime_t();
+  if ( i < 0 )
+  {
+    i = - dt.secsTo( QDateTime::fromTime_t( 0 ) );
+  }
+  return i;
 }
