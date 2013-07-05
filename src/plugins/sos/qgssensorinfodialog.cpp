@@ -18,13 +18,18 @@
 #include "qgssensorinfodialog.h"
 #include "qgswatermldata.h"
 #include <QCheckBox>
+#include <QCursor>
 #include <QDateTimeEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QUrl>
+#include <QToolTip>
+#include <qwt_picker_machine.h>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
+#include <qwt_plot_picker.h>
 #include <qwt_scale_draw.h>
+#include <qwt_symbol.h>
 
 class TimeScaleDraw: public QwtScaleDraw
 {
@@ -156,9 +161,19 @@ void QgsSensorInfoDialog::showDiagram()
   QwtPlotCurve* curve = new QwtPlotCurve( observedProperty );
   curve->setPen( QPen( Qt::red ) );
   curve->setData( timeVector.constData(), valueVector.constData(), timeValueMap.size() );
+  QwtSymbol symbol( QwtSymbol::Rect, QBrush( Qt::NoBrush ), QPen( Qt::red ), QSize( 5, 5 ) );
+  curve->setSymbol( symbol );
   curve->attach( diagram );
+
+  //plot picker to show tooltips
+  QwtPlotPicker* plotPicker = new QwtPlotPicker( diagram->canvas() );
+  plotPicker->setSelectionFlags( QwtPicker::PointSelection | QwtPicker::ClickSelection );
+  plotPicker->setRubberBand( QwtPlotPicker::RectRubberBand );
+  connect( plotPicker, SIGNAL( selected( const QwtDoublePoint& ) ), this, SLOT( onDiagramSelected( const QwtDoublePoint& ) ) );
+
   mTabWidget->addTab( diagram, featureOfInterest );
   diagram->replot();
+  raise();
 }
 
 int QgsSensorInfoDialog::convertTimeToInt( const QDateTime& dt ) const
@@ -169,4 +184,24 @@ int QgsSensorInfoDialog::convertTimeToInt( const QDateTime& dt ) const
     i = - dt.secsTo( QDateTime::fromTime_t( 0 ) );
   }
   return i;
+}
+
+QDateTime QgsSensorInfoDialog::convertIntToTime( int t ) const
+{
+  if ( t > 0 )
+  {
+    return QDateTime::fromTime_t( t );
+  }
+  else
+  {
+    return QDateTime::fromTime_t( 0 ).addSecs( t );
+  }
+}
+
+void QgsSensorInfoDialog::onDiagramSelected( const QwtDoublePoint &pt )
+{
+  QString timeString = convertIntToTime( pt.x() ).toString();
+  QString toolTip = timeString + " // " + QString::number( pt.y() );
+  qWarning( toolTip.toLocal8Bit().data() );
+  QToolTip::showText( QCursor::pos(), toolTip, 0 );
 }

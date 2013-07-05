@@ -19,6 +19,8 @@
 #define QGSSENSORINFODIALOG_H
 
 #include "ui_qgssensorinfodialogbase.h"
+#include <qwt_double_rect.h>
+#include <QDateTime>
 
 class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
 {
@@ -33,6 +35,8 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
   private slots:
     void showDiagram();
     int convertTimeToInt( const QDateTime& dt ) const;
+    QDateTime convertIntToTime( int t ) const;
+    void onDiagramSelected( const QwtDoublePoint &pt );
 };
 
 #endif // QGSSENSORINFODIALOG_H
