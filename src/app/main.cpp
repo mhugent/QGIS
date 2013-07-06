@@ -621,9 +621,9 @@ int main( int argc, char *argv[] )
 
   //
   // Set up the QSettings environment must be done after qapp is created
-  QCoreApplication::setOrganizationName( "QGIS" );
-  QCoreApplication::setOrganizationDomain( "qgis.org" );
-  QCoreApplication::setApplicationName( "QGIS2" );
+  QCoreApplication::setOrganizationName( "NIWA" );
+  QCoreApplication::setOrganizationDomain( "niwa.co.nz" );
+  QCoreApplication::setApplicationName( "NIWA Quantum Map" );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   QSettings* customizationsettings;
@@ -633,11 +633,11 @@ int main( int argc, char *argv[] )
     QSettings::setDefaultFormat( QSettings::IniFormat );
     QString path = optionpath.isEmpty() ? configpath : optionpath;
     QSettings::setPath( QSettings::IniFormat, QSettings::UserScope, path );
-    customizationsettings = new QSettings( QSettings::IniFormat, QSettings::UserScope, "QGIS", "QGISCUSTOMIZATION2" );
+    customizationsettings = new QSettings( QSettings::IniFormat, QSettings::UserScope, "NIWA", "QGISCUSTOMIZATION2" );
   }
   else
   {
-    customizationsettings = new QSettings( "QGIS", "QGISCUSTOMIZATION2" );
+    customizationsettings = new QSettings( "NIWA", "QGISCUSTOMIZATION2" );
   }
 
   // Using the customizationfile option always overrides the option and config path options.

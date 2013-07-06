@@ -305,35 +305,7 @@ const int AFTER_RECENT_PATHS = 321;
   */
 static void setTitleBarText_( QWidget & qgisApp )
 {
-  QString caption = QgisApp::tr( "QGIS " );
-
-  if ( QString( QGis::QGIS_VERSION ).endsWith( "Master" ) )
-  {
-    caption += QString( "%1" ).arg( QGis::QGIS_DEV_VERSION );
-  }
-  else
-  {
-    caption += QGis::QGIS_VERSION;
-  }
-
-  if ( QgsProject::instance()->title().isEmpty() )
-  {
-    if ( QgsProject::instance()->fileName().isEmpty() )
-    {
-      // no project title nor file name, so just leave caption with
-      // application name and version
-    }
-    else
-    {
-      QFileInfo projectFileInfo( QgsProject::instance()->fileName() );
-      caption += " - " + projectFileInfo.completeBaseName();
-    }
-  }
-  else
-  {
-    caption += " - " + QgsProject::instance()->title();
-  }
-
+  QString caption = "NIWA Quantum Map 2.0";
   qgisApp.setWindowTitle( caption );
 } // setTitleBarText_( QWidget * qgisApp )
 
@@ -584,7 +556,7 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, QWidget * parent, 
 #endif
 
   // set application's caption
-  QString caption = tr( "QGIS - %1 ('%2')" ).arg( QGis::QGIS_VERSION ).arg( QGis::QGIS_RELEASE_NAME );
+  QString caption( "NIWA Quantum Map" );
   setWindowTitle( caption );
 
   QgsMessageLog::logMessage( tr( "QGIS starting..." ), QString::null, QgsMessageLog::INFO );
