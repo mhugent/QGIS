@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<HEAD>
+<TITLE>NIWA Quantum Map</TITLE>
+</HEAD>
+
+<h1>NIWA Quantum Map</h1>
+Frequently Asked Questions (FAQ) for Version 1.0<br>
+Brent Wood and Aimee Whitcroft
+
+<h2>Background</h2>
+
+<h3>What is NIWA Quantum Map?</h3>
+NIWA Quantum Map is a free, open source mapping application based on the popular Quantum GIS (Geographic Information System) application. It has had some GIS functionality removed, to provide a simpler tool for new users to learn, and has a custom plugin added to provide easy access to map data for which NIWA provides access via the internet.
+
+<h3>Why is it free?</h3>
+Quantum GIS (also called QGis) is free, as is Quantum Map. They are both Open Source programs, which means they are provided as a free tool: the developers and maintainers of such programs are paid for the work they do directly by users of the tools, so sell support rather than the programe itself. For example, NIWA paid for the developments necessary for this release. 
+	NIWA wants to provide access to its data: to do this, it is better to provide users with a desktop tool that allows them to interact directly with NIWA's datasets, than to develop or enhance web portals for every dataset NIWA provides. This tool means that NIWA can focus on providing data,  rather than developing websites where users can interact with data.
+
+<h3>How does Quantum Map access NIWA (and other) data?</h3>
+Quantum Map has two main approaches for accessing data which it can then display on a map. 
+Local files are read directly from the local PC, and most popular GIS formats are natively supported. 
+NIWA data (and data from other agencies that provide data using OGC Web Services) is accessed via the internet. Much like an internet browser can open a URL for a web server and display the content (a web page), Quantum Map can connect to an OGC Web Service URL and display the content the URL provides  on a map.
+
+<h3>What is the OGC & Web Services?</h3>
+The OGC (Open Geospatial Consortium) is an industry-led body which defines standards enabling interoperability between GIS application and web mapping sites. Two main standards are relevant here:
+<ol>
+<li>Web Map Service (WMS): the client (eg, Quantum Map) requests a map from the server showing the data as an image.</li>
+<li>Web Feature Service (WFS): the client requests the data from the server and plots it on the map itself.</li>
+</ol>
+For complex spatial datasets with thousands or millions of points, or for satellite &amp; aerial photography, WMS is generally better, as much less data has to be transferred to the client. For smaller datasets which are going to be plotted locally, WFS is better.
+
+<h2>How do I use NIWA Quantum Map?</h2>
+
+<h3>How do I install it?</h3>
+Quantum Map can be downloaded from the NIWA web site at <URL> as a Windows installer package. Simply download and run the file to install the application. If you prefer to install the full Quantum GIS application, then this can be downloaded at <a href="http://www.qgis.org">http://www.qgis.org</a>.
+
+<h3>How do I run it?</h3>
+This can become complicated, depending on what you want from the program - the full Quantum GIS User Guide is well over 200 pages long, and it is beyond the scope of this document to replace that. However some simple instructions are provided below to get you started.
+<ol>
+<li>Click on the Q icon <img src="nqmap.png" width=22></img>  on the desktop to start Quantum Map. The first time will be slower than usual as it creates any required user files, etc.</li>
+<li>To access NIWA data via a Web Map Service, using some Bay of Islands Survey data as an example:
+<ul>
+<li>Click the N icon <img src="niwa_icon.png" width=22></img>  at the far right of the icon toolbar, to start the NIWA plugin</li>
+<li>Choose (left click on) the &quot;Data sources&quot; tab, and click &quot;Add NIWA services&quot;</li>
+<li>Click the “Services” pulldown list and choose &quot;Bay of Islands background map layer&quot;, click &quot;Connect&quot;</li>
+<li>Choose &quot;basemap&quot; and add this to your list of layers (click the green + icon <img src="add_to_list.png" width=22></img> )</li>
+<li>Click the Services bar, and choose &quot;Bay of Islands Bathymetry&quot;, click &quot;Connect&quot;</li>
+<li>Choose &quot;bathymetry&quot; and add this to your list of layers</li>
+<li>Click the Services bar, choose Bay of Islands Aerial photos, click &quot;Connect&quot; and add the &quot;NZOIDATA...&quot; layer</li>
+<li>Click the &quot;Layers&quot; tab, click one of the three layers you have added to the list, and click &quot;Add to map&quot;</li>
+<li>Repeat for the other two layers, then exit the plugin.</li>
+<li>Choose the hand tool <img src="mActionPan.png" width=22></img>  to move the map around, the + tool <img src="mActionZoomIn.png" width=22></img> to zoom in to the selected area, the - tool <img src="mActionZoomOut.png"></img> to zoom out.</li>
+<li>In the layers list at the left side, you can turn layers off or on (without removing them) by clicking the tick box</li>
+<li>You can also change the order layers are plotted on the screen by selecting one &amp; dragging it up or down the list</li>
+<li>Right click on a layer name to bring up a menu that you can use to control or see more information about the layer.</li>
+<li>Choose &quot;Properties&quot;, then &quot;Symbology&quot; to control how the layer looks. Given a WMS layer is just an image, one of the more useful facilities is to control transparency, so you can see through a layer to those beneath it.</li>
+</ul>
+</li>
+</ol>
+
+<h3>What are raster and vector data?</h3>
+There are two key types of data that can be displayed in a map: raster and vector.
+<ul>
+<li>Raster data is made up of grids or pixels, and is used for data like aerial &amp; satellite photos, or perhaps gridded modeled data such as elevation models.</li>
+<li>Vector data comprises points, lines &amp; polygons which can be plotted on a map. Note, however, that vector data can be plotted as a map – that map is then displayed, in which case the layer is a raster layer which looks like a vector layer. This is often done with WMS layers. For example, a map of a coastline with many vertices can be plotted by the WMS server, and supplied as a transparent image, so just the plotted lines appear, much as if it was a vector layer.</li>
+</ul>
+
+<h3>How do I access a WFS service?</h3>
+The last example dealt with WMS layers, which are essentially just pictures, and therefore are raster data. A WFS service provides you with the actual vector data, which makes your computer work harder as it needs to manage and plot all the features for you. This isn't usually a problem with a few hundred, or even thousand small featurers, but can be a problem if it involves hundreds of thousands or millions of points. To try a WFS service, along with the WMS layers described above:
+<ol>
+<li>Start the NIWA plugin, select the &quot;Data sources&quot; tab</li>
+<li>Click the &quot;Services&quot; bar, choose the &quot;OS2020 Bay of Islands survey stations&quot; service</li>
+<li>Click connect and choose one of the available layers. (All stations or just one method)</li>
+<li>Add this layer to the layers list (green + icon <img src="add_to_list.png" width=22></img>)</li>
+<li>Select the layers tab, choose this layer and add it to the map.</li>
+</ol>
+You'll see the points where the stations occurred plotted on the map. 
+
+<h3>How do I query a feature for information about it?</h3>
+The Info (white arrow + blue &quot;i&quot; <img src="mActionIdentify.png" width=22></img> ) icon on the toolbar allows you to select a feature in the current layer and see what information is available for it. Given a WFS layer comprises the actual data (not just a map showing the data) you can use this tool to query the WFS station points loaded onto your map above.
+<ol>
+<li>Ensure the layer you want to query is the currently active one (click on it in the left hand layer list)</li>
+<li>Choose the I(nfo) tool</li>
+<li>Click on one of the points to see the available information (attribute data), you will see depths, times, locations, etc, describing the sampling that took place at that station</li>
+</ol>
+This will work for any WFS or local layer which has such attributes pertaining to it.
+
+<h3>How do I change the symbology of a layer?</h3>
+For WMS and raster (image) layers, the only control you really have is over transparency. 
+<p>
+For WFS and local vector datasets, you can control the choice of symbol, size and colour for any points, lines and polygons. You can also choose to classify your data and set the colour, or symbol, for each class. This is not an exhaustive tutorial of how you can manipulate symbology, just a simple example of one possibility.
+<ol>
+<li>Open a WFS layer as described above.</li>
+<li>Click on the layer name in the left hand list, to make it the active layer, right click on it and choose &quot;Properties&quot;</li>
+<li>Choose the style tab, pick the symbol, size, fill colour, border colour and click &quot;Apply&quot;</li>
+</ol>
+The layer will be plotted on the map with the new symbol. Feel free to change the type from &quot;Single symbol&quot; to another type, and see the effects that are possible.
+<p>
+Please see the QGIS documentation, which has far more detail.
+</html>
