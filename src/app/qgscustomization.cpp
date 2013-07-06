@@ -617,12 +617,12 @@ QgsCustomization *QgsCustomization::instance()
 QgsCustomization::QgsCustomization()
     : pDialog( 0 )
     , mEnabled( false )
-    , mStatusPath( "/Customization/status" )
+    , mStatusPath( "/Customization/true" )
 {
   QgsDebugMsg( "Entered" );
 
   QSettings settings;
-  mEnabled = settings.value( "/UI/Customization/enabled", "false" ).toString() == "true";
+  mEnabled = settings.value( "/UI/Customization/enabled", "true" ).toString() == "true";
 }
 
 QgsCustomization::~QgsCustomization()
