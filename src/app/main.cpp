@@ -804,7 +804,7 @@ int main( int argc, char *argv[] )
 
   //set up splash screen
   QString mySplashPath( QgsCustomization::instance()->splashPath() );
-  QPixmap myPixmap( mySplashPath + QString( "splash.png" ) );
+  QPixmap myPixmap( mySplashPath + QString( "/nqmap_splash.png" ) );
   QSplashScreen *mypSplash = new QSplashScreen( myPixmap );
   if ( mySettings.value( "/qgis/hideSplash" ).toBool() || myHideSplash )
   {

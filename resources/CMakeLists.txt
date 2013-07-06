@@ -1,4 +1,4 @@
-INSTALL(FILES srs.db qgis.db symbology-ng-style.db spatialite.db customization.xml
+INSTALL(FILES srs.db qgis.db symbology-ng-style.db spatialite.db customization.xml customization.ini
         DESTINATION ${QGIS_DATA_DIR}/resources)
 INSTALL(DIRECTORY cpt-city-qgis-min DESTINATION ${QGIS_DATA_DIR}/resources)
 
