@@ -1,0 +1,12 @@
+[general]
+name=Survey design plugin
+description=A plugin to design and evaluate biomass surveys
+category=Database
+version=0.2
+qgisMinimumVersion=2.0
+
+author=Marco Hugentobler
+email=marco.hugentobler@sourcepole.ch
+icon=mActionNewVectorLayer.png
+
+class_name=SurveyDesignPlugin

@@ -20,4 +20,4 @@ ADD_CUSTOM_TARGET(survey_design ALL DEPENDS ${PYUI_FILES} ${PYRC_FILES})
 
 INSTALL(FILES ${PYUI_FILES} DESTINATION ${QGIS_DATA_DIR}/python/plugins/survey_design)
 INSTALL(FILES ${PYRC_FILES} DESTINATION ${QGIS_DATA_DIR}/python/plugins/survey_design)
-INSTALL(FILES ${INSTALLER_FILES} DESTINATION ${QGIS_DATA_DIR}/python/plugins/survey_design)
+INSTALL(FILES ${INSTALLER_FILES} metadata.txt DESTINATION ${QGIS_DATA_DIR}/python/plugins/survey_design)
