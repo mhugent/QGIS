@@ -195,6 +195,32 @@ void QgsNewVectorLayerDialog::attributes( QList< QPair<QString, QString> >& at )
   }
 }
 
+void QgsNewVectorLayerDialog::insertAttributeEntry( const QString& name, const QString& type, int width, int precision )
+{
+  QTreeWidgetItem* item = new QTreeWidgetItem( mAttributeView );
+  item->setText( 0, name );
+  item->setText( 1, type );
+  item->setText( 2, QString::number( width ) );
+  item->setText( 3, QString::number( precision ) );
+  mAttributeView->addTopLevelItem( item );
+}
+
+void QgsNewVectorLayerDialog::selectGeometryType( QGis::GeometryType geomType )
+{
+  if ( geomType == QGis::Line )
+  {
+    mLineRadioButton->setChecked( true );
+  }
+  else if ( geomType == QGis::Polygon )
+  {
+    mPolygonRadioButton->setChecked( true );
+  }
+  else
+  {
+    mPointRadioButton->setChecked( true );
+  }
+}
+
 QString QgsNewVectorLayerDialog::selectedFileFormat() const
 {
   //use userrole to avoid translated type string
@@ -214,9 +240,18 @@ void QgsNewVectorLayerDialog::selectionChanged()
 
 
 // this is static
-QString QgsNewVectorLayerDialog::runAndCreateLayer( QWidget* parent, QString* pEnc )
+QString QgsNewVectorLayerDialog::runAndCreateLayer( QWidget* parent, QString* pEnc, QGis::GeometryType geom, const QList< AttributeEntry >& att )
 {
   QgsNewVectorLayerDialog geomDialog( parent );
+  geomDialog.selectGeometryType( geom );
+  if ( !att.isEmpty() )
+  {
+    QList< AttributeEntry >::const_iterator attIt = att.constBegin();
+    for ( ; attIt != att.constEnd(); ++attIt )
+    {
+      geomDialog.insertAttributeEntry( attIt->name, attIt->type, attIt->width, attIt->precision );
+    }
+  }
   if ( geomDialog.exec() == QDialog::Rejected )
   {
     return QString();

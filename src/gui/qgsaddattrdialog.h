@@ -35,6 +35,16 @@ class QgsAddAttrDialog: public QDialog, private Ui::QgsAddAttrDialogBase
 
     QgsField field() const;
 
+    /**Sets a predefined field name programatically*/
+    void setFieldName( const QString& name );
+
+    /**Sets a predefined type*/
+    void setType( int i );
+
+    void setWidth( int w );
+
+    void setPrecision( int p );
+
   public slots:
     void on_mTypeBox_currentIndexChanged( int idx );
     void on_mLength_editingFinished();

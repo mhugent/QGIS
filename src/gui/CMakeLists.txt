@@ -50,6 +50,7 @@ attributetable/qgsdualview.cpp
 
 qgisgui.cpp
 qgisinterface.cpp
+qgsaddattrdialog.cpp
 qgsannotationitem.cpp
 qgsattributeeditor.cpp
 qgsattributedialog.cpp
@@ -176,6 +177,7 @@ attributetable/qgsfeatureselectionmodel.h
 attributetable/qgsfeaturelistviewdelegate.h
 attributetable/qgsdualview.h
 
+qgsaddattrdialog.h
 qgsattributedialog.h
 qgsattributeeditor.h
 qgsblendmodecombobox.h

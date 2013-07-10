@@ -29,8 +29,17 @@ class GUI_EXPORT QgsNewVectorLayerDialog: public QDialog, private Ui::QgsNewVect
 
   public:
 
+    struct AttributeEntry
+    {
+      QString name;
+      QString type;
+      int width;
+      int precision;
+    };
+
     // run the dialog, create the layer. Return file name if the creation was successful
-    static QString runAndCreateLayer( QWidget* parent = 0, QString* enc = 0 );
+    static QString runAndCreateLayer( QWidget* parent = 0, QString* enc = 0, QGis::GeometryType geom = QGis::Point,
+                                      const QList< QgsNewVectorLayerDialog::AttributeEntry >& att = QList<QgsNewVectorLayerDialog::AttributeEntry>() );
 
     QgsNewVectorLayerDialog( QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags );
     ~QgsNewVectorLayerDialog();
@@ -38,6 +47,12 @@ class GUI_EXPORT QgsNewVectorLayerDialog: public QDialog, private Ui::QgsNewVect
     QGis::WkbType selectedType() const;
     /**Appends the chosen attribute names and types to at*/
     void attributes( QList< QPair<QString, QString> >& at ) const;
+
+    /**Populates the attribute section programatically*/
+    void insertAttributeEntry( const QString& name, const QString& type, int width, int precision );
+    /**Sets geometry type programatically*/
+    void selectGeometryType( QGis::GeometryType geomType );
+
     /**Returns the file format for storage*/
     QString selectedFileFormat() const;
     /**Returns the selected crs id*/

@@ -114,3 +114,23 @@ QgsField QgsAddAttrDialog::field() const
            mPrec->value(),
            mCommentEdit->text() );
 }
+
+void QgsAddAttrDialog::setFieldName( const QString& name )
+{
+  mNameEdit->setText( name );
+}
+
+void QgsAddAttrDialog::setType( int i )
+{
+  mTypeBox->setCurrentIndex( i );
+}
+
+void QgsAddAttrDialog::setWidth( int w )
+{
+  mLength->setValue( w );
+}
+
+void QgsAddAttrDialog::setPrecision( int p )
+{
+  mPrec->setValue( p );
+}

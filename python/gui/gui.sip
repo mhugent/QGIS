@@ -11,6 +11,7 @@
 %Include qgsblendmodecombobox.sip
 
 %Include qgisinterface.sip
+%Include qgsaddattrdialog.sip
 %Include qgsannotationitem.sip
 %Include qgsattributeeditor.sip
 %Include qgsattributedialog.sip
