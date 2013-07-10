@@ -375,12 +375,12 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         if not usedBaselineShape:
             return
 
-        strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )
-        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')
-        baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )
-        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )
-        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )
-        strataId = QgsProject.instance().readNumEntry( 'Survey',  'StrataId',  -1 )
+        strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
+        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
+        baselineStrataId = QgsProject.instance().readEntry( 'Survey', 'BaselineStrataId')[0]
+        strataMinDistance = QgsProject.instance().readEntry( 'Survey', 'StrataMinDistance' )[0]
+        strataNSamplePoints = QgsProject.instance().readEntry( 'Survey', 'StrataNSamplePoints' )[0]
+        strataId = QgsProject.instance().readEntry( 'Survey',  'StrataId' )[0]
 
         minDistanceUnitsString = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )
         minDistanceUnits = QgsTransectSample.StrataUnits
@@ -389,7 +389,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
         strataMapLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
         baselineMapLayer = QgsMapLayerRegistry.instance().mapLayer( surveyBaselineLayer )
-        transectSample = QgsTransectSample(  strataMapLayer, strataId , strataMinDistance, minDistanceUnits,  strataNSamplePoints, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(),
+        transectSample = QgsTransectSample(  strataMapLayer, strataId , strataNSamplePoints,  strataMinDistance, minDistanceUnits, baselineMapLayer, self.mShareBaselineCheckBox.isChecked(),
         baselineStrataId, outputPointShape, outputLineShape,  usedBaselineShape,  self.mMinimumTransectLengthSpinBox.value() )
         pd = QProgressDialog(  'Calculating transects...', 'Abort',  0,  0,  self )
         pd.setWindowTitle( 'Transect generation' )
