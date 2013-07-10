@@ -21,7 +21,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
         #set layers from project file
         surveyAreaLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyAreaLayer','' )
-        if not surveyAreaLayer[0].isEmpty():
+        if surveyAreaLayer[0]:
             self.mSurveyAreaLayerComboBox.setCurrentIndex( self.mSurveyAreaLayerComboBox.findData( surveyAreaLayer[0] ) )
 
         surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer', '' )
@@ -77,7 +77,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         minDistanceUnits = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )[0]
         print 'minDistanceUnits'
         print minDistanceUnits
-        if minDistanceUnits.compare( QString('Meters') ) == 0:
+        if minDistanceUnits == u"Meters":
             self.mMinDistanceUnitsComboBox.setCurrentIndex( 1 )
         else:
             self.mMinDistanceUnitsComboBox.setCurrentIndex( 0 )
@@ -112,92 +112,88 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
     #Return id of survey area layer (or empty string if none)
     def surveyAreaLayer(self):
-        return self.mSurveyAreaLayerComboBox.itemData( self.mSurveyAreaLayerComboBox.currentIndex() ).toString()
+        return self.mSurveyAreaLayerComboBox.itemData( self.mSurveyAreaLayerComboBox.currentIndex() )
 
     #Return id of baseline layer
     def surveyBaselineLayer(self):
-        return self.mSurveyBaselineLayerComboBox.itemData( self.mSurveyBaselineLayerComboBox.currentIndex() ).toString()
+        return self.mSurveyBaselineLayerComboBox.itemData( self.mSurveyBaselineLayerComboBox.currentIndex() )
 
     #Return attribut index of stratum id in baseline layer (-1 if none)
     def baselineStrataId( self ):
-        return self.mStratumIdComboBox.itemData( self.mStratumIdComboBox.currentIndex() ).toInt()[0]
+        return self.mStratumIdComboBox.itemData( self.mStratumIdComboBox.currentIndex() )
 
     #Return id of stratum layer
     def strataLayer( self ):
-        return self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString()
+        return self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() )
 
     #Return index of strata layer attribute containing the minimum distance between sample points
     def strataMinDistanceAttribute( self ):
-        return self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ).toInt()[0]
+        return self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() )
 
     #Return index of strata layer attribut containing the number of sample points
     def strataNSamplePointsAttribute( self ):
-        return self.mNSamplePointsComboBox.itemData(  self.mNSamplePointsComboBox.currentIndex() ).toInt()[0]
+        return self.mNSamplePointsComboBox.itemData(  self.mNSamplePointsComboBox.currentIndex() )
 
     #Return index of strata layer containing the feature id
     def strataId( self ):
-        return self.mStrataIdAttributeComboBox.itemData( self.mStrataIdAttributeComboBox.currentIndex() ).toInt()[0]
+        return self.mStrataIdAttributeComboBox.itemData( self.mStrataIdAttributeComboBox.currentIndex() )
 
     #Fill attributes into mStratumIdComboBox
     def setBaselineStrataIdAttributes( self, index ):
         self.mStratumIdComboBox.clear()
         self.mStratumIdComboBox.addItem( self.tr( 'None' ), -1 )
-        layerId = self.mSurveyBaselineLayerComboBox.itemData( index ).toString()
-        if not layerId.isEmpty():
+        layerId = self.mSurveyBaselineLayerComboBox.itemData( index )
+        if layerId:
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )
             if not layer is None:
                 if not layer.type() == QgsMapLayer.VectorLayer:
                     return
 
-                fieldMap = layer.pendingFields()
-                for key in fieldMap:
-                    field = fieldMap[key]
-                    self.mStratumIdComboBox.addItem( field.name(), key )
+                fieldList = layer.pendingFields().toList()
+                for field in fieldList:
+                    self.mStratumIdComboBox.addItem( field.name() )
 
     def setMinimumDistanceAttributes( self, index ):
         self.mMinimumDistanceAttributeComboBox.clear()
 
-        self.mMinimumDistanceAttributeComboBox.addItem( self.tr('None'), -1 )
+        self.mMinimumDistanceAttributeComboBox.addItem( self.tr('None') )
 
-        layerId = self.mStrataLayerComboBox.itemData( index ).toString()
-        if not layerId.isEmpty():
+        layerId = self.mStrataLayerComboBox.itemData( index )
+        if layerId:
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )
             if not layer is None:
                 if not layer.type() == QgsMapLayer.VectorLayer:
                     return
 
-                fieldMap = layer.pendingFields()
-                for key in fieldMap:
-                    field = fieldMap[key]
-                    self.mMinimumDistanceAttributeComboBox.addItem( field.name(), key )
+                fieldList = layer.pendingFields().toList()
+                for field in fieldList:
+                    self.mMinimumDistanceAttributeComboBox.addItem( field.name() )
 
     def setNSamplePointsAttributes( self, index ):
         self.mNSamplePointsComboBox.clear()
-        layerId = self.mStrataLayerComboBox.itemData( index ).toString()
-        if not layerId.isEmpty():
+        layerId = self.mStrataLayerComboBox.itemData( index )
+        if layerId:
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )
             if not layer is None:
                 if not layer.type() == QgsMapLayer.VectorLayer:
                     return
 
-                fieldMap = layer.pendingFields()
-                for key in fieldMap:
-                    field = fieldMap[key]
-                    self.mNSamplePointsComboBox.addItem( field.name(), key )
+                fieldList = layer.pendingFields().toList()
+                for field in fieldList:
+                    self.mNSamplePointsComboBox.addItem( field.name() )
 
     def setStrataIdAttributes( self, index ):
         self.mStrataIdAttributeComboBox.clear()
-        layerId = self.mStrataLayerComboBox.itemData( index ).toString()
-        if not layerId.isEmpty():
+        layerId = self.mStrataLayerComboBox.itemData( index )
+        if layerId:
             layer = QgsMapLayerRegistry.instance().mapLayer( layerId )
             if not layer is None:
                 if not layer.type() == QgsMapLayer.VectorLayer:
                     return
 
-                fieldMap = layer.pendingFields()
-                for key in fieldMap:
-                    field = fieldMap[key]
-                    self.mStrataIdAttributeComboBox.addItem( field.name(), key )
+                fieldList = layer.pendingFields().toList()
+                for field in fieldList:
+                    self.mStrataIdAttributeComboBox.addItem( field.name() )
 
     def createNewStrataLayer( self ):
         attributeList = []
@@ -217,14 +213,14 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         attributeList.append( minDistAttribute )
 
         filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon, attributeList )
-        if not filename.isEmpty():
+        if filename:
             vlayer = self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
             self.fillLayerComboBox( self.mStrataLayerComboBox,  QGis.Polygon,  False )
             self.mStrataLayerComboBox.setCurrentIndex( self.mStrataLayerComboBox.findData( vlayer.id() ) )
 
     def createNewSurveyAreaLayer( self ):
         filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Polygon )
-        if not filename.isEmpty():
+        if filename:
             vlayer = self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
             self.fillLayerComboBox( self.mSurveyAreaLayerComboBox,  QGis.Polygon,  True )
             self.mSurveyAreaLayerComboBox.setCurrentIndex( self.mSurveyAreaLayerComboBox.findData(  vlayer.id())  )
@@ -239,13 +235,13 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         strataIdAttribute.precision = 0
         attributeList.append( strataIdAttribute )
         filename = QgsNewVectorLayerDialog.runAndCreateLayer( None, 'UTF-8', QGis.Line, attributeList )
-        if not filename.isEmpty():
+        if filename:
             vlayer = self.iface.addVectorLayer( filename,  QFileInfo( filename ).baseName(),  'ogr')
             self.fillLayerComboBox( self.mSurveyBaselineLayerComboBox,  QGis.Line,  True )
             self.mSurveyBaselineLayerComboBox.setCurrentIndex( self.mSurveyBaselineLayerComboBox.findData( vlayer.id() ) )
 
     def createStrataMinDistAttribute( self ):
-        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
+        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ) )
         if strataLayer is None:
             return
 
@@ -267,7 +263,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
                 self.mMinimumDistanceAttributeComboBox.setCurrentIndex( self.mMinimumDistanceAttributeComboBox.findData( fieldIndex ) )
 
     def createStrataNSamplePointsAttribute( self ):
-        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
+        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ) )
         if strataLayer is None:
             return
 
@@ -290,7 +286,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
 
     def createStrataIdAttribute( self ):
-        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ).toString() )
+        strataLayer = QgsMapLayerRegistry.instance().mapLayer( self.mStrataLayerComboBox.itemData( self.mStrataLayerComboBox.currentIndex() ) )
         if strataLayer is None:
             return
 
@@ -313,7 +309,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
 
     def createBaselineStrataAttribute( self ):
-        baselineLayer  = QgsMapLayerRegistry.instance().mapLayer( self.mSurveyBaselineLayerComboBox.itemData( self.mSurveyBaselineLayerComboBox.currentIndex() ).toString() )
+        baselineLayer  = QgsMapLayerRegistry.instance().mapLayer( self.mSurveyBaselineLayerComboBox.itemData( self.mSurveyBaselineLayerComboBox.currentIndex() ) )
         if not baselineLayer:
             return
 
@@ -360,33 +356,33 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
     def createTransectSample( self ):
         s = QSettings()
-        saveDir = s.value( '/SurveyPlugin/SaveDir','').toString()
+        saveDir = s.value( '/SurveyPlugin/SaveDir','')
 
         outputPointShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output point shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
-        if outputPointShape.isEmpty():
+        if not outputPointShape:
             return
         else:
             saveDir = QFileInfo( outputPointShape ).absolutePath()
 
 
         outputLineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output line shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
-        if outputLineShape.isEmpty():
+        if not outputLineShape:
             return
         else:
             saveDir = QFileInfo( outputLineShape ).absolutePath()
 
         usedBaselineShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output baseline file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
-        if usedBaselineShape.isEmpty():
+        if not usedBaselineShape:
             return
 
-        strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
-        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
-        baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )[0]
-        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
-        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
-        strataId = QgsProject.instance().readNumEntry( 'Survey',  'StrataId',  -1 )[0]
+        strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )
+        surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')
+        baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )
+        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )
+        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )
+        strataId = QgsProject.instance().readNumEntry( 'Survey',  'StrataId',  -1 )
 
-        minDistanceUnitsString = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )[0]
+        minDistanceUnitsString = QgsProject.instance().readEntry( 'Survey',  'StrataMinDistanceUnits' )
         minDistanceUnits = QgsTransectSample.StrataUnits
         if minDistanceUnitsString == "Meters":
             minDistanceUnits = QgsTransectSample.Meters
@@ -413,7 +409,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
         strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
 
-        if strataLayer.isEmpty() or strataNSamplePoints < 0:
+        if not strataLayer or strataNSamplePoints < 0:
             print 'Error'
             return
 
@@ -421,11 +417,11 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         inputLayer = QgsMapLayerRegistry.instance().mapLayer( strataLayer )
 
         s = QSettings()
-        saveDir = s.value( '/SurveyPlugin/SaveDir','').toString()
+        saveDir = s.value( '/SurveyPlugin/SaveDir','')
 
         outputShape = QFileDialog.getSaveFileName( self, QCoreApplication.translate( 'SurveyDesignDialog', 'Select output shape file' ), saveDir, QCoreApplication.translate( 'SurveyDesignDialog', 'Shapefiles (*.shp)' ) )
         print outputShape
-        if outputShape.isEmpty():
+        if not outputShape:
             return
 
         p = QgsPointSample (  inputLayer, outputShape, strataNSamplePoints, strataMinDistance )
@@ -439,7 +435,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
         baselineStrataId = QgsProject.instance().readNumEntry( 'Survey', 'BaselineStrataId', -1 )[0]
         strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
         strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
-        if surveyBaselineLayer.isEmpty() or ( baselineStrataId == -1 and not self.mShareBaselineCheckBox.isChecked() ) or strataMinDistance == -1 or strataNSamplePoints == -1:
+        if not surveyBaselineLayer or ( baselineStrataId == -1 and not self.mShareBaselineCheckBox.isChecked() ) or strataMinDistance == -1 or strataNSamplePoints == -1:
             self.mTransectSurveyRadioButton.setEnabled( False )
             self.mPointSurveyRadioButton.setChecked( True )
         else:
@@ -447,9 +443,9 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
 
     def setSampleButtonState(self ):
         strataLayerId = QgsProject.instance().readEntry( "Survey",  "StrataLayer" )[0]
-        minDistAttribute = self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ).toInt()[0]
+        minDistAttribute = self.mMinimumDistanceAttributeComboBox.itemData( self.mMinimumDistanceAttributeComboBox.currentIndex() ) #[0]
         nSamplePointsIndex = self.mNSamplePointsComboBox.currentIndex()
-        if not strataLayerId.isEmpty() and minDistAttribute != -1 and nSamplePointsIndex != -1:
+        if strataLayerId and minDistAttribute != -1 and nSamplePointsIndex != -1:
             self.mCreateSampleButton.setEnabled( True )
         else:
             self.mCreateSampleButton.setEnabled( False )
@@ -466,7 +462,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     @pyqtSlot()
     def addStratumToggled(self,  toggleState ):
         strataLayerId = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
-        if strataLayerId.isEmpty():
+        if not strataLayerId:
             return
         self.stratumDigiTool = SurveyDigitizeTool( strataLayerId,  self.iface.mapCanvas(), strataLayerId,  20,  True  )
         self.stratumDigiTool.setButton( self.mAddStratumToolButton )
@@ -479,7 +475,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     @pyqtSlot()
     def addBaselineToggled(self,  toggleState ):
         surveyBaselineLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyBaselineLayer')[0]
-        if surveyBaselineLayer.isEmpty():
+        if not surveyBaselineLayer:
             return
         self.baselineDigiTool = SurveyDigitizeTool( surveyBaselineLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  False )
         self.baselineDigiTool.setButton( self.mAddBaselineToolButton  )
@@ -492,7 +488,7 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     @pyqtSlot()
     def addSurveyAreaToggled(self,  toggleState ):
         surveyAreaLayer = QgsProject.instance().readEntry( 'Survey', 'SurveyAreaLayer' )[0]
-        if surveyAreaLayer.isEmpty():
+        if not surveyAreaLayer:
             return
         self.surveyAreaTool = SurveyDigitizeTool( surveyAreaLayer,  self.iface.mapCanvas(),  strataLayerId,  20,  True )
         self.surveyAreaTool.setButton( self.mAddSurveyAreaToolButton )

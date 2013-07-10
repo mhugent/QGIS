@@ -79,7 +79,7 @@ class SurveyDesignPlugin:
         surveyAreaLayerId = QgsProject.instance().readEntry( "Survey",  "SurveyAreaLayer" )[0]
         strataLayerId = QgsProject.instance().readEntry( "Survey",  "StrataLayer" )[0]
 
-        if strataLayerId.isEmpty():
+        if not strataLayerId:
             return False
         else:
             return True
