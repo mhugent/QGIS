@@ -402,8 +402,8 @@ class SurveyInitDialog( QDialog,  Ui_SurveyInitDialogBase ):
     def createPointSample( self ):
         #get StrataLayer, StrataMinDistance, StrataNSamplePoints
         strataLayer = QgsProject.instance().readEntry( 'Survey', 'StrataLayer' )[0]
-        strataMinDistance = QgsProject.instance().readNumEntry( 'Survey', 'StrataMinDistance', -1 )[0]
-        strataNSamplePoints = QgsProject.instance().readNumEntry( 'Survey', 'StrataNSamplePoints', -1 )[0]
+        strataMinDistance = QgsProject.instance().readEntry( 'Survey', 'StrataMinDistance' )[0]
+        strataNSamplePoints = QgsProject.instance().readEntry( 'Survey', 'StrataNSamplePoints' )[0]
 
         if not strataLayer or strataNSamplePoints < 0:
             print 'Error'
