@@ -33,42 +33,22 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
         return self.mBaselineLayerClipComboBox.itemData( self.mBaselineLayerClipComboBox.currentIndex() ).toString()
 
     def stratumId(self):
-        return self.mStratumIdComboBox.itemData( self.mStratumIdComboBox.currentIndex() ).toInt()[0]
+        return self.mStratumIdComboBox.itemText( self.mStratumIdComboBox.currentIndex() )
 
     def arealAvailability(self):
-        index = self.mArealAvailabilityComboBox.currentIndex()
-        if index == -1:
-            return -1
-
-        return self.mArealAvailabilityComboBox.itemData( index ).toInt()[0]
+        return self.mArealAvailabilityComboBox.itemText( self.mArealAvailabilityComboBox.currentIndex() )
 
     def catch(self):
-        index = self.mCatchComboBox.currentIndex()
-        if index == -1:
-            return -1
-
-        return self.mCatchComboBox.itemData( index ).toInt()[0]
+        return self.mCatchComboBox.itemText( self. mCatchComboBox.currentIndex() )
 
     def dist(self):
-        index = self.mDistComboBox.currentIndex()
-        if index == -1:
-            return -1
-
-        return self.mDistComboBox.itemData( index ).toInt()[0]
+        return self.mDistComboBox.itemText( self.mDistComboBox.currentIndex() )
 
     def width(self):
-        index = self.mWidthComboBox.currentIndex()
-        if index == -1:
-            return -1
-
-        return self.mWidthComboBox.itemData( index ).toInt()[0]
+        return self.mWidthComboBox.itemText( self.mWidthComboBox.currentIndex() )
 
     def verticalAvailability(self):
-        index = self.mVavailComboBox.currentIndex()
-        if index == -1:
-            return -1
-
-        return self.mVavailComboBox.itemData( index ).toInt()[0]
+        return self.mVavailComboBox.itemText( self.mVavailComboBox.currentIndex() )
 
     def sampleLayerChanged(self,  index):
 
@@ -79,7 +59,7 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
         self.mWidthComboBox.clear()
         self.mVavailComboBox.clear()
 
-        layerKey = self.mSampleLayerComboBox.itemData( index ).toString()
+        layerKey = self.mSampleLayerComboBox.itemData( index )
         layer = QgsMapLayerRegistry.instance().mapLayer( layerKey )
         if layer is None or layer.type() != QgsMapLayer.VectorLayer:
             return
@@ -89,10 +69,10 @@ class SurveyEvaluationDialog( QDialog,  Ui_SurveyEvaluationDialogBase ):
             field = fieldMap[key]
             if field.type() == QVariant.String:
                 continue
-            self.mStratumIdComboBox.addItem( field.name(),  key )
-            self.mArealAvailabilityComboBox.addItem( field.name(),  key )
-            self.mCatchComboBox.addItem( field.name(),  key )
-            self.mDistComboBox.addItem( field.name(),  key )
-            self.mWidthComboBox.addItem( field.name(),  key )
-            self.mVavailComboBox.addItem( field.name(),  key )
+            self.mStratumIdComboBox.addItem( field.name() )
+            self.mArealAvailabilityComboBox.addItem( field.name() )
+            self.mCatchComboBox.addItem( field.name() )
+            self.mDistComboBox.addItem( field.name() )
+            self.mWidthComboBox.addItem( field.name() )
+            self.mVavailComboBox.addItem( field.name() )
 

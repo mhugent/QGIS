@@ -44,25 +44,25 @@ class SurveyEvaluation:
         while strataProvider.nextFeature( stratumFeature ):
 
             #get stratum id (!= feature id) and go to next one if stratum is in the exclude list
-            currentStratumId = stratumFeature.attributeMap()[stratumIdIndex].toInt()[0]
+            currentStratumId = stratumFeature.attribute( stratumIdIndex ).toInt()[0]
             if currentStratumId in self.mExcludeStrata:
                 continue
 
             stratumInfo[ currentStratumId ] = [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0] #1. number of stations / 2. sumscr / 3. meanscr / 4. variance scr / 5. area / 6. sumvar / 7. bio
 
-        stationProvider.select( stationProvider.attributeIndexes() )
+        stIt = stationProvider.getFeatures()
         stationFeature = QgsFeature()
-        while stationProvider.nextFeature( stationFeature ):
-            stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
+        while stIt.nextFeature( stationFeature ):
+            stratumId = stationFeature.attribute( self.mStratumId ).toInt()[0]
             if stratumId in self.mExcludeStrata:
                 continue
             stratumInfo[stratumId][0] += 1 #number of stations
-            stratumInfo[stratumId][1] += ( stationFeature.attributeMap()[scrAttribute].toDouble()[0] ) #sumscr
+            stratumInfo[stratumId][1] += ( stationFeature.attribute(scrAttribute).toDouble()[0] ) #sumscr
 
         #calculate strata area and scr mean
-        strataProvider.select(  stratumAttributeList )
-        while strataProvider.nextFeature( stratumFeature ):
-            stratumId = stratumFeature.attributeMap()[stratumIdIndex].toInt()[0]
+        strataIt = strataProvider.getFeatures()
+        while strataIt.nextFeature( stratumFeature ):
+            stratumId = stratumFeature.attribute(stratumIdIndex ).toInt()[0]
             if stratumId in self.mExcludeStrata:
                continue
             stratInfo = stratumInfo[stratumId]
@@ -73,21 +73,21 @@ class SurveyEvaluation:
             stratInfo[4] = stratumFeature.geometry().area()
 
         #calculate scr variance per stratum
-        stationProvider.select( stationProvider.attributeIndexes() )
-        while stationProvider.nextFeature( stationFeature ):
-            stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
+        stationIt = stationProvider.getFeatures()
+        while stationIt.nextFeature( stationFeature ):
+            stratumId = stationFeature.attribute(self.mStratumId).toInt()[0]
             if stratumId in self.mExcludeStrata:
                 continue
             meanscr = stratumInfo[stratumId][2]
-            scrValue = stationFeature.attributeMap()[scrAttribute].toDouble()[0]
+            scrValue = stationFeature.attribute(scrAttribute).toDouble()[0]
             nStations = stratumInfo[stratumId][0]
             if nStations > 1:
                 stratumInfo[stratumId][3] += ( (scrValue - meanscr)* (scrValue - meanscr) / ( nStations - 1 ) )
 
         #calculate sumvar per stratum
-        stationProvider.select( stationProvider.attributeIndexes() )
-        while stationProvider.nextFeature( stationFeature ):
-            stratumId = stationFeature.attributeMap()[self.mStratumId].toInt()[0]
+        stationIt = stationProvider.getFeatures()
+        while stationIt.nextFeature( stationFeature ):
+            stratumId = stationFeature.attribute(self.mStratumId).toInt()[0]
             if stratumId in self.mExcludeStrata:
                 continue
             width = stationFeature.attributeMap()[self.mWidth].toDouble()[0]

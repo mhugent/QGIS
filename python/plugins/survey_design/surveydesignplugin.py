@@ -53,19 +53,13 @@ class SurveyDesignPlugin:
         baselineClipLayerId = dialog.baselineClipLayerId()
         if not baselineClipLayerId.isEmpty():
             baselineClipLayer = QgsMapLayerRegistry.instance().mapLayers()[ baselineClipLayerId ]
-            okAttribute = baselineClipLayer.fieldNameIndex("ok" )
-            strataIdAttribute = baselineClipLayer.fieldNameIndex( "stratum_id" )
-
-            if okAttribute != -1 and strataIdAttribute != 1:
-                attList = [okAttribute,  strataIdAttribute]
-                baselineClipLayer.select( attList,  QgsRectangle(),  False )
-
-                f = QgsFeature()
-                while baselineClipLayer.nextFeature( f ):
-                    okString = f.attributeMap()[okAttribute].toString()[0]
-                    stratumId = f.attributeMap()[strataIdAttribute].toInt()[0]
-                    if okString == 'f' or okString == 'F':
-                        strataExcludeSet.add( stratumId )
+            f = QgsFeature()
+            fIt = baselineClipLayer.getFeatures( QgsFeatureRequest() )
+            while fIt.nextFeature( f ):
+                okString = f.attribute( "ok" )
+                stratumId = f.attribute["stratum_id"].toInt()[0]
+                if okString == u"f" or okString == u"F":
+                    strataExcludeSet.add( stratumId )
 
         eval = SurveyEvaluation( self.iface,  dialog.sampleLayerId(), dialog.stratumId(),  dialog.arealAvailability(),  dialog.catch(),  dialog.dist(),  dialog.width(),  dialog.verticalAvailability(),  strataExcludeSet )
         eval.evaluateSurvey( dialog.speciesVulnerability() )
