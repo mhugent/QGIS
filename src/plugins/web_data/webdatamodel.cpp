@@ -2,6 +2,7 @@
 #include "qgisinterface.h"
 #include "qgsapplication.h"
 #include "qgscoordinatereferencesystem.h"
+#include "qgsdatasourceuri.h"
 #include "qgslegendinterface.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
@@ -446,6 +447,7 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     {
       mapLayer = mIface->addRasterLayer( statusItem->data().toString(), layername );
       QgsRasterLayer* rl = dynamic_cast<QgsRasterLayer*>( mapLayer );
+#if 0 //todo: fix with 2.0 methods
       if ( rl )
       {
         rl->setRedBandName( rl->bandName( 1 ) );
@@ -453,13 +455,20 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
         rl->setBlueBandName( rl->bandName( 3 ) );
         rl->setTransparentBandName( rl->bandName( 4 ) );
       }
+#endif //0
     }
     else
     {
       QString url, format, crs;
       QStringList layers, styles;
       wmsParameterFromIndex( index, url, format, crs, layers, styles );
-      mapLayer = mIface->addRasterLayer( url, layername, "wms", layers, styles, format, crs );
+
+      QgsDataSourceURI uri( url );
+      uri.setParam( "layers", layers );
+      uri.setParam( "styles", styles );
+      uri.setParam( "format", format );
+      uri.setParam( "crs", crs );
+      mapLayer = mIface->addRasterLayer( uri.encodedUri(), layername, "wms" );
     }
   }
   else if ( type == "WFS" )
@@ -574,15 +583,20 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
     {
       //get preferred style, crs, format
       QString url, format, crs;
-      QString providerKey = "wms";
       QStringList layers, styles;
       wmsParameterFromIndex( index, url, format, crs, layers, styles );
-      wmsLayer = new QgsRasterLayer( 0, url, layername, "wms", layers, styles, format, crs );
+      QgsDataSourceURI uri( url );
+      uri.setParam( "layers", layers );
+      uri.setParam( "styles", styles );
+      uri.setParam( "format", format );
+      uri.setParam( "crs", crs );
+      wmsLayer = new QgsRasterLayer( uri.encodedUri(), layername, "wms" );
     }
 
     //call save as dialog
     filePath = saveFilePath + "/" + layerId;
-    QgsRasterLayerSaveAsDialog d( wmsLayer->dataProvider(),  mIface->mapCanvas()->extent() );
+    QgsRasterLayerSaveAsDialog d( wmsLayer, wmsLayer->dataProvider(),  mIface->mapCanvas()->extent(), wmsLayer->crs(),
+                                  mIface->mapCanvas()->mapRenderer()->destinationCrs() );
     d.hideFormat();
     d.hideOutput();
     if ( d.exec() == QDialog::Accepted )
@@ -598,7 +612,14 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
 
       QProgressDialog pd( 0, tr( "Abort..." ), 0, 0 );
       pd.setWindowModality( Qt::WindowModal );
-      fileWriter.writeRaster( wmsLayer->dataProvider(), d.nColumns(), d.outputRectangle(), &pd );
+
+      QgsRasterPipe* pipe = new QgsRasterPipe();
+      if ( !pipe->set( wmsLayer->dataProvider()->clone() ) )
+      {
+        QgsDebugMsg( "Cannot set pipe provider" );
+        return;
+      }
+      fileWriter.writeRaster( pipe, d.nColumns(), d.nRows(), d.outputRectangle(), wmsLayer->crs(), &pd );
 
       filePath += ( "/" + layerId + ".vrt" );
       offlineOk = true;
@@ -656,12 +677,16 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
     {
       //get preferred style, crs, format
       QString url, format, crs;
-      QString providerKey = "wms";
       QStringList layers, styles;
       wmsParameterFromIndex( index, url, format, crs, layers, styles );
 
       //add to map
-      onlineLayer = mIface->addRasterLayer( url, layername, providerKey, layers, styles, format, crs );
+      QgsDataSourceURI uri( url );
+      uri.setParam( "layers", layers );
+      uri.setParam( "styles", styles );
+      uri.setParam( "format", format );
+      uri.setParam( "crs", crs );
+      onlineLayer = mIface->addRasterLayer( uri.encodedUri(), layername, "wms" );
     }
 
     if ( onlineLayer )
@@ -893,6 +918,7 @@ bool WebDataModel::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer 
   {
     //set Red/Green/Blue/Alpha channels
     QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
+#if 0
     if ( newRasterLayer->dataProvider() && newRasterLayer->dataProvider()->name() != "wms" )
     {
       newRasterLayer->setRedBandName( newRasterLayer->bandName( 1 ) );
@@ -900,6 +926,7 @@ bool WebDataModel::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer 
       newRasterLayer->setBlueBandName( newRasterLayer->bandName( 3 ) );
       newRasterLayer->setTransparentBandName( newRasterLayer->bandName( 4 ) );
     }
+#endif //0
   }
 
   //move new layer next to the old one

@@ -43,6 +43,7 @@ INCLUDE_DIRECTORIES(
      ${GDAL_INCLUDE_DIR}
      ../../core
      ../../core/raster
+     ../../core/symbology-ng
      ../../gui
      ..
      .
