@@ -78,6 +78,9 @@ class QgsLegendInterface : QObject
     //! returns true if the layer exists, false otherwise
     //! @note Added in 2.0
     virtual bool setCurrentLayer( QgsMapLayer *layer ) = 0;
+    
+    //! Moves layer item after another one
+    virtual void moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after ) = 0;
 
   signals:
 
