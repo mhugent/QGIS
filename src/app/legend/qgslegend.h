@@ -339,6 +339,9 @@ class QgsLegend : public QTreeWidget
      */
     void moveLayer( QgsMapLayer* ml, int groupIndex );
 
+    /**Moves a maplayer after another one*/
+    void moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after );
+
     /**Toggle show in overview for current layer*/
     void legendLayerShowInOverview();
 

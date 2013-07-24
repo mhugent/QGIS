@@ -218,3 +218,8 @@ bool QgsAppLegendInterface::setCurrentLayer( QgsMapLayer *layer )
 {
   return mLegend->setCurrentLayer( layer );
 }
+
+void QgsAppLegendInterface::moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after )
+{
+  mLegend->moveLayer( ml, after );
+}

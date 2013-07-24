@@ -1633,6 +1633,27 @@ void QgsLegend::moveLayer( QgsMapLayer *ml, int groupIndex )
   emit itemMovedGroup( dynamic_cast<QgsLegendItem*>( layer ), groupIndex );
 }
 
+void QgsLegend::moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after )
+{
+  if ( !ml || !after || ml == after )
+  {
+    return;
+  }
+
+  QgsLegendLayer* mlLegendLayer = findLegendLayer( ml->id() );
+  if ( !mlLegendLayer )
+  {
+    return;
+  }
+  QgsLegendLayer* afterLegendLayer = findLegendLayer( after->id() );
+  if ( !afterLegendLayer )
+  {
+    return;
+  }
+
+  moveItem( mlLegendLayer, afterLegendLayer );
+}
+
 void QgsLegend::legendLayerShowInOverview()
 {
   if ( !mMapCanvas || mMapCanvas->isDrawing() )
