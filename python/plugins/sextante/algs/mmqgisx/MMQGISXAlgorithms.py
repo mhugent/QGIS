@@ -418,7 +418,7 @@ class mmqgisx_grid_algorithm(GeoAlgorithm):
 
 		crsId = self.getParameterValue(self.CRS)
 		self.crs = QgsCoordinateReferenceSystem(crsId)
-		
+
 		if (hspacing <= 0) or (vspacing <= 0):
 			raise GeoAlgorithmExecutionException("Invalid grid spacing: " + unicode(hspacing) + " / " + unicode(vspacing))
 
@@ -1030,6 +1030,7 @@ class mmqgisx_select_algorithm(GeoAlgorithm):
 	RESULT = "RESULT"
 
 	def defineCharacteristics(self):
+		self.allowOnlyOpenedLayers = True
 		self.name = "Select by attribute"
 		self.group = "Vector selection tools"
 

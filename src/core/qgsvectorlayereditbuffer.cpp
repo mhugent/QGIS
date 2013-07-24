@@ -99,9 +99,7 @@ bool QgsVectorLayerEditBuffer::addFeature( QgsFeature& f )
   {
     return false;
   }
-
-  int layerFieldCount = L->dataProvider()->fields().count() + mAddedAttributes.count() - mDeletedAttributeIds.count();
-  if ( layerFieldCount != f.attributes().count() )
+  if ( L->mUpdatedFields.count() != f.attributes().count() )
     return false;
 
   // TODO: check correct geometry type
@@ -247,6 +245,8 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
 
   QgsFields oldFields = L->pendingFields();
 
+  bool hadPendingDeletes = !mDeletedFeatureIds.isEmpty();
+
   //
   // delete attributes
   //
@@ -265,6 +265,14 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
     else
     {
       commitErrors << tr( "ERROR: %n attribute(s) not deleted.", "not deleted attributes count", mDeletedAttributeIds.size() );
+#if 0
+      QString list = "ERROR: Pending attribute deletes:";
+      foreach ( int idx, mDeletedAttributeIds )
+      {
+        list.append( " " + L->pendingFields()[idx].name() );
+      }
+      commitErrors << list;
+#endif
       success = false;
     }
   }
@@ -286,6 +294,14 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
     else
     {
       commitErrors << tr( "ERROR: %n new attribute(s) not added", "not added attributes count", mAddedAttributes.size() );
+#if 0
+      QString list = "ERROR: Pending adds:";
+      foreach ( QgsField f, mAddedAttributes )
+      {
+        list.append( " " + f.name() );
+      }
+      commitErrors << list;
+#endif
       success = false;
     }
   }
@@ -335,6 +351,19 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       else
       {
         commitErrors << tr( "ERROR: %n attribute value change(s) not applied.", "not changed attribute values count", mChangedAttributeValues.size() );
+#if 0
+        QString list = "ERROR: pending changes:";
+        foreach ( QgsFeatureId id, mChangedAttributeValues.keys() )
+        {
+          list.append( "\n  " + FID_TO_STRING( id ) + "[" );
+          foreach ( int idx, mChangedAttributeValues[ id ].keys() )
+          {
+            list.append( QString( " %1:%2" ).arg( L->pendingFields()[idx].name() ).arg( mChangedAttributeValues[id][idx].toString() ) );
+          }
+          list.append( " ]" );
+        }
+        commitErrors << list;
+#endif
         success = false;
       }
     }
@@ -342,7 +371,7 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
     //
     // delete features
     //
-    if ( !mDeletedFeatureIds.isEmpty() )
+    if ( success && !mDeletedFeatureIds.isEmpty() )
     {
       if (( cap & QgsVectorDataProvider::DeleteFeatures ) && provider->deleteFeatures( mDeletedFeatureIds ) )
       {
@@ -361,6 +390,14 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       else
       {
         commitErrors << tr( "ERROR: %n feature(s) not deleted.", "not deleted features count", mDeletedFeatureIds.size() );
+#if 0
+        QString list = "ERROR: pending deletes:";
+        foreach ( QgsFeatureId id, mDeletedFeatureIds )
+        {
+          list.append( " " + FID_TO_STRING( id ) );
+        }
+        commitErrors << list;
+#endif
         success = false;
       }
     }
@@ -368,7 +405,7 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
     //
     //  add features
     //
-    if ( !mAddedFeatures.isEmpty() )
+    if ( success && !mAddedFeatures.isEmpty() )
     {
       if ( cap & QgsVectorDataProvider::AddFeatures )
       {
@@ -402,6 +439,19 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
         else
         {
           commitErrors << tr( "ERROR: %n feature(s) not added.", "not added features count", mAddedFeatures.size() );
+#if 0
+          QString list = "ERROR: pending adds:";
+          foreach ( QgsFeature f, mAddedFeatures )
+          {
+            list.append( " " + FID_TO_STRING( f.id() ) + "[" );
+            for ( int i = 0; i < L->pendingFields().size(); i++ )
+            {
+              list.append( QString( " %1:%2" ).arg( L->pendingFields()[i].name() ).arg( f.attributes()[i].toString() ) );
+            }
+            list.append( " ]" );
+          }
+          commitErrors << list;
+#endif
           success = false;
         }
       }
@@ -412,11 +462,15 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       }
     }
   }
+  else
+  {
+    success = false;
+  }
 
   //
   // update geometries
   //
-  if ( !mChangedGeometries.isEmpty() )
+  if ( success && !mChangedGeometries.isEmpty() )
   {
     if (( cap & QgsVectorDataProvider::ChangeGeometries ) && provider->changeGeometryValues( mChangedGeometries ) )
     {
@@ -433,13 +487,21 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
     }
   }
 
-  if ( !success )
+  // for shapes run a REPACK after each transaction
+  // TODO: enhance provider interface to allow moving this there
+  if ( success && hadPendingDeletes && L->providerType() == "ogr" && L->storageType() == "ESRI Shapefile" )
   {
-    if ( provider->hasErrors() )
+    provider->createSpatialIndex();
+  }
+
+  if ( !success && provider->hasErrors() )
+  {
+    commitErrors << tr( "\n  Provider errors:" );
+    foreach ( QString e, provider->errors() )
     {
-      commitErrors << tr( "\n  Provider errors:" ) << provider->errors();
-      provider->clearErrors();
+      commitErrors << "    " + e.replace( "\n", "\n    " );
     }
+    provider->clearErrors();
   }
 
   return success;

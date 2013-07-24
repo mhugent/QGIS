@@ -127,6 +127,7 @@ qgis:nearestneighbouranalysis,USE_ORIGINAL_NAME,Vector/Points
 qgis:pointslayerfromtable,USE_ORIGINAL_NAME,Vector/Creation
 qgis:polygonfromlayerextent,USE_ORIGINAL_NAME,Vector/Creation
 qgis:polygonstolines,USE_ORIGINAL_NAME,Vector/Polygons
+qgis:polygoncentroids,USE_ORIGINAL_NAME,Vector/Polygons
 qgis:randomselection,USE_ORIGINAL_NAME,Vector/Selection
 qgis:randomselectionwithinsubsets,USE_ORIGINAL_NAME,Vector/Selection
 qgis:rasterlayerhistogram,USE_ORIGINAL_NAME,Raster/Statistics
@@ -214,7 +215,7 @@ saga:edgecontamination,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and ge
 saga:effectiveairflowheights,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
 saga:enumeratetablefield,USE_ORIGINAL_NAME,Vector/Table tools
 saga:fillgapsinrecords,USE_ORIGINAL_NAME,Vector/Table tools
-saga:fillsinksplanchondarboux2001,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
+saga:fillsinks,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
 saga:fillsinkswangliu,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
 saga:fillsinksxxlwangliu,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
 saga:filterclumps,Remove small pixel clumps (to no-data),Raster/General tools
@@ -244,7 +245,7 @@ saga:gradientvectorsfromdirectionalcomponents,USE_ORIGINAL_NAME,Raster - vector/
 saga:gradientvectorsfromdirectionandlength,USE_ORIGINAL_NAME,Raster - vector/Raster -> Vector
 saga:gradientvectorsfromsurface,USE_ORIGINAL_NAME,Raster - vector/Raster -> Vector
 saga:gridbuffer,USE_ORIGINAL_NAME,Raster/General tools
-saga:gridcalculator,USE_ORIGINAL_NAME,Raster/General tools
+saga:rastercalculator,USE_ORIGINAL_NAME,Raster/General tools
 saga:griddifference,USE_ORIGINAL_NAME,Raster/General tools
 saga:griddivision,USE_ORIGINAL_NAME,Raster/General tools
 saga:gridmasking,USE_ORIGINAL_NAME,Raster/General tools
@@ -279,7 +280,7 @@ saga:lsfactor,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphome
 saga:majorityfilter,USE_ORIGINAL_NAME,Raster/Filters
 saga:massbalanceindex,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
 saga:mergeshapeslayers,USE_ORIGINAL_NAME,Vector/General tools
-saga:merging,Merge raster layers,Raster/General tools
+saga:mergerasterlayers,USE_ORIGINAL_NAME,Raster/General tools
 saga:metricconversions,USE_ORIGINAL_NAME,Raster/Edition
 saga:minimumdistanceanalysis,USE_ORIGINAL_NAME,Vector/Points
 saga:modifedquadraticshepard,USE_ORIGINAL_NAME,Raster - vector/Vector -> Raster
@@ -306,9 +307,15 @@ saga:pointstatisticsforpolygons,USE_ORIGINAL_NAME,Raster - vector/Raster - vecto
 saga:pointsthinning,USE_ORIGINAL_NAME,Vector/Points
 saga:polartocartesiancoordinates,USE_ORIGINAL_NAME,Domain specific/Cost analysis
 saga:polygon-lineintersection,USE_ORIGINAL_NAME,Vector/Geometry operations
-saga:polygoncentroids,USE_ORIGINAL_NAME,Vector/Polygons
 saga:polygondissolve,USE_ORIGINAL_NAME,Vector/Polygons
-saga:polygonintersection,USE_ORIGINAL_NAME,Vector/Polygons
+saga:polygondissolvebyattribute,Polygon dissolve (by attribute),Vector/Polygons
+saga:polygondissolveallpolygons,Polygon dissolve (all polygons),Vector/Polygons
+saga:intersect,Polygon intersection,Vector/Polygons
+saga:difference,Polygon difference,Vector/Polygons
+saga:update,Polygon update,Vector/Polygons
+saga:identity,Polygon identity,Vector/Polygons
+saga:union,Polygon union,Vector/Polygons
+saga:symmetricaldifference,Polygon symmetrical difference,Vector/Polygons
 saga:polygonpartstoseparatepolygons,USE_ORIGINAL_NAME,Vector/Polygons
 saga:polygonproperties,USE_ORIGINAL_NAME,Vector/Polygons
 saga:polygonshapeindices,USE_ORIGINAL_NAME,Vector/Polygons
@@ -387,3 +394,6 @@ saga:waterretentioncapacity,USE_ORIGINAL_NAME,Domain specific/Hydrology
 saga:watershedbasins,USE_ORIGINAL_NAME,Domain specific/Hydrology
 saga:windeffectwindwardleewardindex,USE_ORIGINAL_NAME,Domain specific/Terrain analysis and geomorphometry
 saga:zonalgridstatistics,USE_ORIGINAL_NAME,Raster/Statistics
+modelertools:calculator,USE_ORIGINAL_NAME,Modeler/Modeler tools
+modelertools:rasterlayerbounds,USE_ORIGINAL_NAME,Modeler/Modeler tools
+modelertools:vectorlayerbounds,USE_ORIGINAL_NAME,Modeler/Modeler tools

@@ -26,12 +26,8 @@
 #include "qgsmaplayer.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsdistancearea.h"
-#include "qgscentralpointpositionmanager.h"
-#include "qgsoverlayobjectpositionmanager.h"
-#include "qgspalobjectpositionmanager.h"
 #include "qgsproject.h"
 #include "qgsvectorlayer.h"
-#include "qgsvectoroverlay.h"
 
 
 #include <QDomDocument>
@@ -194,9 +190,9 @@ void QgsMapRenderer::adjustExtentToSize()
     dymax = mExtent.yMaximum() + whitespace;
   }
 
-  QgsDebugMsg( QString( "Map units per pixel (x,y) : %1, %2" ).arg( mapUnitsPerPixelX, 0, 'f', 8 ).arg( mapUnitsPerPixelY, 0, 'f', 8 ) );
-  QgsDebugMsg( QString( "Pixmap dimensions (x,y) : %1, %2" ).arg( myWidth, 0, 'f', 8 ).arg( myHeight, 0, 'f', 8 ) );
-  QgsDebugMsg( QString( "Extent dimensions (x,y) : %1, %2" ).arg( mExtent.width(), 0, 'f', 8 ).arg( mExtent.height(), 0, 'f', 8 ) );
+  QgsDebugMsg( QString( "Map units per pixel (x,y) : %1, %2" ).arg( qgsDoubleToString( mapUnitsPerPixelX ) ).arg( qgsDoubleToString( mapUnitsPerPixelY ) ) );
+  QgsDebugMsg( QString( "Pixmap dimensions (x,y) : %1, %2" ).arg( qgsDoubleToString( myWidth ) ).arg( qgsDoubleToString( myHeight ) ) );
+  QgsDebugMsg( QString( "Extent dimensions (x,y) : %1, %2" ).arg( qgsDoubleToString( mExtent.width() ) ).arg( qgsDoubleToString( mExtent.height() ) ) );
   QgsDebugMsg( mExtent.toString() );
 
   // update extent
@@ -205,14 +201,14 @@ void QgsMapRenderer::adjustExtentToSize()
   mExtent.setYMinimum( dymin );
   mExtent.setYMaximum( dymax );
 
-  QgsDebugMsg( QString( "Adjusted map units per pixel (x,y) : %1, %2" ).arg( mExtent.width() / myWidth, 0, 'f', 8 ).arg( mExtent.height() / myHeight, 0, 'f', 8 ) );
+  QgsDebugMsg( QString( "Adjusted map units per pixel (x,y) : %1, %2" ).arg( qgsDoubleToString( mExtent.width() / myWidth ) ).arg( qgsDoubleToString( mExtent.height() / myHeight ) ) );
 
-  QgsDebugMsg( QString( "Recalced pixmap dimensions (x,y) : %1, %2" ).arg( mExtent.width() / mMapUnitsPerPixel, 0, 'f', 8 ).arg( mExtent.height() / mMapUnitsPerPixel, 0, 'f', 8 ) );
+  QgsDebugMsg( QString( "Recalced pixmap dimensions (x,y) : %1, %2" ).arg( qgsDoubleToString( mExtent.width() / mMapUnitsPerPixel ) ).arg( qgsDoubleToString( mExtent.height() / mMapUnitsPerPixel ) ) );
 
   // update the scale
   updateScale();
 
-  QgsDebugMsg( QString( "Scale (assuming meters as map units) = 1:%1" ).arg( mScale, 0, 'f', 8 ) );
+  QgsDebugMsg( QString( "Scale (assuming meters as map units) = 1:%1" ).arg( qgsDoubleToString( mScale ) ) );
 
   newCoordXForm.setParameters( mMapUnitsPerPixel, dxmin, dymin, myHeight );
   mRenderContext.setMapToPixel( newCoordXForm );
@@ -345,9 +341,6 @@ void QgsMapRenderer::render( QPainter* painter, double* forceWidthScale )
     }
   }
 
-  QgsOverlayObjectPositionManager* overlayManager = overlayManagerFromSettings();
-  QList<QgsVectorOverlay*> allOverlayList; //list of all overlays, used to draw them after layers have been rendered
-
   // render all layers in the stack, starting at the base
   QListIterator<QString> li( mLayerSet );
   li.toBack();
@@ -444,30 +437,6 @@ void QgsMapRenderer::render( QPainter* painter, double* forceWidthScale )
       if ( ml->type() == QgsMapLayer::RasterLayer && qAbs( rasterScaleFactor - 1.0 ) > 0.000001 )
       {
         scaleRaster = true;
-      }
-
-
-      //create overlay objects for features within the view extent
-      if ( ml->type() == QgsMapLayer::VectorLayer && overlayManager )
-      {
-        QgsVectorLayer* vl = qobject_cast<QgsVectorLayer *>( ml );
-        if ( vl )
-        {
-          QList<QgsVectorOverlay*> thisLayerOverlayList;
-          vl->vectorOverlays( thisLayerOverlayList );
-
-          QList<QgsVectorOverlay*>::iterator overlayIt = thisLayerOverlayList.begin();
-          for ( ; overlayIt != thisLayerOverlayList.end(); ++overlayIt )
-          {
-            if (( *overlayIt )->displayFlag() )
-            {
-              ( *overlayIt )->createOverlayObjects( mRenderContext );
-              allOverlayList.push_back( *overlayIt );
-            }
-          }
-
-          overlayManager->addLayer( vl, thisLayerOverlayList );
-        }
       }
 
       // Force render of layers that are being edited
@@ -693,20 +662,6 @@ void QgsMapRenderer::render( QPainter* painter, double* forceWidthScale )
     }
   } // if (!mOverview)
 
-  //find overlay positions and draw the vector overlays
-  if ( overlayManager && allOverlayList.size() > 0 )
-  {
-    overlayManager->findObjectPositions( mRenderContext, mScaleCalculator->mapUnits() );
-    //draw all the overlays
-    QList<QgsVectorOverlay*>::iterator allOverlayIt = allOverlayList.begin();
-    for ( ; allOverlayIt != allOverlayList.end(); ++allOverlayIt )
-    {
-      ( *allOverlayIt )->drawOverlayObjects( mRenderContext );
-    }
-    overlayManager->removeLayers();
-  }
-
-  delete overlayManager;
   // make sure progress bar arrives at 100%!
   emit drawingProgress( 1, 1 );
 
@@ -1003,6 +958,12 @@ void QgsMapRenderer::updateFullExtent()
       QgsDebugMsg( "Updating extent using " + lyr->name() );
       QgsDebugMsg( "Input extent: " + lyr->extent().toString() );
 
+      if ( lyr->extent().isEmpty() )
+      {
+        it++;
+        continue;
+      }
+
       // Layer extents are stored in the coordinate system (CS) of the
       // layer. The extent must be projected to the canvas CS
       QgsRectangle extent = layerExtentToOutputExtent( lyr, lyr->extent() );
@@ -1057,42 +1018,6 @@ void QgsMapRenderer::setLayerSet( const QStringList& layers )
 QStringList& QgsMapRenderer::layerSet()
 {
   return mLayerSet;
-}
-
-QgsOverlayObjectPositionManager* QgsMapRenderer::overlayManagerFromSettings()
-{
-  QSettings settings;
-  QString overlayAlgorithmQString = settings.value( "qgis/overlayPlacementAlgorithm", "Central point" ).toString();
-
-  QgsOverlayObjectPositionManager* result = 0;
-
-  if ( overlayAlgorithmQString != "Central point" )
-  {
-    QgsPALObjectPositionManager* palManager = new QgsPALObjectPositionManager();
-    if ( overlayAlgorithmQString == "Chain" )
-    {
-      palManager->setPlacementAlgorithm( "Chain" );
-    }
-    else if ( overlayAlgorithmQString == "Popmusic tabu chain" )
-    {
-      palManager->setPlacementAlgorithm( "Popmusic tabu chain" );
-    }
-    else if ( overlayAlgorithmQString == "Popmusic tabu" )
-    {
-      palManager->setPlacementAlgorithm( "Popmusic tabu" );
-    }
-    else if ( overlayAlgorithmQString == "Popmusic chain" )
-    {
-      palManager->setPlacementAlgorithm( "Popmusic chain" );
-    }
-    result = palManager;
-  }
-  else
-  {
-    result = new QgsCentralPointPositionManager();
-  }
-
-  return result;
 }
 
 bool QgsMapRenderer::readXML( QDomNode & theNode )
@@ -1204,10 +1129,10 @@ bool QgsMapRenderer::writeXML( QDomNode & theNode, QDomDocument & theDoc )
   QDomElement yMax = theDoc.createElement( "ymax" );
 
   QgsRectangle r = extent();
-  QDomText xMinText = theDoc.createTextNode( QString::number( r.xMinimum(), 'f' ) );
-  QDomText yMinText = theDoc.createTextNode( QString::number( r.yMinimum(), 'f' ) );
-  QDomText xMaxText = theDoc.createTextNode( QString::number( r.xMaximum(), 'f' ) );
-  QDomText yMaxText = theDoc.createTextNode( QString::number( r.yMaximum(), 'f' ) );
+  QDomText xMinText = theDoc.createTextNode( qgsDoubleToString( r.xMinimum() ) );
+  QDomText yMinText = theDoc.createTextNode( qgsDoubleToString( r.yMinimum() ) );
+  QDomText xMaxText = theDoc.createTextNode( qgsDoubleToString( r.xMaximum() ) );
+  QDomText yMaxText = theDoc.createTextNode( qgsDoubleToString( r.yMaximum() ) );
 
   xMin.appendChild( xMinText );
   yMin.appendChild( yMinText );

@@ -24,6 +24,7 @@ __copyright__ = '(C) 2012, Victor Olaya'
 __revision__ = '$Format:%H$'
 
 import os
+import importlib
 from qgis.core import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -180,6 +181,8 @@ class SagaAlgorithm(GeoAlgorithm):
                 raise GeoAlgorithmExecutionException("SAGA folder is not configured.\nPlease configure it before running SAGA algorithms.")
         commands = list()
         self.exportedLayers = {}
+                
+        self.preProcessInputs()
 
         #1: Export rasters to sgrd and vectors to shp
         #   Tables must be in dbf format. We check that.
@@ -304,9 +307,11 @@ class SagaAlgorithm(GeoAlgorithm):
                 if SextanteUtils.isWindows() or SextanteUtils.isMac():
                     commands.append("io_gdal 1 -GRIDS \"" + filename2 + "\" -FORMAT 4 -TYPE 0 -FILE \"" + filename + "\"");
                 else:
-                    commands.append("libio_gdal 1 -GRIDS \"" + filename2 + "\" -FORMAT 4 -TYPE 0 -FILE \"" + filename + "\"");
+                    commands.append("libio_gdal 1 -GRIDS \"" + filename2 + "\" -FORMAT 1 -TYPE 0 -FILE \"" + filename + "\"");
 
+        
         #4 Run SAGA
+        commands = self.editCommands(commands)
         SagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
         loglines = []
         loglines.append("SAGA execution commands")
@@ -317,6 +322,28 @@ class SagaAlgorithm(GeoAlgorithm):
             SextanteLog.addToLog(SextanteLog.LOG_INFO, loglines)
         SagaUtils.executeSaga(progress);
 
+
+    def preProcessInputs(self):
+        name = self.commandLineName().replace('.','_')[len('saga:'):]
+        try:
+            module = importlib.import_module('sextante.grass.ext.' + name)
+        except ImportError:
+            return
+        if hasattr(module, 'preProcessInputs'):
+            func = getattr(module,'preProcessInputs')
+            func(self)
+            
+    def editCommands(self, commands):
+        name = self.commandLineName()[len('saga:'):]
+        try:
+            module = importlib.import_module('sextante.saga.ext.' + name)
+        except ImportError:
+            return commands
+        if hasattr(module, 'editCommands'):
+            func = getattr(module,'editCommands')
+            return func(commands)
+        else:
+            return commands
 
     def getOutputCellsize(self):
         '''tries to guess the cellsize of the output, searching for a parameter with an appropriate name for it'''
@@ -361,7 +388,7 @@ class SagaAlgorithm(GeoAlgorithm):
         if msg is not None:
             html = ("<p>This algorithm requires SAGA to be run."
             "Unfortunately, it seems that SAGA is not installed in your system, or it is not correctly configured to be used from QGIS</p>")
-            html += '<p><a href= "http://docs.qgis.org/html/en/docs/user_manual/sextante/3rdParty.html">Click here</a> to know more about how to install and configure SAGA to be used with SEXTANTE</p>'
+            html += '<p><a href= "http://docs.qgis.org/2.0/html/en/docs/user_manual/sextante/3rdParty.html">Click here</a> to know more about how to install and configure SAGA to be used with SEXTANTE</p>'
             return html
 
 
@@ -375,13 +402,25 @@ class SagaAlgorithm(GeoAlgorithm):
                         return ("Input layer " + str(layer.name()) + " has more than one band.\n"
                                 + "Multiband layers are not supported by SAGA")
 
-
     def helpFile(self):
         return  os.path.join(os.path.dirname(__file__), "help", self.name.replace(" ", "") + ".html")
 
+    def getPostProcessingErrorMessage(self, wrongLayers):
+        html = GeoAlgorithm.getPostProcessingErrorMessage(self, wrongLayers)
+        msg = SagaUtils.checkSagaIsInstalled(True)
+        html += ("<p>This algorithm requires SAGA to be run. A test to check if SAGA is correctly installed "
+                "and configured in your system has been performed, with the following result:</p><ul><i>")
+        if msg is None:
+            html += "SAGA seems to be correctly installed and configured</li></ul>"
+        else:
+            html += msg + "</i></li></ul>"
+            html += '<p><a href= "http://docs.qgis.org/2.0/html/en/docs/user_manual/sextante/3rdParty.html">Click here</a> to know more about how to install and configure SAGA to be used with SEXTANTE</p>'
 
-    def commandLineName(self):
-        name = self.provider.getName().lower() + ":" + self.cmdname.lower()
-        validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:"
-        name = ''.join(c for c in name if c in validChars)
-        return name
+        return html
+    #===========================================================================
+    # def commandLineName(self):
+    #    name = self.provider.getName().lower() + ":" + self.cmdname.lower()
+    #    validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:"
+    #    name = ''.join(c for c in name if c in validChars)
+    #    return name
+    #===========================================================================

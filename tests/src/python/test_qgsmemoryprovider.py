@@ -12,19 +12,23 @@ __copyright__ = 'Copyright 2012, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
+import qgis
+
+from PyQt4.QtCore import *
 
 from qgis.core import (QGis,
-                        QgsVectorLayer,
-                        QgsFeature,
-                        QgsFeatureRequest,
-                        QgsField,
-                        QgsGeometry,
-                        QgsPoint)
+                       QgsVectorLayer,
+                       QgsFeature,
+                       QgsFeatureRequest,
+                       QgsField,
+                       QgsGeometry,
+                       QgsPoint
+                      )
 
 from utilities import (getQgisTestApp,
                        TestCase,
-                       unittest
+                       unittest,
+                       compareWkt,
                        #expectedFailure
                        )
 QGISAPP, CANVAS, IFACE, PARENT = getQgisTestApp()
@@ -63,9 +67,9 @@ class TestQgsMemoryProvider(TestCase):
 
         ft = QgsFeature()
         ft.setGeometry(QgsGeometry.fromPoint(QgsPoint(10,10)))
-        ft.setAttributes([ QVariant("Johny"),
-                           QVariant(20),
-                           QVariant(0.3) ])
+        ft.setAttributes([ "Johny",
+                           20,
+                           0.3 ])
         res, t = provider.addFeatures([ft])
 
         assert res, "Failed to add feature"
@@ -75,36 +79,35 @@ class TestQgsMemoryProvider(TestCase):
         assert provider.featureCount() == 1, myMessage
 
         for f in provider.getFeatures(QgsFeatureRequest()):
-            attrs = f.attributes()
             myMessage = ('Expected: %s\nGot: %s\n' %
-                         ("Johny", str(attrs[0].toString())))
+                         ("Johny", f[0]))
 
-            assert str(attrs[0].toString()) == "Johny", myMessage
-
-            myMessage = ('Expected: %s\nGot: %s\n' %
-                         (20, attrs[1].toInt()[0]))
-
-            assert attrs[1].toInt()[0] == 20, myMessage
+            assert f[0] == "Johny", myMessage
 
             myMessage = ('Expected: %s\nGot: %s\n' %
-                         (0.3, attrs[2].toFloat()[0]))
+                         (20, f[1]))
 
-            assert (attrs[0].toFloat()[0] - 0.3) < 0.0000001, myMessage
+            assert f[1] == 20, myMessage
+
+            myMessage = ('Expected: %s\nGot: %s\n' %
+                         (0.3, f[2]))
+
+            assert (f[2] - 0.3) < 0.0000001, myMessage
 
             geom = f.geometry()
 
             myMessage = ('Expected: %s\nGot: %s\n' %
                         ("POINT(10.0 10.0)", str(geom.exportToWkt())))
 
-            assert str(geom.exportToWkt()) == "POINT(10.0 10.0)", myMessage
+            assert compareWkt( str(geom.exportToWkt()), "POINT(10.0 10.0)" ), myMessage
 
     def testGetFields(self):
         layer = QgsVectorLayer("Point", "test", "memory")
         provider = layer.dataProvider()
 
         provider.addAttributes([QgsField("name", QVariant.String,),
-                                      QgsField("age",  QVariant.Int),
-                                      QgsField("size", QVariant.Double)])
+                                QgsField("age",  QVariant.Int),
+                                QgsField("size", QVariant.Double)])
         myMessage = ('Expected: %s\nGot: %s\n' %
                      (3, len(provider.fields())))
 
@@ -112,17 +115,16 @@ class TestQgsMemoryProvider(TestCase):
 
         ft = QgsFeature()
         ft.setGeometry(QgsGeometry.fromPoint(QgsPoint(10,10)))
-        ft.setAttributes([QVariant("Johny"),
-                          QVariant(20),
-                          QVariant(0.3)])
+        ft.setAttributes(["Johny",
+                          20,
+                          0.3])
         provider.addFeatures([ft])
 
         for f in provider.getFeatures(QgsFeatureRequest()):
             myMessage = ('Expected: %s\nGot: %s\n' %
-                         ("Johny", str(f['name'].toString())))
+                         ("Johny", f['name']))
 
-            self.assertEqual(str(f["name"].toString()), "Johny", myMessage)
-
+            self.assertEqual(f["name"], "Johny", myMessage)
 
     def testFromUri(self):
         """Test we can construct the mem provider from a uri"""

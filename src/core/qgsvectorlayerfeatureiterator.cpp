@@ -256,7 +256,11 @@ void QgsVectorLayerFeatureIterator::useChangedAttributeFeature( QgsFeatureId fid
     QgsFeature tmp;
     //mDataProvider->featureAtId( fid, tmp, false, mFetchProvAttributes );
     QgsFeatureRequest request;
-    request.setFilterFid( fid ).setFlags( QgsFeatureRequest::NoGeometry ).setSubsetOfAttributes( mProviderRequest.subsetOfAttributes() );
+    request.setFilterFid( fid ).setFlags( QgsFeatureRequest::NoGeometry );
+    if ( subsetAttrs )
+    {
+      request.setSubsetOfAttributes( mProviderRequest.subsetOfAttributes() );
+    }
     QgsFeatureIterator fi = L->dataProvider()->getFeatures( request );
     if ( fi.nextFeature( tmp ) )
     {
@@ -394,7 +398,7 @@ void QgsVectorLayerFeatureIterator::FetchJoinInfo::addJoinedAttributesDirect( Qg
   QString bkSubsetString = subsetString;
   if ( !subsetString.isEmpty() )
   {
-    subsetString.append( " AND " );
+    subsetString.prepend( "(" ).append( ") AND " );
   }
 
   QString joinFieldName;
@@ -403,7 +407,31 @@ void QgsVectorLayerFeatureIterator::FetchJoinInfo::addJoinedAttributesDirect( Qg
   else
     joinFieldName = joinInfo->joinFieldName;
 
-  subsetString.append( "\"" + joinFieldName + "\"" + " = " + "\"" + joinValue.toString() + "\"" );
+  subsetString.append( QString( "\"%1\"" ).arg( joinFieldName ) );
+
+  if ( joinValue.isNull() )
+  {
+    subsetString += " IS NULL";
+  }
+  else
+  {
+    QString v = joinValue.toString();
+    switch ( joinValue.type() )
+    {
+      case QVariant::Int:
+      case QVariant::LongLong:
+      case QVariant::Double:
+        break;
+
+      default:
+      case QVariant::String:
+        v.replace( "'", "''" );
+        v.prepend( "'" ).append( "'" );
+        break;
+    }
+    subsetString += "=" + v;
+  }
+
   joinLayer->dataProvider()->setSubsetString( subsetString, false );
 
   // select (no geometry)

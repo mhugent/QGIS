@@ -59,6 +59,9 @@ class GeoAlgorithm:
         #change any of the following if your algorithm should not appear in the toolbox or modeler
         self.showInToolbox = True
         self.showInModeler = True
+        #if true, will show only loaded layers in parameters dialog
+        self.allowOnlyOpenedLayers = False
+        #False if it should not be run a a batch process
         self.canRunInBatchMode = True
         #to be set by the provider when it loads the algorithm
         self.provider = None
@@ -272,6 +275,14 @@ class GeoAlgorithm:
                             if layer.source() == inputlayer:
                                 self.crs = layer.crs()
                                 return
+                        if (isinstance(param, ParameterRaster) or
+                            (isinstance(param, ParameterMultipleInput) and param.datatype == ParameterMultipleInput.TYPE_RASTER)):
+                            p = QgsProviderRegistry.instance().provider('gdal', inputlayer)
+                        else:
+                            p = QgsProviderRegistry.instance().provider('ogr', inputlayer)
+                        if p is not None:
+                            self.crs = p.crs()
+                            return
         qgis = QGisLayers.iface
         self.crs = qgis.mapCanvas().mapRenderer().destinationCrs()
 
@@ -400,5 +411,21 @@ class GeoAlgorithm:
                 s+=out.getValueAsCommandLineParameter() + ","
         s= s[:-1] + ")"
         return s
+
+    def getPostProcessingErrorMessage(self, wrongLayers):
+        '''Returns the message to be shown to the user when, after running this algorithm,
+        there is a problem loading the resulting layer.
+        This method should analyze if the problem is caused by wrong entry data, a wrong or missing
+        installation of a required 3rd party app, or any other cause, and create an error response accordingly.
+        Message is provided as an HTML code that will be displayed to the user, and which might contains
+        links to installation paths for missing 3rd party apps.
+        - wrongLayers: a list of Output objects that could not be loaded.'''
+
+        html ="<p>Oooops! SEXTANTE could not open the following output layers</p><ul>\n"
+        for layer in wrongLayers:
+            html += '<li>' + layer.description + ': <font size=3 face="Courier New" color="ff0000">' + layer.value + "</font></li>\n"
+        html +="</ul><p>The above files could not be opened, which probably indicates that they were not correctly produced by the executed algorithm</p>"
+        html +="<p>Checking the log information might help you see why those layers were not created as expected</p>"
+        return html
 
 

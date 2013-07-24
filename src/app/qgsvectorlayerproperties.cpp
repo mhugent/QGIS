@@ -46,7 +46,6 @@
 #include "qgsvectorlayerproperties.h"
 #include "qgsconfig.h"
 #include "qgsvectordataprovider.h"
-#include "qgsvectoroverlayplugin.h"
 #include "qgsquerybuilder.h"
 #include "qgsdatasourceuri.h"
 
@@ -82,8 +81,8 @@ QgsVectorLayerProperties::QgsVectorLayerProperties(
   // and connecting QDialogButtonBox's accepted/rejected signals to dialog's accept/reject slots
   initOptionsBase( false );
 
-  mMaximumScaleIconLabel->setPixmap( QgsApplication::getThemePixmap( "/mActionZoomIn.png" ) );
-  mMinimumScaleIconLabel->setPixmap( QgsApplication::getThemePixmap( "/mActionZoomOut.png" ) );
+  mMaximumScaleIconLabel->setPixmap( QgsApplication::getThemePixmap( "/mActionZoomIn.svg" ) );
+  mMinimumScaleIconLabel->setPixmap( QgsApplication::getThemePixmap( "/mActionZoomOut.svg" ) );
 
   connect( buttonBox->button( QDialogButtonBox::Apply ), SIGNAL( clicked() ), this, SLOT( apply() ) );
   connect( this, SIGNAL( accepted() ), this, SLOT( apply() ) );
@@ -479,12 +478,6 @@ void QgsVectorLayerProperties::apply()
 
   //apply diagram settings
   diagramPropertiesDialog->apply();
-
-  //apply overlay dialogs
-  for ( QList<QgsApplyDialog*>::iterator it = mOverlayDialogs.begin(); it != mOverlayDialogs.end(); ++it )
-  {
-    ( *it )->apply();
-  }
 
   //layer title and abstract
   layer->setTitle( mLayerTitleLineEdit->text() );
@@ -898,34 +891,6 @@ void QgsVectorLayerProperties::showListOfStylesFromDatabase()
   }
 
 }
-
-QList<QgsVectorOverlayPlugin*> QgsVectorLayerProperties::overlayPlugins() const
-{
-  QList<QgsVectorOverlayPlugin*> pluginList;
-
-  QgisPlugin* thePlugin = 0;
-  QgsVectorOverlayPlugin* theOverlayPlugin = 0;
-
-  QList<QgsPluginMetadata*> pluginData = QgsPluginRegistry::instance()->pluginData();
-  for ( QList<QgsPluginMetadata*>::iterator it = pluginData.begin(); it != pluginData.end(); ++it )
-  {
-    if ( *it )
-    {
-      thePlugin = ( *it )->plugin();
-      if ( thePlugin && thePlugin->type() == QgisPlugin::VECTOR_OVERLAY )
-      {
-        theOverlayPlugin = dynamic_cast<QgsVectorOverlayPlugin *>( thePlugin );
-        if ( theOverlayPlugin )
-        {
-          pluginList.push_back( theOverlayPlugin );
-        }
-      }
-    }
-  }
-
-  return pluginList;
-}
-
 
 void QgsVectorLayerProperties::on_mButtonAddJoin_clicked()
 {

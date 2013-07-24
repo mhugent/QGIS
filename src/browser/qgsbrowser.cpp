@@ -33,6 +33,13 @@
 #include "qgsnewvectorlayerdialog.h"
 #include "qgsattributetablemodel.h"
 #include "qgsattributetablefiltermodel.h"
+#include "qgscredentialdialog.h"
+
+#ifdef ANDROID
+#define QGIS_ICON_SIZE 32
+#else
+#define QGIS_ICON_SIZE 24
+#endif
 
 QgsBrowser::QgsBrowser( QWidget *parent, Qt::WFlags flags )
     : QMainWindow( parent, flags )
@@ -78,6 +85,20 @@ QgsBrowser::QgsBrowser( QWidget *parent, Qt::WFlags flags )
   {
     expandPath( lastPath );
   }
+
+  //Set the icon size of for all the toolbars created in the future.
+  int size = settings.value( "/IconSize", QGIS_ICON_SIZE ).toInt();
+  setIconSize( QSize( size, size ) );
+
+  //Change all current icon sizes.
+  QList<QToolBar *> toolbars = findChildren<QToolBar *>();
+  foreach ( QToolBar * toolbar, toolbars )
+  {
+    toolbar->setIconSize( QSize( size, size ) );
+  }
+
+  // set graphical credential requester
+  new QgsCredentialDialog( this );
 }
 
 QgsBrowser::~QgsBrowser()

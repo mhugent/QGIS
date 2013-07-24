@@ -118,6 +118,7 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayerV2
 
   protected:
     QBrush mBrush;
+    double mNextAngle; // mAngle / data defined angle
 
     /**Outline width*/
     double mOutlineWidth;
@@ -382,6 +383,8 @@ class CORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
     void setOutputUnit( QgsSymbolV2::OutputUnit unit ) { Q_UNUSED( unit ); }
     QgsSymbolV2::OutputUnit outputUnit() const;
+
+    virtual QSet<QString> usedAttributes() const;
 
   protected:
     QgsMarkerSymbolV2* mMarker;

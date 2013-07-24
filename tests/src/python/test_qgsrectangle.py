@@ -12,11 +12,13 @@ __copyright__ = 'Copyright 2012, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import qgis
 from qgis.core import (QgsRectangle,
                        QgsPoint)
 
 from utilities import (unitTestDataPath,
                        getQgisTestApp,
+                       compareWkt,
                        TestCase,
                        unittest,
                        expectedFailure
@@ -179,25 +181,25 @@ class TestQgsRectangle(TestCase):
     def testAsWktCoordinates(self):
         """Test that we can get a proper wkt representation fo the rect"""
         rect1 = QgsRectangle( 0.0, 0.0, 5.0, 5.0)
-        myExpectedWkt = ('0.0 0.0, '
-                         '5.0 5.0')
+        myExpectedWkt = ('0 0, '
+                         '5 5')
         myWkt = rect1.asWktCoordinates()
         myMessage = ('Expected: %s\nGot: %s\n' %
                       (myExpectedWkt, myWkt))
-        self.assertEquals(myWkt, myExpectedWkt, myMessage)
+        assert compareWkt( myWkt, myExpectedWkt ), myMessage
 
     def testAsWktPolygon(self):
         """Test that we can get a proper rect wkt polygon representation for rect"""
         rect1 = QgsRectangle( 0.0, 0.0, 5.0, 5.0)
-        myExpectedWkt = ('POLYGON((0.0 0.0, '
-                         '5.0 0.0, '
-                         '5.0 5.0, '
-                         '0.0 5.0, '
-                         '0.0 0.0))')
+        myExpectedWkt = ('POLYGON((0 0, '
+                         '5 0, '
+                         '5 5, '
+                         '0 5, '
+                         '0 0))')
         myWkt = rect1.asWktPolygon()
         myMessage = ('Expected: %s\nGot: %s\n' %
                       (myExpectedWkt, myWkt))
-        self.assertEquals(myWkt, myExpectedWkt, myMessage)
+        assert compareWkt( myWkt, myExpectedWkt ), myMessage
 
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -37,14 +37,14 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1855"
+     inkscape:window-width="1920"
      inkscape:window-height="1056"
      id="namedview59"
      showgrid="false"
      inkscape:zoom="9.8333332"
-     inkscape:cx="-3.3322465"
+     inkscape:cx="-21.230552"
      inkscape:cy="26.05417"
-     inkscape:window-x="65"
+     inkscape:window-x="1920"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg3428" />
@@ -350,15 +350,6 @@
          d="m 200.1619,45.294924 c -5.42224,0.212474 -9.70739,4.671813 -9.70376,10.098216 l 0,25.245539 c 0.0171,3.487235 1.83207,6.718917 4.80092,8.54838 2.96888,1.829463 6.67151,1.997824 9.79416,0.445344 l 25.24554,-12.62277 c 3.37866,-1.725896 5.50499,-5.199776 5.50499,-8.993723 0,-3.793948 -2.12633,-7.267827 -5.50499,-8.993724 l -25.24554,-12.62277 c -1.51165,-0.77352 -3.19397,-1.153395 -4.89132,-1.104492 z"
          style="fill:url(#radialGradient6107);fill-opacity:1;fill-rule:evenodd;stroke:none" />
     </clipPath>
-    <filter
-       color-interpolation-filters="sRGB"
-       inkscape:collect="always"
-       id="filter6085">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.26087548"
-         id="feGaussianBlur6087" />
-    </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
        id="clipPath6097">
@@ -368,15 +359,6 @@
          d="m 151.42888,45.294924 c -5.42224,0.212474 -9.70739,4.671813 -9.70376,10.098216 l 0,25.245539 c 0.0171,3.487235 1.83207,6.718917 4.80092,8.54838 2.96888,1.829463 6.67151,1.997824 9.79416,0.445344 l 25.24554,-12.62277 c 3.37866,-1.725896 5.50499,-5.199776 5.50499,-8.993723 0,-3.793948 -2.12633,-7.267827 -5.50499,-8.993724 L 156.3202,46.399416 c -1.51165,-0.77352 -3.19397,-1.153395 -4.89132,-1.104492 z"
          id="path6099" />
     </clipPath>
-    <filter
-       color-interpolation-filters="sRGB"
-       inkscape:collect="always"
-       id="filter6093">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.17382035"
-         id="feGaussianBlur6095" />
-    </filter>
     <radialGradient
        inkscape:collect="always"
        xlink:href="#radialGradient3605"
@@ -722,7 +704,7 @@
      d="m 24.4692,10.480302 c -4.852629,2.059817 -7.119036,7.656693 -5.062748,12.501 2.056415,4.844613 7.657023,7.101778 12.509344,5.04209 4.852627,-2.059816 7.119034,-7.656691 5.062747,-12.500997 C 34.922126,10.67778 29.321518,8.4206136 24.4692,10.480302 z m 6.185735,14.572685 c -3.209286,1.362262 -6.912755,-0.130685 -8.272619,-3.334325 -1.359993,-3.203944 0.138846,-6.904777 3.348133,-8.267038 3.20898,-1.362133 6.912624,0.130378 8.272616,3.334323 1.3599,3.203716 -0.13907,6.904875 -3.34813,8.26704 z" />
   <path
      sodipodi:type="arc"
-     style="fill:#729fcf;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+     style="fill:#6d97c4;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
      id="path3030"
      sodipodi:cx="39.559322"
      sodipodi:cy="10.220339"
@@ -775,7 +757,7 @@
      d="m 9.4838188,33.817507 c -2.4033228,0 -4.3513978,1.945013 -4.3513978,4.344217 0,2.399354 1.9482261,4.344215 4.3513978,4.344215 2.4033242,0 4.3513982,-1.945013 4.3513982,-4.344215 0,-2.399355 -1.948225,-4.344217 -4.3513982,-4.344217 z m 0,7.217303 c -1.5894392,0 -2.8776599,-1.286218 -2.8776599,-2.87286 0,-1.586794 1.2882207,-2.87286 2.8776599,-2.87286 1.5892882,0 2.8776612,1.286066 2.8776612,2.87286 0,1.58668 -1.288334,2.87286 -2.8776612,2.87286 z" />
   <path
      sodipodi:type="arc"
-     style="fill:#729fcf;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+     style="fill:#6d97c4;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
      id="path3030-1"
      sodipodi:cx="39.559322"
      sodipodi:cy="10.220339"

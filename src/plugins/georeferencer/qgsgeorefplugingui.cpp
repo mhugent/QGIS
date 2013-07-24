@@ -358,7 +358,7 @@ void QgsGeorefPluginGui::generateGDALScript()
       {
         gdalwarpCommand = generateGDALwarpCommand( resamplingStr, mCompressionMethod, mUseZeroForTrans, order,
                           mUserResX, mUserResY );
-        showGDALScript( 2, translateCommand.toAscii().data(), gdalwarpCommand.toAscii().data() );
+        showGDALScript( QStringList() << translateCommand << gdalwarpCommand );
         break;
       }
     }
@@ -832,19 +832,19 @@ void QgsGeorefPluginGui::createActions()
   mActionPan->setIcon( getThemeIcon( "/mActionPan.png" ) );
   connect( mActionPan, SIGNAL( triggered() ), this, SLOT( setPanTool() ) );
 
-  mActionZoomIn->setIcon( getThemeIcon( "/mActionZoomIn.png" ) );
+  mActionZoomIn->setIcon( getThemeIcon( "/mActionZoomIn.svg" ) );
   connect( mActionZoomIn, SIGNAL( triggered() ), this, SLOT( setZoomInTool() ) );
 
-  mActionZoomOut->setIcon( getThemeIcon( "/mActionZoomOut.png" ) );
+  mActionZoomOut->setIcon( getThemeIcon( "/mActionZoomOut.svg" ) );
   connect( mActionZoomOut, SIGNAL( triggered() ), this, SLOT( setZoomOutTool() ) );
 
-  mActionZoomToLayer->setIcon( getThemeIcon( "/mActionZoomToLayer.png" ) );
+  mActionZoomToLayer->setIcon( getThemeIcon( "/mActionZoomToLayer.svg" ) );
   connect( mActionZoomToLayer, SIGNAL( triggered() ), this, SLOT( zoomToLayerTool() ) );
 
-  mActionZoomLast->setIcon( getThemeIcon( "/mActionZoomLast.png" ) );
+  mActionZoomLast->setIcon( getThemeIcon( "/mActionZoomLast.svg" ) );
   connect( mActionZoomLast, SIGNAL( triggered() ), this, SLOT( zoomToLast() ) );
 
-  mActionZoomNext->setIcon( getThemeIcon( "/mActionZoomNext.png" ) );
+  mActionZoomNext->setIcon( getThemeIcon( "/mActionZoomNext.svg" ) );
   connect( mActionZoomNext, SIGNAL( triggered() ), this, SLOT( zoomToNext() ) );
 
   mActionLinkGeorefToQGis->setIcon( getThemeIcon( "/mActionLinkGeorefToQGis.png" ) );
@@ -1090,11 +1090,11 @@ void QgsGeorefPluginGui::updateIconTheme( QString theme )
 
   // View actions
   mActionPan->setIcon( getThemeIcon( "/mActionPan.png" ) );
-  mActionZoomIn->setIcon( getThemeIcon( "/mActionZoomIn.png" ) );
-  mActionZoomOut->setIcon( getThemeIcon( "/mActionZoomOut.png" ) );
-  mActionZoomToLayer->setIcon( getThemeIcon( "/mActionZoomToLayer.png" ) );
-  mActionZoomLast->setIcon( getThemeIcon( "/mActionZoomLast.png" ) );
-  mActionZoomNext->setIcon( getThemeIcon( "/mActionZoomNext.png" ) );
+  mActionZoomIn->setIcon( getThemeIcon( "/mActionZoomIn.svg" ) );
+  mActionZoomOut->setIcon( getThemeIcon( "/mActionZoomOut.svg" ) );
+  mActionZoomToLayer->setIcon( getThemeIcon( "/mActionZoomToLayer.svg" ) );
+  mActionZoomLast->setIcon( getThemeIcon( "/mActionZoomLast.svg" ) );
+  mActionZoomNext->setIcon( getThemeIcon( "/mActionZoomNext.svg" ) );
   mActionLinkGeorefToQGis->setIcon( getThemeIcon( "/mActionLinkGeorefToQGis.png" ) );
   mActionLinkQGisToGeoref->setIcon( getThemeIcon( "/mActionLinkQGisToGeoref.png" ) );
 
@@ -1223,9 +1223,12 @@ void QgsGeorefPluginGui::saveGCPs()
     points << "mapX,mapY,pixelX,pixelY,enable" << endl;
     foreach ( QgsGeorefDataPoint *pt, mPoints )
     {
-      points << ( QString( "%1,%2,%3,%4,%5" ).arg( pt->mapCoords().x(), 0, 'f', 15 ).
-                  arg( pt->mapCoords().y(), 0, 'f', 15 ).arg( pt->pixelCoords().x(), 0, 'f', 15 ).
-                  arg( pt->pixelCoords().y(), 0, 'f', 15 ) ).arg( pt->isEnabled() ) << endl;
+      points << QString( "%1,%2,%3,%4,%5" )
+      .arg( qgsDoubleToString( pt->mapCoords().x() ) )
+      .arg( qgsDoubleToString( pt->mapCoords().y() ) )
+      .arg( qgsDoubleToString( pt->pixelCoords().x() ) )
+      .arg( qgsDoubleToString( pt->pixelCoords().y() ) )
+      .arg( pt->isEnabled() ) << endl;
     }
 
     mInitialPoints = mPoints;
@@ -1377,12 +1380,12 @@ bool QgsGeorefPluginGui::writeWorldFile( QgsPoint origin, double pixelXSize, dou
   }
 
   QTextStream stream( &file );
-  stream << QString::number( pixelXSize, 'f', 15 ) << endl
+  stream << qgsDoubleToString( pixelXSize ) << endl
   << rotationX << endl
   << rotationY << endl
-  << QString::number( -pixelYSize, 'f', 15 ) << endl
-  << QString::number( origin.x(), 'f', 15 ) << endl
-  << QString::number( origin.y(), 'f', 15 ) << endl;
+  << qgsDoubleToString( -pixelYSize ) << endl
+  << qgsDoubleToString( origin.x() ) << endl
+  << qgsDoubleToString( origin.y() ) << endl;
   return true;
 }
 
@@ -1703,7 +1706,7 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
     {
       currentGCPStrings << tr( "no" );
     }
-    currentGCPStrings << QString::number(( *gcpIt )->pixelCoords().x(), 'f', 0 ) << QString::number(( *gcpIt )->pixelCoords().y(), 'f', 0 ) << QString::number(( *gcpIt )->mapCoords().x(), 'f', 3 )\
+    currentGCPStrings << QString::number(( *gcpIt )->pixelCoords().x(), 'f', 0 ) << QString::number(( *gcpIt )->pixelCoords().y(), 'f', 0 ) << QString::number(( *gcpIt )->mapCoords().x(), 'f', 3 )
     <<  QString::number(( *gcpIt )->mapCoords().y(), 'f', 3 ) <<  QString::number( residual.x() ) <<  QString::number( residual.y() ) << QString::number( residualTot );
     gcpTable->addRow( currentGCPStrings );
   }
@@ -1761,17 +1764,9 @@ void QgsGeorefPluginGui::updateTransformParamLabel()
 }
 
 // Gdal script
-void QgsGeorefPluginGui::showGDALScript( int argNum... )
+void QgsGeorefPluginGui::showGDALScript( const QStringList& commands )
 {
-  QString script;
-  va_list vl;
-  va_start( vl, argNum );
-  while ( argNum-- )
-  {
-    script.append( va_arg( vl, char * ) );
-    script.append( "\n" );
-  }
-  va_end( vl );
+  QString script = commands.join( "\n" ) + "\n";
 
   // create window to show gdal script
   QDialogButtonBox *bbxGdalScript = new QDialogButtonBox( QDialogButtonBox::Cancel, Qt::Horizontal, this );

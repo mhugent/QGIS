@@ -343,7 +343,6 @@ QImage* QgsWMSServer::getLegendGraphics()
   double mmToPixelFactor = theImage->dotsPerMeterX() / 1000.0;
   double maxTextWidth = 0;
   double maxSymbolWidth = 0;
-  double currentY = 0;
   double fontOversamplingFactor = 10.0;
 
   //get icon size, spaces between legend items and font from config parser
@@ -360,13 +359,43 @@ QImage* QgsWMSServer::getLegendGraphics()
     return 0;
   }
 
+  double currentY = drawLegendGraphics( 0, fontOversamplingFactor, rootItem, boxSpace, layerSpace, layerTitleSpace, symbolSpace,
+                                        iconLabelSpace, symbolWidth, symbolHeight, layerFont, itemFont, layerFontColor, itemFontColor, maxTextWidth,
+                                        maxSymbolWidth, theImage->dotsPerMeterX() * 0.0254 );
+
+  //create second image with the right dimensions
+  QImage* paintImage = createImage( maxTextWidth + maxSymbolWidth, ceil( currentY ) );
+
+  //go through the items a second time for painting
+  QPainter p( paintImage );
+  p.setRenderHint( QPainter::Antialiasing, true );
+
+  drawLegendGraphics( &p, fontOversamplingFactor, rootItem, boxSpace, layerSpace, layerTitleSpace, symbolSpace,
+                      iconLabelSpace, symbolWidth, symbolHeight, layerFont, itemFont, layerFontColor, itemFontColor, maxTextWidth,
+                      maxSymbolWidth, theImage->dotsPerMeterX() * 0.0254 );
+
+  QgsMapLayerRegistry::instance()->removeAllMapLayers();
+  delete theImage;
+  return paintImage;
+}
+
+double QgsWMSServer::drawLegendGraphics( QPainter* p, double fontOversamplingFactor, QStandardItem* rootItem, double boxSpace,
+    double layerSpace, double layerTitleSpace, double symbolSpace, double iconLabelSpace,
+    double symbolWidth, double symbolHeight, const QFont& layerFont, const QFont& itemFont,
+    const QColor& layerFontColor, const QColor& itemFontColor, double& maxTextWidth, double& maxSymbolWidth, double dpi )
+{
+  if ( !rootItem )
+  {
+    return 0;
+  }
+
   int numLayerItems = rootItem->rowCount();
   if ( numLayerItems < 1 )
   {
     return 0;
   }
 
-  currentY = boxSpace;
+  double currentY = boxSpace;
   for ( int i = 0; i < numLayerItems; ++i )
   {
     QgsComposerLayerItem* layerItem = dynamic_cast<QgsComposerLayerItem*>( rootItem->child( i ) );
@@ -376,40 +405,13 @@ QImage* QgsWMSServer::getLegendGraphics()
       {
         currentY += layerSpace;
       }
-      drawLegendLayerItem( layerItem, 0, maxTextWidth, maxSymbolWidth, currentY, layerFont, layerFontColor, itemFont, itemFontColor,
+      drawLegendLayerItem( layerItem, p, maxTextWidth, maxSymbolWidth, currentY, layerFont, layerFontColor, itemFont, itemFontColor,
                            boxSpace, layerSpace, layerTitleSpace, symbolSpace, iconLabelSpace, symbolWidth, symbolHeight, fontOversamplingFactor,
-                           theImage->dotsPerMeterX() * 0.0254 );
+                           dpi );
     }
   }
   currentY += boxSpace;
-
-  //create second image with the right dimensions
-  QImage* paintImage = createImage( maxTextWidth + maxSymbolWidth, currentY );
-
-  //go through the items a second time for painting
-  QPainter p( paintImage );
-  p.setRenderHint( QPainter::Antialiasing, true );
-  currentY = boxSpace;
-
-  for ( int i = 0; i < numLayerItems; ++i )
-  {
-    QgsComposerLayerItem* layerItem = dynamic_cast<QgsComposerLayerItem*>( rootItem->child( i ) );
-    if ( layerItem )
-    {
-      if ( i > 0 )
-      {
-        currentY += layerSpace;
-      }
-      drawLegendLayerItem( layerItem, &p, maxTextWidth, maxSymbolWidth, currentY, layerFont, layerFontColor, itemFont, itemFontColor, boxSpace,
-                           layerSpace, layerTitleSpace, symbolSpace, iconLabelSpace, symbolWidth, symbolHeight, fontOversamplingFactor,
-                           theImage->dotsPerMeterX() * 0.0254 );
-    }
-    currentY += layerSpace;
-  }
-
-  QgsMapLayerRegistry::instance()->removeAllMapLayers();
-  delete theImage;
-  return paintImage;
+  return currentY;
 }
 
 void QgsWMSServer::legendParameters( double mmToPixelFactor, double fontOversamplingFactor, double& boxSpace, double& layerSpace, double& layerTitleSpace,
@@ -1286,9 +1288,13 @@ int QgsWMSServer::featureInfoFromVectorLayer( QgsVectorLayer* layer,
     {
       searchRadius = layerRect.width() / 400;
     }
-    else
+    else if ( layer->geometryType() == QGis::Line )
     {
       searchRadius = layerRect.width() / 200;
+    }
+    else
+    {
+      searchRadius = layerRect.width() / 100;
     }
 
     searchRect.set( infoPoint->x() - searchRadius, infoPoint->y() - searchRadius,

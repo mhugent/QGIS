@@ -51,7 +51,7 @@ class QgsAddAttrDialog: public QDialog, private Ui::QgsAddAttrDialogBase
     void accept();
 
   private:
-    QString mLayerType;
+    bool mIsShapeFile;
 
     void setPrecisionMinMax();
 };
