@@ -446,30 +446,9 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     if ( offline )
     {
       mapLayer = mIface->addRasterLayer( statusItem->data().toString(), layername );
-      QgsRasterLayer* rl = dynamic_cast<QgsRasterLayer*>( mapLayer );
-#if 0 //todo: fix with 2.0 methods
-      if ( rl )
-      {
-        rl->setRedBandName( rl->bandName( 1 ) );
-        rl->setGreenBandName( rl->bandName( 2 ) );
-        rl->setBlueBandName( rl->bandName( 3 ) );
-        rl->setTransparentBandName( rl->bandName( 4 ) );
-      }
-#endif //0
     }
     else
     {
-#if 0
-      QString url, format, crs;
-      QStringList layers, styles;
-      wmsParameterFromIndex( index, url, format, crs, layers, styles );
-
-      QgsDataSourceURI uri( url );
-      uri.setParam( "layers", layers );
-      uri.setParam( "styles", styles );
-      uri.setParam( "format", format );
-      uri.setParam( "crs", crs );
-#endif //0
       QgsDataSourceURI uri = wmsUriFromIndex( index );
       mapLayer = mIface->addRasterLayer( uri.encodedUri(), layername, "wms" );
     }
@@ -584,24 +563,11 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
     }
     else
     {
-#if 0
-      //get preferred style, crs, format
-      QString url, format, crs;
-      QStringList layers, styles;
-      wmsParameterFromIndex( index, url, format, crs, layers, styles );
-      QgsDataSourceURI uri;
-      uri.setParam( "url", url );
-      uri.setParam( "layers", layers );
-      uri.setParam( "styles", styles );
-      uri.setParam( "format", format );
-      uri.setParam( "crs", crs );
-#endif //0
       QgsDataSourceURI uri = wmsUriFromIndex( index );
       wmsLayer = new QgsRasterLayer( uri.encodedUri(), layername, "wms" );
     }
 
     //call save as dialog
-    filePath = saveFilePath + "/" + layerId;
     QgsRasterLayerSaveAsDialog d( wmsLayer, wmsLayer->dataProvider(),  mIface->mapCanvas()->extent(), wmsLayer->crs(),
                                   mIface->mapCanvas()->mapRenderer()->destinationCrs() );
     d.hideFormat();
@@ -609,6 +575,15 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
     if ( d.exec() == QDialog::Accepted )
     {
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+      filePath = saveFilePath + "/" + layerId;
+      if ( !d.tileMode() )
+      {
+        QDir saveFileDir( saveFilePath );
+        saveFileDir.mkdir( layerId );
+        filePath += ( "/" + layerId + ".tif" );
+      }
+
       QgsRasterFileWriter fileWriter( filePath );
       if ( d.tileMode() )
       {
@@ -627,8 +602,11 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
         return;
       }
       fileWriter.writeRaster( pipe, d.nColumns(), d.nRows(), d.outputRectangle(), wmsLayer->crs(), &pd );
+      if ( d.tileMode() )
+      {
+        filePath += ( "/" + layerId + ".vrt" );
+      }
 
-      filePath += ( "/" + layerId + ".vrt" );
       offlineOk = true;
       if ( inMap )
       {
@@ -669,6 +647,8 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
   {
     return;
   }
+
+  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
   if ( inMap )
   {
@@ -930,20 +910,6 @@ bool WebDataModel::exchangeLayer( const QString& layerId, QgsMapLayer* newLayer 
       return false;
     }
   }
-  else if ( newLayer->type() == QgsMapLayer::RasterLayer )
-  {
-    //set Red/Green/Blue/Alpha channels
-    QgsRasterLayer* newRasterLayer = static_cast<QgsRasterLayer*>( newLayer );
-#if 0
-    if ( newRasterLayer->dataProvider() && newRasterLayer->dataProvider()->name() != "wms" )
-    {
-      newRasterLayer->setRedBandName( newRasterLayer->bandName( 1 ) );
-      newRasterLayer->setGreenBandName( newRasterLayer->bandName( 2 ) );
-      newRasterLayer->setBlueBandName( newRasterLayer->bandName( 3 ) );
-      newRasterLayer->setTransparentBandName( newRasterLayer->bandName( 4 ) );
-    }
-#endif //0
-  }
 
   //move new layer next to the old one
   //remove old layer
@@ -970,15 +936,21 @@ void WebDataModel::deleteOfflineDatasource( const QString& serviceType, const QS
   }
   else if ( serviceType == "WMS" )
   {
-    //remove directory and content
-    QDir rasterFileDir( offlinePath );
+    //remove files in directory
+    QDir rasterFileDir( QFileInfo( offlinePath ).absolutePath() );  //raster offline is always in a directory
     QFileInfoList rasterFileList = rasterFileDir.entryInfoList( QDir::Files | QDir::NoDotAndDotDot );
     QFileInfoList::iterator it = rasterFileList.begin();
     for ( ; it != rasterFileList.end(); ++it )
     {
       QFile::remove( it->absoluteFilePath() );
     }
-    rasterFileDir.rmdir( offlinePath );
+
+    //remove the directory itself
+    QString dirName = rasterFileDir.dirName();
+    if ( rasterFileDir.cdUp() )
+    {
+      rasterFileDir.rmdir( dirName );
+    }
   }
 }
 

@@ -315,7 +315,6 @@ void WebDataDialog::on_mLayersTreeView_clicked( const QModelIndex& index )
     return;
   }
 
-  QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
   if ( item->text().compare( "online", Qt::CaseInsensitive ) == 0 )
   {
     mStatusLabel->setText( tr( "Saving layer offline..." ) );
@@ -326,7 +325,6 @@ void WebDataDialog::on_mLayersTreeView_clicked( const QModelIndex& index )
     mStatusLabel->setText( tr( "Changing layer to online..." ) );
     mModel.changeEntryToOnline( srcIndex.sibling( srcIndex.row(), 0 ) );
   }
-
   resetStateAndCursor();
 }
 
@@ -416,6 +414,7 @@ void WebDataDialog::updateEntry()
 
 void WebDataDialog::showContextMenu( const QPoint&  point )
 {
+  Q_UNUSED( point );
   if ( mContextMenu )
   {
     mContextMenu->exec( QCursor::pos() );
