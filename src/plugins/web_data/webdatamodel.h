@@ -1,6 +1,7 @@
 #ifndef WEBDATAMODEL_H
 #define WEBDATAMODEL_H
 
+#include "qgsdatasourceuri.h"
 #include <QStandardItemModel>
 
 class QgisInterface;
@@ -45,7 +46,7 @@ class WebDataModel: public QStandardItemModel
     QgisInterface* mIface;
 
     QString wfsUrlFromLayerIndex( const QModelIndex& index ) const;
-    void wmsParameterFromIndex( const QModelIndex& index, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const;
+    QgsDataSourceURI wmsUriFromIndex( const QModelIndex& index ) const;
     QString layerName( const QModelIndex& index ) const;
     QString serviceType( const QModelIndex& index ) const;
 

@@ -459,6 +459,7 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
     }
     else
     {
+#if 0
       QString url, format, crs;
       QStringList layers, styles;
       wmsParameterFromIndex( index, url, format, crs, layers, styles );
@@ -468,6 +469,8 @@ void WebDataModel::addEntryToMap( const QModelIndex& index )
       uri.setParam( "styles", styles );
       uri.setParam( "format", format );
       uri.setParam( "crs", crs );
+#endif //0
+      QgsDataSourceURI uri = wmsUriFromIndex( index );
       mapLayer = mIface->addRasterLayer( uri.encodedUri(), layername, "wms" );
     }
   }
@@ -581,15 +584,19 @@ void WebDataModel::changeEntryToOffline( const QModelIndex& index )
     }
     else
     {
+#if 0
       //get preferred style, crs, format
       QString url, format, crs;
       QStringList layers, styles;
       wmsParameterFromIndex( index, url, format, crs, layers, styles );
-      QgsDataSourceURI uri( url );
+      QgsDataSourceURI uri;
+      uri.setParam( "url", url );
       uri.setParam( "layers", layers );
       uri.setParam( "styles", styles );
       uri.setParam( "format", format );
       uri.setParam( "crs", crs );
+#endif //0
+      QgsDataSourceURI uri = wmsUriFromIndex( index );
       wmsLayer = new QgsRasterLayer( uri.encodedUri(), layername, "wms" );
     }
 
@@ -675,17 +682,8 @@ void WebDataModel::changeEntryToOnline( const QModelIndex& index )
     }
     else if ( type == "WMS" )
     {
-      //get preferred style, crs, format
-      QString url, format, crs;
-      QStringList layers, styles;
-      wmsParameterFromIndex( index, url, format, crs, layers, styles );
-
       //add to map
-      QgsDataSourceURI uri( url );
-      uri.setParam( "layers", layers );
-      uri.setParam( "styles", styles );
-      uri.setParam( "format", format );
-      uri.setParam( "crs", crs );
+      QgsDataSourceURI uri = wmsUriFromIndex( index );
       onlineLayer = mIface->addRasterLayer( uri.encodedUri(), layername, "wms" );
     }
 
@@ -768,21 +766,34 @@ QString WebDataModel::wfsUrlFromLayerIndex( const QModelIndex& index ) const
   return url;
 }
 
-void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url, QString& format, QString& crs, QStringList& layers, QStringList& styles ) const
+QgsDataSourceURI WebDataModel::wmsUriFromIndex( const QModelIndex& index ) const
 {
   QStandardItem* nameItem = itemFromIndex( index );
   if ( !nameItem )
   {
-    return;
+    return QgsDataSourceURI();
   }
 
-  url = nameItem->data().toString();
-  layers.clear();
-  layers.append( nameItem->text() );
-  url.prepend( "ignoreUrl=GetMap;GetFeatureInfo,url=" ); //ignore advertised urls per default
+  //get name of parent item
+  QStandardItem* parentItem = nameItem->parent();
+  if ( !parentItem )
+  {
+    return QgsDataSourceURI();
+  }
+
+  //QgsWMSConnection wmsConnection( parentItem->text() );
+  QgsDataSourceURI uri; // = wmsConnection.uri();
+  uri.setParam( "url", nameItem->data().toString() );
+
+  //ignore advertised GetMap / GetFeatureInfo urls per derfault
+  uri.setParam( "IgnoreGetMapUrl", "1" );
+  uri.setParam( "IgnoreGetFeatureInfoUrl", "1" );
+
+  //name
+  uri.setParam( "layers", nameItem->text() );
 
   //format: prefer png
-  format.clear();
+  QString format;
   QStandardItem* formatItem = itemFromIndex( index.sibling( index.row(), 6 ) );
   if ( formatItem )
   {
@@ -799,12 +810,13 @@ void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url
       }
     }
   }
+  uri.setParam( "format", format );
 
-  crs.clear();
+  //CRS: prefer map crs
+  QString crs;
   QStandardItem* crsItem = itemFromIndex( index.sibling( index.row(), 5 ) );
   if ( crsItem && mIface )
   {
-    //CRS: prefer map crs
     QStringList crsList = crsItem->text().split( "," );
     if ( crsList.size() > 0 )
     {
@@ -825,8 +837,10 @@ void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url
       }
     }
   }
+  uri.setParam( "crs", crs );
 
-  styles.clear();
+  //styles
+  QString styles;
   QStandardItem* stylesItem = itemFromIndex( index.sibling( index.row(), 7 ) );
   if ( stylesItem )
   {
@@ -841,6 +855,8 @@ void WebDataModel::wmsParameterFromIndex( const QModelIndex& index, QString& url
       styles.append( stylesString.split( "," ).at( 0 ) );
     }
   }
+  uri.setParam( "styles", styles );
+  return uri;
 }
 
 QString WebDataModel::layerName( const QModelIndex& index ) const
@@ -992,6 +1008,11 @@ QString WebDataModel::layerIdFromUrl( const QString& url, const QString& service
     }
     else //for online WMS, we need to additionally consider the layer name
     {
+      if ( url == layer->source() )
+      {
+        return layer->id();
+      }
+#if 0
       QString testUrl = url;
       testUrl.chop( 1 );
       if ( layer->source().contains( testUrl ) ) //sometimes url contains '?' or '&' at the end
@@ -1005,6 +1026,7 @@ QString WebDataModel::layerIdFromUrl( const QString& url, const QString& service
           }
         }
       }
+#endif //0
     }
   }
   return QString();
