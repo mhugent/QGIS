@@ -954,7 +954,8 @@ void WebDataModel::deleteOfflineDatasource( const QString& serviceType, const QS
   }
 }
 
-QString WebDataModel::layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName )
+QString WebDataModel::layerIdFromUrl( const QString& url, const QString& serviceType, bool online,
+                                      const QString& layerName )
 {
   const QMap<QString, QgsMapLayer*>& layerMap = QgsMapLayerRegistry::instance()->mapLayers();
   QMap<QString, QgsMapLayer*>::const_iterator layerIt = layerMap.constBegin();
@@ -980,25 +981,12 @@ QString WebDataModel::layerIdFromUrl( const QString& url, const QString& service
     }
     else //for online WMS, we need to additionally consider the layer name
     {
-      if ( url == layer->source() )
+      QString layerSource = layer->source();
+      if ( layerSource.contains( url ) && layerSource.contains( "&layers=" + QUrl::toPercentEncoding( layerName ),
+           Qt::CaseInsensitive ) )
       {
         return layer->id();
       }
-#if 0
-      QString testUrl = url;
-      testUrl.chop( 1 );
-      if ( layer->source().contains( testUrl ) ) //sometimes url contains '?' or '&' at the end
-      {
-        const QgsRasterLayer* rlayer = dynamic_cast<const QgsRasterLayer*>( layer );
-        if ( rlayer )
-        {
-          if ( rlayer->layers().join( "" ) == layerName )
-          {
-            return layer->id();
-          }
-        }
-      }
-#endif //0
     }
   }
   return QString();

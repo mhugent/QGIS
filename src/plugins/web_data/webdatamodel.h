@@ -56,7 +56,8 @@ class WebDataModel: public QStandardItemModel
     void deleteOfflineDatasource( const QString& serviceType, const QString& offlinePath );
 
     /**Returns id of layer in current map with given url (or empty string if no such layer)*/
-    static QString layerIdFromUrl( const QString& url, const QString& serviceType, bool online, QString layerName );
+    static QString layerIdFromUrl( const QString& url, const QString& serviceType, bool online,
+                                   const QString& layerName );
 
     void loadFromXML();
     void saveToXML() const;
