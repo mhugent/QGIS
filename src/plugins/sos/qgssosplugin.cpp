@@ -72,11 +72,12 @@ void QgsSOSPlugin::unload()
   {
     mIface->removeWebToolBarIcon( mSensorInfoAction );
   }
-  delete mSensorInfoAction;
-  mSensorInfoAction = 0;
 
   delete mMapToolSensorInfo;
   mMapToolSensorInfo = 0;
+
+  delete mSensorInfoAction;
+  mSensorInfoAction = 0;
 }
 
 void QgsSOSPlugin::showSOSDialog()
