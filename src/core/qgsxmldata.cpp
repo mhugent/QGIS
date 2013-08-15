@@ -71,15 +71,8 @@ int QgsXMLData::getXMLData( QProgressDialog* progress )
   }
 
   int atEnd = 0;
-  int totalData = 0;
   while ( !atEnd )
   {
-    //sometimes, the network reply emits the finished signal even if something is still to come...
-    if ( !totalData > 0 )
-    {
-      mFinished = false;
-    }
-
     if ( mFinished )
     {
       atEnd = 1;
@@ -93,7 +86,6 @@ int QgsXMLData::getXMLData( QProgressDialog* progress )
       qWarning( QString( readData ).toLocal8Bit().data() );
     }
 
-    totalData += readData.size();
     if ( readData.size() > 0 )
     {
       if ( XML_Parse( p, readData.constData(), readData.size(), atEnd ) == 0 )
