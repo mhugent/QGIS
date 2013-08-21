@@ -27,6 +27,7 @@
 #include <qwt_picker_machine.h>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
+#include <qwt_plot_marker.h>
 #include <qwt_plot_picker.h>
 #include <qwt_scale_draw.h>
 #include <qwt_symbol.h>
@@ -60,7 +61,6 @@ QgsSensorInfoDialog::QgsSensorInfoDialog( QWidget* parent, Qt::WindowFlags f ): 
 
 QgsSensorInfoDialog::~QgsSensorInfoDialog()
 {
-
 }
 
 void QgsSensorInfoDialog::clearObservables()
@@ -202,10 +202,71 @@ QDateTime QgsSensorInfoDialog::convertIntToTime( int t ) const
 
 void QgsSensorInfoDialog::onDiagramSelected( const QwtDoublePoint &pt )
 {
-  QString timeString = convertIntToTime( pt.x() ).toString();
-  QString toolTip = timeString + " // " + QString::number( pt.y() );
-  qWarning( toolTip.toLocal8Bit().data() );
-  QToolTip::showText( QCursor::pos(), toolTip, 0 );
+  QwtPlot* cPlot = currentPlot();
+
+  //snap to next point
+
+  if( cPlot )
+  {
+      QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>( cPlot->itemList()[0] );
+      QwtPlotItemList debugList =  cPlot->itemList();
+
+      int xPixel = cPlot->transform( QwtPlot::xBottom, pt.x() );
+      int yPixel = cPlot->transform( QwtPlot::yLeft , pt.y() );
+
+      int snapPoint = curve->closestPoint( QPoint( xPixel, yPixel ) );
+      if( snapPoint >= 0 )
+      {
+        QString snappedTime = convertIntToTime( curve->data().x( snapPoint ) ).toString();
+        double snappedValue = curve->data().y(snapPoint);
+
+        qWarning( "Snapped value" );
+        qWarning( snappedTime.toLocal8Bit().data() );
+        qWarning( QString::number( snappedValue ).toLocal8Bit().data() );
+
+        QwtPlotMarker* mark = plotMarker( cPlot );
+        mark->setValue( curve->data().x( snapPoint ), curve->data().y( snapPoint ) );
+        mark->show();
+
+        //marker label
+
+        QwtText  labelText;
+        labelText.setText( "Value: " + QString::number( snappedValue ) + "\n" + snappedTime );
+        labelText.setColor( QColor( Qt::black ) );
+        QBrush labelBrush( QColor( Qt::white ), Qt::SolidPattern );
+        labelText.setBackgroundBrush( labelBrush );
+        mark->setLabel( labelText );
+        mark->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
+        cPlot->replot();
+      }
+  }
+}
+
+QwtPlot* QgsSensorInfoDialog::currentPlot()
+{
+    return qobject_cast<QwtPlot*>( mTabWidget->currentWidget() );
+}
+
+QwtPlotMarker* QgsSensorInfoDialog::plotMarker( QwtPlot* plot )
+{
+    if( !plot )
+    {
+        return 0;
+    }
+
+    QMap< QwtPlot*, QwtPlotMarker* >::const_iterator plotIt = mPlotMarkers.find( plot );
+    if( plotIt != mPlotMarkers.constEnd() )
+    {
+        return plotIt.value();
+    }
+
+    QwtPlotMarker* marker = new QwtPlotMarker();
+    marker->setXAxis( QwtPlot::xBottom );
+    marker->setYAxis( QwtPlot::yLeft );
+    marker->setSymbol( QwtSymbol( QwtSymbol::Rect, QBrush( Qt::blue ), QPen( Qt::green ), QSize( 5, 5 ) ) );
+    marker->attach( plot );
+    mPlotMarkers.insert( plot, marker );
+    return marker;
 }
 
 void QgsSensorInfoDialog::on_mTabWidget_tabCloseRequested( int index )

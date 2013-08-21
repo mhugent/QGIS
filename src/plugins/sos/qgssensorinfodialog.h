@@ -22,6 +22,9 @@
 #include <qwt_double_rect.h>
 #include <QDateTime>
 
+class QwtPlot;
+class QwtPlotMarker;
+
 class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
 {
     Q_OBJECT
@@ -38,6 +41,12 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
     QDateTime convertIntToTime( int t ) const;
     void onDiagramSelected( const QwtDoublePoint &pt );
     void on_mTabWidget_tabCloseRequested( int index );
+
+  private:
+    QwtPlot* currentPlot();
+    QwtPlotMarker* plotMarker( QwtPlot* plot );
+
+    QMap< QwtPlot*, QwtPlotMarker* > mPlotMarkers;
 };
 
 #endif // QGSSENSORINFODIALOG_H
