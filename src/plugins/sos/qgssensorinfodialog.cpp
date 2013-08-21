@@ -54,6 +54,8 @@ QgsSensorInfoDialog::QgsSensorInfoDialog( QWidget* parent, Qt::WindowFlags f ): 
   QPushButton* displayButton = new QPushButton( tr( "Display" ), this );
   connect( displayButton, SIGNAL( clicked() ), this, SLOT( showDiagram() ) );
   mButtonBox->addButton( displayButton, QDialogButtonBox::ActionRole );
+
+  mTabWidget->setTabsClosable( true );
 }
 
 QgsSensorInfoDialog::~QgsSensorInfoDialog()
@@ -204,4 +206,13 @@ void QgsSensorInfoDialog::onDiagramSelected( const QwtDoublePoint &pt )
   QString toolTip = timeString + " // " + QString::number( pt.y() );
   qWarning( toolTip.toLocal8Bit().data() );
   QToolTip::showText( QCursor::pos(), toolTip, 0 );
+}
+
+void QgsSensorInfoDialog::on_mTabWidget_tabCloseRequested( int index )
+{
+  if ( index < 1 )
+  {
+    return;
+  }
+  mTabWidget->removeTab( index );
 }
