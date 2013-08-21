@@ -83,9 +83,12 @@ void QgsSensorInfoDialog::addObservables( const QString& serviceUrl, const QStri
   {
 
     QTreeWidgetItem* observableItem = new QTreeWidgetItem( stationIdWidget, QStringList() << "" << *obsIt );
-    mObservableTreeWidget->setItemWidget( observableItem, 2, new QCheckBox() );
+    QCheckBox* cb = new QCheckBox();
+    cb->setCheckState( Qt::Checked );
+    mObservableTreeWidget->setItemWidget( observableItem, 2, cb );
     mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( *bIt ) );
     mObservableTreeWidget->setItemWidget( observableItem, 4, new QDateTimeEdit( *eIt ) );
+    mObservableTreeWidget->setCurrentItem( observableItem );
   }
   mObservableTreeWidget->expandAll();
 }
@@ -206,67 +209,67 @@ void QgsSensorInfoDialog::onDiagramSelected( const QwtDoublePoint &pt )
 
   //snap to next point
 
-  if( cPlot )
+  if ( cPlot )
   {
-      QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>( cPlot->itemList()[0] );
-      QwtPlotItemList debugList =  cPlot->itemList();
+    QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>( cPlot->itemList()[0] );
+    QwtPlotItemList debugList =  cPlot->itemList();
 
-      int xPixel = cPlot->transform( QwtPlot::xBottom, pt.x() );
-      int yPixel = cPlot->transform( QwtPlot::yLeft , pt.y() );
+    int xPixel = cPlot->transform( QwtPlot::xBottom, pt.x() );
+    int yPixel = cPlot->transform( QwtPlot::yLeft , pt.y() );
 
-      int snapPoint = curve->closestPoint( QPoint( xPixel, yPixel ) );
-      if( snapPoint >= 0 )
-      {
-        QString snappedTime = convertIntToTime( curve->data().x( snapPoint ) ).toString();
-        double snappedValue = curve->data().y(snapPoint);
+    int snapPoint = curve->closestPoint( QPoint( xPixel, yPixel ) );
+    if ( snapPoint >= 0 )
+    {
+      QString snappedTime = convertIntToTime( curve->data().x( snapPoint ) ).toString();
+      double snappedValue = curve->data().y( snapPoint );
 
-        qWarning( "Snapped value" );
-        qWarning( snappedTime.toLocal8Bit().data() );
-        qWarning( QString::number( snappedValue ).toLocal8Bit().data() );
+      qWarning( "Snapped value" );
+      qWarning( snappedTime.toLocal8Bit().data() );
+      qWarning( QString::number( snappedValue ).toLocal8Bit().data() );
 
-        QwtPlotMarker* mark = plotMarker( cPlot );
-        mark->setValue( curve->data().x( snapPoint ), curve->data().y( snapPoint ) );
-        mark->show();
+      QwtPlotMarker* mark = plotMarker( cPlot );
+      mark->setValue( curve->data().x( snapPoint ), curve->data().y( snapPoint ) );
+      mark->show();
 
-        //marker label
+      //marker label
 
-        QwtText  labelText;
-        labelText.setText( "Value: " + QString::number( snappedValue ) + "\n" + snappedTime );
-        labelText.setColor( QColor( Qt::black ) );
-        QBrush labelBrush( QColor( Qt::white ), Qt::SolidPattern );
-        labelText.setBackgroundBrush( labelBrush );
-        mark->setLabel( labelText );
-        mark->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
-        cPlot->replot();
-      }
+      QwtText  labelText;
+      labelText.setText( "Value: " + QString::number( snappedValue ) + "\n" + snappedTime );
+      labelText.setColor( QColor( Qt::black ) );
+      QBrush labelBrush( QColor( Qt::white ), Qt::SolidPattern );
+      labelText.setBackgroundBrush( labelBrush );
+      mark->setLabel( labelText );
+      mark->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
+      cPlot->replot();
+    }
   }
 }
 
 QwtPlot* QgsSensorInfoDialog::currentPlot()
 {
-    return qobject_cast<QwtPlot*>( mTabWidget->currentWidget() );
+  return qobject_cast<QwtPlot*>( mTabWidget->currentWidget() );
 }
 
 QwtPlotMarker* QgsSensorInfoDialog::plotMarker( QwtPlot* plot )
 {
-    if( !plot )
-    {
-        return 0;
-    }
+  if ( !plot )
+  {
+    return 0;
+  }
 
-    QMap< QwtPlot*, QwtPlotMarker* >::const_iterator plotIt = mPlotMarkers.find( plot );
-    if( plotIt != mPlotMarkers.constEnd() )
-    {
-        return plotIt.value();
-    }
+  QMap< QwtPlot*, QwtPlotMarker* >::const_iterator plotIt = mPlotMarkers.find( plot );
+  if ( plotIt != mPlotMarkers.constEnd() )
+  {
+    return plotIt.value();
+  }
 
-    QwtPlotMarker* marker = new QwtPlotMarker();
-    marker->setXAxis( QwtPlot::xBottom );
-    marker->setYAxis( QwtPlot::yLeft );
-    marker->setSymbol( QwtSymbol( QwtSymbol::Rect, QBrush( Qt::blue ), QPen( Qt::green ), QSize( 5, 5 ) ) );
-    marker->attach( plot );
-    mPlotMarkers.insert( plot, marker );
-    return marker;
+  QwtPlotMarker* marker = new QwtPlotMarker();
+  marker->setXAxis( QwtPlot::xBottom );
+  marker->setYAxis( QwtPlot::yLeft );
+  marker->setSymbol( QwtSymbol( QwtSymbol::Rect, QBrush( Qt::blue ), QPen( Qt::green ), QSize( 5, 5 ) ) );
+  marker->attach( plot );
+  mPlotMarkers.insert( plot, marker );
+  return marker;
 }
 
 void QgsSensorInfoDialog::on_mTabWidget_tabCloseRequested( int index )
