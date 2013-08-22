@@ -24,6 +24,7 @@
 #include "qgsfeatureiterator.h"
 #include "qgsfeaturerequest.h"
 #include "qgsfield.h"
+#include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
 
@@ -386,6 +387,47 @@ void QgsVectorDataProvider::fillMinMaxCache()
   }
 
   mCacheMinMaxDirty = false;
+}
+
+void QgsVectorDataProvider::copyFeature( QgsFeature* f, QgsFeature& feature, bool fetchGeometry, QgsAttributeList fetchAttributes )
+{
+  Q_UNUSED( fetchGeometry );
+
+  if ( !f )
+  {
+    return;
+  }
+
+  //copy the geometry
+  QgsGeometry* geometry = f->geometry();
+  if ( geometry && fetchGeometry )
+  {
+    const unsigned char *geom = geometry->asWkb();
+    int geomSize = geometry->wkbSize();
+    unsigned char* copiedGeom = new unsigned char[geomSize];
+    memcpy( copiedGeom, geom, geomSize );
+    feature.setGeometryAndOwnership( copiedGeom, geomSize );
+  }
+  else
+  {
+    feature.setGeometry( 0 );
+  }
+
+  //and the attributes
+  const QgsAttributes& attributes = f->attributes();
+  feature.setAttributes( attributes );
+
+  int i = 0;
+  for ( QgsAttributeList::const_iterator it = fetchAttributes.begin(); it != fetchAttributes.end(); ++it )
+  {
+    feature.setAttribute( i, attributes[*it] );
+    ++i;
+  }
+
+  //id and valid
+  feature.setValid( true );
+  feature.setFeatureId( f->id() );
+  feature.setFields( &( fields() ) ); // allow name-based attribute lookups
 }
 
 QVariant QgsVectorDataProvider::convertValue( QVariant::Type type, QString value )

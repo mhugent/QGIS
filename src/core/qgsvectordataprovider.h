@@ -341,6 +341,9 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
     void clearMinMaxCache();
     void fillMinMaxCache();
 
+    /**Copies feature attributes / geometry from f to feature*/
+    void copyFeature( QgsFeature* f, QgsFeature& feature, bool fetchGeometry, QgsAttributeList fetchAttributes );
+
     bool mCacheMinMaxDirty;
     QMap<int, QVariant> mCacheMinValues, mCacheMaxValues;
 
