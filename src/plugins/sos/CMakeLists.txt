@@ -45,9 +45,10 @@ INCLUDE_DIRECTORIES(
      ../../core
      ../../gui
      ${CMAKE_CURRENT_BINARY_DIR}/../../ui
+     ${QWT_INCLUDE_DIR}
+     ${EXPAT_INCLUDE_DIR}
      ..
      .
-     ${QWT_INCLUDE_DIR}
 )
 
 TARGET_LINK_LIBRARIES(sosplugin

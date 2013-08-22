@@ -27,7 +27,7 @@ const char XML_NS_SEPARATOR = '?';
 class QProgressDialog;
 
 /**Base class to download and parse xml data. Handles network request, streaming, error and progress handling*/
-class QgsXMLData: public QObject
+class CORE_EXPORT QgsXMLData: public QObject
 {
     Q_OBJECT
   public:
