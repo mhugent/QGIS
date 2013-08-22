@@ -23,6 +23,10 @@ qgsmaptoolsensorinfo.h
 qgssensorinfodialog.h
 )
 
+IF (WIN32)
+	ADD_DEFINITIONS(-DQWT_DLL=1)
+ENDIF (WIN32)
+
 #SET (SOS_RCCS  resources.qrc)
 ########################################################
 # Build
