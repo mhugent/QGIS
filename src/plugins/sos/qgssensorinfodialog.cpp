@@ -84,10 +84,26 @@ void QgsSensorInfoDialog::addObservables( const QString& serviceUrl, const QStri
 
     QTreeWidgetItem* observableItem = new QTreeWidgetItem( stationIdWidget, QStringList() << "" << *obsIt );
     QCheckBox* cb = new QCheckBox();
-    cb->setCheckState( Qt::Checked );
     mObservableTreeWidget->setItemWidget( observableItem, 2, cb );
-    mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( *bIt ) );
-    mObservableTreeWidget->setItemWidget( observableItem, 4, new QDateTimeEdit( *eIt ) );
+    //begin
+    QDateTime beginDateTime = bIt->isValid() ? *bIt : QDateTime( QDate( 1900, 1, 1 ), QTime( 0, 0, 0 ), Qt::UTC );
+    mObservableTreeWidget->setItemWidget( observableItem, 3, new QDateTimeEdit( beginDateTime ) );
+    //end
+    QDateTime endDateTime;
+    if ( eIt->isValid() )
+    {
+      endDateTime = *eIt;
+    }
+    else
+    {
+      endDateTime =  QDateTime::currentDateTime().toTimeSpec( Qt::UTC );
+      endDateTime.setTime( QTime( 0, 0, 0 ) );
+    }
+    mObservableTreeWidget->setItemWidget( observableItem, 4, new QDateTimeEdit( endDateTime ) );
+    if ( bIt->isValid() && eIt->isValid() )
+    {
+      cb->setCheckState( Qt::Checked );
+    }
     mObservableTreeWidget->setCurrentItem( observableItem );
   }
   mObservableTreeWidget->expandAll();
