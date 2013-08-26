@@ -144,8 +144,9 @@ void QgsSOSData::endElement( const XML_Char* el )
     QStringList coordList = QString( mStringCache ).split( " " );
     if ( coordList.size() > 1 )
     {
-      double x = coordList.at( 0 ).toDouble();
-      double y = coordList.at( 1 ).toDouble();
+      //coordinates swapped
+      double y = coordList.at( 0 ).toDouble();
+      double x = coordList.at( 1 ).toDouble();
       mCurrentFeature->setGeometry( QgsGeometry::fromPoint( QgsPoint( x, y ) ) );
       if ( mExtent )
       {
