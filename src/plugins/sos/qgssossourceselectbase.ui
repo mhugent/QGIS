@@ -102,6 +102,9 @@
       </item>
       <item row="2" column="0">
        <widget class="QTreeWidget" name="mOfferingsTreeWidget">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::ExtendedSelection</enum>
+        </property>
         <column>
          <property name="text">
           <string>Observable property</string>
