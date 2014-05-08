@@ -32,6 +32,7 @@
 #include "qgsmapserviceexception.h"
 #include "qgspallabeling.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgsserverlogger.h"
 
 #include <QDomDocument>
 #include <QNetworkDiskCache>
@@ -77,55 +78,54 @@ void dummyMessageHandler( QtMsgType type, const char *msg )
 #endif
 }
 
-void printRequestInfos()
+void printRequestInfos( int logLevel )
 {
-#ifdef QGSMSDEBUG
-  //print out some infos about the request
-  QgsDebugMsg( "************************new request**********************" );
-  QgsDebugMsg( QDateTime::currentDateTime().toString( "yyyy-MM-dd hh:mm:ss" ) );
+  if ( logLevel < 3 )
+  {
+    return;
+  }
 
+  QgsServerLogger::instance()->logMessage( "************************new request**********************", 3 );
   if ( getenv( "REMOTE_ADDR" ) != NULL )
   {
-    QgsDebugMsg( "remote ip: " + QString( getenv( "REMOTE_ADDR" ) ) );
+    QgsServerLogger::instance()->logMessage( "remote ip: " + QString( getenv( "REMOTE_ADDR" ) ), 3 );
   }
   if ( getenv( "REMOTE_HOST" ) != NULL )
   {
-    QgsDebugMsg( "remote host: " + QString( getenv( "REMOTE_HOST" ) ) );
+    QgsServerLogger::instance()->logMessage( "remote host: " + QString( getenv( "REMOTE_HOST" ) ), 3 );
   }
   if ( getenv( "REMOTE_USER" ) != NULL )
   {
-    QgsDebugMsg( "remote user: " + QString( getenv( "REMOTE_USER" ) ) );
+    QgsServerLogger::instance()->logMessage( "remote user: " + QString( getenv( "REMOTE_USER" ) ), 3 );
   }
   if ( getenv( "REMOTE_IDENT" ) != NULL )
   {
-    QgsDebugMsg( "REMOTE_IDENT: " + QString( getenv( "REMOTE_IDENT" ) ) );
+    QgsServerLogger::instance()->logMessage( "REMOTE_IDENT: " + QString( getenv( "REMOTE_IDENT" ) ), 3 );
   }
   if ( getenv( "CONTENT_TYPE" ) != NULL )
   {
-    QgsDebugMsg( "CONTENT_TYPE: " + QString( getenv( "CONTENT_TYPE" ) ) );
+    QgsServerLogger::instance()->logMessage( "CONTENT_TYPE: " + QString( getenv( "CONTENT_TYPE" ) ), 3 );
   }
   if ( getenv( "AUTH_TYPE" ) != NULL )
   {
-    QgsDebugMsg( "AUTH_TYPE: " + QString( getenv( "AUTH_TYPE" ) ) );
+    QgsServerLogger::instance()->logMessage( "AUTH_TYPE: " + QString( getenv( "AUTH_TYPE" ) ), 3 );
   }
   if ( getenv( "HTTP_USER_AGENT" ) != NULL )
   {
-    QgsDebugMsg( "HTTP_USER_AGENT: " + QString( getenv( "HTTP_USER_AGENT" ) ) );
+    QgsServerLogger::instance()->logMessage( "HTTP_USER_AGENT: " + QString( getenv( "HTTP_USER_AGENT" ) ), 3 );
   }
   if ( getenv( "HTTP_PROXY" ) != NULL )
   {
-    QgsDebugMsg( "HTTP_PROXY: " + QString( getenv( "HTTP_PROXY" ) ) );
+    QgsServerLogger::instance()->logMessage( "HTTP_PROXY: " + QString( getenv( "HTTP_PROXY" ) ), 3 );
   }
   if ( getenv( "HTTPS_PROXY" ) != NULL )
   {
-    QgsDebugMsg( "HTTPS_PROXY: " + QString( getenv( "HTTPS_PROXY" ) ) );
+    QgsServerLogger::instance()->logMessage( "HTTPS_PROXY: " + QString( getenv( "HTTPS_PROXY" ) ), 3 );
   }
   if ( getenv( "NO_PROXY" ) != NULL )
   {
-    QgsDebugMsg( "NO_PROXY: " + QString( getenv( "NO_PROXY" ) ) );
+    QgsServerLogger::instance()->logMessage( "NO_PROXY: " + QString( getenv( "NO_PROXY" ) ), 3 );
   }
-
-#endif //QGSMSDEBUG
 }
 
 QFileInfo defaultProjectFile()
@@ -287,7 +287,8 @@ int main( int argc, char * argv[] )
   QgsFontUtils::loadStandardTestFonts( QStringList() << "Roman" << "Bold" );
 #endif
 
-  QString logFile = QgsLogger::logFile();
+  QString logFile = QgsServerLogger::instance()->logFile();
+  int logLevel = QgsServerLogger::instance()->logLevel();
 
   while ( fcgi_accept() >= 0 )
   {
@@ -296,7 +297,7 @@ int main( int argc, char * argv[] )
       setenv( "QGIS_LOG_FILE", logFile.toLocal8Bit().data(), 1 );
     }
 
-    printRequestInfos(); //print request infos if in debug mode
+    printRequestInfos( logLevel );
 
     //Request handler
     QgsRequestHandler* theRequestHandler = createRequestHandler();
