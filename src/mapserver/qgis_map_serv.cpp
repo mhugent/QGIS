@@ -128,6 +128,20 @@ void printRequestInfos( int logLevel )
   }
 }
 
+void printRequestParameters( const QMap<QString, QString>& parameterMap, int logLevel )
+{
+  if ( logLevel < 3 )
+  {
+    return;
+  }
+
+  QMap<QString, QString>::const_iterator pIt = parameterMap.constBegin();
+  for ( ; pIt != parameterMap.constEnd(); ++pIt )
+  {
+    QgsServerLogger::instance()->logMessage( pIt.key() + ":" + pIt.value(), 3 );
+  }
+}
+
 QFileInfo defaultProjectFile()
 {
   QDir currentDir;
@@ -288,12 +302,18 @@ int main( int argc, char * argv[] )
 
   QString logFile = QgsServerLogger::instance()->logFile();
   int logLevel = QgsServerLogger::instance()->logLevel();
+  QTime time; //used for measuring request time if loglevel >= 3
 
   while ( fcgi_accept() >= 0 )
   {
     if ( !logFile.isEmpty() )
     {
       setenv( "QGIS_LOG_FILE", logFile.toLocal8Bit().data(), 1 );
+    }
+
+    if ( logLevel >= 3 )
+    {
+      time.start();
     }
 
     printRequestInfos( logLevel );
@@ -312,6 +332,7 @@ int main( int argc, char * argv[] )
       continue;
     }
 
+    printRequestParameters( parameterMap, logLevel );
     QMap<QString, QString>::const_iterator paramIt;
 
     //Config file path
@@ -366,6 +387,11 @@ int main( int argc, char * argv[] )
       //adminConfigParser->loadLabelSettings( theMapRenderer->labelingEngine() );
       QgsWMSServer wmsServer( configFilePath, parameterMap, p, theRequestHandler, theMapRenderer, &capabilitiesCache );
       wmsServer.executeRequest();
+    }
+
+    if ( logLevel >= 3 )
+    {
+      QgsServerLogger::instance()->logMessage( "Request finished in " + QString::number( time.elapsed() ) + " ms", 3 );
     }
   }
 
