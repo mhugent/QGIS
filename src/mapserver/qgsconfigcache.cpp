@@ -19,6 +19,7 @@
 #include "qgswcsprojectparser.h"
 #include "qgswfsprojectparser.h"
 #include "qgswmsprojectparser.h"
+#include "qgsserverlogger.h"
 #include "qgssldconfigparser.h"
 
 #include <QFile>
@@ -118,9 +119,15 @@ QDomDocument* QgsConfigCache::xmlDocument( const QString& filePath )
 {
   //first open file
   QFile configFile( filePath );
-  if ( !configFile.exists() || !configFile.open( QIODevice::ReadOnly ) )
+  if ( !configFile.exists() )
   {
-    QgsDebugMsg( "File unreadable: " + filePath );
+    QgsServerLogger::instance()->logMessage( "Error: configuration file '" + filePath + "' does not exist", 1 );
+    return 0;
+  }
+
+  if ( !configFile.open( QIODevice::ReadOnly ) )
+  {
+    QgsServerLogger::instance()->logMessage( "Error: cannot open configuration file '" + filePath + "'", 1 );
     return 0;
   }
 
@@ -130,8 +137,9 @@ QDomDocument* QgsConfigCache::xmlDocument( const QString& filePath )
   int line, column;
   if ( !xmlDoc->setContent( &configFile, true, &errorMsg, &line, &column ) )
   {
-    QgsDebugMsg( QString( "Parse error %1 at row %2, column %3 in %4 " )
-                 .arg( errorMsg ).arg( line ).arg( column ).arg( filePath ) );
+    QgsServerLogger::instance()->logMessage( "Error parsing file '" +
+        filePath + QString( "': parse error %1 at row %2, column %3 in %4" )
+        .arg( errorMsg ).arg( line ).arg( column ).arg( filePath ), 1 );
     delete xmlDoc;
     return 0;
   }

@@ -225,7 +225,6 @@ QString configPath( const QString& defaultConfigPath, const QMap<QString, QStrin
   return cfPath;
 }
 
-
 int main( int argc, char * argv[] )
 {
 #ifndef _MSC_VER
@@ -308,7 +307,7 @@ int main( int argc, char * argv[] )
     }
     catch ( QgsMapServiceException& e )
     {
-      QgsDebugMsg( "An exception was thrown during input parsing" );
+      QgsServerLogger::instance()->logMessage( "Parse input exception: " + e.message(), 1 );
       theRequestHandler->sendServiceException( e );
       continue;
     }
@@ -323,6 +322,7 @@ int main( int argc, char * argv[] )
     paramIt = parameterMap.find( "SERVICE" );
     if ( paramIt == parameterMap.constEnd() )
     {
+      QgsServerLogger::instance()->logMessage( "Exception: SERVICE parameter is missing", 1 );
       theRequestHandler->sendServiceException( QgsMapServiceException( "ServiceNotSpecified", "Service not specified. The SERVICE parameter is mandatory" ) );
       delete theRequestHandler;
       continue;
@@ -337,7 +337,8 @@ int main( int argc, char * argv[] )
       QgsWCSProjectParser* p = QgsConfigCache::instance()->wcsConfiguration( configFilePath );
       if ( !p )
       {
-        //error handling
+        theRequestHandler->sendServiceException( QgsMapServiceException( "Project file error", "Error reading the project file" ) );
+        continue;
       }
       QgsWCSServer wcsServer( configFilePath, parameterMap, p, theRequestHandler );
       wcsServer.executeRequest();
@@ -347,7 +348,8 @@ int main( int argc, char * argv[] )
       QgsWFSProjectParser* p = QgsConfigCache::instance()->wfsConfiguration( configFilePath );
       if ( !p )
       {
-        //error handling
+        theRequestHandler->sendServiceException( QgsMapServiceException( "Project file error", "Error reading the project file" ) );
+        continue;
       }
       QgsWFSServer wfsServer( configFilePath, parameterMap, p, theRequestHandler );
       wfsServer.executeRequest();
@@ -357,8 +359,10 @@ int main( int argc, char * argv[] )
       QgsWMSConfigParser* p = QgsConfigCache::instance()->wmsConfiguration( configFilePath, parameterMap );
       if ( !p )
       {
-        //error handling
+        theRequestHandler->sendServiceException( QgsMapServiceException( "WMS configuration error", "There was an error reading the project file or the SLD configuration" ) );
+        continue;
       }
+
       //adminConfigParser->loadLabelSettings( theMapRenderer->labelingEngine() );
       QgsWMSServer wmsServer( configFilePath, parameterMap, p, theRequestHandler, theMapRenderer, &capabilitiesCache );
       wmsServer.executeRequest();
