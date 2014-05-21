@@ -191,4 +191,7 @@ class QgsMapLayerRegistry : QObject
     //! protected constructor
     QgsMapLayerRegistry( QObject * parent = 0 );
 
+  private:
+    void connectNotify( const char * signal );
+
 }; // class QgsMapLayerRegistry
