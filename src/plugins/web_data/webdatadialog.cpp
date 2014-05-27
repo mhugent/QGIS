@@ -153,7 +153,8 @@ void WebDataDialog::on_mAddPushButton_clicked()
 
 void WebDataDialog::on_mAddNIWAServicesButton_clicked()
 {
-  addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
+//  addServicesFromHtml( "https://www.niwa.co.nz/ei/feeds/report" );
+  addServicesFromCSW( "http://dc.niwa.co.nz/niwa_dc_cogs/srv/eng/csw" );
 }
 
 void WebDataDialog::on_mAddLINZServicesButton_clicked()
@@ -274,6 +275,61 @@ void WebDataDialog::addServicesFromHtml( const QString& url )
       }
     }
   }
+  mStatusLabel->setText( tr( "Ready" ) );
+}
+
+void WebDataDialog::addServicesFromCSW( const QString &url )
+{
+  //get xml from csw
+
+  mNIWAServicesRequestFinished = false;
+  QString get = QString( "%1?SERVICE=CSW&REQUEST=GetRecords&VERSION=2.0.2&CONSTRAINTLANGUAGE=CQL_TEXT&RESULTTYPE=results&maxrecords=200&constraint=dc:type LIKE 'service'&constraint_language_version=1.1.0&ElementSetName=full" ).arg( url );
+  QNetworkRequest request( get );
+  QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
+  connect( reply, SIGNAL( finished() ), this, SLOT( NIWAServicesRequestFinished() ) );
+  connect( reply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( handleDownloadProgress( qint64, qint64 ) ) );
+
+  while ( !mNIWAServicesRequestFinished )
+  {
+    QCoreApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+  }
+
+  QByteArray response = reply->readAll();
+  reply->deleteLater();
+
+  QDomDocument xml;
+  QString errorMsg;
+  int errorLine;
+  int errorColumn;
+  if ( !xml.setContent( response, false, &errorMsg, &errorLine, &errorColumn ) )
+  {
+    QMessageBox::critical( 0, tr( "Failed to parse XML file" ), tr( "Error parsing the xml from %1: %2 on line %3, column %4" ).arg( url ).arg( errorMsg ).arg( errorLine ).arg( errorColumn ) );
+    return;
+  }
+
+  QRegExp wmsTest("OGC:WMS-[\\w\\.]+-http-get-capabilities");
+
+  QDomNodeList records = xml.elementsByTagName( "csw:Record" );
+  for ( int i = 0; i < records.size(); ++i )
+  {
+    QDomElement record = records.at( i ).toElement();
+    QString title = record.firstChildElement( "dc:title" ).text();
+    QDomNodeList uris = record.elementsByTagName( "dc:URI" );
+    for ( int j = 0; j < uris.size(); ++j )
+    {
+      QDomElement uri = uris.at( j ).toElement();
+      QString protocol = uri.attribute( "protocol" );
+      if ( wmsTest.indexIn(protocol) != -1 )
+      {
+        setServiceSetting( title, "WMS", uri.text() );
+      }
+      else if ( protocol == "WWW:LINK-1.0-http--link" )
+      {
+        setServiceSetting( title, "WFS", uri.text() );
+      }
+    }
+  }
+
   mStatusLabel->setText( tr( "Ready" ) );
 }
 
