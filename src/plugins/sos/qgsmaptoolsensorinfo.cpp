@@ -111,6 +111,7 @@ int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const 
   }
 
   QUrl url( serviceUrl );
+  url.removeQueryItem( "observedProperty" );
   url.removeQueryItem( "request" );
   url.addQueryItem( "request", "GetDataAvailability" );
   url.addQueryItem( "featureofinterest", station_id );
@@ -140,7 +141,7 @@ int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const 
 
   QSet<QString> observedPropertySet; //keep track of duplicates
 
-  QDomNodeList dataAvailabilityList = dataAvailabilityDocument.elementsByTagNameNS( "http://www.opengis.net/sos/2.0", "dataAvailabilityMember" );
+  QDomNodeList dataAvailabilityList = dataAvailabilityDocument.elementsByTagNameNS( "http://www.opengis.net/sosgda/1.0", "dataAvailabilityMember" );
   for ( int i = 0; i < dataAvailabilityList.size(); ++i )
   {
     QDomElement observedPropertyElem = dataAvailabilityList.at( i ).firstChildElement( "observedProperty" );
