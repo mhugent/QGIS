@@ -29,6 +29,7 @@ class QgsFeature;
 class QgsGeometry;
 class QgsOgcUtils;
 class QgsVectorLayer;
+class QgsVectorLayerJoinBuffer;
 class QgsVectorDataProvider;
 
 class QDomElement;
@@ -341,7 +342,8 @@ class CORE_EXPORT QgsExpression
       ntFunction,
       ntLiteral,
       ntColumnRef,
-      ntCondition
+      ntCondition,
+      ntJoin
     };
 
     class CORE_EXPORT Node
@@ -589,6 +591,30 @@ class CORE_EXPORT QgsExpression
         WhenThenList mConditions;
         Node* mElseExp;
     };
+
+    class CORE_EXPORT NodeJoin : public Node
+    {
+      public:
+        NodeJoin( Node* expression, Node* tableExpression, Node* joinCondition );
+        ~NodeJoin();
+
+        virtual NodeType nodeType() const;
+        virtual QVariant eval( QgsExpression* parent, const QgsFeature* f );
+        virtual bool prepare( QgsExpression* parent, const QgsFields& fields );
+        virtual QString dump() const;
+        virtual QStringList referencedColumns() const;
+        virtual bool needsGeometry() const;
+
+        // support for visitor pattern
+        virtual void accept( Visitor& v ) const;
+
+      protected:
+        Node* mExpression;
+        Node* mTableExpression;
+        Node* mJoinCondition;
+        QgsVectorLayerJoinBuffer* mJoinBuffer;
+    };
+
 
     //////
 

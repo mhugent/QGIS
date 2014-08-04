@@ -68,7 +68,6 @@ QgsExpression::Node* gExpParserRootNode;
 
 %start root
 
-
 //
 // token definitions
 //
@@ -92,6 +91,8 @@ QgsExpression::Node* gExpParserRootNode;
 
 %token Unknown_CHARACTER
 
+%token JOIN ON
+
 //
 // definition of non-terminal types
 //
@@ -111,6 +112,7 @@ QgsExpression::Node* gExpParserRootNode;
 // left associativity means that 1+2+3 translates to (1+2)+3
 // the order of operators here determines their precedence
 
+%left JOIN
 %left OR
 %left AND
 %right NOT
@@ -128,13 +130,16 @@ QgsExpression::Node* gExpParserRootNode;
 %destructor { delete $$; } <nodelist>
 %destructor { delete $$; } <text>
 
+
+
 %%
 
 root: expression { gExpParserRootNode = $1; }
     ;
 
 expression:
-      expression AND expression       { $$ = BINOP($2, $1, $3); }
+      expression JOIN expression ON expression      { $$ = new QgsExpression::NodeJoin($1, $3, $5 ); }
+    | expression AND expression       { $$ = BINOP($2, $1, $3); }
     | expression OR expression        { $$ = BINOP($2, $1, $3); }
     | expression EQ expression        { $$ = BINOP($2, $1, $3); }
     | expression NE expression        { $$ = BINOP($2, $1, $3); }

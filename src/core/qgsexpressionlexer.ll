@@ -149,6 +149,8 @@ string      "'"{str_char}*"'"
 "THEN" { return THEN; }
 "ELSE" { return ELSE; }
 "END"  { return END;  }
+"JOIN" { return JOIN; }
+"ON" { return ON; }
 
 [()]      { return yytext[0]; }
 

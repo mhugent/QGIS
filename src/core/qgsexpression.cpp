@@ -34,6 +34,7 @@
 #include "qgsvectorlayer.h"
 #include "qgssymbollayerv2utils.h"
 #include "qgsvectorcolorrampv2.h"
+#include "qgsvectorlayerjoinbuffer.h"
 #include "qgsstylev2.h"
 
 // from parser
@@ -2639,32 +2640,134 @@ bool QgsExpression::NodeCondition::needsGeometry() const
   return false;
 }
 
-QString QgsExpression::helptext( QString name )
+QgsExpression::NodeJoin::NodeJoin( Node* expression, Node* tableExpression, Node* joinCondition ) : mExpression( expression ), mTableExpression( tableExpression ),
+    mJoinCondition( joinCondition ), mJoinBuffer( 0 )
 {
-  QgsExpression::initFunctionHelp();
-  return gFunctionHelpTexts.value( name, QObject::tr( "function help for %1 missing" ).arg( name ) );
+  QString debug1 = expression->dump(); //original expression
+  QString debug2 = tableExpression->dump(); //second expression as a string
+  QString debug3 = joinCondition->dump();
+  bool debug = true;
 }
 
-QHash<QString, QString> QgsExpression::gGroups;
-
-QString QgsExpression::group( QString name )
+QgsExpression::NodeJoin::~NodeJoin()
 {
-  if ( gGroups.isEmpty() )
+  delete mExpression; delete mTableExpression; delete mJoinCondition;
+}
+
+QgsExpression::NodeType QgsExpression::NodeJoin::nodeType() const
+{
+  return ntJoin;
+}
+
+QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature* f )
+{
+  //test vectorlayer != 0 and mExpression
+  //append new attributes to feature (with layer prefix)
+
+  return mExpression->eval( parent, f );
+}
+
+bool QgsExpression::NodeJoin::prepare( QgsExpression* parent, const QgsFields& fields )
+{
+  if ( !mExpression || !mTableExpression || !mJoinCondition )
   {
-    gGroups.insert( "Operators", QObject::tr( "Operators" ) );
-    gGroups.insert( "Conditionals", QObject::tr( "Conditionals" ) );
-    gGroups.insert( "Fields and Values", QObject::tr( "Fields and Values" ) );
-    gGroups.insert( "Math", QObject::tr( "Math" ) );
-    gGroups.insert( "Conversions", QObject::tr( "Conversions" ) );
-    gGroups.insert( "Date and Time", QObject::tr( "Date and Time" ) );
-    gGroups.insert( "String", QObject::tr( "String" ) );
-    gGroups.insert( "Color", QObject::tr( "Color" ) );
-    gGroups.insert( "Geometry", QObject::tr( "Geometry" ) );
-    gGroups.insert( "Record", QObject::tr( "Record" ) );
+    return false;
   }
 
-  //return the translated name for this group. If group does not
-  //have a translated name in the gGroups hash, return the name
-  //unchanged
-  return gGroups.value( name, name );
-}
+  //join table name
+  QgsFeature f;
+  QString layerName = mTableExpression->eval( parent, &f ).toString(); //table expression cannot use attribute value
+
+  //join condition in simple form 'attribute1 = attribute2' ? Otherwise, the whole table needs to be scanned
+  QString joinConditionStr = mJoinCondition->dump();
+  QStringList equalSplit = joinConditionStr.split( "=" );
+
+  QString attribute1 = equalSplit.at( 0 ).trimmed();
+  QString attribute2 = equalSplit.at( 1 ).trimmed();
+
+  //join condition attribute1 = attribute2? Otherwise, the whole table needs to be scanned
+  QgsVectorJoinInfo joinInfo;
+  joinInfo.joinLayerId = layerName;
+  joinInfo.memoryCache = true;
+  joinInfo.joinFieldName = attribute1.startsWith( layerName ) ? attribute1.remove( 0, layerName.size() ) : attribute2;
+  joinInfo.targetFieldName = attribute2.startsWith( layerName ) ? attribute2.remove( 0, layerName.size() ) : attribute1;
+
+  mJoinBuffer = new QgsVectorLayerJoinBuffer();
+  mJoinBuffer->addJoin( joinInfo );
+
+  //todo: handle case where the join condition is more complex
+
+#if 0
+  struct CORE_EXPORT QgsVectorJoinInfo
+  {
+    /**Join field in the target layer*/
+    QString targetFieldName;
+    /**Source layer*/
+    QString joinLayerId;
+    /**Join field in the source layer*/
+    QString joinFieldName;
+    /**True if the join is cached in virtual memory*/
+    bool memoryCache;
+    /**Cache for joined attributes to provide fast lookup (size is 0 if no memory caching)
+      @note not available in python bindings
+      */
+    QHash< QString, QgsAttributes> cachedAttributes;
+
+    /**Join field index in the target layer. For backward compatibility with 1.x (x>=7)*/
+    int targetFieldIndex;
+    /**Join field index in the source layer. For backward compatibility with 1.x (x>=7)*/
+    int joinFieldIndex;
+#endif //0
+
+    return false;
+  }
+
+  QString QgsExpression::NodeJoin::dump() const
+  {
+    return QString();
+  }
+
+  QStringList QgsExpression::NodeJoin::referencedColumns() const
+  {
+    return QStringList();
+  }
+
+  bool QgsExpression::NodeJoin::needsGeometry() const
+  {
+    return false;
+  }
+
+  void QgsExpression::NodeJoin::accept( Visitor& v ) const
+  {
+
+  }
+
+  QString QgsExpression::helptext( QString name )
+  {
+    QgsExpression::initFunctionHelp();
+    return gFunctionHelpTexts.value( name, QObject::tr( "function help for %1 missing" ).arg( name ) );
+  }
+
+  QHash<QString, QString> QgsExpression::gGroups;
+
+  QString QgsExpression::group( QString name )
+  {
+    if ( gGroups.isEmpty() )
+    {
+      gGroups.insert( "Operators", QObject::tr( "Operators" ) );
+      gGroups.insert( "Conditionals", QObject::tr( "Conditionals" ) );
+      gGroups.insert( "Fields and Values", QObject::tr( "Fields and Values" ) );
+      gGroups.insert( "Math", QObject::tr( "Math" ) );
+      gGroups.insert( "Conversions", QObject::tr( "Conversions" ) );
+      gGroups.insert( "Date and Time", QObject::tr( "Date and Time" ) );
+      gGroups.insert( "String", QObject::tr( "String" ) );
+      gGroups.insert( "Color", QObject::tr( "Color" ) );
+      gGroups.insert( "Geometry", QObject::tr( "Geometry" ) );
+      gGroups.insert( "Record", QObject::tr( "Record" ) );
+    }
+
+    //return the translated name for this group. If group does not
+    //have a translated name in the gGroups hash, return the name
+    //unchanged
+    return gGroups.value( name, name );
+  }
