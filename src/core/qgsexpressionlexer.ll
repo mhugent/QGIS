@@ -151,6 +151,7 @@ string      "'"{str_char}*"'"
 "END"  { return END;  }
 "JOIN" { return JOIN; }
 "ON" { return ON; }
+"AS" { return AS; }
 
 [()]      { return yytext[0]; }
 

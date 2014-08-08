@@ -595,7 +595,7 @@ class CORE_EXPORT QgsExpression
     class CORE_EXPORT NodeJoin : public Node
     {
       public:
-        NodeJoin( Node* expression, Node* tableExpression, Node* joinCondition );
+        NodeJoin( Node* expression, Node* tableExpression, Node* joinCondition, Node* aliasNode = 0 );
         ~NodeJoin();
 
         virtual NodeType nodeType() const;
@@ -612,6 +612,8 @@ class CORE_EXPORT QgsExpression
         Node* mExpression;
         Node* mTableExpression;
         Node* mJoinCondition;
+
+        QString mTableAlias;
 
         //Information for join. Created in eval method
         QgsVectorJoinInfo* mJoinInfo;
