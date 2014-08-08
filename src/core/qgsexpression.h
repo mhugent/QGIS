@@ -29,7 +29,7 @@ class QgsFeature;
 class QgsGeometry;
 class QgsOgcUtils;
 class QgsVectorLayer;
-class QgsVectorLayerJoinBuffer;
+class QgsVectorJoinInfo;
 class QgsVectorDataProvider;
 
 class QDomElement;
@@ -612,7 +612,18 @@ class CORE_EXPORT QgsExpression
         Node* mExpression;
         Node* mTableExpression;
         Node* mJoinCondition;
-        QgsVectorLayerJoinBuffer* mJoinBuffer;
+
+        //Information for join. Created in eval method
+        QgsVectorJoinInfo* mJoinInfo;
+        QgsAttributeList mJoinAttributes;      //!< attributes to fetch
+        QgsFields mCombinedFields;
+        int mIndexOffset;                  //!< at what position the joined fields start
+        QgsVectorLayer* mJoinLayer;
+        int mJoinFieldIndex;
+
+        void addJoinedAttributesDirect( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const;
+        void addJoinedAttributesFromCache( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const;
+        void cacheJoin( QgsVectorLayer* joinLayer, int joinFieldIndex, QgsVectorJoinInfo* joinInfo );
     };
 
 
