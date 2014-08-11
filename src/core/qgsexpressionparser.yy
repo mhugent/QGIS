@@ -138,8 +138,8 @@ root: expression { gExpParserRootNode = $1; }
     ;
 
 expression:
-      expression JOIN expression ON expression      { $$ = new QgsExpression::NodeJoin($1, $3, $5 ); }
-    | expression JOIN expression AS expression ON expression      { $$ = new QgsExpression::NodeJoin($1, $3, $7, $5 ); }
+      expression JOIN STRING ON STRING      { $$ = new QgsExpression::NodeJoin($1, $3, $5 ); }
+    | expression JOIN STRING AS STRING ON STRING    { $$ = new QgsExpression::NodeJoin($1, $3, $7, $5 ); }
     | expression AND expression       { $$ = BINOP($2, $1, $3); }
     | expression OR expression        { $$ = BINOP($2, $1, $3); }
     | expression EQ expression        { $$ = BINOP($2, $1, $3); }

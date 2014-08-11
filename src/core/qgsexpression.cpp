@@ -2642,23 +2642,63 @@ bool QgsExpression::NodeCondition::needsGeometry() const
   return false;
 }
 
-QgsExpression::NodeJoin::NodeJoin( Node* expression, Node* tableExpression, Node* joinCondition, Node* aliasNode ) : mExpression( expression ),
-    mTableExpression( tableExpression ), mJoinCondition( joinCondition ), mJoinInfo( 0 )
+QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* joinCondition, QString* alias ) : mExpression( expression ), mJoinInfo( 0 )
 {
-  if ( aliasNode )
+  if ( alias )
   {
-    mTableAlias = aliasNode->dump();
-    delete aliasNode;
+    mTableAlias = *alias;
+    delete alias;
   }
-  QString debug1 = expression->dump(); //original expression
-  QString debug2 = tableExpression->dump(); //second expression as a string
-  QString debug3 = joinCondition->dump();
-  bool debug = true;
+
+  if ( table )
+  {
+    mTableId = *table;
+    delete table;
+  }
+
+  if ( joinCondition )
+  {
+    mJoinCondition = *joinCondition;
+  }
+  QString debug = expression->dump(); //original expression
+
+  mJoinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( mTableId ) );
+  if ( mTableAlias.isEmpty() )
+  {
+    mTableAlias = mTableId;
+  }
+
+  //join condition in equi join form ('attribute1 = attribute2') ?
+  QStringList equalSplit = mJoinCondition.split( "=" );
+  if ( equalSplit.size() < 2 )
+  {
+    //error
+  }
+
+  QString attribute1 = equalSplit.at( 0 ).trimmed().remove( "\"" );
+  QString attribute2 = equalSplit.at( 1 ).trimmed().remove( "\"" );
+
+  //join condition attribute1 = attribute2? Otherwise, the whole table needs to be scanned
+  delete mJoinInfo;
+  mJoinInfo = new QgsVectorJoinInfo();
+  mJoinInfo->joinLayerId = mTableId;
+  mJoinInfo->targetFieldName = attribute1.startsWith( mTableAlias ) ? attribute2 : attribute1;
+  mJoinInfo->joinFieldName = attribute1.startsWith( mTableAlias ) ? attribute1.remove( 0, mTableAlias.size() + 1 ) : attribute2.remove( 0, mTableAlias.size() + 1 );
+
+  const QgsFields& joinLayerFields = mJoinLayer->pendingFields();
+  mJoinFieldIndex = joinLayerFields.fieldNameIndex( mJoinInfo->joinFieldName );
+  if ( mJoinFieldIndex < 0 )
+  {
+    //error
+  }
+
+  cacheJoin( mJoinLayer, mJoinFieldIndex, mJoinInfo );
+  mJoinInfo->memoryCache = true; //choice to have join not cached?
 }
 
 QgsExpression::NodeJoin::~NodeJoin()
 {
-  delete mExpression; delete mTableExpression; delete mJoinCondition; delete mJoinInfo;
+  delete mExpression; delete mJoinInfo;
 }
 
 QgsExpression::NodeType QgsExpression::NodeJoin::nodeType() const
@@ -2802,50 +2842,16 @@ void QgsExpression::NodeJoin::addJoinedAttributesFromCache( QgsVectorLayer* join
 
 bool QgsExpression::NodeJoin::prepare( QgsExpression* parent, const QgsFields& fields )
 {
-  if ( !mExpression || !mTableExpression || !mJoinCondition )
+  if ( !mExpression )
   {
     return false;
   }
 
-  //debug
-  QString debug1 = mExpression->dump();
-  QString debug2 = mTableExpression->dump();
-  QString debug3 = mJoinCondition->dump();
-
-  //join table name
-  QgsFeature f;
-  QString layerId = mTableExpression->eval( parent, &f ).toString(); //table expression cannot use attribute value
-  mJoinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( layerId ) );
-  if ( mTableAlias.isEmpty() )
-  {
-    mTableAlias = layerId;
-  }
-
-
-  //join condition in simple form 'attribute1 = attribute2' ? Otherwise, the whole table needs to be scanned
-  QString joinConditionStr = mJoinCondition->dump();
-  QStringList equalSplit = joinConditionStr.split( "=" );
-
-  QString attribute1 = equalSplit.at( 0 ).trimmed().remove( "\"" );
-  QString attribute2 = equalSplit.at( 1 ).trimmed().remove( "\"" );
-
-  //join condition attribute1 = attribute2? Otherwise, the whole table needs to be scanned
-  delete mJoinInfo;
-  mJoinInfo = new QgsVectorJoinInfo();
-  mJoinInfo->joinLayerId = layerId;
-  mJoinInfo->targetFieldName = attribute1.startsWith( mTableAlias ) ? attribute2 : attribute1;
-  mJoinInfo->joinFieldName = attribute1.startsWith( mTableAlias ) ? attribute1.remove( 0, mTableAlias.size() + 1 ) : attribute2.remove( 0, mTableAlias.size() + 1 );
-
   mJoinAttributes.clear();
-
-
   const QgsFields& joinLayerFields = mJoinLayer->pendingFields();
   mCombinedFields = fields;
   mIndexOffset = fields.size();
   mJoinFieldIndex = joinLayerFields.fieldNameIndex( mJoinInfo->joinFieldName );
-
-  cacheJoin( mJoinLayer, mJoinFieldIndex, mJoinInfo );
-  mJoinInfo->memoryCache = true; //choice to have join not cached?
 
   for ( int i = 0; i < joinLayerFields.size(); ++i )
   {
@@ -2869,7 +2875,7 @@ QString QgsExpression::NodeJoin::dump() const
 
 QStringList QgsExpression::NodeJoin::referencedColumns() const
 {
-  QStringList columnList;
+  QStringList columnList = mExpression->referencedColumns();
   if ( !mJoinInfo )
   {
     return columnList;
