@@ -2672,7 +2672,7 @@ QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* jo
   QStringList equalSplit = mJoinCondition.split( "=" );
   if ( equalSplit.size() < 2 )
   {
-    //error
+    return;
   }
 
   QString attribute1 = equalSplit.at( 0 ).trimmed().remove( "\"" );
@@ -2689,7 +2689,8 @@ QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* jo
   mJoinFieldIndex = joinLayerFields.fieldNameIndex( mJoinInfo->joinFieldName );
   if ( mJoinFieldIndex < 0 )
   {
-    //error
+    delete mJoinInfo; mJoinInfo = 0;
+    return;
   }
 
   cacheJoin( mJoinLayer, mJoinFieldIndex, mJoinInfo );
@@ -2708,8 +2709,10 @@ QgsExpression::NodeType QgsExpression::NodeJoin::nodeType() const
 
 QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature* f )
 {
-  //test vectorlayer != 0 and mExpression
-  //append new attributes to feature (with layer prefix)
+  if ( !mExpression )
+  {
+    return QVariant();
+  }
 
   if ( !mJoinInfo )
   {
@@ -2727,81 +2730,9 @@ QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature*
   QgsVectorLayer* joinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( mJoinInfo->joinLayerId ) );
   if ( joinLayer )
   {
-    mJoinInfo->memoryCache ? addJoinedAttributesFromCache( joinLayer, feat, targetFieldValue ) : addJoinedAttributesDirect( joinLayer, feat, targetFieldValue );
+    addJoinedAttributesFromCache( joinLayer, feat, targetFieldValue );
   }
   return mExpression->eval( parent, &feat );
-}
-
-void QgsExpression::NodeJoin::addJoinedAttributesDirect( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const
-{
-  // no memory cache, query the joined values by setting substring
-  QString subsetString = joinLayer->dataProvider()->subsetString(); // provider might already have a subset string
-  QString bkSubsetString = subsetString;
-  if ( !subsetString.isEmpty() )
-  {
-    subsetString.prepend( "(" ).append( ") AND " );
-  }
-
-  QString joinFieldName;
-  if ( mJoinInfo->joinFieldName.isEmpty() && mJoinInfo->joinFieldIndex >= 0 && mJoinInfo->joinFieldIndex < joinLayer->pendingFields().count() )
-    joinFieldName = joinLayer->pendingFields().field( mJoinInfo->joinFieldIndex ).name();   // for compatibility with 1.x
-  else
-    joinFieldName = mJoinInfo->joinFieldName;
-
-  subsetString.append( QString( "\"%1\"" ).arg( joinFieldName ) );
-
-  if ( joinValue.isNull() )
-  {
-    subsetString += " IS NULL";
-  }
-  else
-  {
-    QString v = joinValue.toString();
-    switch ( joinValue.type() )
-    {
-      case QVariant::Int:
-      case QVariant::LongLong:
-      case QVariant::Double:
-        break;
-
-      default:
-      case QVariant::String:
-        v.replace( "'", "''" );
-        v.prepend( "'" ).append( "'" );
-        break;
-    }
-    subsetString += "=" + v;
-  }
-
-  joinLayer->dataProvider()->setSubsetString( subsetString, false );
-
-  // select (no geometry)
-  QgsFeatureRequest request;
-  request.setFlags( QgsFeatureRequest::NoGeometry );
-  request.setSubsetOfAttributes( mJoinAttributes );
-  QgsFeatureIterator fi = joinLayer->getFeatures( request );
-
-  // get first feature
-  QgsFeature fet;
-  if ( fi.nextFeature( fet ) )
-  {
-    int index = mIndexOffset;
-    const QgsAttributes& attr = fet.attributes();
-    for ( int i = 0; i < attr.count(); ++i )
-    {
-      if ( i != mJoinFieldIndex )
-      {
-        f.setAttribute( index, attr[i] );
-        ++index;
-      }
-    }
-  }
-  else
-  {
-    // no suitable join feature found, keeping empty (null) attributes
-  }
-
-  joinLayer->dataProvider()->setSubsetString( bkSubsetString, false );
 }
 
 void QgsExpression::NodeJoin::cacheJoin( QgsVectorLayer* joinLayer, int joinFieldIndex, QgsVectorJoinInfo* joinInfo )
@@ -2842,20 +2773,18 @@ void QgsExpression::NodeJoin::addJoinedAttributesFromCache( QgsVectorLayer* join
 
 bool QgsExpression::NodeJoin::prepare( QgsExpression* parent, const QgsFields& fields )
 {
-  if ( !mExpression )
+  if ( !mExpression || !mJoinInfo )
   {
     return false;
   }
 
-  mJoinAttributes.clear();
   const QgsFields& joinLayerFields = mJoinLayer->pendingFields();
   mCombinedFields = fields;
-  mIndexOffset = fields.size();
+  mIndexOffset = mCombinedFields.size();
   mJoinFieldIndex = joinLayerFields.fieldNameIndex( mJoinInfo->joinFieldName );
 
   for ( int i = 0; i < joinLayerFields.size(); ++i )
   {
-    mJoinAttributes.append( joinLayerFields.fieldOriginIndex( i ) );
     if ( i != mJoinFieldIndex )
     {
       QgsField joinField = joinLayerFields.field( i );
@@ -2865,12 +2794,23 @@ bool QgsExpression::NodeJoin::prepare( QgsExpression* parent, const QgsFields& f
   }
 
   mExpression->prepare( parent, mCombinedFields );
-  return false;
+  return true;
 }
 
 QString QgsExpression::NodeJoin::dump() const
 {
-  return QString();
+  if ( !mExpression )
+  {
+    return QString();
+  }
+
+  QString dump = mExpression->dump() + " JOIN " + mTableId;
+  if ( mTableAlias != mTableId )
+  {
+    dump += ( " AS " + mTableAlias );
+  }
+  dump += ( " ON " + mJoinCondition );
+  return dump;
 }
 
 QStringList QgsExpression::NodeJoin::referencedColumns() const
@@ -2886,7 +2826,11 @@ QStringList QgsExpression::NodeJoin::referencedColumns() const
 
 bool QgsExpression::NodeJoin::needsGeometry() const
 {
-  return false;
+  if ( !mExpression )
+  {
+    return false;
+  }
+  return mExpression->needsGeometry();
 }
 
 void QgsExpression::NodeJoin::accept( Visitor& v ) const

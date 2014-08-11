@@ -612,24 +612,26 @@ class CORE_EXPORT QgsExpression
         Node* mExpression;
         QString mTableId;
         QString mJoinCondition;
-
         QString mTableAlias;
 
         //Information for join. Created in eval method
         QgsVectorJoinInfo* mJoinInfo;
-        QgsAttributeList mJoinAttributes;      //!< attributes to fetch
         QgsFields mCombinedFields;
-        int mIndexOffset;                  //!< at what position the joined fields start
+        int mIndexOffset;
         QgsVectorLayer* mJoinLayer;
         int mJoinFieldIndex;
 
-        void addJoinedAttributesDirect( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const;
         void addJoinedAttributesFromCache( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const;
         void cacheJoin( QgsVectorLayer* joinLayer, int joinFieldIndex, QgsVectorJoinInfo* joinInfo );
+
+      private:
+        //assignment and copy constructor forbidden
+        NodeJoin( const NodeJoin& j ) { Q_UNUSED( j ); }
+        void operator=( const NodeJoin& j ) {}
     };
 
 
-    //////
+//////
 
     /** support for visitor pattern - algorithms dealing with the expressions
         may be implemented without modifying the Node classes */
@@ -653,7 +655,7 @@ class CORE_EXPORT QgsExpression
     static QString group( QString group );
 
   protected:
-    // internally used to create an empty expression
+// internally used to create an empty expression
     QgsExpression() : mRootNode( 0 ), mRowNumber( 0 ), mCalc( 0 ) {}
 
     void initGeomCalculator();
