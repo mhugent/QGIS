@@ -606,7 +606,7 @@ class CORE_EXPORT QgsExpression
         virtual bool needsGeometry() const;
 
         // support for visitor pattern
-        virtual void accept( Visitor& v ) const;
+        virtual void accept( Visitor& v ) const { v.visit( *this ); }
 
       protected:
         Node* mExpression;
@@ -627,7 +627,7 @@ class CORE_EXPORT QgsExpression
       private:
         //assignment and copy constructor forbidden
         NodeJoin( const NodeJoin& j ) { Q_UNUSED( j ); }
-        void operator=( const NodeJoin& j ) {}
+        void operator=( const NodeJoin& j ) { Q_UNUSED( j ); }
     };
 
 
@@ -646,6 +646,7 @@ class CORE_EXPORT QgsExpression
         virtual void visit( const NodeLiteral& n ) = 0;
         virtual void visit( const NodeColumnRef& n ) = 0;
         virtual void visit( const NodeCondition& n ) = 0;
+        virtual void visit( const NodeJoin& n ){ Q_UNUSED( n ); } //Note: added in 2.5
     };
 
     /** entry function for the visitor pattern */

@@ -2833,11 +2833,6 @@ bool QgsExpression::NodeJoin::needsGeometry() const
   return mExpression->needsGeometry();
 }
 
-void QgsExpression::NodeJoin::accept( Visitor& v ) const
-{
-
-}
-
 QString QgsExpression::helptext( QString name )
 {
   QgsExpression::initFunctionHelp();
