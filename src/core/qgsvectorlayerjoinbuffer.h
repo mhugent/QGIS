@@ -66,13 +66,13 @@ class CORE_EXPORT QgsVectorLayerJoinBuffer
       @param sourceFieldIndex Output: field's index in source layer */
     const QgsVectorJoinInfo* joinForFieldIndex( int index, const QgsFields& fields, int& sourceFieldIndex ) const;
 
+    /**Caches attributes of join layer in memory if QgsVectorJoinInfo.memoryCache is true (and the cache is not already there)*/
+    static void cacheJoinLayer( QgsVectorJoinInfo& joinInfo );
+
   private:
 
     /**Joined vector layers*/
     QList< QgsVectorJoinInfo > mVectorJoins;
-
-    /**Caches attributes of join layer in memory if QgsVectorJoinInfo.memoryCache is true (and the cache is not already there)*/
-    void cacheJoinLayer( QgsVectorJoinInfo& joinInfo );
 };
 
 #endif // QGSVECTORLAYERJOINBUFFER_H
