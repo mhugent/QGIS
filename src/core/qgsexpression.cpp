@@ -2719,7 +2719,7 @@ QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature*
     return QVariant();
   }
 
-  if ( !mJoinInfo )
+  if ( !mJoinInfo || !f )
   {
     return mExpression->eval( parent, f );
   }
@@ -2791,18 +2791,29 @@ QString QgsExpression::NodeJoin::dump() const
     return QString();
   }
 
-  QString dump = mExpression->dump() + " JOIN " + mTableId;
+  QString dump = mExpression->dump() + " JOIN '" + mTableId + "'";
   if ( mTableAlias != mTableId )
   {
-    dump += ( " AS " + mTableAlias );
+    dump += ( " AS '" + mTableAlias + "'" );
   }
-  dump += ( " ON " + mJoinCondition );
+  dump += ( " ON '" + mJoinCondition + "'" );
   return dump;
 }
 
 QStringList QgsExpression::NodeJoin::referencedColumns() const
 {
-  QStringList columnList = mExpression->referencedColumns();
+  QStringList columnList;
+
+  QStringList expressionColumns = mExpression->referencedColumns();
+  QStringList::const_iterator exIt = expressionColumns.constBegin();
+  for ( ; exIt != expressionColumns.constEnd(); ++exIt )
+  {
+    if ( !exIt->startsWith( mTableAlias ) )
+    {
+      columnList.append( *exIt );
+    }
+  }
+
   if ( !mJoinInfo )
   {
     return columnList;
