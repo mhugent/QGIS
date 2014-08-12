@@ -2659,7 +2659,6 @@ QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* jo
   {
     mJoinCondition = *joinCondition;
   }
-  QString debug = expression->dump(); //original expression
 
   mJoinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( mTableId ) );
   if ( !mJoinLayer )
