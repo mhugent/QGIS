@@ -2641,7 +2641,9 @@ bool QgsExpression::NodeCondition::needsGeometry() const
   return false;
 }
 
-QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* joinCondition, QString* alias ) : mExpression( expression ), mJoinInfo( 0 )
+QCache< QPair< QString, QString >, QHash< QString, QgsAttributes > > QgsExpression::NodeJoin::mJoinCache( 10000000 );
+
+QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* joinCondition, QString* alias ) : mExpression( expression ), mJoinInfo( 0 ), mCachedAttributes()
 {
   if ( alias )
   {
@@ -2707,8 +2709,25 @@ QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* jo
     return;
   }
 
-  QgsVectorLayerJoinBuffer::cacheJoinLayer( *mJoinInfo );
-  mJoinInfo->memoryCache = true; //choice to have join not cached?
+  //QgsVectorLayerJoinBuffer::cacheJoinLayer( *mJoinInfo );
+  mCachedAttributes = mJoinCache.object( qMakePair( mJoinInfo->joinLayerId, mJoinInfo->joinFieldName ) );
+  if ( !mCachedAttributes )
+  {
+    QHash< QString, QgsAttributes >* cache = new QHash< QString, QgsAttributes >();
+    QgsFeatureIterator fit = mJoinLayer->getFeatures( QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry ) );
+    QgsFeature f;
+    while ( fit.nextFeature( f ) )
+    {
+      const QgsAttributes& attrs = f.attributes();
+      cache->insert( attrs[mJoinFieldIndex].toString(), attrs );
+    }
+    if ( mJoinCache.insert( qMakePair( mJoinInfo->joinLayerId, mJoinInfo->joinFieldName ), cache, cache->size() ) )
+    {
+      mCachedAttributes = cache;
+    }
+  }
+
+  mJoinInfo->memoryCache = false; //choice to have join not cached?
 }
 
 QgsExpression::NodeJoin::~NodeJoin()
@@ -2751,17 +2770,20 @@ QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature*
 
 void QgsExpression::NodeJoin::addJoinedAttributesFromCache( QgsFeature& f, const QVariant& joinValue ) const
 {
-  QHash< QString, QgsAttributes>::const_iterator it = mJoinInfo->cachedAttributes.find( joinValue.toString() );
-  if ( it != mJoinInfo->cachedAttributes.constEnd() )
+  if ( mCachedAttributes )
   {
-    int index = mIndexOffset;
-    const QgsAttributes& attr = it.value();
-    for ( int i = 0; i < attr.count(); ++i )
+    QHash< QString, QgsAttributes>::const_iterator it = mCachedAttributes->find( joinValue.toString() );
+    if ( it != mCachedAttributes->constEnd() )
     {
-      if ( i != mJoinFieldIndex )
+      int index = mIndexOffset;
+      const QgsAttributes& attr = it.value();
+      for ( int i = 0; i < attr.count(); ++i )
       {
-        f.setAttribute( index, attr[i] );
-        ++index;
+        if ( i != mJoinFieldIndex )
+        {
+          f.setAttribute( index, attr[i] );
+          ++index;
+        }
       }
     }
   }

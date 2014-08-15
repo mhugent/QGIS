@@ -21,11 +21,12 @@
 #include <QVariant>
 #include <QList>
 #include <QDomDocument>
+#include <QCache>
 
+#include "qgsfeature.h"
 #include "qgsfield.h"
 #include "qgsdistancearea.h"
 
-class QgsFeature;
 class QgsGeometry;
 class QgsOgcUtils;
 class QgsVectorLayer;
@@ -621,12 +622,16 @@ class CORE_EXPORT QgsExpression
         QgsVectorLayer* mJoinLayer;
         int mJoinFieldIndex;
 
+        QHash< QString, QgsAttributes >* mCachedAttributes;
+
         void addJoinedAttributesFromCache( QgsFeature& f, const QVariant& joinValue ) const;
 
       private:
         //assignment and copy constructor forbidden
         NodeJoin( const NodeJoin& j ) { Q_UNUSED( j ); }
         void operator=( const NodeJoin& j ) { Q_UNUSED( j ); }
+
+        static QCache< QPair< QString, QString >, QHash< QString, QgsAttributes > > mJoinCache;
     };
 
     //////
