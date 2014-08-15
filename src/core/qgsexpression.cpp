@@ -2660,7 +2660,17 @@ QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* jo
     mJoinCondition = *joinCondition;
   }
 
-  mJoinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( mTableId ) );
+  //table id can be layer name or layer id
+  QList<QgsMapLayer *> layersByName = QgsMapLayerRegistry::instance()->mapLayersByName( mTableId );
+  if ( layersByName.size() > 0 )
+  {
+    mJoinLayer = dynamic_cast<QgsVectorLayer*>( layersByName.at( 0 ) );
+  }
+  else
+  {
+    mJoinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( mTableId ) );
+  }
+
   if ( !mJoinLayer )
   {
     return;
@@ -2684,9 +2694,9 @@ QgsExpression::NodeJoin::NodeJoin( Node* expression, QString* table, QString* jo
   //join condition attribute1 = attribute2? Otherwise, the whole table needs to be scanned
   delete mJoinInfo;
   mJoinInfo = new QgsVectorJoinInfo();
-  mJoinInfo->joinLayerId = mTableId;
-  mJoinInfo->targetFieldName = attribute1.startsWith( mTableAlias ) ? attribute2 : attribute1;
-  mJoinInfo->joinFieldName = attribute1.startsWith( mTableAlias ) ? attribute1.remove( 0, mTableAlias.size() + 1 ) : attribute2.remove( 0, mTableAlias.size() + 1 );
+  mJoinInfo->joinLayerId = mJoinLayer->id();
+  mJoinInfo->targetFieldName = ( attribute1.startsWith( mTableAlias ) && attribute1.contains( "." ) ) ? attribute2 : attribute1;
+  mJoinInfo->joinFieldName = ( attribute1.startsWith( mTableAlias ) && attribute1.contains( "." ) ) ? attribute1.remove( 0, mTableAlias.size() + 1 ) : attribute2.remove( 0, mTableAlias.size() + 1 );
   mJoinInfo->memoryCache = true;
 
   const QgsFields& joinLayerFields = mJoinLayer->pendingFields();
@@ -2734,12 +2744,12 @@ QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature*
   QgsVectorLayer* joinLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( mJoinInfo->joinLayerId ) );
   if ( joinLayer )
   {
-    addJoinedAttributesFromCache( joinLayer, feat, targetFieldValue );
+    addJoinedAttributesFromCache( feat, targetFieldValue );
   }
   return mExpression->eval( parent, &feat );
 }
 
-void QgsExpression::NodeJoin::addJoinedAttributesFromCache( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const
+void QgsExpression::NodeJoin::addJoinedAttributesFromCache( QgsFeature& f, const QVariant& joinValue ) const
 {
   QHash< QString, QgsAttributes>::const_iterator it = mJoinInfo->cachedAttributes.find( joinValue.toString() );
   if ( it != mJoinInfo->cachedAttributes.constEnd() )

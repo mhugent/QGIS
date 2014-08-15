@@ -621,7 +621,7 @@ class CORE_EXPORT QgsExpression
         QgsVectorLayer* mJoinLayer;
         int mJoinFieldIndex;
 
-        void addJoinedAttributesFromCache( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const;
+        void addJoinedAttributesFromCache( QgsFeature& f, const QVariant& joinValue ) const;
 
       private:
         //assignment and copy constructor forbidden
