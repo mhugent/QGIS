@@ -615,12 +615,12 @@ class CORE_EXPORT QgsExpression
         QString mJoinCondition;
         QString mTableAlias;
 
-        //Information for join. Created in eval method
-        QgsVectorJoinInfo* mJoinInfo;
         QgsFields mCombinedFields;
         int mIndexOffset;
         QgsVectorLayer* mJoinLayer;
         int mJoinFieldIndex;
+        QString mJoinFieldName;
+        QString mTargetFieldName;
 
         QHash< QString, QgsAttributes >* mCachedAttributes;
 
