@@ -34,8 +34,8 @@
 #include "qgsogcutils.h"
 #include "qgsvectorlayer.h"
 #include "qgssymbollayerv2utils.h"
-#include "qgsvectorlayerjoinbuffer.h"
 #include "qgsvectorcolorrampv2.h"
+#include "qgsvectordataprovider.h"
 #include "qgsstylev2.h"
 
 // from parser
@@ -2753,9 +2753,13 @@ QVariant QgsExpression::NodeJoin::eval( QgsExpression* parent, const QgsFeature*
   }
 
   QVariant targetFieldValue = feat.attribute( mTargetFieldName );
-  if ( mJoinLayer )
+  if ( mJoinLayer && mCachedAttributes )
   {
     addJoinedAttributesFromCache( feat, targetFieldValue );
+  }
+  else if ( mJoinLayer )
+  {
+    addJoinedAttributesDirect( mJoinLayer, feat, targetFieldValue );
   }
   return mExpression->eval( parent, &feat );
 }
@@ -2779,6 +2783,77 @@ void QgsExpression::NodeJoin::addJoinedAttributesFromCache( QgsFeature& f, const
       }
     }
   }
+}
+
+void QgsExpression::NodeJoin::addJoinedAttributesDirect( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const
+{
+  if ( !joinLayer )
+  {
+    return;
+  }
+
+  // no memory cache, query the joined values by setting substring
+  QString subsetString = mJoinLayer->dataProvider()->subsetString(); // provider might already have a subset string
+  QString bkSubsetString = subsetString;
+  if ( !subsetString.isEmpty() )
+  {
+    subsetString.prepend( "(" ).append( ") AND " );
+  }
+
+  subsetString.append( QString( "\"%1\"" ).arg( mJoinFieldName ) );
+
+  if ( joinValue.isNull() )
+  {
+    subsetString += " IS NULL";
+  }
+  else
+  {
+    QString v = joinValue.toString();
+    switch ( joinValue.type() )
+    {
+      case QVariant::Int:
+      case QVariant::LongLong:
+      case QVariant::Double:
+        break;
+
+      default:
+      case QVariant::String:
+        v.replace( "'", "''" );
+        v.prepend( "'" ).append( "'" );
+        break;
+    }
+    subsetString += "=" + v;
+  }
+
+  mJoinLayer->dataProvider()->setSubsetString( subsetString, false );
+
+  // select (no geometry)
+  QgsFeatureRequest request;
+  request.setFlags( QgsFeatureRequest::NoGeometry );
+  request.setSubsetOfAttributes( QgsAttributeList() );
+  QgsFeatureIterator fi = mJoinLayer->getFeatures( request );
+
+  // get first feature
+  QgsFeature fet;
+  if ( fi.nextFeature( fet ) )
+  {
+    int index = mIndexOffset;
+    const QgsAttributes& attr = fet.attributes();
+    for ( int i = 0; i < attr.count(); ++i )
+    {
+      if ( i != mJoinFieldIndex )
+      {
+        f.setAttribute( index, attr[i] );
+        ++index;
+      }
+    }
+  }
+  else
+  {
+    // no suitable join feature found, keeping empty (null) attributes
+  }
+
+  joinLayer->dataProvider()->setSubsetString( bkSubsetString, false );
 }
 
 bool QgsExpression::NodeJoin::prepare( QgsExpression* parent, const QgsFields& fields )

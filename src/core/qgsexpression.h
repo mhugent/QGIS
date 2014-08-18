@@ -624,12 +624,13 @@ class CORE_EXPORT QgsExpression
 
         QHash< QString, QgsAttributes >* mCachedAttributes;
 
-        void addJoinedAttributesFromCache( QgsFeature& f, const QVariant& joinValue ) const;
-
       private:
         //assignment and copy constructor forbidden
         NodeJoin( const NodeJoin& j ) { Q_UNUSED( j ); }
         void operator=( const NodeJoin& j ) { Q_UNUSED( j ); }
+
+        void addJoinedAttributesFromCache( QgsFeature& f, const QVariant& joinValue ) const;
+        void addJoinedAttributesDirect( QgsVectorLayer* joinLayer, QgsFeature& f, const QVariant& joinValue ) const;
 
         static QCache< QPair< QString, QString >, QHash< QString, QgsAttributes > > mJoinCache;
     };
