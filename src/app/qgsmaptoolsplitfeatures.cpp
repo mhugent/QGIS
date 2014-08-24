@@ -13,11 +13,13 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "qgsmaptoolsplitfeatures.h"
+#include "qgisapp.h"
+#include "qgsmessagebar.h"
 #include "qgsmapcanvas.h"
+#include "qgsmaptoolsplitfeatures.h"
 #include "qgsproject.h"
-#include "qgsrubberband.h"
 #include "qgsvectorlayer.h"
+
 #include <QMessageBox>
 #include <QMouseEvent>
 
@@ -48,27 +50,54 @@ void QgsMapToolSplitFeatures::canvasReleaseEvent( QMouseEvent * e )
     return;
   }
 
-  //add point to list and to rubber band
-  int error = addVertex( e->pos() );
-  if ( error == 1 )
-  {
-    //current layer is not a vector layer
-    return;
-  }
-  else if ( error == 2 )
-  {
-    //problem with coordinate transformation
-    QMessageBox::information( 0, tr( "Coordinate transform error" ),
-                              tr( "Cannot transform the point to the layers coordinate system" ) );
-    return;
-  }
+  bool split = false;
 
+
+  //add point to list and to rubber band
   if ( e->button() == Qt::LeftButton )
   {
+    QList<QgsSnappingResult> snapResults;
+
+    //If we snap the first point on a vertex of a line layer, we directly split the feature at this point
+    if ( vlayer->geometryType() == QGis::Line && points().isEmpty() )
+    {
+      if ( mSnapper.snapToCurrentLayer( e->pos(), snapResults, QgsSnapper::SnapToVertex ) == 0 )
+      {
+        if ( snapResults.size() > 0 )
+        {
+          split = true;
+        }
+      }
+    }
+
+    int error = addVertex( e->pos() );
+    if ( error == 1 )
+    {
+      //current layer is not a vector layer
+      return;
+    }
+    else if ( error == 2 )
+    {
+      //problem with coordinate transformation
+      QgisApp::instance()->messageBar()->pushMessage(
+        tr( "Coordinate transform error" ),
+        tr( "Cannot transform the point to the layers coordinate system" ),
+        QgsMessageBar::INFO,
+        QgisApp::instance()->messageTimeout() );
+      return;
+    }
+
     startCapturing();
   }
   else if ( e->button() == Qt::RightButton )
   {
+    split = true;
+  }
+
+  if ( split )
+  {
+    deleteTempRubberBand();
+
     //bring up dialog if a split was not possible (polygon) or only done once (line)
     int topologicalEditing = QgsProject::instance()->readNumEntry( "Digitizing", "/TopologicalEditing", 0 );
     vlayer->beginEditCommand( tr( "Features split" ) );
@@ -76,20 +105,36 @@ void QgsMapToolSplitFeatures::canvasReleaseEvent( QMouseEvent * e )
     vlayer->endEditCommand();
     if ( returnCode == 4 )
     {
-      QMessageBox::warning( 0, tr( "No feature split done" ), tr( "If there are selected features, the split tool only applies to the selected ones. If you like to split all features under the split line, clear the selection" ) );
+      QgisApp::instance()->messageBar()->pushMessage(
+        tr( "No features were split" ),
+        tr( "If there are selected features, the split tool only applies to those. If you would like to split all features under the split line, clear the selection." ),
+        QgsMessageBar::WARNING,
+        QgisApp::instance()->messageTimeout() );
     }
     else if ( returnCode == 3 )
     {
-      QMessageBox::warning( 0, tr( "No feature split done" ), tr( "Cut edges detected. Make sure the line splits features into multiple parts." ) );
+      QgisApp::instance()->messageBar()->pushMessage(
+        tr( "No feature split done" ),
+        tr( "Cut edges detected. Make sure the line splits features into multiple parts." ),
+        QgsMessageBar::WARNING,
+        QgisApp::instance()->messageTimeout() );
     }
     else if ( returnCode == 7 )
     {
-      QMessageBox::warning( 0, tr( "No feature split done" ), tr( "The geometry is invalid. Please repair before trying to split it." ) );
+      QgisApp::instance()->messageBar()->pushMessage(
+        tr( "No feature split done" ),
+        tr( "The geometry is invalid. Please repair before trying to split it." ),
+        QgsMessageBar::WARNING,
+        QgisApp::instance()->messageTimeout() );
     }
     else if ( returnCode != 0 )
     {
       //several intersections but only one split (most likely line)
-      QMessageBox::warning( 0, tr( "Split error" ), tr( "An error occured during feature splitting" ) );
+      QgisApp::instance()->messageBar()->pushMessage(
+        tr( "No feature split done" ),
+        tr( "An error occured during splitting." ),
+        QgsMessageBar::WARNING,
+        QgisApp::instance()->messageTimeout() );
     }
 
     stopCapturing();

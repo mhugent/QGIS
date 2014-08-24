@@ -31,6 +31,7 @@ class QgsRasterLayer;
 class QgsVectorLayer;
 class QgsMapLayer;
 class QgsMapCanvas;
+class QgsHighlight;
 
 /**
   \brief Map tool for identifying features in layers
@@ -38,7 +39,7 @@ class QgsMapCanvas;
   after selecting a point, performs the identification:
   - for raster layers shows value of underlying pixel
   - for vector layers shows feature attributes within search radius
-    (allows to edit values when vector layer is in editing mode)
+    (allows editing values when vector layer is in editing mode)
 */
 class GUI_EXPORT QgsMapToolIdentify : public QgsMapTool
 {
@@ -51,7 +52,8 @@ class GUI_EXPORT QgsMapToolIdentify : public QgsMapTool
       DefaultQgsSetting = -1,
       ActiveLayer,
       TopDownStopAtFirst,
-      TopDownAll
+      TopDownAll,
+      LayerSelection
     };
 
     enum LayerType
@@ -119,8 +121,13 @@ class GUI_EXPORT QgsMapToolIdentify : public QgsMapTool
     @return a list of IdentifyResult*/
     QList<IdentifyResult> identify( int x, int y, IdentifyMode mode, LayerType layerType = AllLayers );
 
+  protected:
+    //! rubber bands for layer select mode
+    void deleteRubberBands();
+
   public slots:
     void formatChanged( QgsRasterLayer *layer );
+    void layerDestroyed();
 
   signals:
     void identifyProgress( int, int );
@@ -153,12 +160,22 @@ class GUI_EXPORT QgsMapToolIdentify : public QgsMapTool
 
     QMap< QString, QString > featureDerivedAttributes( QgsFeature *feature, QgsMapLayer *layer );
 
+    // specific to layer selection mode
+    //! layer id map for layer select mode
+    QMap< QgsMapLayer*, QList<IdentifyResult> > mLayerIdResults;
+    //! rubber bands for layer select mode
+    QList<QgsHighlight*> mRubberBands;
+
     // Last point in canvas CRS
     QgsPoint mLastPoint;
 
     double mLastMapUnitsPerPixel;
 
     QgsRectangle mLastExtent;
+
+  private slots:
+    //! menu for layer selection
+    void handleMenuHover();
 };
 
 #endif

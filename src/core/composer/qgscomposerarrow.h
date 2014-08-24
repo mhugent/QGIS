@@ -63,7 +63,7 @@ class CORE_EXPORT QgsComposerArrow: public QgsComposerItem
     void setArrowColor( const QColor& c ) { mArrowColor = c; }
 
     MarkerMode markerMode() const { return mMarkerMode;}
-    void setMarkerMode( MarkerMode mode ) {mMarkerMode = mode;}
+    void setMarkerMode( MarkerMode mode );
 
     /** stores state in Dom element
     * @param elem is Dom element corresponding to 'Composer' tag
@@ -88,6 +88,12 @@ class CORE_EXPORT QgsComposerArrow: public QgsComposerItem
     QPointF mStartPoint;
     QPointF mStopPoint;
 
+    /**Considering the rectangle as spanning [x[0], x[1]] x [y[0], y[1]], these
+     * indices specify which index {0, 1} corresponds to the start point
+     * coordinate of the respective dimension*/
+    int mStartXIdx;
+    int mStartYIdx;
+
     QPen mPen;
     QBrush mBrush;
 
@@ -104,12 +110,16 @@ class CORE_EXPORT QgsComposerArrow: public QgsComposerItem
     /**Default marker, no marker or svg marker*/
     MarkerMode mMarkerMode;
     QColor mArrowColor;
-
-
+    /**Indicates QGIS version to mimic bounding box behaviour for. The line placement changed in version 2.4, so a value
+     * of 22 is used to indicate that the line should be drawn using the older placement routine.
+    */
+    int mBoundsBehaviour;
 
     /**Adapts the item scene rect to contain the start point, the stop point including the arrow marker and the outline.
         Needs to be called whenever the arrow width/height, the outline with or the endpoints are changed*/
     void adaptItemSceneRect();
+    /**Computes the margin around the line necessary to include the markers */
+    double computeMarkerMargin() const;
     /**Draws the default marker at the line end*/
     void drawHardcodedMarker( QPainter* p, MarkerType type );
     /**Draws a user-defined marker (must be an svg file)*/
@@ -119,3 +129,5 @@ class CORE_EXPORT QgsComposerArrow: public QgsComposerItem
 };
 
 #endif // QGSCOMPOSERARROW_H
+
+

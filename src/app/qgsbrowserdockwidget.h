@@ -25,7 +25,7 @@ class QgsLayerItem;
 class QgsDataItem;
 class QgsBrowserTreeFilterProxyModel;
 
-class QgsBrowserDockWidget : public QDockWidget, private Ui::QgsBrowserDockWidgetBase
+class APP_EXPORT QgsBrowserDockWidget : public QDockWidget, private Ui::QgsBrowserDockWidgetBase
 {
     Q_OBJECT
   public:
@@ -44,6 +44,7 @@ class QgsBrowserDockWidget : public QDockWidget, private Ui::QgsBrowserDockWidge
 
     void showFilterWidget( bool visible );
     void setFilterSyntax( QAction * );
+    void setCaseSensitive( bool caseSensitive );
     void setFilter();
 
     // layer menu items

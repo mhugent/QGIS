@@ -40,7 +40,7 @@
 
 #include <spatialite.h>
 
-QgsNewSpatialiteLayerDialog::QgsNewSpatialiteLayerDialog( QWidget *parent, Qt::WFlags fl )
+QgsNewSpatialiteLayerDialog::QgsNewSpatialiteLayerDialog( QWidget *parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
   setupUi( this );
@@ -74,7 +74,7 @@ QgsNewSpatialiteLayerDialog::QgsNewSpatialiteLayerDialog( QWidget *parent, Qt::W
 
   // Set the SRID box to a default of WGS84
   QgsCoordinateReferenceSystem srs;
-  srs.createFromOgcWmsCrs( GEO_EPSG_CRS_AUTHID );
+  srs.createFromOgcWmsCrs( settings.value( "/Projections/layerDefaultCrs", GEO_EPSG_CRS_AUTHID ).toString() );
   srs.validate();
   mCrsId = srs.authid();
   leSRID->setText( srs.authid() + " - " + srs.description() );

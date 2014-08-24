@@ -247,8 +247,8 @@ class GeoprocessingDialog( QDialog, Ui_Dialog ):
       out_text = self.tr( "\nWarnings:" )
       end_text = self.tr( "\nSome output geometries may be missing or invalid.\n\nWould you like to add the new layer anyway?" )
     else:
-      out_text = "\n"
-      end_text = self.tr( "\n\nWould you like to add the new layer to the TOC?" )
+      out_text = ""
+      end_text = ""
     if not results[2] is None:
       if not results[2]:
         out_text = out_text + self.tr( "\nInput CRS error: Different input coordinate reference systems detected, results may not be as expected.")
@@ -258,11 +258,13 @@ class GeoprocessingDialog( QDialog, Ui_Dialog ):
       out_text = out_text + self.tr( "\nFeature geometry error: One or more output features ignored due to invalid geometry.")
     if not results[0]:
       out_text = out_text + self.tr( "\nGEOS geoprocessing error: One or more input features have invalid geometry.")
-    addToTOC = QMessageBox.question( self, self.tr("Geoprocessing"), self.tr( "Created output shapefile:\n%s\n%s%s" ) % ( unicode( self.shapefileName ), out_text, end_text ), QMessageBox.Yes, QMessageBox.No, QMessageBox.NoButton )
-    if addToTOC == QMessageBox.Yes:
-      if not ftools_utils.addShapeToCanvas( unicode( self.shapefileName ) ):
-          QMessageBox.warning( self, self.tr("Geoprocessing"), self.tr( "Error loading output shapefile:\n%s" ) % ( unicode( self.shapefileName ) ))
+    if self.addToCanvasCheck.isChecked():
+      addCanvasCheck = ftools_utils.addShapeToCanvas(unicode(self.shapefileName))
+      if not addCanvasCheck:
+        QMessageBox.warning( self, self.tr("Geoprocessing"), self.tr( "Error loading output shapefile:\n%s" ) % ( unicode( self.shapefileName ) ))
       self.populateLayers()
+    else:
+      QMessageBox.information(self, self.tr("Geoprocessing"),self.tr("Created output shapefile:\n%s\n%s%s" ) % ( unicode( self.shapefileName ), out_text, end_text ))
 
   def runStatusFromThread( self, status ):
     self.progressBar.setValue( status )
@@ -465,13 +467,17 @@ class geoprocessingThread( QThread ):
     GEOS_EXCEPT = True
     FEATURE_EXCEPT = True
     vproviderA = self.vlayerA.dataProvider()
-    # creating fields
-    idField = QgsField("outID", QVariant.String)
+    #
+    outFeatFields = QgsFields()
+    if useField:
+      importedField = vproviderA.fields().at( self.myParam )
+      importedFieldName = importedField.name( )
+    #
+    outFeatFields.extend( vproviderA.fields() )
+    # creating area and perimeter fields
     areaField = QgsField("area", QVariant.Double)
     perimField = QgsField("perim", QVariant.Double)
     # appending fields
-    outFeatFields = QgsFields()
-    outFeatFields.append(idField)
     outFeatFields.append(areaField)
     outFeatFields.append(perimField)
     #
@@ -499,15 +505,14 @@ class geoprocessingThread( QThread ):
         self.emit( SIGNAL( "runStatus(PyQt_PyObject)" ), 0 )
         self.emit( SIGNAL( "runRange(PyQt_PyObject)" ), ( 0, nFeat ) )
         for i in unique:
-          hull = []
           first = True
-          outID = 0
+          hull = []
           for inFeat in selectionA:
             atMap = inFeat.attributes()
             idVar = atMap[ self.myParam ]
             if idVar == i:
               if first:
-                outID = idVar
+                firstFeature = QgsFeature( inFeat )
                 first = False
               inGeom = QgsGeometry( inFeat.geometry() )
               points = ftools_utils.extractPoints( inGeom )
@@ -520,7 +525,8 @@ class geoprocessingThread( QThread ):
               outGeom = tmpGeom.convexHull()
               outFeat.setGeometry( outGeom )
               (area, perim) = self.simpleMeasure( outGeom )
-              outFeat.setAttribute( "outID", outID )
+              for f in firstFeature.fields():
+                outFeat.setAttribute( f.name( ), firstFeature.attribute( f.name( ) ) )
               outFeat.setAttribute( "area", area )
               outFeat.setAttribute( "perim", perim )
               writer.addFeature( outFeat )
@@ -541,6 +547,11 @@ class geoprocessingThread( QThread ):
         try:
           outGeom = tmpGeom.convexHull()
           outFeat.setGeometry( outGeom )
+          (area, perim) = self.simpleMeasure( outGeom )
+          for f in inFeat.fields():
+            outFeat.setAttribute( f.name( ), inFeat.attribute( f.name( ) ) )
+          outFeat.setAttribute( "area", area )
+          outFeat.setAttribute( "perim", perim )
           writer.addFeature( outFeat )
         except:
           GEOS_EXCEPT = False
@@ -552,18 +563,16 @@ class geoprocessingThread( QThread ):
         nFeat = nFeat * len( unique )
         self.emit( SIGNAL( "runStatus(PyQt_PyObject)" ), 0 )
         self.emit( SIGNAL( "runRange(PyQt_PyObject)" ), ( 0, nFeat ) )
-        for i in unique:
-          hull = []
-          first = True
-          outID = 0
 
+        for i in unique:
+          first = True
+          hull = []
           fitA = vproviderA.getFeatures()
           while fitA.nextFeature( inFeat ):
-            atMap = inFeat.attributes()
-            idVar = atMap[ self.myParam ]
+            idVar = inFeat.attribute( importedFieldName )
             if idVar == i:
               if first:
-                outID = idVar
+                firstFeature = QgsFeature( inFeat )
                 first = False
               inGeom = QgsGeometry( inFeat.geometry() )
               points = ftools_utils.extractPoints( inGeom )
@@ -576,7 +585,8 @@ class geoprocessingThread( QThread ):
               outGeom = tmpGeom.convexHull()
               outFeat.setGeometry( outGeom )
               (area, perim) = self.simpleMeasure( outGeom )
-              outFeat.setAttribute( "outID", outID )
+              for f in firstFeature.fields():
+                outFeat.setAttribute( f.name( ), firstFeature.attribute( f.name( ) ) )
               outFeat.setAttribute( "area", area )
               outFeat.setAttribute( "perim", perim )
               writer.addFeature( outFeat )
@@ -598,6 +608,11 @@ class geoprocessingThread( QThread ):
         try:
           outGeom = tmpGeom.convexHull()
           outFeat.setGeometry( outGeom )
+          (area, perim) = self.simpleMeasure( outGeom )
+          for f in inFeat.fields():
+            outFeat.setAttribute( f.name( ), inFeat.attribute( f.name( ) ) )
+          outFeat.setAttribute( "area", area )
+          outFeat.setAttribute( "perim", perim )
           writer.addFeature( outFeat )
         except:
           GEOS_EXCEPT = False
@@ -1092,7 +1107,7 @@ class geoprocessingThread( QThread ):
     indexA = ftools_utils.createIndex( vproviderB )
     indexB = ftools_utils.createIndex( vproviderA )
 
-    nFeat = vproviderA.featureCount() * vproviderB.featureCount()
+    nFeat = vproviderA.featureCount() + vproviderB.featureCount()
     self.emit( SIGNAL( "runStatus(PyQt_PyObject)" ), 0)
     self.emit( SIGNAL( "runRange(PyQt_PyObject)" ), ( 0, nFeat ) )
 
@@ -1196,14 +1211,14 @@ class geoprocessingThread( QThread ):
             FEATURE_EXCEPT = False
 
     length = len( vproviderA.fields() )
+    atMapA = [None] * length
 
     fitB = vproviderB.getFeatures()
-    while fitB.nextFeature( inFeatA ):
+    while fitB.nextFeature( inFeatB ):
       add = False
-      geom = QgsGeometry( inFeatA.geometry() )
+      geom = QgsGeometry( inFeatB.geometry() )
       diff_geom = QgsGeometry( geom )
-      atMap = inFeatA.attributes()
-      atMap = dict( zip( range( length, length + len( atMap ) ), atMap ) )
+      atMap = atMapA + inFeatB.attributes()
       intersects = indexB.intersects( geom.boundingBox() )
 
       if len(intersects) < 1:
@@ -1215,8 +1230,8 @@ class geoprocessingThread( QThread ):
           FEATURE_EXCEPT = False
       else:
         for id in intersects:
-          vproviderB.getFeatures( QgsFeatureRequest().setFilterFid( int( id ) ) ).nextFeature( inFeatB )
-          tmpGeom = QgsGeometry( inFeatB.geometry() )
+          vproviderA.getFeatures( QgsFeatureRequest().setFilterFid( int( id ) ) ).nextFeature( inFeatA )
+          tmpGeom = QgsGeometry( inFeatA.geometry() )
 
           try:
             if diff_geom.intersects( tmpGeom ):
@@ -1314,7 +1329,7 @@ class geoprocessingThread( QThread ):
       geom = QgsGeometry( inFeatA.geometry() )
       diff_geom = QgsGeometry( geom )
       atMap = inFeatA.attributes()
-      atMap = dict( zip( range( length, length + len( atMap ) ), atMap ) )
+      atMap = [ NULL ] * length + atMap
       intersects = indexB.intersects( geom.boundingBox() )
       for id in intersects:
         vproviderA.getFeatures( QgsFeatureRequest().setFilterFid( int( id ) ) ).nextFeature( inFeatB )

@@ -46,7 +46,7 @@ class TreeFilterProxyModel : public QSortFilterProxyModel
     bool filterAcceptsRow( int sourceRow, const QModelIndex &sourceParent ) const
     {
       QgsCptCityDataItem* item = mModel->dataItem( mModel->index( sourceRow, 0, sourceParent ) );
-      return ( item && ! item->type() == QgsCptCityDataItem::ColorRamp );
+      return ( item && !( item->type() == QgsCptCityDataItem::ColorRamp ) );
     }
     // bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
@@ -145,8 +145,7 @@ QgsCptCityColorRampV2Dialog::QgsCptCityColorRampV2Dialog( QgsCptCityColorRampV2*
   QgsDebugMsg( "looking for ramp " + mRamp->schemeName() );
   if ( mRamp->schemeName() != "" )
   {
-    bool found = false;
-    found = updateRamp();
+    bool found = updateRamp();
     if ( ! found )
     {
       tabBar->setCurrentIndex( 1 );
@@ -161,6 +160,10 @@ QgsCptCityColorRampV2Dialog::QgsCptCityColorRampV2Dialog( QgsCptCityColorRampV2*
     }
     if ( found )
       buttonBox->button( QDialogButtonBox::Ok )->setEnabled( true );
+  }
+  else
+  {
+    updateRamp();
   }
 
   tabBar->blockSignals( false );
@@ -315,8 +318,17 @@ void QgsCptCityColorRampV2Dialog::on_mListWidget_itemClicked( QListWidgetItem * 
   }
 }
 
+void QgsCptCityColorRampV2Dialog::on_mListWidget_itemSelectionChanged()
+{
+  if ( mListWidget->selectedItems().count() == 0 )
+  {
+    mRamp->setName( "", "" );
+  }
+}
+
 void QgsCptCityColorRampV2Dialog::on_tabBar_currentChanged( int index )
 {
+  QgsDebugMsg( "Entered" );
   if ( index == 0 )
   {
     setTreeModel( mSelectionsModel );
@@ -334,7 +346,9 @@ void QgsCptCityColorRampV2Dialog::on_tabBar_currentChanged( int index )
     mArchiveViewType = QgsCptCityBrowserModel::Authors;
   }
 
+  mListWidget->blockSignals( true );
   updateRamp();
+  mListWidget->blockSignals( false );
 }
 
 
@@ -506,6 +520,7 @@ bool QgsCptCityColorRampV2Dialog::saveAsGradientRamp() const
 
 void QgsCptCityColorRampV2Dialog::updateListWidget( QgsCptCityDataItem *item )
 {
+  mListWidget->blockSignals( true );
   mListWidget->clear();
   mListRamps.clear();
   QgsCptCityCollectionItem* colItem = dynamic_cast<QgsCptCityCollectionItem*>( item );
@@ -535,6 +550,7 @@ void QgsCptCityColorRampV2Dialog::updateListWidget( QgsCptCityDataItem *item )
   {
     QgsDebugMsg( "invalid item" );
   }
+  mListWidget->blockSignals( false );
 }
 
 // this function is for a svg preview, available if the svg files have been processed with svgx
@@ -568,6 +584,7 @@ bool QgsCptCityColorRampV2Dialog::eventFilter( QObject *obj, QEvent *event )
 
 bool QgsCptCityColorRampV2Dialog::updateRamp()
 {
+  QgsDebugMsg( "Entered" );
   mListWidget->clear();
   mListRamps.clear();
   cboVariantName->clear();
@@ -579,12 +596,17 @@ bool QgsCptCityColorRampV2Dialog::updateRamp()
 
   QgsDebugMsg( "schemeName= " + mRamp->schemeName() );
   if ( mRamp->schemeName() == "" )
+  {
+    showAll();
     return false;
+  }
 
   // search for item in model
   QModelIndex modelIndex = mModel->findPath( mRamp->schemeName() );
   if ( modelIndex == QModelIndex() )
+  {
     return false;
+  }
   QgsCptCityColorRampItem* childItem =
     dynamic_cast<QgsCptCityColorRampItem*>( mModel->dataItem( modelIndex ) );
   if ( ! childItem )
@@ -628,8 +650,22 @@ bool QgsCptCityColorRampV2Dialog::updateRamp()
   return false;
 }
 
+void QgsCptCityColorRampV2Dialog::showAll()
+{
+  QModelIndex modelIndex = mModel->findPath( "" );
+  if ( modelIndex != QModelIndex() )
+  {
+    QModelIndex selIndex = mTreeFilter->mapFromSource( modelIndex );
+    mTreeView->setCurrentIndex( selIndex );
+    mTreeView->setExpanded( selIndex, true );
+    mTreeView->scrollTo( selIndex, QAbstractItemView::PositionAtCenter );
+    updateTreeView( mModel->dataItem( modelIndex ), false );
+  }
+}
+
 void QgsCptCityColorRampV2Dialog::setTreeModel( QgsCptCityBrowserModel* model )
 {
+  QgsDebugMsg( "Entered" );
   mModel = model;
 
   if ( mTreeFilter )

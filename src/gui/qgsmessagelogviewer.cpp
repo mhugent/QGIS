@@ -39,10 +39,11 @@ static QIcon icon( QString icon )
   return QIcon( path );
 }
 
-QgsMessageLogViewer::QgsMessageLogViewer( QStatusBar *statusBar, QWidget *parent, Qt::WFlags fl )
+QgsMessageLogViewer::QgsMessageLogViewer( QStatusBar *statusBar, QWidget *parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )
     , mButton( 0 )
     , mCount( 0 )
+    , mShowToolTips( true )
 {
   setupUi( this );
 
@@ -56,7 +57,9 @@ QgsMessageLogViewer::QgsMessageLogViewer( QStatusBar *statusBar, QWidget *parent
     mButton->setMaximumWidth( 20 );
     mButton->setMaximumHeight( 20 );
     mButton->setIcon( icon( "/mIconWarn.png" ) );
+#ifndef ANDROID
     mButton->setToolTip( tr( "No messages." ) );
+#endif
     mButton->setCheckable( true );
     mButton->hide();
     connect( mButton, SIGNAL( toggled( bool ) ), this, SLOT( buttonToggled( bool ) ) );
@@ -108,12 +111,17 @@ void QgsMessageLogViewer::buttonDestroyed()
 
 void QgsMessageLogViewer::logMessage( QString message, QString tag, QgsMessageLog::MessageLevel level )
 {
+#ifdef ANDROID
+  mCount++;
+#else
   mButton->setToolTip( tr( "%1 message(s) logged." ).arg( mCount++ ) );
+#endif
 
   if ( !isVisible() && level > QgsMessageLog::INFO )
   {
     mButton->show();
-    QToolTip::showText( mButton->mapToGlobal( QPoint( 0, 0 ) ), mButton->toolTip() );
+    if ( mShowToolTips )
+      QToolTip::showText( mButton->mapToGlobal( QPoint( 0, 0 ) ), mButton->toolTip() );
   }
 
   if ( tag.isNull() )
@@ -138,6 +146,7 @@ void QgsMessageLogViewer::logMessage( QString message, QString tag, QgsMessageLo
     w->setGridStyle( Qt::DotLine );
     w->setEditTriggers( QAbstractItemView::NoEditTriggers );
     w->setHorizontalScrollMode( QAbstractItemView::ScrollPerPixel );
+    w->setVerticalScrollMode( QAbstractItemView::ScrollPerPixel );
     w->setHorizontalHeaderLabels( QStringList() << tr( "Timestamp" ) << tr( "Message" ) << tr( "Level" ) );
     tabWidget->addTab( w, tag );
 
@@ -163,7 +172,11 @@ void QgsMessageLogViewer::closeTab( int index )
   {
     mCount -= w->rowCount();
     if ( mButton )
+#ifdef ANDROID
+      mCount++;
+#else
       mButton->setToolTip( tr( "%1 message(s) logged." ).arg( mCount++ ) );
+#endif
   }
   tabWidget->removeTab( index );
 }

@@ -13,26 +13,34 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "qgsdualview.h"
-#include "qgsmapcanvas.h"
-#include "qgsvectorlayercache.h"
-#include "qgsattributetablemodel.h"
-#include "qgsfeaturelistmodel.h"
-#include "qgsattributedialog.h"
 #include "qgsapplication.h"
-#include "qgsexpressionbuilderdialog.h"
 #include "qgsattributeaction.h"
+#include "qgsattributeform.h"
+#include "qgsattributetablemodel.h"
+#include "qgsdualview.h"
+#include "qgsexpressionbuilderdialog.h"
+#include "qgsfeaturelistmodel.h"
+#include "qgsifeatureselectionmanager.h"
+#include "qgsmapcanvas.h"
+#include "qgsmaplayeractionregistry.h"
+#include "qgsmessagelog.h"
 #include "qgsvectordataprovider.h"
+#include "qgsvectordataprovider.h"
+#include "qgsvectorlayercache.h"
 
 #include <QDialog>
 #include <QMenu>
-#include <QProgressDialog>
 #include <QMessageBox>
+#include <QProgressDialog>
 
 QgsDualView::QgsDualView( QWidget* parent )
     : QStackedWidget( parent )
-    , mAttributeDialog( NULL )
-    , mProgressDlg( NULL )
+    , mEditorContext()
+    , mMasterModel( 0 )
+    , mAttributeForm( 0 )
+    , mLayerCache( 0 )
+    , mProgressDlg( 0 )
+    , mFeatureSelectionManager( 0 )
 {
   setupUi( this );
 
@@ -48,31 +56,27 @@ QgsDualView::QgsDualView( QWidget* parent )
   connect( mActionExpressionPreview, SIGNAL( triggered() ), SLOT( previewExpressionBuilder() ) );
   connect( mPreviewActionMapper, SIGNAL( mapped( QObject* ) ), SLOT( previewColumnChanged( QObject* ) ) );
   connect( mFeatureList, SIGNAL( displayExpressionChanged( QString ) ), this, SLOT( previewExpressionChanged( QString ) ) );
-  connect( this, SIGNAL( currentChanged( int ) ), this, SLOT( saveEditChanges() ) );
 }
 
-QgsDualView::~QgsDualView()
+void QgsDualView::init( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, const QgsFeatureRequest &request, QgsAttributeEditorContext context )
 {
-  delete mAttributeDialog;
-}
-
-void QgsDualView::init( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, QgsDistanceArea myDa )
-{
-  mDistanceArea = myDa;
+  mEditorContext = context;
 
   connect( mTableView, SIGNAL( willShowContextMenu( QMenu*, QModelIndex ) ), this, SLOT( viewWillShowContextMenu( QMenu*, QModelIndex ) ) );
 
-  connect( layer, SIGNAL( editingStarted() ), this, SLOT( editingToggled() ) );
-  connect( layer, SIGNAL( beforeCommitChanges() ), this, SLOT( editingToggled() ) );
-
   initLayerCache( layer );
-  initModels( mapCanvas );
+  initModels( mapCanvas, request );
 
   mTableView->setModel( mFilterModel );
   mFeatureList->setModel( mFeatureListModel );
+  mAttributeForm = new QgsAttributeForm( layer, QgsFeature(), mEditorContext );
+  mAttributeEditorScrollArea->setLayout( new QGridLayout() );
+  mAttributeEditorScrollArea->layout()->addWidget( mAttributeForm );
+  mAttributeEditorScrollArea->setWidget( mAttributeForm );
 
-  mAttributeDialog = new QgsAttributeDialog( layer, 0, false, myDa );
-  mAttributeEditorLayout->addWidget( mAttributeDialog->dialog() );
+  mAttributeForm->hideButtonBox();
+
+  connect( mAttributeForm, SIGNAL( attributeChanged( QString, QVariant ) ), this, SLOT( featureFormAttributeChanged() ) );
 
   columnBoxInit();
 }
@@ -82,13 +86,19 @@ void QgsDualView::columnBoxInit()
   // load fields
   QList<QgsField> fields = mLayerCache->layer()->pendingFields().toList();
 
+  QString defaultField;
+
   // default expression: saved value
   QString displayExpression = mLayerCache->layer()->displayExpression();
 
   // if no display expression is saved: use display field instead
   if ( displayExpression == "" )
   {
-    displayExpression = mLayerCache->layer()->displayField();
+    if ( mLayerCache->layer()->displayField() != "" )
+    {
+      defaultField = mLayerCache->layer()->displayField();
+      displayExpression = QString( "COALESCE(\"%1\", '<NULL>')" ).arg( defaultField );
+    }
   }
 
   // if neither diaplay expression nor display field is saved...
@@ -98,23 +108,29 @@ void QgsDualView::columnBoxInit()
 
     if ( pkAttrs.size() > 0 )
     {
+      if ( pkAttrs.size() == 1 )
+        defaultField = pkAttrs.at( 0 );
+
       // ... If there are primary key(s) defined
       QStringList pkFields;
 
-      foreach ( int attr, pkAttrs )
+      Q_FOREACH( int attr, pkAttrs )
       {
-        pkFields.append( "\"" + fields[attr].name() + "\"" );
+        pkFields.append( "COALESCE(\"" + fields[attr].name() + "\", '<NULL>')" );
       }
 
       displayExpression = pkFields.join( "||', '||" );
     }
     else if ( fields.size() > 0 )
     {
+      if ( fields.size() == 1 )
+        defaultField = fields.at( 0 ).name();
+
       // ... concat all fields
       QStringList fieldNames;
       foreach ( QgsField field, fields )
       {
-        fieldNames.append( "\"" + field.name() + "\"" );
+        fieldNames.append( "COALESCE(\"" + field.name() + "\", '<NULL>')" );
       }
 
       displayExpression = fieldNames.join( "||', '||" );
@@ -122,7 +138,7 @@ void QgsDualView::columnBoxInit()
     else
     {
       // ... there isn't really much to display
-      displayExpression = "[Please define preview text]";
+      displayExpression = "'[Please define preview text]'";
     }
   }
 
@@ -140,9 +156,9 @@ void QgsDualView::columnBoxInit()
   mFeatureListPreviewButton->addAction( mActionExpressionPreview );
   mFeatureListPreviewButton->addAction( mActionPreviewColumnsMenu );
 
-  foreach ( const QgsField field, fields )
+  foreach ( const QgsField& field, fields )
   {
-    if ( mLayerCache->layer()->editType( mLayerCache->layer()->fieldNameIndex( field.name() ) ) != QgsVectorLayer::Hidden )
+    if ( mLayerCache->layer()->editorWidgetV2( mLayerCache->layer()->fieldNameIndex( field.name() ) ) != "Hidden" )
     {
       QIcon icon = QgsApplication::getThemeIcon( "/mActionNewAttribute.png" );
       QString text = field.name();
@@ -153,7 +169,7 @@ void QgsDualView::columnBoxInit()
       connect( previewAction, SIGNAL( triggered() ), mPreviewActionMapper, SLOT( map() ) );
       mPreviewColumnsMenu->addAction( previewAction );
 
-      if ( text == displayExpression )
+      if ( text == defaultField )
       {
         mFeatureListPreviewButton->setDefaultAction( previewAction );
       }
@@ -172,18 +188,6 @@ void QgsDualView::columnBoxInit()
   }
 }
 
-void QgsDualView::hideEvent( QHideEvent* event )
-{
-  saveEditChanges();
-  QStackedWidget::hideEvent( event );
-}
-
-void QgsDualView::focusOutEvent( QFocusEvent* event )
-{
-  saveEditChanges();
-  QStackedWidget::focusOutEvent( event );
-}
-
 void QgsDualView::setView( QgsDualView::ViewMode view )
 {
   setCurrentIndex( view );
@@ -192,6 +196,7 @@ void QgsDualView::setView( QgsDualView::ViewMode view )
 void QgsDualView::setFilterMode( QgsAttributeTableFilterModel::FilterMode filterMode )
 {
   mFilterModel->setFilterMode( filterMode );
+  emit filterChanged();
 }
 
 void QgsDualView::setSelectedOnTop( bool selectedOnTop )
@@ -215,9 +220,10 @@ void QgsDualView::initLayerCache( QgsVectorLayer* layer )
   }
 }
 
-void QgsDualView::initModels( QgsMapCanvas* mapCanvas )
+void QgsDualView::initModels( QgsMapCanvas* mapCanvas, const QgsFeatureRequest& request )
 {
   mMasterModel = new QgsAttributeTableModel( mLayerCache, this );
+  mMasterModel->setRequest( request );
 
   connect( mMasterModel, SIGNAL( progress( int, bool & ) ), this, SLOT( progress( int, bool & ) ) );
   connect( mMasterModel, SIGNAL( finished() ), this, SLOT( finished() ) );
@@ -231,62 +237,34 @@ void QgsDualView::initModels( QgsMapCanvas* mapCanvas )
   mFeatureListModel = new QgsFeatureListModel( mFilterModel, mFilterModel );
 }
 
+void QgsDualView::on_mFeatureList_aboutToChangeEditSelection( bool& ok )
+{
+  if ( mLayerCache->layer()->isEditable() && !mAttributeForm->save() )
+    ok = false;
+}
+
 void QgsDualView::on_mFeatureList_currentEditSelectionChanged( const QgsFeature &feat )
 {
-  if ( !feat.isValid() )
-    return;
-
-  // Backup old dialog and delete only after creating the new dialog, so we can "hot-swap" the contained QgsFeature
-  QgsAttributeDialog* oldDialog = mAttributeDialog;
-
-  if ( mAttributeDialog->dialog() )
+  if ( !mLayerCache->layer()->isEditable() || mAttributeForm->save() )
   {
-    saveEditChanges();
-    mAttributeEditorLayout->removeWidget( mAttributeDialog->dialog() );
+    mAttributeForm->setFeature( feat );
+    setCurrentEditSelection( QgsFeatureIds() << feat.id() );
   }
-
-  mAttributeDialog = new QgsAttributeDialog( mLayerCache->layer(), new QgsFeature( feat ), true, mDistanceArea, this, false );
-  mAttributeEditorLayout->addWidget( mAttributeDialog->dialog() );
-  mAttributeDialog->dialog()->setVisible( true );
-
-  delete oldDialog;
+  else
+  {
+    // Couldn't save feature
+  }
 }
 
 void QgsDualView::setCurrentEditSelection( const QgsFeatureIds& fids )
 {
+  mFeatureList->setCurrentFeatureEdited( false );
   mFeatureList->setEditSelection( fids );
 }
 
-void QgsDualView::saveEditChanges()
+bool QgsDualView::saveEditChanges()
 {
-  if ( mAttributeDialog && mAttributeDialog->dialog() )
-  {
-    if ( mLayerCache->layer()->isEditable() )
-    {
-      // Get the current (unedited) feature
-      QgsFeature srcFeat;
-      QgsFeatureId fid = mAttributeDialog->feature()->id();
-      mLayerCache->featureAtId( fid, srcFeat );
-      QgsAttributes src = srcFeat.attributes();
-
-      // Let the dialog write the edited widget values to it's feature
-      mAttributeDialog->accept();
-      // Get the edited feature
-      const QgsAttributes &dst = mAttributeDialog->feature()->attributes();
-
-      mLayerCache->layer()->beginEditCommand( tr( "Attributes changed" ) );
-
-      for ( int i = 0; i < dst.count(); ++i )
-      {
-        if ( dst[i] != src[i] )
-        {
-          mLayerCache->layer()->changeAttributeValue( fid, i, dst[i] );
-        }
-      }
-
-      mLayerCache->layer()->endEditCommand();
-    }
-  }
+  return mAttributeForm->save();
 }
 
 void QgsDualView::previewExpressionBuilder()
@@ -310,7 +288,7 @@ void QgsDualView::previewColumnChanged( QObject* action )
 
   if ( previewAction )
   {
-    if ( !mFeatureList->setDisplayExpression( previewAction->text() ) )
+    if ( !mFeatureList->setDisplayExpression( QString( "COALESCE( \"%1\", '<NULL>' )" ).arg( previewAction->text() ) ) )
     {
       QMessageBox::warning( this
                             , tr( "Could not set preview column" )
@@ -329,15 +307,6 @@ void QgsDualView::previewColumnChanged( QObject* action )
   Q_ASSERT( previewAction );
 }
 
-void QgsDualView::editingToggled()
-{
-  // Reload the attribute dialog widget and commit changes if any
-  if ( mAttributeDialog->dialog() && mAttributeDialog->feature() )
-  {
-    on_mFeatureList_currentEditSelectionChanged( *mAttributeDialog->feature() );
-  }
-}
-
 int QgsDualView::featureCount()
 {
   return mMasterModel->rowCount();
@@ -352,10 +321,11 @@ void QgsDualView::viewWillShowContextMenu( QMenu* menu, QModelIndex atIndex )
 {
   QModelIndex sourceIndex = mFilterModel->mapToSource( atIndex );
 
+  //add user-defined actions to context menu
   if ( mLayerCache->layer()->actions()->size() != 0 )
   {
 
-    QAction *a = menu->addAction( tr( "Run action" ) );
+    QAction *a = menu->addAction( tr( "Run layer action" ) );
     a->setEnabled( false );
 
     for ( int i = 0; i < mLayerCache->layer()->actions()->size(); i++ )
@@ -370,6 +340,22 @@ void QgsDualView::viewWillShowContextMenu( QMenu* menu, QModelIndex atIndex )
     }
   }
 
+  //add actions from QgsMapLayerActionRegistry to context menu
+  QList<QgsMapLayerAction *> registeredActions = QgsMapLayerActionRegistry::instance()->mapLayerActions( mLayerCache->layer() );
+  if ( registeredActions.size() > 0 )
+  {
+    //add a separator between user defined and standard actions
+    menu->addSeparator();
+
+    QList<QgsMapLayerAction*>::iterator actionIt;
+    for ( actionIt = registeredActions.begin(); actionIt != registeredActions.end(); ++actionIt )
+    {
+      QgsAttributeTableMapLayerAction *a = new QgsAttributeTableMapLayerAction(( *actionIt )->text(), this, ( *actionIt ), sourceIndex );
+      menu->addAction(( *actionIt )->text(), a, SLOT( execute() ) );
+    }
+  }
+
+  menu->addSeparator();
   QgsAttributeTableAction *a = new QgsAttributeTableAction( tr( "Open form" ), this, -1, sourceIndex );
   menu->addAction( tr( "Open form" ), a, SLOT( featureForm() ) );
 }
@@ -379,9 +365,30 @@ void QgsDualView::previewExpressionChanged( const QString expression )
   mLayerCache->layer()->setDisplayExpression( expression );
 }
 
+void QgsDualView::featureFormAttributeChanged()
+{
+  mFeatureList->setCurrentFeatureEdited( true );
+}
+
 void QgsDualView::setFilteredFeatures( QgsFeatureIds filteredFeatures )
 {
   mFilterModel->setFilteredFeatures( filteredFeatures );
+}
+
+void QgsDualView::setRequest( const QgsFeatureRequest& request )
+{
+  mMasterModel->setRequest( request );
+}
+
+void QgsDualView::setFeatureSelectionManager( QgsIFeatureSelectionManager* featureSelectionManager )
+{
+  mTableView->setFeatureSelectionManager( featureSelectionManager );
+  // mFeatureList->setFeatureSelectionManager( featureSelectionManager );
+
+  if ( mFeatureSelectionManager && mFeatureSelectionManager->parent() == this )
+    delete mFeatureSelectionManager;
+
+  mFeatureSelectionManager = featureSelectionManager;
 }
 
 void QgsDualView::progress( int i, bool& cancel )
@@ -423,4 +430,13 @@ void QgsAttributeTableAction::featureForm()
   editedIds << mDualView->masterModel()->rowToId( mFieldIdx.row() );
   mDualView->setCurrentEditSelection( editedIds );
   mDualView->setView( QgsDualView::AttributeEditor );
+}
+
+/*
+ * QgsAttributeTableMapLayerAction
+ */
+
+void QgsAttributeTableMapLayerAction::execute()
+{
+  mDualView->masterModel()->executeMapLayerAction( mAction, mFieldIdx );
 }

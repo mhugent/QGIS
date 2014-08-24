@@ -51,7 +51,6 @@ class GUI_EXPORT QgsSvgSelectorListModel : public QAbstractListModel
     QStringList mSvgFiles;
 };
 
-
 class GUI_EXPORT QgsSvgSelectorGroupsModel : public QStandardItemModel
 {
   public:
@@ -109,7 +108,7 @@ class GUI_EXPORT QgsSvgSelectorDialog : public QDialog
 {
     Q_OBJECT
   public:
-    QgsSvgSelectorDialog( QWidget* parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags,
+    QgsSvgSelectorDialog( QWidget* parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags,
                           QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::Close | QDialogButtonBox::Ok,
                           Qt::Orientation orientation = Qt::Horizontal );
     ~QgsSvgSelectorDialog();

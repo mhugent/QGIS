@@ -2,7 +2,7 @@
                       qgsfeatureaction.h  -  description
                                ------------------
         begin                : 2010-09-20
-        copyright            : (C) 2010 by Jürgen E. Fischer
+        copyright            : (C) 2010 by JÃ¼rgen E. Fischer
         email                : jef at norbit dot de
  ***************************************************************************/
 
@@ -18,6 +18,7 @@
 #define QGSFEATUREACTION_H
 
 #include "qgsfeature.h"
+#include "qgsvectorlayertools.h"
 
 #include <QList>
 #include <QPair>
@@ -28,18 +29,31 @@ class QgsVectorLayer;
 class QgsHighlight;
 class QgsAttributeDialog;
 
-class QgsFeatureAction : public QAction
+class APP_EXPORT QgsFeatureAction : public QAction
 {
     Q_OBJECT
 
   public:
-    QgsFeatureAction( const QString &name, QgsFeature &f, QgsVectorLayer *vl, int action, int defaultAttr, QObject *parent );
+    QgsFeatureAction( const QString &name, QgsFeature &f, QgsVectorLayer *vl, int action = -1, int defaultAttr = -1, QObject *parent = NULL );
 
   public slots:
     void execute();
     bool viewFeatureForm( QgsHighlight *h = 0 );
     bool editFeature();
-    bool addFeature();
+
+    /**
+     * Add a new feature to the layer.
+     * Will set the default values to recently used or provider defaults based on settings
+     * and override with values in defaultAttributes if provided.
+     *
+     * @param defaultAttributes  Provide some default attributes here if desired.
+     *
+     * @return true if feature was added
+     */
+    bool addFeature( const QgsAttributeMap& defaultAttributes = QgsAttributeMap() );
+
+  private slots:
+    void onFeatureSaved( const QgsFeature& feature );
 
   private:
     QgsAttributeDialog *newDialog( bool cloneFeature );
@@ -49,7 +63,9 @@ class QgsFeatureAction : public QAction
     int mAction;
     int mIdx;
 
-    static QMap<QgsVectorLayer *, QgsAttributeMap> mLastUsedValues;
+    bool mFeatureSaved;
+
+    static QMap<QgsVectorLayer *, QgsAttributeMap> sLastUsedValues;
 };
 
 #endif

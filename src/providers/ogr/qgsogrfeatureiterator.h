@@ -19,17 +19,35 @@
 
 #include <ogr_api.h>
 
+class QgsOgrFeatureIterator;
 class QgsOgrProvider;
+class QgsOgrAbstractGeometrySimplifier;
 
-class QgsOgrFeatureIterator : public QgsAbstractFeatureIterator
+class QgsOgrFeatureSource : public QgsAbstractFeatureSource
 {
   public:
-    QgsOgrFeatureIterator( QgsOgrProvider* p, const QgsFeatureRequest& request );
+    QgsOgrFeatureSource( const QgsOgrProvider* p );
+
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest& request );
+
+  protected:
+    QString mFilePath;
+    QString mLayerName;
+    int mLayerIndex;
+    QString mSubsetString;
+    QTextCodec* mEncoding;
+    QgsFields mFields;
+    OGRwkbGeometryType mOgrGeometryTypeFilter;
+
+    friend class QgsOgrFeatureIterator;
+};
+
+class QgsOgrFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsOgrFeatureSource>
+{
+  public:
+    QgsOgrFeatureIterator( QgsOgrFeatureSource* source, bool ownSource, const QgsFeatureRequest& request );
 
     ~QgsOgrFeatureIterator();
-
-    //! fetch next feature, return true on success
-    virtual bool nextFeature( QgsFeature& feature );
 
     //! reset the iterator to the starting position
     virtual bool rewind();
@@ -38,9 +56,12 @@ class QgsOgrFeatureIterator : public QgsAbstractFeatureIterator
     virtual bool close();
 
   protected:
-    QgsOgrProvider* P;
+    //! fetch next feature, return true on success
+    virtual bool fetchFeature( QgsFeature& feature );
 
-    void ensureRelevantFields();
+    //! Setup the simplification of geometries to fetch using the specified simplify method
+    virtual bool prepareSimplification( const QgsSimplifyMethod& simplifyMethod );
+
 
     bool readFeature( OGRFeatureH fet, QgsFeature& feature );
 
@@ -53,7 +74,16 @@ class QgsOgrFeatureIterator : public QgsAbstractFeatureIterator
     OGRLayerH ogrLayer;
 
     bool mSubsetStringSet;
-};
 
+    //! Set to true, if geometry is in the requested columns
+    bool mFetchGeometry;
+
+  private:
+    //! optional object to simplify OGR-geometries fecthed by this feature iterator
+    QgsOgrAbstractGeometrySimplifier* mGeometrySimplifier;
+
+    //! returns whether the iterator supports simplify geometries on provider side
+    virtual bool providerCanSimplify( QgsSimplifyMethod::MethodType methodType ) const;
+};
 
 #endif // QGSOGRFEATUREITERATOR_H

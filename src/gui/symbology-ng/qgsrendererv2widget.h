@@ -53,6 +53,8 @@ class GUI_EXPORT QgsRendererV2Widget : public QWidget
     QgsVectorLayer* mLayer;
     QgsStyleV2* mStyle;
     QMenu* contextMenu;
+    QAction* mCopyAction;
+    QAction* mPasteAction;
 
     /**Subclasses may provide the capability of changing multiple symbols at once by implementing the following two methods
       and by connecting the slot contextMenuViewCategories(const QPoint&)*/
@@ -71,6 +73,10 @@ class GUI_EXPORT QgsRendererV2Widget : public QWidget
     void changeSymbolWidth();
     /**Change marker sizes of selected symbols*/
     void changeSymbolSize();
+
+    virtual void copy() {}
+    virtual void paste() {}
+
 };
 
 
@@ -84,7 +90,7 @@ class QgsFields;
 
 
 /**
-Utility class for prividing GUI for data-defined rendering.
+Utility class for providing GUI for data-defined rendering.
 */
 class QgsRendererV2DataDefinedMenus : public QObject
 {
@@ -92,10 +98,10 @@ class QgsRendererV2DataDefinedMenus : public QObject
 
   public:
 
-    QgsRendererV2DataDefinedMenus( QMenu* menu, const QgsFields& flds, QString rotationField, QString sizeScaleField, QgsSymbolV2::ScaleMethod scaleMethod );
+    QgsRendererV2DataDefinedMenus( QMenu* menu, QgsVectorLayer* layer, QString rotationField, QString sizeScaleField, QgsSymbolV2::ScaleMethod scaleMethod );
     ~QgsRendererV2DataDefinedMenus();
 
-    void populateMenu( QMenu* menu, const char* slot, QString fieldName, QActionGroup *actionGroup );
+    void populateMenu( QMenu* menu, QString fieldName, QActionGroup *actionGroup );
 #if 0
     void updateMenu( QActionGroup* actionGroup, QString fieldName );
 #endif
@@ -117,7 +123,7 @@ class QgsRendererV2DataDefinedMenus : public QObject
     QActionGroup *mSizeMethodActionGroup;
     QActionGroup *mRotationAttributeActionGroup;
     QActionGroup *mSizeAttributeActionGroup;
-    const QgsFields& mFlds;
+    QgsVectorLayer* mLayer;
 };
 
 #endif // QGSRENDERERV2WIDGET_H

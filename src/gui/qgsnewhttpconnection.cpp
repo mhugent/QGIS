@@ -20,9 +20,10 @@
 #include <QMessageBox>
 #include <QUrl>
 #include <QPushButton>
+#include <QRegExpValidator>
 
 QgsNewHttpConnection::QgsNewHttpConnection(
-  QWidget *parent, const QString& baseKey, const QString& connName, Qt::WFlags fl ):
+  QWidget *parent, const QString& baseKey, const QString& connName, Qt::WindowFlags fl ):
     QDialog( parent, fl ),
     mBaseKey( baseKey ),
     mOriginalConnName( connName )
@@ -38,6 +39,15 @@ QgsNewHttpConnection::QgsNewHttpConnection(
   // Only WMS and WFS providers are using QgsNewHttpConnection at this moment
   // using connection-wms and connection-wfs -> parse credential key fro it.
   mCredentialsBaseKey = mBaseKey.split( '-' ).last().toUpper();
+
+  txtName->setValidator( new QRegExpValidator( QRegExp( "[^\\/]+" ), txtName ) );
+
+  cmbDpiMode->clear();
+  cmbDpiMode->addItem( tr( "all" ) );
+  cmbDpiMode->addItem( tr( "off" ) );
+  cmbDpiMode->addItem( tr( "QGIS" ) );
+  cmbDpiMode->addItem( tr( "UMN" ) );
+  cmbDpiMode->addItem( tr( "GeoServer" ) );
 
   if ( !connName.isEmpty() )
   {
@@ -56,6 +66,27 @@ QgsNewHttpConnection::QgsNewHttpConnection(
     cbxInvertAxisOrientation->setChecked( settings.value( key + "/invertAxisOrientation", false ).toBool() );
     cbxIgnoreGetFeatureInfoURI->setChecked( settings.value( key + "/ignoreGetFeatureInfoURI", false ).toBool() );
     cbxSmoothPixmapTransform->setChecked( settings.value( key + "/smoothPixmapTransform", false ).toBool() );
+
+    int dpiIdx;
+    switch ( settings.value( key + "/dpiMode", 7 ).toInt() )
+    {
+      case 0: // off
+        dpiIdx = 1;
+        break;
+      case 1: // QGIS
+        dpiIdx = 2;
+        break;
+      case 2: // UMN
+        dpiIdx = 3;
+        break;
+      case 4: // GeoServer
+        dpiIdx = 4;
+        break;
+      default: // other => all
+        dpiIdx = 0;
+        break;
+    }
+    cmbDpiMode->setCurrentIndex( dpiIdx );
 
     txtReferer->setText( settings.value( key + "/referer" ).toString() );
 
@@ -85,6 +116,11 @@ QgsNewHttpConnection::QgsNewHttpConnection(
     cbxIgnoreGetFeatureInfoURI->setVisible( false );
     mGroupBox->layout()->removeWidget( cbxIgnoreGetFeatureInfoURI );
 
+    cmbDpiMode->setVisible( false );
+    mGroupBox->layout()->removeWidget( cmbDpiMode );
+    lblDpiMode->setVisible( false );
+    mGroupBox->layout()->removeWidget( lblDpiMode );
+
     txtReferer->setVisible( false );
     mGroupBox->layout()->removeWidget( txtReferer );
     lblReferer->setVisible( false );
@@ -105,7 +141,14 @@ QgsNewHttpConnection::~QgsNewHttpConnection()
 
 void QgsNewHttpConnection::on_txtName_textChanged( const QString &text )
 {
-  buttonBox->button( QDialogButtonBox::Ok )->setDisabled( text.isEmpty() );
+  Q_UNUSED( text );
+  buttonBox->button( QDialogButtonBox::Ok )->setDisabled( txtName->text().isEmpty() || txtUrl->text().isEmpty() );
+}
+
+void QgsNewHttpConnection::on_txtUrl_textChanged( const QString &text )
+{
+  Q_UNUSED( text );
+  buttonBox->button( QDialogButtonBox::Ok )->setDisabled( txtName->text().isEmpty() || txtUrl->text().isEmpty() );
 }
 
 void QgsNewHttpConnection::accept()
@@ -170,6 +213,28 @@ void QgsNewHttpConnection::accept()
     settings.setValue( key + "/ignoreAxisOrientation", cbxIgnoreAxisOrientation->isChecked() );
     settings.setValue( key + "/invertAxisOrientation", cbxInvertAxisOrientation->isChecked() );
     settings.setValue( key + "/smoothPixmapTransform", cbxSmoothPixmapTransform->isChecked() );
+
+    int dpiMode = 0;
+    switch ( cmbDpiMode->currentIndex() )
+    {
+      case 0: // all => QGIS|UMN|GeoServer
+        dpiMode = 7;
+        break;
+      case 1: // off
+        dpiMode = 0;
+        break;
+      case 2: // QGIS
+        dpiMode = 1;
+        break;
+      case 3: // UMN
+        dpiMode = 2;
+        break;
+      case 4: // GeoServer
+        dpiMode = 4;
+        break;
+    }
+
+    settings.setValue( key + "/dpiMode", dpiMode );
   }
   if ( mBaseKey == "/Qgis/connections-wms/" )
   {

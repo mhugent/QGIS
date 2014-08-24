@@ -23,7 +23,7 @@ class QgsOWSSourceSelect : QDialog
     };
 
     //! Constructor
-    QgsOWSSourceSelect( QString service, QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
+    QgsOWSSourceSelect( QString service, QWidget *parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
     //! Destructor
     ~QgsOWSSourceSelect();
 
@@ -135,6 +135,7 @@ class QgsOWSSourceSelect : QDialog
     virtual void populateLayerList( );
 
     //! create an item including possible parents
+    //! @note not available in python bindings
     /*
     QgsNumericSortTreeWidgetItem *createItem( int id,
         const QStringList &names,

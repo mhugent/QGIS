@@ -33,7 +33,7 @@
  * \class QgsOptions
  * \brief Set user options and preferences
  */
-class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
+class APP_EXPORT QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
 {
     Q_OBJECT
   public:
@@ -43,7 +43,7 @@ class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
      * @param name name for the widget
      * @param modal true for modal dialog
      */
-    QgsOptions( QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags );
+    QgsOptions( QWidget *parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags );
     //! Destructor
     ~QgsOptions();
     /**
@@ -51,6 +51,11 @@ class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
      * @return theme name (a directory name in the themes directory)
      */
     QString theme();
+
+    /** Sets the page with the specified widget name as the current page
+     * @note added in QGIS 2.1
+     */
+    void setCurrentPage( QString pageWidgetName );
 
   public slots:
     void on_cbxProjectDefaultNew_toggled( bool checked );
@@ -88,10 +93,6 @@ class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
      */
     void on_mProjectOnLaunchPushBtn_pressed();
 
-    //! Slot to change backbuffering. This is handled when the user changes
-    // the value of the checkbox
-    void toggleEnableBackbuffer( int );
-
     /**
      * Return the desired state of newly added layers. If a layer
      * is to be drawn when added to the map, this function returns
@@ -124,16 +125,26 @@ class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
      */
     void on_mCustomGroupBoxChkBx_clicked( bool chkd );
 
+    /** Slot to set whether to use custom side bar style
+      * @note added in QGIS 2.2
+      */
+    void on_mCustomSideBarSide_clicked( bool chkd );
+
     /** Slot to set whether to bold group box titles
      * @note added in QGIS 1.9
      */
     void on_mBoldGroupBoxTitleChkBx_clicked( bool chkd );
+
+    void on_mProxyTypeComboBox_currentIndexChanged( int idx );
 
     /**Add a new URL to exclude from Proxy*/
     void on_mAddUrlPushButton_clicked();
 
     /**Remove an URL to exclude from Proxy*/
     void on_mRemoveUrlPushButton_clicked();
+
+    /**Slot to flag restoring/delete window state settings upon restart*/
+    void on_mRestoreDefaultWindowStateBtn_clicked();
 
     /** Slot to enable custom environment variables table and buttons
      * @note added in QGIS 1.9
@@ -227,6 +238,9 @@ class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
      */
     void saveGdalDriverList();
 
+    void on_mRemoveDefaultTransformButton_clicked();
+    void on_mAddDefaultTransformButton_clicked();
+
   private:
     QStringList i18nList();
     void initContrastEnhancement( QComboBox *cbox, QString name, QString defaultVal );
@@ -239,6 +253,8 @@ class QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOptionsBase
      * @note added in QGIS 1.9
      */
     void addCustomEnvVarRow( QString varName, QString varVal, QString varApply = QString() );
+
+    void saveDefaultDatumTransformations();
 
   protected:
     QgisAppStyleSheet* mStyleSheetBuilder;

@@ -29,7 +29,6 @@
 */
 QgsRubberBand::QgsRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geometryType )
     : QgsMapCanvasItem( mapCanvas )
-    , mWidth( 1 )
     , mIconSize( 5 )
     , mIconType( ICON_CIRCLE )
     , mGeometryType( geometryType )
@@ -37,19 +36,28 @@ QgsRubberBand::QgsRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geomet
     , mTranslationOffsetY( 0.0 )
 {
   reset( geometryType );
-  setColor( QColor( Qt::lightGray ) );
+  QColor color( Qt::lightGray );
+  color.setAlpha( 63 );
+  setColor( color );
+  setWidth( 1 );
+  setLineStyle( Qt::SolidLine );
+  setBrushStyle( Qt::SolidPattern );
 }
 
 QgsRubberBand::QgsRubberBand( QgsMapCanvas* mapCanvas, bool isPolygon )
     : QgsMapCanvasItem( mapCanvas )
-    , mWidth( 1 )
     , mIconSize( 5 )
     , mIconType( ICON_CIRCLE )
     , mTranslationOffsetX( 0.0 )
     , mTranslationOffsetY( 0.0 )
 {
   reset( isPolygon ? QGis::Polygon : QGis::Line );
-  setColor( QColor( Qt::lightGray ) );
+  QColor color( Qt::lightGray );
+  color.setAlpha( 63 );
+  setColor( color );
+  setWidth( 1 );
+  setLineStyle( Qt::SolidLine );
+  setBrushStyle( Qt::SolidPattern );
 }
 
 QgsRubberBand::QgsRubberBand(): QgsMapCanvasItem( 0 )
@@ -66,9 +74,8 @@ QgsRubberBand::~QgsRubberBand()
 void QgsRubberBand::setColor( const QColor & color )
 {
   mPen.setColor( color );
-  QColor fillColor( color.red(), color.green(), color.blue(), 63 );
+  QColor fillColor( color.red(), color.green(), color.blue(), color.alpha() );
   mBrush.setColor( fillColor );
-  mBrush.setStyle( Qt::SolidPattern );
 }
 
 /*!
@@ -76,7 +83,7 @@ void QgsRubberBand::setColor( const QColor & color )
   */
 void QgsRubberBand::setWidth( int width )
 {
-  mWidth = width;
+  mPen.setWidth( width );
 }
 
 void QgsRubberBand::setIcon( IconType icon )
@@ -87,6 +94,16 @@ void QgsRubberBand::setIcon( IconType icon )
 void QgsRubberBand::setIconSize( int iconSize )
 {
   mIconSize = iconSize;
+}
+
+void QgsRubberBand::setLineStyle( Qt::PenStyle penStyle )
+{
+  mPen.setStyle( penStyle );
+}
+
+void QgsRubberBand::setBrushStyle( Qt::BrushStyle brushStyle )
+{
+  mBrush.setStyle( brushStyle );
 }
 
 /*!
@@ -173,9 +190,9 @@ void QgsRubberBand::removePoint( int index, bool doUpdate/* = true*/, int geomet
   }
 }
 
-void QgsRubberBand::removeLastPoint( int geometryIndex )
+void QgsRubberBand::removeLastPoint( int geometryIndex, bool doUpdate/* = true*/ )
 {
-  removePoint( -1, true, geometryIndex );
+  removePoint( -1, doUpdate, geometryIndex );
 }
 
 /*!
@@ -219,6 +236,12 @@ void QgsRubberBand::movePoint( int index, const QgsPoint& p, int geometryIndex )
 
 void QgsRubberBand::setToGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
 {
+  if ( !geom )
+  {
+    reset( mGeometryType );
+    return;
+  }
+
   reset( geom->type() );
   addGeometry( geom, layer );
 }
@@ -231,11 +254,7 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
   }
 
   //maprender object of canvas
-  QgsMapRenderer* mr = mMapCanvas->mapRenderer();
-  if ( !mr )
-  {
-    return;
-  }
+  const QgsMapSettings& ms = mMapCanvas->mapSettings();
 
   int idx = mPoints.size();
 
@@ -248,13 +267,14 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
       QgsPoint pt;
       if ( layer )
       {
-        pt = mr->layerToMapCoordinates( layer, geom->asPoint() );
+        pt = ms.layerToMapCoordinates( layer, geom->asPoint() );
       }
       else
       {
         pt = geom->asPoint();
       }
       addPoint( pt, false, idx );
+      removeLastPoint( idx , false );
     }
     break;
 
@@ -267,11 +287,13 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
         QgsPoint pt = mpt[i];
         if ( layer )
         {
-          addPoint( mr->layerToMapCoordinates( layer, pt ), false, idx );
+          addPoint( ms.layerToMapCoordinates( layer, pt ), false, idx );
+          removeLastPoint( idx , false );
         }
         else
         {
           addPoint( pt, false, idx );
+          removeLastPoint( idx , false );
         }
       }
     }
@@ -285,7 +307,7 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
       {
         if ( layer )
         {
-          addPoint( mr->layerToMapCoordinates( layer, line[i] ), false, idx );
+          addPoint( ms.layerToMapCoordinates( layer, line[i] ), false, idx );
         }
         else
         {
@@ -313,7 +335,7 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
         {
           if ( layer )
           {
-            addPoint( mr->layerToMapCoordinates( layer, line[j] ), false, idx );
+            addPoint( ms.layerToMapCoordinates( layer, line[j] ), false, idx );
           }
           else
           {
@@ -333,7 +355,7 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
       {
         if ( layer )
         {
-          addPoint( mr->layerToMapCoordinates( layer, line[i] ), false, idx );
+          addPoint( ms.layerToMapCoordinates( layer, line[i] ), false, idx );
         }
         else
         {
@@ -356,7 +378,7 @@ void QgsRubberBand::addGeometry( QgsGeometry* geom, QgsVectorLayer* layer )
         {
           if ( layer )
           {
-            addPoint( mr->layerToMapCoordinates( layer, line[j] ), false, idx );
+            addPoint( ms.layerToMapCoordinates( layer, line[j] ), false, idx );
           }
           else
           {
@@ -402,7 +424,6 @@ void QgsRubberBand::paint( QPainter* p )
   if ( mPoints.size() > 0 )
   {
     p->setBrush( mBrush );
-    mPen.setWidth( mWidth );
     p->setPen( mPen );
 
     Q_FOREACH( const QList<QgsPoint>& line, mPoints )
@@ -454,6 +475,10 @@ void QgsRubberBand::paint( QPainter* p )
                 p->drawLine( QLineF( x - s, y + s, x - s, y - s ) );
                 break;
 
+              case ICON_FULL_BOX:
+                p->drawRect( x - s, y - s, mIconSize, mIconSize );
+                break;
+
               case ICON_CIRCLE:
                 p->drawEllipse( x - s, y - s, mIconSize, mIconSize );
                 break;
@@ -483,8 +508,10 @@ void QgsRubberBand::updateRect()
     {
       return;
     }
-    qreal s = ( mIconSize - 1 ) / 2;
-    qreal p = mWidth;
+
+    qreal scale = mMapCanvas->mapUnitsPerPixel();
+    qreal s = ( mIconSize - 1 ) / 2 * scale;
+    qreal p = mPen.width() * scale;
 
     QgsRectangle r( it->x() + mTranslationOffsetX - s - p, it->y() + mTranslationOffsetY - s - p,
                     it->x() + mTranslationOffsetX + s + p, it->y() + mTranslationOffsetY + s + p );
@@ -518,6 +545,12 @@ void QgsRubberBand::setTranslationOffset( double dx, double dy )
 int QgsRubberBand::size() const
 {
   return mPoints.size();
+}
+
+int QgsRubberBand::partSize( int geometryIndex ) const
+{
+  if ( geometryIndex < 0 || geometryIndex >= mPoints.size() ) return 0;
+  return mPoints[geometryIndex].size();
 }
 
 int QgsRubberBand::numberOfVertices() const

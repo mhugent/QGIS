@@ -81,6 +81,7 @@ class GUI_EXPORT QgsRuleBasedRendererV2Model : public QAbstractItemModel
     void willAddRules( const QModelIndex& parent, int count ); // call beginInsertRows
     void finishedAddingRules(); // call endInsertRows
 
+    //! @note not available in python bindungs
     void setFeatureCounts( QMap<QgsRuleBasedRendererV2::Rule*, QgsRuleBasedRendererV2Count> theCountMap );
     void clearFeatureCounts();
 
@@ -128,7 +129,6 @@ class GUI_EXPORT QgsRuleBasedRendererV2Widget : public QgsRendererV2Widget, priv
     void restoreSectionWidths();
 
   protected:
-
     void refineRule( int type );
     void refineRuleCategoriesGui( const QModelIndexList& index );
     void refineRuleRangesGui( const QModelIndexList& index );
@@ -137,12 +137,21 @@ class GUI_EXPORT QgsRuleBasedRendererV2Widget : public QgsRendererV2Widget, priv
     QgsRuleBasedRendererV2::Rule* currentRule();
 
     QList<QgsSymbolV2*> selectedSymbols();
+    QgsRuleBasedRendererV2::RuleList selectedRules();
     void refreshSymbolView();
+    void keyPressEvent( QKeyEvent* event );
 
     QgsRuleBasedRendererV2* mRenderer;
     QgsRuleBasedRendererV2Model* mModel;
 
     QMenu* mRefineMenu;
+    QAction* mDeleteAction;
+
+    QgsRuleBasedRendererV2::RuleList mCopyBuffer;
+
+  protected slots:
+    void copy();
+    void paste();
 };
 
 ///////

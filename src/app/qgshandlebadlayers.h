@@ -20,7 +20,7 @@
 #include "ui_qgshandlebadlayersbase.h"
 #include "qgsproject.h"
 
-class QgsHandleBadLayersHandler
+class APP_EXPORT QgsHandleBadLayersHandler
       : public QObject
       , public QgsProjectBadLayerHandler
 {
@@ -36,7 +36,7 @@ class QgsHandleBadLayersHandler
 
 class QPushButton;
 
-class QgsHandleBadLayers
+class APP_EXPORT QgsHandleBadLayers
       : public QDialog
       , private Ui::QgsHandleBadLayersBase
 {
@@ -54,8 +54,6 @@ class QgsHandleBadLayers
     void apply();
     void accept();
     void rejected();
-    void itemChanged( QTableWidgetItem * );
-    void cellDoubleClicked( int row, int column );
 
   private:
     QPushButton *mBrowseButton;
@@ -63,6 +61,9 @@ class QgsHandleBadLayers
     QList<int> mRows;
     QString mVectorFileFilter;
     QString mRasterFileFilter;
+
+    QString filename( int row );
+    void setFilename( int row, QString filename );
 };
 
 #endif

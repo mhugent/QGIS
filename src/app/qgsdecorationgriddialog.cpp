@@ -54,7 +54,7 @@ QgsDecorationGridDialog::QgsDecorationGridDialog( QgsDecorationGrid& deco, QWidg
   mAnnotationDirectionComboBox->insertItem( QgsDecorationGrid::Vertical,
       tr( "Vertical" ) );
   mAnnotationDirectionComboBox->insertItem( QgsDecorationGrid::HorizontalAndVertical,
-      tr( "Horizontal and vertical" ) );
+      tr( "Horizontal and Vertical" ) );
   mAnnotationDirectionComboBox->insertItem( QgsDecorationGrid::BoundaryDirection,
       tr( "Boundary direction" ) );
 
@@ -275,7 +275,7 @@ void QgsDecorationGridDialog::on_mPbtnUpdateFromLayer_clicked()
 void QgsDecorationGridDialog::on_mAnnotationFontButton_clicked()
 {
   bool ok;
-#if defined(Q_WS_MAC) && QT_VERSION >= 0x040500 && defined(QT_MAC_USE_COCOA)
+#if defined(Q_WS_MAC) && defined(QT_MAC_USE_COCOA)
   // Native Mac dialog works only for Qt Carbon
   QFont newFont = QFontDialog::getFont( &ok, mDeco.gridAnnotationFont(), 0, QString(), QFontDialog::DontUseNativeDialog );
 #else

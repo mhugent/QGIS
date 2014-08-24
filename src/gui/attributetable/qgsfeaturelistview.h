@@ -53,7 +53,7 @@ class GUI_EXPORT QgsFeatureListView : public QListView
     /**
      * Destructor
      */
-    virtual ~QgsFeatureListView() {};
+    virtual ~QgsFeatureListView() {}
 
     /**
      * Returns the layer cache
@@ -91,7 +91,7 @@ class GUI_EXPORT QgsFeatureListView : public QListView
      *
      * @see QgsExpression
      */
-    const QString& displayExpression() const;
+    const QString displayExpression() const;
 
     /**
      * Returns a detailed message about errors while parsing a QgsExpression.
@@ -99,6 +99,20 @@ class GUI_EXPORT QgsFeatureListView : public QListView
      * @return A message containg information about the parser error.
      */
     QString parserErrorString();
+
+    /**
+     * Get the currentEditSelection
+     *
+     * @return A list of edited feature ids
+     */
+    QgsFeatureIds currentEditSelection();
+
+    /**
+     * Sets if the currently shown form has received any edit events so far.
+     *
+     * @param state The state
+     */
+    void setCurrentFeatureEdited( bool state );
 
   protected:
     virtual void mouseMoveEvent( QMouseEvent *event );
@@ -120,6 +134,8 @@ class GUI_EXPORT QgsFeatureListView : public QListView
      */
     void displayExpressionChanged( const QString expression );
 
+    void aboutToChangeEditSelection( bool& ok );
+
   public slots:
     /**
      * Set the feature(s) to be edited
@@ -127,6 +143,14 @@ class GUI_EXPORT QgsFeatureListView : public QListView
      * @param fids  A list of features to be edited
      */
     void setEditSelection( const QgsFeatureIds &fids );
+
+    /**
+     * Set the feature(s) to be edited
+     *
+     * @param index The selection to set
+     * @param command selection update mode
+     */
+    void setEditSelection( const QModelIndex& index, QItemSelectionModel::SelectionFlags command );
 
     /**
      * Select all currently visible features

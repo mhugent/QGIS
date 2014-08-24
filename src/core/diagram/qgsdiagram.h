@@ -26,22 +26,37 @@ class QgsDiagramInterpolationSettings;
 
 class QgsRenderContext;
 
+class QgsExpression;
+
 
 
 /**Base class for all diagram types*/
 class CORE_EXPORT QgsDiagram
 {
   public:
-    virtual ~QgsDiagram() {}
+    virtual ~QgsDiagram() { clearCache(); }
+    /** Returns an instance that is equivalent to this one
+     * @note added in 2.4 */
+    virtual QgsDiagram* clone() const = 0;
+
+    void clearCache();
+    QgsExpression* getExpression( const QString& expression, const QgsFields* fields );
+    /** @deprecated `void renderDiagram( const QgsFeature& feature, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position )` should be used instead */
+    virtual Q_DECL_DEPRECATED void renderDiagram( const QgsAttributes& att, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position );
     /**Draws the diagram at the given position (in pixel coordinates)*/
-    virtual void renderDiagram( const QgsAttributes& att, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position ) = 0;
+    virtual void renderDiagram( const QgsFeature& feature, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position ) = 0;
     virtual QString diagramName() const = 0;
     /**Returns the size in map units the diagram will use to render.*/
     virtual QSizeF diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s ) = 0;
+    /** @deprecated `QSizeF diagramSize( const QgsFeature& feature, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is )` should be used instead */
+    virtual Q_DECL_DEPRECATED QSizeF diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is );
     /**Returns the size in map units the diagram will use to render. Interpolate size*/
-    virtual QSizeF diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is ) = 0;
+    virtual QSizeF diagramSize( const QgsFeature& feature, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is ) = 0;
 
   protected:
+    QgsDiagram();
+    QgsDiagram( const QgsDiagram& other );
+
     /** Changes the pen width to match the current settings and rendering context
      *  @param pen The pen to modify
      *  @param s   The settings that specify the pen width
@@ -74,6 +89,9 @@ class CORE_EXPORT QgsDiagram
      *  @return The properly scaled font for rendering
      */
     QFont scaledFont( const QgsDiagramSettings& s, const QgsRenderContext& c );
+
+  private:
+    QMap<QString, QgsExpression*> mExpressions;
 };
 
 #endif // QGSDIAGRAM_H

@@ -19,19 +19,51 @@
 
 #include <QQueue>
 
+#include "qgspostgresprovider.h"
 
 class QgsPostgresProvider;
 class QgsPostgresResult;
 
-class QgsPostgresFeatureIterator : public QgsAbstractFeatureIterator
+
+class QgsPostgresFeatureSource : public QgsAbstractFeatureSource
 {
   public:
-    QgsPostgresFeatureIterator( QgsPostgresProvider* p, const QgsFeatureRequest& request );
+    QgsPostgresFeatureSource( const QgsPostgresProvider* p );
+
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest& request );
+
+  protected:
+
+    QString mConnInfo;
+
+    QString mGeometryColumn;
+    QString mSqlWhereClause;
+    QgsFields mFields;
+    QgsPostgresGeometryColumnType mSpatialColType;
+    QString mRequestedSrid;
+    QString mDetectedSrid;
+    bool mForce2d;
+    QGis::WkbType mRequestedGeomType; //! geometry type requested in the uri
+    QGis::WkbType mDetectedGeomType;  //! geometry type detected in the database
+    QgsPostgresPrimaryKeyType mPrimaryKeyType;
+    QList<int> mPrimaryKeyAttrs;
+    QString mQuery;
+    // TODO: loadFields()
+
+    QSharedPointer<QgsPostgresSharedData> mShared;
+
+    friend class QgsPostgresFeatureIterator;
+};
+
+
+class QgsPostgresConn;
+
+class QgsPostgresFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsPostgresFeatureSource>
+{
+  public:
+    QgsPostgresFeatureIterator( QgsPostgresFeatureSource* source, bool ownSource, const QgsFeatureRequest& request );
 
     ~QgsPostgresFeatureIterator();
-
-    //! fetch next feature, return true on success
-    virtual bool nextFeature( QgsFeature& feature );
 
     //! reset the iterator to the starting position
     virtual bool rewind();
@@ -40,7 +72,14 @@ class QgsPostgresFeatureIterator : public QgsAbstractFeatureIterator
     virtual bool close();
 
   protected:
-    QgsPostgresProvider* P;
+    //! fetch next feature, return true on success
+    virtual bool fetchFeature( QgsFeature& feature );
+
+    //! Setup the simplification of geometries to fetch using the specified simplify method
+    virtual bool prepareSimplification( const QgsSimplifyMethod& simplifyMethod );
+
+    QgsPostgresConn* mConn;
+
 
     QString whereClauseRect();
     bool getFeature( QgsPostgresResult &queryResult, int row, QgsFeature &feature );
@@ -58,11 +97,17 @@ class QgsPostgresFeatureIterator : public QgsAbstractFeatureIterator
     //! Maximal size of the feature queue
     int mFeatureQueueSize;
 
-    //!< Number of retrieved features
+    //! Number of retrieved features
     int mFetched;
+
+    //! Set to true, if geometry is in the requested columns
+    bool mFetchGeometry;
 
     static const int sFeatureQueueSize;
 
+  private:
+    //! returns whether the iterator supports simplify geometries on provider side
+    virtual bool providerCanSimplify( QgsSimplifyMethod::MethodType methodType ) const;
 };
 
 #endif // QGSPOSTGRESFEATUREITERATOR_H

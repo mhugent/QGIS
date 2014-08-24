@@ -264,7 +264,7 @@ void QgsMapToolSimplify::canvasPressEvent( QMouseEvent * e )
 
   QgsPoint layerCoords = mCanvas->getCoordinateTransform()->toMapPoint( e->pos().x(), e->pos().y() );
 
-  double r = QgsTolerance::vertexSearchRadius( vlayer, mCanvas->mapRenderer() );
+  double r = QgsTolerance::vertexSearchRadius( vlayer, mCanvas->mapSettings() );
   QgsRectangle selectRect = QgsRectangle( layerCoords.x() - r, layerCoords.y() - r,
                                           layerCoords.x() + r, layerCoords.y() + r );
   QgsFeatureIterator fit = vlayer->getFeatures( QgsFeatureRequest().setFilterRect( selectRect ).setSubsetOfAttributes( QgsAttributeList() ) );
@@ -299,7 +299,7 @@ void QgsMapToolSimplify::canvasPressEvent( QMouseEvent * e )
 
     mRubberBand = new QgsRubberBand( mCanvas );
     mRubberBand->setToGeometry( mSelectedFeature.geometry(), 0 );
-    mRubberBand->setColor( Qt::red );
+    mRubberBand->setColor( QColor( 255, 0, 0, 65 ) );
     mRubberBand->setWidth( 2 );
     mRubberBand->show();
     //calculate boudaries for slidebar

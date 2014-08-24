@@ -71,8 +71,9 @@ QgsGeorefDockWidget::QgsGeorefDockWidget( const QString & title, QWidget * paren
   setObjectName( "GeorefDockWidget" ); // set object name so the position can be saved
 }
 
-QgsGeorefPluginGui::QgsGeorefPluginGui( QgisInterface* theQgisInterface, QWidget* parent, Qt::WFlags fl )
+QgsGeorefPluginGui::QgsGeorefPluginGui( QgisInterface* theQgisInterface, QWidget* parent, Qt::WindowFlags fl )
     : QMainWindow( parent, fl )
+    , mMousePrecisionDecimalPlaces( 0 )
     , mTransformParam( QgsGeorefTransform::InvalidTransform )
     , mIface( theQgisInterface )
     , mLayer( 0 )
@@ -633,16 +634,14 @@ void QgsGeorefPluginGui::showGeorefConfigDialog()
 void QgsGeorefPluginGui::fullHistogramStretch()
 {
   mLayer->setContrastEnhancement( QgsContrastEnhancement::StretchToMinimumMaximum );
-  mLayer->setCacheImage( NULL );
   mCanvas->refresh();
 }
 
 void QgsGeorefPluginGui::localHistogramStretch()
 {
-  QgsRectangle rectangle = mIface->mapCanvas()->mapRenderer()->outputExtentToLayerExtent( mLayer, mIface->mapCanvas()->extent() );
+  QgsRectangle rectangle = mIface->mapCanvas()->mapSettings().outputExtentToLayerExtent( mLayer, mIface->mapCanvas()->extent() );
 
   mLayer->setContrastEnhancement( QgsContrastEnhancement::StretchToMinimumMaximum, QgsRaster::ContrastEnhancementMinMax, rectangle );
-  mLayer->setCacheImage( NULL );
   mCanvas->refresh();
 }
 
@@ -734,7 +733,7 @@ void QgsGeorefPluginGui::extentsChangedQGisCanvas()
 }
 
 // Canvas info slots (copy/pasted from QGIS :) )
-void QgsGeorefPluginGui::showMouseCoords( QgsPoint p )
+void QgsGeorefPluginGui::showMouseCoords( const QgsPoint &p )
 {
   mCoordsLabel->setText( p.toString( mMousePrecisionDecimalPlaces ) );
   // Set minimum necessary width
@@ -800,7 +799,7 @@ void QgsGeorefPluginGui::layerWillBeRemoved( QString theLayerId )
 void QgsGeorefPluginGui::createActions()
 {
   // File actions
-  mActionOpenRaster->setIcon( getThemeIcon( "/mActionOpenRaster.png" ) );
+  mActionOpenRaster->setIcon( getThemeIcon( "/mActionAddRasterLayer.svg" ) );
   connect( mActionOpenRaster, SIGNAL( triggered() ), this, SLOT( openRaster() ) );
 
   mActionStartGeoref->setIcon( getThemeIcon( "/mActionStartGeoref.png" ) );
@@ -829,7 +828,7 @@ void QgsGeorefPluginGui::createActions()
   connect( mActionMoveGCPPoint, SIGNAL( triggered() ), this, SLOT( setMovePointTool() ) );
 
   // View actions
-  mActionPan->setIcon( getThemeIcon( "/mActionPan.png" ) );
+  mActionPan->setIcon( getThemeIcon( "/mActionPan.svg" ) );
   connect( mActionPan, SIGNAL( triggered() ), this, SLOT( setPanTool() ) );
 
   mActionZoomIn->setIcon( getThemeIcon( "/mActionZoomIn.svg" ) );
@@ -968,10 +967,12 @@ void QgsGeorefPluginGui::createMenus()
     QDialogButtonBox::ButtonLayout( style()->styleHint( QStyle::SH_DialogButtonLayout, 0, this ) );
 
   mPanelMenu = new QMenu( tr( "Panels" ) );
+  mPanelMenu->setObjectName( "mPanelMenu" );
   mPanelMenu->addAction( dockWidgetGCPpoints->toggleViewAction() );
   //  mPanelMenu->addAction(dockWidgetLogView->toggleViewAction());
 
   mToolbarMenu = new QMenu( tr( "Toolbars" ) );
+  mToolbarMenu->setObjectName( "mToolbarMenu" );
   mToolbarMenu->addAction( toolBarFile->toggleViewAction() );
   mToolbarMenu->addAction( toolBarEdit->toggleViewAction() );
   mToolbarMenu->addAction( toolBarView->toggleViewAction() );
@@ -1076,7 +1077,7 @@ void QgsGeorefPluginGui::updateIconTheme( QString theme )
 {
   Q_UNUSED( theme );
   // File actions
-  mActionOpenRaster->setIcon( getThemeIcon( "/mActionOpenRaster.png" ) );
+  mActionOpenRaster->setIcon( getThemeIcon( "/mActionAddRasterLayer.svg" ) );
   mActionStartGeoref->setIcon( getThemeIcon( "/mActionStartGeoref.png" ) );
   mActionGDALScript->setIcon( getThemeIcon( "/mActionGDALScript.png" ) );
   mActionLoadGCPpoints->setIcon( getThemeIcon( "/mActionLoadGCPpoints.png" ) );
@@ -1089,7 +1090,7 @@ void QgsGeorefPluginGui::updateIconTheme( QString theme )
   mActionMoveGCPPoint->setIcon( getThemeIcon( "/mActionMoveGCPPoint.png" ) );
 
   // View actions
-  mActionPan->setIcon( getThemeIcon( "/mActionPan.png" ) );
+  mActionPan->setIcon( getThemeIcon( "/mActionPan.svg" ) );
   mActionZoomIn->setIcon( getThemeIcon( "/mActionZoomIn.svg" ) );
   mActionZoomOut->setIcon( getThemeIcon( "/mActionZoomOut.svg" ) );
   mActionZoomToLayer->setIcon( getThemeIcon( "/mActionZoomToLayer.svg" ) );
@@ -1443,12 +1444,6 @@ bool QgsGeorefPluginGui::writePDFMapFile( const QString& fileName, const QgsGeor
     return false;
   }
 
-  QgsMapRenderer* canvasRenderer = mCanvas->mapRenderer();
-  if ( !canvasRenderer )
-  {
-    return false;
-  }
-
   QgsRasterLayer *rlayer = ( QgsRasterLayer* ) mCanvas->layer( 0 );
   if ( !rlayer )
   {
@@ -1465,7 +1460,7 @@ bool QgsGeorefPluginGui::writePDFMapFile( const QString& fileName, const QgsGeor
   double paperHeight = s.value( "/Plugin-GeoReferencer/Config/HeightPDFMap" ).toDouble();
 
   //create composition
-  QgsComposition* composition = new QgsComposition( mCanvas->mapRenderer() );
+  QgsComposition* composition = new QgsComposition( mCanvas->mapSettings() );
   if ( mapRatio >= 1 )
   {
     composition->setPaperSize( paperHeight, paperWidth );
@@ -1487,7 +1482,7 @@ bool QgsGeorefPluginGui::writePDFMapFile( const QString& fileName, const QgsGeor
   QgsComposerMap* composerMap = new QgsComposerMap( composition, leftMargin, topMargin, contentWidth, contentHeight );
   composerMap->setKeepLayerSet( true );
   QStringList list;
-  list.append( canvasRenderer->layerSet()[0] );
+  list.append( mCanvas->mapSettings().layers()[0] );
   composerMap->setLayerSet( list );
 
   double xcenter = rlayer->extent().center().x();
@@ -1547,18 +1542,12 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
     return false;
   }
 
-  QgsMapRenderer* canvasRenderer = mCanvas->mapRenderer();
-  if ( !canvasRenderer )
-  {
-    return false;
-  }
-
   QPrinter printer;
   printer.setOutputFormat( QPrinter::PdfFormat );
   printer.setOutputFileName( fileName );
 
   //create composition A4 with 300 dpi
-  QgsComposition* composition = new QgsComposition( mCanvas->mapRenderer() );
+  QgsComposition* composition = new QgsComposition( mCanvas->mapSettings() );
   composition->setPaperSize( 210, 297 ); //A4
   composition->setPrintResolution( 300 );
   printer.setPaperSize( QSizeF( composition->paperWidth(), composition->paperHeight() ), QPrinter::Millimeter );
@@ -1604,8 +1593,8 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
     mapWidthMM = 70 / canvasExtent.height() * canvasExtent.width();
   }
 
-  QgsComposerMap* composerMap = new QgsComposerMap( composition, leftMargin, titleLabel->rect().bottom() + titleLabel->transform().dy(), mapWidthMM, mapHeightMM );
-  composerMap->setLayerSet( canvasRenderer->layerSet() );
+  QgsComposerMap* composerMap = new QgsComposerMap( composition, leftMargin, titleLabel->rect().bottom() + titleLabel->pos().y(), mapWidthMM, mapHeightMM );
+  composerMap->setLayerSet( mCanvas->mapSettings().layers() );
   composerMap->setNewExtent( mCanvas->extent() );
   composerMap->setMapCanvas( mCanvas );
   composition->addItem( composerMap );
@@ -1638,7 +1627,7 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
     parameterLabel->setText( parameterTitle );
     parameterLabel->adjustSizeToText();
     composition->addItem( parameterLabel );
-    parameterLabel->setSceneRect( QRectF( leftMargin, composerMap->rect().bottom() + composerMap->transform().dy() + 5, contentWidth, 8 ) );
+    parameterLabel->setSceneRect( QRectF( leftMargin, composerMap->rect().bottom() + composerMap->pos().y() + 5, contentWidth, 8 ) );
     parameterLabel->setFrameEnabled( false );
 
     //calculate mean error
@@ -1655,7 +1644,7 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
     row << QString::number( origin.x(), 'f', 3 ) << QString::number( origin.y(), 'f', 3 ) << QString::number( scaleX ) << QString::number( scaleY ) << QString::number( rotation * 180 / M_PI ) << QString::number( meanError );
     parameterTable->addRow( row );
     composition->addItem( parameterTable );
-    parameterTable->setSceneRect( QRectF( leftMargin, parameterLabel->rect().bottom() + parameterLabel->transform().dy() + 5, contentWidth, 20 ) );
+    parameterTable->setSceneRect( QRectF( leftMargin, parameterLabel->rect().bottom() + parameterLabel->pos().y() + 5, contentWidth, 20 ) );
     parameterTable->setGridStrokeWidth( 0.1 );
     parameterTable->adjustFrameToSize();
   }
@@ -1670,13 +1659,13 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
   residualLabel->setFont( titleFont );
   residualLabel->setText( tr( "Residuals" ) );
   composition->addItem( residualLabel );
-  residualLabel->setSceneRect( QRectF( leftMargin, previousItem->rect().bottom() + previousItem->transform().dy() + 5, contentWidth, 6 ) );
+  residualLabel->setSceneRect( QRectF( leftMargin, previousItem->rect().bottom() + previousItem->pos().y() + 5, contentWidth, 6 ) );
   residualLabel->setFrameEnabled( false );
 
   //residual plot
   QgsResidualPlotItem* resPlotItem = new QgsResidualPlotItem( composition );
   composition->addItem( resPlotItem );
-  resPlotItem->setSceneRect( QRectF( leftMargin, residualLabel->rect().bottom() + residualLabel->transform().dy() + 5, contentWidth, composerMap->rect().height() ) );
+  resPlotItem->setSceneRect( QRectF( leftMargin, residualLabel->rect().bottom() + residualLabel->pos().y() + 5, contentWidth, composerMap->rect().height() ) );
   resPlotItem->setExtent( composerMap->extent() );
   resPlotItem->setGCPList( mPoints );
 
@@ -1713,7 +1702,7 @@ bool QgsGeorefPluginGui::writePDFReportFile( const QString& fileName, const QgsG
 
   composition->addItem( gcpTable );
 
-  gcpTable->setSceneRect( QRectF( leftMargin,  resPlotItem->rect().bottom() + resPlotItem->transform().dy() + 5, contentWidth, 100 ) );
+  gcpTable->setSceneRect( QRectF( leftMargin,  resPlotItem->rect().bottom() + resPlotItem->pos().y() + 5, contentWidth, 100 ) );
   gcpTable->setGridStrokeWidth( 0.1 );
 
   printer.setResolution( composition->printResolution() );

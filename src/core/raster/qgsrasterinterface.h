@@ -40,16 +40,16 @@ class CORE_EXPORT QgsRasterInterface
     //! If you add to this, please also add to capabilitiesString()
     enum Capability
     {
-      NoCapabilities =          0,
-      Size =                    1 << 1, // original data source size (and thus resolution) is known, it is not always available, for example for WMS
-      Create =                  1 << 2, // create new datasets
-      Remove =                  1 << 3, // delete datasets
-      BuildPyramids =           1 << 4, // supports building of pyramids (overviews)
-      Identify =                1 << 5, // at least one identify format supported
-      IdentifyValue =           1 << 6, // numerical values
-      IdentifyText =            1 << 7, // WMS text
-      IdentifyHtml =            1 << 8, // WMS HTML
-      IdentifyFeature =         1 << 9  // WMS GML -> feature
+      NoCapabilities   = 0,
+      Size             = 1 << 1, // original data source size (and thus resolution) is known, it is not always available, for example for WMS
+      Create           = 1 << 2, // create new datasets
+      Remove           = 1 << 3, // delete datasets
+      BuildPyramids    = 1 << 4, // supports building of pyramids (overviews)
+      Identify         = 1 << 5, // at least one identify format supported
+      IdentifyValue    = 1 << 6, // numerical values
+      IdentifyText     = 1 << 7, // WMS text
+      IdentifyHtml     = 1 << 8, // WMS HTML
+      IdentifyFeature  = 1 << 9, // WMS GML -> feature
     };
 
     QgsRasterInterface( QgsRasterInterface * input = 0 );
@@ -97,7 +97,7 @@ class CORE_EXPORT QgsRasterInterface
     virtual int ySize() const { if ( mInput ) return mInput->ySize(); else return 0; }
 
     /** \brief helper function to create zero padded band names */
-    virtual QString  generateBandName( int theBandNumber ) const
+    virtual QString generateBandName( int theBandNumber ) const
     {
       return tr( "Band" ) + QString( " %1" ) .arg( theBandNumber,  1 + ( int ) log10(( float ) bandCount() ), 10, QChar( '0' ) );
     }

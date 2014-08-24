@@ -21,7 +21,7 @@
 #include <QDomDocument>
 #include <QStringList>
 
-void QgsPropertyValue::dump( size_t tabs ) const
+void QgsPropertyValue::dump( int tabs ) const
 {
   QString tabString;
   tabString.fill( '\t', tabs );
@@ -40,7 +40,6 @@ void QgsPropertyValue::dump( size_t tabs ) const
     QgsDebugMsg( QString( "%1%2" ).arg( tabString ).arg( value_.toString() ) );
   }
 } // QgsPropertyValue::dump()
-
 
 
 bool QgsPropertyValue::readXML( QDomNode & keyNode )
@@ -265,9 +264,7 @@ bool QgsPropertyValue::writeXML( QString const & nodeName,
 } // QgsPropertyValue::writeXML
 
 
-
-
-QgsPropertyKey::QgsPropertyKey( QString const name )
+QgsPropertyKey::QgsPropertyKey( const QString &name )
     : mName( name )
 {}
 
@@ -290,7 +287,7 @@ QVariant QgsPropertyKey::value() const
 } // QVariant QgsPropertyKey::value()
 
 
-void QgsPropertyKey::dump( size_t tabs ) const
+void QgsPropertyKey::dump( int tabs ) const
 {
   QString tabString;
 
@@ -330,17 +327,19 @@ void QgsPropertyKey::dump( size_t tabs ) const
         i.value()->dump( tabs + 1 );
       }
 
-//              qDebug("<%s>", name().toUtf8().constData());
-//              if ( i.value()->isValue() )
-//              {
-//                  qDebug("   <%s>", i.key().toUtf8().constData() );
-//              }
-//              i.value()->dump();
-//              if ( i.value()->isValue() )
-//              {
-//                  qDebug("   </%s>", i.key().toUtf8().constData() );
-//              }
-//              qDebug("</%s>", name().toUtf8().constData());
+#if 0
+      qDebug( "<%s>", name().toUtf8().constData() );
+      if ( i.value()->isValue() )
+      {
+        qDebug( "   <%s>", i.key().toUtf8().constData() );
+      }
+      i.value()->dump();
+      if ( i.value()->isValue() )
+      {
+        qDebug( "   </%s>", i.key().toUtf8().constData() );
+      }
+      qDebug( "</%s>", name().toUtf8().constData() );
+#endif
     }
   }
 

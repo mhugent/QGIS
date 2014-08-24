@@ -41,6 +41,15 @@ enum QgsPostgresGeometryColumnType
   sctTopoGeometry
 };
 
+enum QgsPostgresPrimaryKeyType
+{
+  pktUnknown,
+  pktInt,
+  pktTid,
+  pktOid,
+  pktFidMap
+};
+
 /** Layer Property structure */
 // TODO: Fill to Postgres/PostGIS specifications
 struct QgsPostgresLayerProperty
@@ -53,9 +62,20 @@ struct QgsPostgresLayerProperty
   QgsPostgresGeometryColumnType geometryColType;
   QStringList                   pkCols;
   QList<int>                    srids;
+  unsigned int                  nSpCols;
   QString                       sql;
+  bool                          force2d;
 
+
+  // TODO: rename this !
   int size() const { Q_ASSERT( types.size() == srids.size() ); return types.size(); }
+
+  QString   defaultName() const
+  {
+    QString n = tableName;
+    if ( nSpCols > 1 ) n += "." + geometryColName;
+    return n;
+  }
 
   QgsPostgresLayerProperty at( int i ) const
   {
@@ -70,6 +90,7 @@ struct QgsPostgresLayerProperty
     property.geometryColName = geometryColName;
     property.geometryColType = geometryColType;
     property.pkCols          = pkCols;
+    property.nSpCols         = nSpCols;
     property.sql             = sql;
 
     return property;
@@ -93,14 +114,16 @@ struct QgsPostgresLayerProperty
       sridString += QString::number( srid );
     }
 
-    return QString( "%1.%2.%3 type=%4 srid=%5 pkCols=%6 sql=%7" )
+    return QString( "%1.%2.%3 type=%4 srid=%5 pkCols=%6 sql=%7 nSpCols=%8 force2d=%9" )
            .arg( schemaName )
            .arg( tableName )
            .arg( geometryColName )
            .arg( typeString )
            .arg( sridString )
            .arg( pkCols.join( "|" ) )
-           .arg( sql );
+           .arg( sql )
+           .arg( nSpCols )
+           .arg( force2d ? "yes" : "no" );
   }
 #endif
 };
@@ -134,11 +157,12 @@ class QgsPostgresResult
     PGresult *mRes;
 };
 
+
 class QgsPostgresConn : public QObject
 {
     Q_OBJECT;
   public:
-    static QgsPostgresConn *connectDb( QString connInfo, bool readOnly );
+    static QgsPostgresConn *connectDb( QString connInfo, bool readOnly, bool shared = true );
     void disconnect();
 
     //! get postgis version string
@@ -174,6 +198,8 @@ class QgsPostgresConn : public QObject
     //! cursor handling
     bool openCursor( QString cursorName, QString declare );
     bool closeCursor( QString cursorName );
+
+    QString uniqueCursorName();
 
 #if 0
     PGconn *pgConnection() { return mConn; }
@@ -215,9 +241,6 @@ class QgsPostgresConn : public QObject
     /** Gets information about the spatial tables */
     bool getTableInfo( bool searchGeometryColumnsOnly, bool searchPublicOnly, bool allowGeometrylessTables );
 
-    /** get primary key candidates (all int4 columns) */
-    QStringList pkCandidates( QString schemaName, QString viewName );
-
     qint64 getBinaryInt( QgsPostgresResult &queryResult, int row, int col );
 
     QString fieldExpression( const QgsField &fld );
@@ -237,6 +260,7 @@ class QgsPostgresConn : public QObject
     static QString postgisTypeFilter( QString geomCol, QGis::WkbType wkbType, bool isGeography );
 
     static QGis::WkbType wkbTypeFromGeomType( QGis::GeometryType geomType );
+    static QGis::WkbType wkbTypeFromOgcWkbType( unsigned int ogcWkbType );
 
     static QStringList connectionList();
     static QString selectedConnection();
@@ -249,7 +273,7 @@ class QgsPostgresConn : public QObject
     static void deleteConnection( QString theConnName );
 
   private:
-    QgsPostgresConn( QString conninfo, bool readOnly );
+    QgsPostgresConn( QString conninfo, bool readOnly, bool shared );
     ~QgsPostgresConn();
 
     int mRef;
@@ -292,6 +316,9 @@ class QgsPostgresConn : public QObject
     static QMap<QString, QgsPostgresConn *> sConnectionsRW;
     static QMap<QString, QgsPostgresConn *> sConnectionsRO;
 
+    /** count number of spatial columns in a given relation */
+    void addColumnInfo( QgsPostgresLayerProperty& layerProperty, const QString& schemaName, const QString& viewName, bool fetchPkCandidates );
+
     //! List of the supported layers
     QVector<QgsPostgresLayerProperty> mLayersSupported;
 
@@ -307,6 +334,11 @@ class QgsPostgresConn : public QObject
      */
     bool mSwapEndian;
     void deduceEndian();
+
+    int mNextCursorId;
+
+    bool mShared; //! < whether the connection is shared by more providers (must not be if going to be used in worker threads)
 };
+
 
 #endif

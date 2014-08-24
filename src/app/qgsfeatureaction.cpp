@@ -2,7 +2,7 @@
                      qgsfeatureaction.cpp  -  description
                               -------------------
       begin                : 2010-09-20
-      copyright            : (C) 2010 by Jürgen E. Fischer
+      copyright            : (C) 2010 by Juergen E. Fischer
       email                : jef at norbit dot de
  ***************************************************************************/
 
@@ -15,16 +15,17 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "qgsfeatureaction.h"
-#include "qgsvectorlayer.h"
-#include "qgsvectordataprovider.h"
-#include "qgsidentifyresultsdialog.h"
-#include "qgsattributedialog.h"
-#include "qgslogger.h"
-#include "qgsdistancearea.h"
 #include "qgisapp.h"
-#include "qgsproject.h"
+#include "qgsattributedialog.h"
+#include "qgsdistancearea.h"
+#include "qgsfeatureaction.h"
+#include "qgsguivectorlayertools.h"
+#include "qgsidentifyresultsdialog.h"
+#include "qgslogger.h"
 #include "qgsmapcanvas.h"
+#include "qgsproject.h"
+#include "qgsvectordataprovider.h"
+#include "qgsvectorlayer.h"
 
 #include <QPushButton>
 #include <QSettings>
@@ -35,6 +36,7 @@ QgsFeatureAction::QgsFeatureAction( const QString &name, QgsFeature &f, QgsVecto
     , mFeature( f )
     , mAction( action )
     , mIdx( defaultAttr )
+    , mFeatureSaved( false )
 {
 }
 
@@ -47,13 +49,18 @@ QgsAttributeDialog *QgsFeatureAction::newDialog( bool cloneFeature )
 {
   QgsFeature *f = cloneFeature ? new QgsFeature( mFeature ) : &mFeature;
 
+  QgsAttributeEditorContext context;
+
   QgsDistanceArea myDa;
 
-  myDa.setSourceCrs( mLayer->crs().srsid() );
-  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapRenderer()->hasCrsTransformEnabled() );
+  myDa.setSourceCrs( mLayer->crs() );
+  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapSettings().hasCrsTransformEnabled() );
   myDa.setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
 
-  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, myDa );
+  context.setDistanceArea( myDa );
+  context.setVectorLayerTools( QgisApp::instance()->vectorLayerTools() );
+
+  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, NULL, true, context );
 
   if ( mLayer->actions()->size() > 0 )
   {
@@ -121,7 +128,7 @@ bool QgsFeatureAction::editFeature()
       {
         if ( dst[i] != src[i] )
         {
-          mLayer->changeAttributeValue( mFeature.id(), i, dst[i] );
+          mLayer->changeAttributeValue( mFeature.id(), i, dst[i], src[i] );
         }
       }
 
@@ -138,7 +145,7 @@ bool QgsFeatureAction::editFeature()
   return res;
 }
 
-bool QgsFeatureAction::addFeature()
+bool QgsFeatureAction::addFeature( const QgsAttributeMap& defaultAttributes )
 {
   if ( !mLayer || !mLayer->isEditable() )
     return false;
@@ -154,64 +161,88 @@ bool QgsFeatureAction::addFeature()
   mFeature.initAttributes( fields.count() );
   for ( int idx = 0; idx < fields.count(); ++idx )
   {
-    if ( reuseLastValues && mLastUsedValues.contains( mLayer ) && mLastUsedValues[ mLayer ].contains( idx ) )
+    QVariant v;
+
+    if ( defaultAttributes.contains( idx ) )
     {
-      QgsDebugMsg( QString( "reusing %1 for %2" ).arg( mLastUsedValues[ mLayer ][idx].toString() ).arg( idx ) );
-      mFeature.setAttribute( idx, mLastUsedValues[ mLayer ][idx] );
+      v = defaultAttributes.value( idx );
+    }
+    else if ( reuseLastValues && sLastUsedValues.contains( mLayer ) && sLastUsedValues[ mLayer ].contains( idx ) )
+    {
+      v = sLastUsedValues[ mLayer ][idx];
     }
     else
     {
-      mFeature.setAttribute( idx, provider->defaultValue( idx ) );
+      v = provider->defaultValue( idx );
     }
+
+    mFeature.setAttribute( idx, v );
   }
-
-  bool res = false;
-
-  mLayer->beginEditCommand( text() );
 
   // show the dialog to enter attribute values
   bool isDisabledAttributeValuesDlg = settings.value( "/qgis/digitizing/disable_enter_attribute_values_dialog", false ).toBool();
+  // override application-wide setting with any layer setting
+  switch ( mLayer->featureFormSuppress() )
+  {
+    case QgsVectorLayer::SuppressOn:
+      isDisabledAttributeValuesDlg = true;
+      break;
+    case QgsVectorLayer::SuppressOff:
+      isDisabledAttributeValuesDlg = false;
+      break;
+    case QgsVectorLayer::SuppressDefault:
+      break;
+  }
   if ( isDisabledAttributeValuesDlg )
   {
-    res = mLayer->addFeature( mFeature );
+    mLayer->beginEditCommand( text() );
+    mFeatureSaved = mLayer->addFeature( mFeature );
+
+    if ( mFeatureSaved )
+      mLayer->endEditCommand();
+    else
+      mLayer->destroyEditCommand();
   }
   else
   {
-    QgsAttributes origValues;
-    if ( reuseLastValues )
-      origValues = mFeature.attributes();
-
     QgsAttributeDialog *dialog = newDialog( false );
-    if ( dialog->exec() )
-    {
-      if ( reuseLastValues )
-      {
-        for ( int idx = 0; idx < fields.count(); ++idx )
-        {
-          const QgsAttributes &newValues = mFeature.attributes();
-          if ( origValues[idx] != newValues[idx] )
-          {
-            QgsDebugMsg( QString( "saving %1 for %2" ).arg( mLastUsedValues[ mLayer ][idx].toString() ).arg( idx ) );
-            mLastUsedValues[ mLayer ][idx] = newValues[idx];
-          }
-        }
-      }
+    dialog->setIsAddDialog( true );
+    dialog->setEditCommandMessage( text() );
 
-      res = mLayer->addFeature( mFeature );
-    }
-    else
-    {
-      QgsDebugMsg( "Adding feature to layer failed" );
-      res = false;
-    }
+    connect( dialog->attributeForm(), SIGNAL( featureSaved( QgsFeature ) ), this, SLOT( onFeatureSaved( QgsFeature ) ) );
+
+    dialog->exec();
   }
 
-  if ( res )
-    mLayer->endEditCommand();
-  else
-    mLayer->destroyEditCommand();
-
-  return res;
+  // Will be set in the onFeatureSaved SLOT
+  return mFeatureSaved;
 }
 
-QMap<QgsVectorLayer *, QgsAttributeMap> QgsFeatureAction::mLastUsedValues;
+void QgsFeatureAction::onFeatureSaved( const QgsFeature& feature )
+{
+  QgsAttributeForm* form = qobject_cast<QgsAttributeForm*>( sender() );
+  Q_ASSERT( form );
+
+  mFeatureSaved = true;
+
+  QSettings settings;
+  bool reuseLastValues = settings.value( "/qgis/digitizing/reuseLastValues", false ).toBool();
+  QgsDebugMsg( QString( "reuseLastValues: %1" ).arg( reuseLastValues ) );
+
+  if ( reuseLastValues )
+  {
+    QgsFields fields = mLayer->pendingFields();
+    for ( int idx = 0; idx < fields.count(); ++idx )
+    {
+      const QgsAttributes &newValues = feature.attributes();
+      QgsAttributeMap origValues = sLastUsedValues[ mLayer ];
+      if ( origValues[idx] != newValues[idx] )
+      {
+        QgsDebugMsg( QString( "saving %1 for %2" ).arg( sLastUsedValues[ mLayer ][idx].toString() ).arg( idx ) );
+        sLastUsedValues[ mLayer ][idx] = newValues[idx];
+      }
+    }
+  }
+}
+
+QMap<QgsVectorLayer *, QgsAttributeMap> QgsFeatureAction::sLastUsedValues;

@@ -39,6 +39,7 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
+#include <vector>
 
 
 #include <pal/pal.h>
@@ -60,7 +61,7 @@ namespace pal
 
   Layer::Layer( const char *lyrName, double min_scale, double max_scale, Arrangement arrangement, Units label_unit, double defaultPriority, bool obstacle, bool active, bool toLabel, Pal *pal, bool displayAll )
       :  pal( pal ), obstacle( obstacle ), active( active ),
-      toLabel( toLabel ), displayAll( displayAll ), label_unit( label_unit ),
+      toLabel( toLabel ), displayAll( displayAll ), centroidInside( false ), label_unit( label_unit ),
       min_scale( min_scale ), max_scale( max_scale ),
       arrangement( arrangement ), arrangementFlags( 0 ), mode( LabelPerFeature ), mergeLines( false )
   {
@@ -486,6 +487,102 @@ namespace pal
     connectedHashtable = NULL;
     delete connectedTexts;
     connectedTexts = NULL;
+  }
+
+  void Layer::chopFeatures( double chopInterval )
+  {
+    LinkedList<FeaturePart*> * newFeatureParts = new LinkedList<FeaturePart*>( ptrFeaturePartCompare );
+    while ( FeaturePart* fpart = featureParts->pop_front() )
+    {
+      const GEOSGeometry* geom = fpart->getGeometry();
+      if ( GEOSGeomTypeId( geom ) == GEOS_LINESTRING )
+      {
+
+        double bmin[2], bmax[2];
+        fpart->getBoundingBox( bmin, bmax );
+        rtree->Remove( bmin, bmax, fpart );
+
+        const GEOSCoordSequence *cs = GEOSGeom_getCoordSeq( geom );
+
+        // get number of points
+        unsigned int n;
+        GEOSCoordSeq_getSize( cs, &n );
+
+        // Read points
+        std::vector<Point> points( n );
+        for ( unsigned int i = 0; i < n; ++i )
+        {
+          GEOSCoordSeq_getX( cs, i, &points[i].x );
+          GEOSCoordSeq_getY( cs, i, &points[i].y );
+        }
+
+        // Cumulative length vector
+        std::vector<double> len( n, 0 );
+        for ( unsigned int i = 1; i < n; ++i )
+        {
+          double dx = points[i].x - points[i - 1].x;
+          double dy = points[i].y - points[i - 1].y;
+          len[i] = len[i - 1] + std::sqrt( dx * dx + dy * dy );
+        }
+
+        // Walk along line
+        unsigned int cur = 0;
+        double lambda = 0;
+        std::vector<Point> part;
+        for ( ;; )
+        {
+          lambda += chopInterval;
+          for ( ; cur < n && lambda > len[cur]; ++cur )
+          {
+            part.push_back( points[cur] );
+          }
+          if ( cur >= n )
+          {
+            break;
+          }
+          double c = ( lambda - len[cur - 1] ) / ( len[cur] - len[cur - 1] );
+          Point p;
+          p.x = points[cur - 1].x + c * ( points[cur].x - points[cur - 1].x );
+          p.y = points[cur - 1].y + c * ( points[cur].y - points[cur - 1].y );
+          part.push_back( p );
+          GEOSCoordSequence* cooSeq = GEOSCoordSeq_create( part.size(), 2 );
+          for ( std::size_t i = 0; i < part.size(); ++i )
+          {
+            GEOSCoordSeq_setX( cooSeq, i, part[i].x );
+            GEOSCoordSeq_setY( cooSeq, i, part[i].y );
+          }
+
+          GEOSGeometry* newgeom = GEOSGeom_createLineString( cooSeq );
+          FeaturePart* newfpart = new FeaturePart( fpart->getFeature(), newgeom );
+          newFeatureParts->push_back( newfpart );
+          newfpart->getBoundingBox( bmin, bmax );
+          rtree->Insert( bmin, bmax, newfpart );
+          part.clear();
+          part.push_back( p );
+        }
+        // Create final part
+        part.push_back( points[n - 1] );
+        GEOSCoordSequence* cooSeq = GEOSCoordSeq_create( part.size(), 2 );
+        for ( std::size_t i = 0; i < part.size(); ++i )
+        {
+          GEOSCoordSeq_setX( cooSeq, i, part[i].x );
+          GEOSCoordSeq_setY( cooSeq, i, part[i].y );
+        }
+
+        GEOSGeometry* newgeom = GEOSGeom_createLineString( cooSeq );
+        FeaturePart* newfpart = new FeaturePart( fpart->getFeature(), newgeom );
+        newFeatureParts->push_back( newfpart );
+        newfpart->getBoundingBox( bmin, bmax );
+        rtree->Insert( bmin, bmax, newfpart );
+      }
+      else
+      {
+        newFeatureParts->push_back( fpart );
+      }
+    }
+
+    delete featureParts;
+    featureParts = newFeatureParts;
   }
 
 

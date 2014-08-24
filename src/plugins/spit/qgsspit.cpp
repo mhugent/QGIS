@@ -39,7 +39,7 @@
 #include "qgslogger.h"
 
 
-QgsSpit::QgsSpit( QWidget *parent, Qt::WFlags fl ) : QDialog( parent, fl )
+QgsSpit::QgsSpit( QWidget *parent, Qt::WindowFlags fl ) : QDialog( parent, fl )
 {
   setupUi( this );
 
@@ -278,11 +278,11 @@ void QgsSpit::addFile()
 
 void QgsSpit::removeFile()
 {
-  std::vector <int> temp;
+  QVector<int> temp;
   for ( int n = 0; n < tblShapefiles->rowCount(); n++ )
     if ( tblShapefiles->isItemSelected( tblShapefiles->item( n, 0 ) ) )
     {
-      for ( std::vector<QgsShapeFile *>::iterator vit = fileList.begin(); vit != fileList.end(); vit++ )
+      for ( QVector<QgsShapeFile *>::iterator vit = fileList.begin(); vit != fileList.end(); ++vit )
       {
         if (( *vit ) ->getName() == tblShapefiles->item( n, 0 )->text() )
         {
@@ -531,7 +531,7 @@ void QgsSpit::import()
 
     int count = fileList.size(), successes = 0;
 
-    for ( std::vector<QgsShapeFile*>::size_type i = 0; i < fileList.size() ; i++ )
+    for ( QVector<QgsShapeFile*>::size_type i = 0; i < fileList.size() ; i++ )
     {
       QString error = tr( "Problem inserting features from file:" ) + "\n" +
                       tblShapefiles->item( i, ColFILENAME )->text();
@@ -557,14 +557,14 @@ void QgsSpit::import()
       }
 
       // duplicate field check
-      std::vector<QString> names_copy = fileList[ i ] ->column_names;
+      QStringList names_copy = fileList[ i ] ->column_names;
       names_copy.push_back( txtPrimaryKeyName->text() );
       names_copy.push_back( txtGeomName->text() );
 
       QString dupl = "";
-      std::sort( names_copy.begin(), names_copy.end() );
+      qSort( names_copy.begin(), names_copy.end() );
 
-      for ( std::vector<QString>::size_type k = 1; k < names_copy.size(); k++ )
+      for ( int k = 1; k < names_copy.size(); k++ )
       {
         QgsDebugMsg( QString( "Checking to see if %1 == %2" ).arg( names_copy[ k ] ).arg( names_copy[ k - 1 ] ) );
         if ( names_copy[ k ] == names_copy[ k - 1 ] )
@@ -584,13 +584,11 @@ void QgsSpit::import()
       // Check and set destination table
       fileList[ i ] ->setTable( tblShapefiles->item( i, ColDBRELATIONNAME )->text() );
       pro.setLabelText( tr( "Importing files\n%1" ).arg( tblShapefiles->item( i, ColFILENAME )->text() ) );
-      bool rel_exists1 = false;
-      bool rel_exists2 = false;
       query = QString( "SELECT f_table_name FROM geometry_columns WHERE f_table_name=%1 AND f_table_schema=%2" )
               .arg( QgsPgUtil::quotedValue( tblShapefiles->item( i, ColDBRELATIONNAME )->text() ) )
               .arg( QgsPgUtil::quotedValue( tblShapefiles->item( i, ColDBSCHEMA )->text() ) );
       res = PQexec( conn, query.toUtf8() );
-      rel_exists1 = ( PQntuples( res ) > 0 );
+      bool rel_exists1 = ( PQntuples( res ) > 0 );
 
       if ( PQresultStatus( res ) != PGRES_TUPLES_OK )
       {
@@ -610,7 +608,7 @@ void QgsSpit::import()
               .arg( QgsPgUtil::quotedValue( tblShapefiles->item( i, ColDBSCHEMA )->text() ) );
       res = PQexec( conn, query.toUtf8() );
 
-      rel_exists2 = ( PQntuples( res ) > 0 );
+      bool rel_exists2 = ( PQntuples( res ) > 0 );
 
       if ( PQresultStatus( res ) != PGRES_TUPLES_OK )
       {
@@ -857,7 +855,6 @@ QWidget *ShapefileTableDelegate::createEditor( QWidget *parent,
       editor->setSizeAdjustPolicy( QComboBox::AdjustToContents );
       editor->installEventFilter( const_cast<ShapefileTableDelegate*>( this ) );
       return editor;
-      break;
     }
     case 1:
     case 3:
@@ -865,7 +862,6 @@ QWidget *ShapefileTableDelegate::createEditor( QWidget *parent,
       QLineEdit* editor = new QLineEdit( parent );
       editor->installEventFilter( const_cast<ShapefileTableDelegate*>( this ) );
       return editor;
-      break;
     }
   }
   return NULL;

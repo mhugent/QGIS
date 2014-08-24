@@ -23,7 +23,7 @@
 /**Base class for vertex manipulation tools.
  Inherited by QgsMapToolMoveVertex, QgsMapToolAddVertex,
 QgsMapToolDeleteVertex*/
-class QgsMapToolVertexEdit: public QgsMapToolEdit
+class APP_EXPORT QgsMapToolVertexEdit: public QgsMapToolEdit
 {
     Q_OBJECT
 
@@ -38,9 +38,6 @@ class QgsMapToolVertexEdit: public QgsMapToolEdit
     /**Snapping results that are collected during the mouse press event
      (search for vertices/segments to manipulate)*/
     QList<QgsSnappingResult> mRecentSnappingResults;
-
-    //! Displays a warning about the snap tolerance settings
-    void displaySnapToleranceWarning();
 };
 
 #endif

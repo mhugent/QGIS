@@ -27,7 +27,7 @@
 
 #include <QWidget>
 
-QgsWCSSourceSelect::QgsWCSSourceSelect( QWidget * parent, Qt::WFlags fl, bool managerMode, bool embeddedMode )
+QgsWCSSourceSelect::QgsWCSSourceSelect( QWidget * parent, Qt::WindowFlags fl, bool managerMode, bool embeddedMode )
     : QgsOWSSourceSelect( "WCS", parent, fl, managerMode, embeddedMode )
 {
   // Hide irrelevant widgets
@@ -79,7 +79,7 @@ void QgsWCSSourceSelect::populateLayerList( )
 
   for ( QVector<QgsWcsCoverageSummary>::iterator coverage = coverages.begin();
         coverage != coverages.end();
-        coverage++ )
+        ++coverage )
   {
     QgsDebugMsg( QString( "coverage orderId = %1 identifier = %2" ).arg( coverage->orderId ).arg( coverage->identifier ) );
 

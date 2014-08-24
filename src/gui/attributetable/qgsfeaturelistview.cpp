@@ -13,23 +13,24 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <QKeyEvent>
-#include <QSettings>
 #include <QHeaderView>
+#include <QKeyEvent>
 #include <QMenu>
+#include <QSet>
+#include <QSettings>
 
-#include "qgsfeaturelistview.h"
-#include "qgsattributetablemodel.h"
 #include "qgsattributetabledelegate.h"
 #include "qgsattributetablefiltermodel.h"
-#include "qgsvectorlayer.h"
-#include "qgsvectordataprovider.h"
+#include "qgsattributetablemodel.h"
+#include "qgsfeaturelistmodel.h"
+#include "qgsfeaturelistviewdelegate.h"
+#include "qgsfeaturelistview.h"
+#include "qgsfeatureselectionmodel.h"
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
-#include "qgsfeaturelistviewdelegate.h"
-#include "qgsfeaturelistmodel.h"
-#include "qgsfeatureselectionmodel.h"
-#include <QSet>
+#include "qgsvectordataprovider.h"
+#include "qgsvectorlayer.h"
+#include "qgsvectorlayerselectionmanager.h"
 
 QgsFeatureListView::QgsFeatureListView( QWidget *parent )
     : QListView( parent )
@@ -52,7 +53,7 @@ void QgsFeatureListView::setModel( QgsFeatureListModel* featureListModel )
   mModel = featureListModel;
 
   delete mFeatureSelectionModel;
-  mFeatureSelectionModel = new QgsFeatureSelectionModel( featureListModel, featureListModel, featureListModel->layerCache()->layer(), this );
+  mFeatureSelectionModel = new QgsFeatureSelectionModel( featureListModel, featureListModel, new QgsVectorLayerSelectionManager( featureListModel->layerCache()->layer(), this ), this );
   setSelectionModel( mFeatureSelectionModel );
 
   mCurrentEditSelectionModel = new QItemSelectionModel( mModel->masterModel(), this );
@@ -86,7 +87,7 @@ bool QgsFeatureListView::setDisplayExpression( const QString expression )
   }
 }
 
-const QString& QgsFeatureListView::displayExpression() const
+const QString QgsFeatureListView::displayExpression() const
 {
   return mModel->displayExpression();
 }
@@ -94,6 +95,22 @@ const QString& QgsFeatureListView::displayExpression() const
 QString QgsFeatureListView::parserErrorString()
 {
   return mModel->parserErrorString();
+}
+
+QgsFeatureIds QgsFeatureListView::currentEditSelection()
+{
+  QgsFeatureIds selection;
+  Q_FOREACH( QModelIndex idx, mCurrentEditSelectionModel->selectedIndexes() )
+  {
+    selection << idx.data( QgsAttributeTableModel::FeatureIdRole ).value<QgsFeatureId>();
+  }
+  return selection;
+}
+
+void QgsFeatureListView::setCurrentFeatureEdited( bool state )
+{
+  mItemDelegate->setCurrentFeatureEdited( state );
+  viewport()->update( visualRegionForSelection( mCurrentEditSelectionModel->selection() ) );
 }
 
 void QgsFeatureListView::mousePressEvent( QMouseEvent *event )
@@ -105,7 +122,7 @@ void QgsFeatureListView::mousePressEvent( QMouseEvent *event )
   if ( QgsFeatureListViewDelegate::EditElement == mItemDelegate->positionToElement( event->pos() ) )
   {
     mEditSelectionDrag = true;
-    mCurrentEditSelectionModel->select( mModel->mapToMaster( index ), QItemSelectionModel::ClearAndSelect );
+    setEditSelection( mModel->mapToMaster( index ), QItemSelectionModel::ClearAndSelect );
   }
   else
   {
@@ -127,10 +144,14 @@ void QgsFeatureListView::editSelectionChanged( QItemSelection deselected, QItemS
   QItemSelection currentSelection = mCurrentEditSelectionModel->selection();
   if ( currentSelection.size() == 1 )
   {
-    QgsFeature feat;
-    mModel->featureByIndex( mModel->mapFromMaster( currentSelection.indexes().first() ), feat );
+    QModelIndexList indexList = currentSelection.indexes();
+    if ( !indexList.isEmpty() )
+    {
+      QgsFeature feat;
+      mModel->featureByIndex( mModel->mapFromMaster( indexList.first() ), feat );
 
-    emit currentEditSelectionChanged( feat );
+      emit currentEditSelectionChanged( feat );
+    }
   }
 }
 
@@ -151,7 +172,20 @@ void QgsFeatureListView::setEditSelection( const QgsFeatureIds &fids )
     selection.append( QItemSelectionRange( mModel->mapToMaster( mModel->fidToIdx( fid ) ) ) );
   }
 
-  mCurrentEditSelectionModel->select( selection, QItemSelectionModel::ClearAndSelect );
+  bool ok = true;
+  emit aboutToChangeEditSelection( ok );
+
+  if ( ok )
+    mCurrentEditSelectionModel->select( selection, QItemSelectionModel::ClearAndSelect );
+}
+
+void QgsFeatureListView::setEditSelection( const QModelIndex& index, QItemSelectionModel::SelectionFlags command )
+{
+  bool ok = true;
+  emit aboutToChangeEditSelection( ok );
+
+  if ( ok )
+    mCurrentEditSelectionModel->select( index, command );
 }
 
 void QgsFeatureListView::repaintRequested( QModelIndexList indexes )
@@ -181,7 +215,7 @@ void QgsFeatureListView::mouseMoveEvent( QMouseEvent *event )
 
   if ( mEditSelectionDrag )
   {
-    mCurrentEditSelectionModel->select( mModel->mapToMaster( index ), QItemSelectionModel::ClearAndSelect );
+    setEditSelection( mModel->mapToMaster( index ), QItemSelectionModel::ClearAndSelect );
   }
   else
   {
@@ -231,7 +265,7 @@ void QgsFeatureListView::keyPressEvent( QKeyEvent *event )
         newIndex = mModel->mapToMaster( newLocalIndex );
         if ( newIndex.isValid() )
         {
-          mCurrentEditSelectionModel->select( newIndex, QItemSelectionModel::ClearAndSelect );
+          setEditSelection( newIndex, QItemSelectionModel::ClearAndSelect );
           scrollTo( newLocalIndex );
         }
         break;
@@ -241,7 +275,7 @@ void QgsFeatureListView::keyPressEvent( QKeyEvent *event )
         newIndex = mModel->mapToMaster( newLocalIndex );
         if ( newIndex.isValid() )
         {
-          mCurrentEditSelectionModel->select( newIndex, QItemSelectionModel::ClearAndSelect );
+          setEditSelection( newIndex, QItemSelectionModel::ClearAndSelect );
           scrollTo( newLocalIndex );
         }
         break;

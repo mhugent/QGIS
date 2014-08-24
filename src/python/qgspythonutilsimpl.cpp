@@ -33,6 +33,7 @@
 #include <QStringList>
 #include <QDir>
 
+PyThreadState* _mainState;
 
 QgsPythonUtilsImpl::QgsPythonUtilsImpl()
 {
@@ -53,6 +54,9 @@ void QgsPythonUtilsImpl::initPython( QgisInterface* interface )
   // initialize python
   Py_Initialize();
 
+  // initialize threading AND acquire GIL
+  PyEval_InitThreads();
+
   mPythonEnabled = true;
 
   mMainModule = PyImport_AddModule( "__main__" ); // borrowed reference
@@ -60,6 +64,14 @@ void QgsPythonUtilsImpl::initPython( QgisInterface* interface )
 
   runString( "import sys" ); // import sys module (for display / exception hooks)
   runString( "import os" ); // import os module (for user paths)
+
+  // support for PYTHONSTARTUP-like environment variable: PYQGIS_STARTUP
+  // (unlike PYTHONHOME and PYTHONPATH, PYTHONSTARTUP is not supported for embedded interpreter by default)
+  // this is different than user's 'startup.py' (below), since it is loaded just after Py_Initialize
+  // it is very useful for cleaning sys.path, which may have undesireable paths, or for
+  // isolating/loading the initial environ without requiring a virt env, e.g. homebrew or MacPorts installs on Mac
+  runString( "pyqgstart = os.getenv('PYQGIS_STARTUP')\n" );
+  runString( "if pyqgstart is not None and os.path.exists(pyqgstart): execfile(pyqgstart)\n" );
 
 #ifdef Q_OS_WIN
   runString( "oldhome=None" );
@@ -74,10 +86,20 @@ void QgsPythonUtilsImpl::initPython( QgisInterface* interface )
   QStringList pluginpaths;
   foreach ( QString p, extraPluginsPaths() )
   {
+    if ( !QDir( p ).exists() )
+    {
+      QgsMessageOutput* msg = QgsMessageOutput::createMessageOutput();
+      msg->setTitle( QObject::tr( "Python error" ) );
+      msg->setMessage( QString( QObject::tr( "The extra plugin path '%1' does not exist !" ) ).arg( p ), QgsMessageOutput::MessageText );
+      msg->showMessage();
+    }
 #ifdef Q_OS_WIN
     p = p.replace( '\\', "\\\\" );
 #endif
-    pluginpaths << '"' + p + '"';
+    // we store here paths in unicode strings
+    // the str constant will contain utf8 code (through runString)
+    // so we call '...'.decode('utf-8') to make a unicode string
+    pluginpaths << '"' + p + "\".decode('utf-8')";
   }
   pluginpaths << homePluginsPath();
   pluginpaths << '"' + pluginsPath() + '"';
@@ -137,6 +159,8 @@ void QgsPythonUtilsImpl::initPython( QgisInterface* interface )
 
   // tell the utils script where to look for the plugins
   runString( "qgis.utils.plugin_paths = [" + pluginpaths.join( "," ) + "]" );
+  runString( "qgis.utils.sys_plugin_path = \"" + pluginsPath() + "\"" );
+  runString( "qgis.utils.home_plugin_path = " + homePluginsPath() );
 
 #ifdef Q_OS_WIN
   runString( "if oldhome: os.environ['HOME']=oldhome\n" );
@@ -147,6 +171,13 @@ void QgsPythonUtilsImpl::initPython( QgisInterface* interface )
 
   QString startuppath = homePythonPath() + " + \"/startup.py\"";
   runString( "if os.path.exists(" + startuppath + "): from startup import *\n" );
+
+  // release GIL!
+  // Later on, we acquire GIL just before doing some Python calls and
+  // release GIL again when the work with Python API is done.
+  // (i.e. there must be PyGILState_Ensure + PyGILState_Release pair
+  // around any calls to Python API, otherwise we may segfault!)
+  _mainState = PyEval_SaveThread();
 }
 
 void QgsPythonUtilsImpl::exitPython()
@@ -467,13 +498,13 @@ QString QgsPythonUtilsImpl::pluginsPath()
 QString QgsPythonUtilsImpl::homePythonPath()
 {
   QString settingsDir = QgsApplication::qgisSettingsDirPath();
-  if ( QDir::cleanPath( settingsDir ) == QDir::homePath() + QString( "/.qgis%1" ).arg( 2 /* FIXME QGis::QGIS_VERSION_INT / 10000 */ ) )
+  if ( QDir::cleanPath( settingsDir ) == QDir::homePath() + QString( "/.qgis%1" ).arg( QGis::QGIS_VERSION_INT / 10000 ) )
   {
-    return QString( "os.path.expanduser(\"~/.qgis%1/python\")" ).arg( 2 /* FIXME: QGis::QGIS_VERSION_INT / 10000 */ );
+    return QString( "\"%1/.qgis%2/python\".decode('utf-8')" ).arg( QDir::homePath() ).arg( QGis::QGIS_VERSION_INT / 10000 );
   }
   else
   {
-    return '"' + settingsDir.replace( '\\', "\\\\" ) + "python\"";
+    return '"' + settingsDir.replace( '\\', "\\\\" ) + "python\".decode('utf-8')";
   }
 }
 

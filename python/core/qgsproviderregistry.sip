@@ -1,5 +1,7 @@
 
-/** canonical manager of data providers
+
+/** \ingroup core
+  * A registry / canonical manager of data providers.
 
   This is a Singleton class that manages data provider access.
 */
@@ -38,7 +40,7 @@ class QgsProviderRegistry
                                const QString & dataSource );
 
     QWidget *selectWidget( const QString & providerKey,
-                           QWidget * parent = 0, Qt::WFlags fl = 0 );
+                           QWidget * parent = 0, Qt::WindowFlags fl = 0 );
 
     /** Get pointer to provider function
         @param providerKey identificator of the provider
@@ -74,6 +76,9 @@ class QgsProviderRegistry
       Returns a string suitable for a QFileDialog of raster file formats
       supported by all data providers.
 
+      This walks through all data providers appending calls to their
+      buildSupportedRasterFileFilter to a string, which is then returned.
+
       @note this method was added in QGIS 2.0
       @note This replaces QgsRasterLayer::buildSupportedRasterFileFilter()
     */
@@ -97,4 +102,3 @@ class QgsProviderRegistry
     /** ctor private since instance() creates it */
     QgsProviderRegistry( QString pluginPath );
 }; // class QgsProviderRegistry
-

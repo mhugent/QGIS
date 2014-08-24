@@ -21,6 +21,7 @@
 #include <ui_qgsvectorlayersaveasdialogbase.h>
 #include <QDialog>
 #include "qgscontexthelp.h"
+#include "qgsvectorfilewriter.h"
 
 /**
  *  Class to select destination file, type and CRS for ogr layrs
@@ -30,7 +31,15 @@ class QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVectorLayerSav
     Q_OBJECT
 
   public:
-    QgsVectorLayerSaveAsDialog( long srsid, QWidget* parent = 0,  Qt::WFlags fl = 0 );
+    // bitmask of options to be shown
+    enum Options
+    {
+      Symbology = 1,
+      AllOptions = ~0
+    };
+
+    QgsVectorLayerSaveAsDialog( long srsid, QWidget* parent = 0,  Qt::WindowFlags fl = 0 );
+    QgsVectorLayerSaveAsDialog( long srsid, const QgsRectangle& layerExtent, bool layerHasSelectedFeatures, int options = AllOptions, QWidget* parent = 0,  Qt::WindowFlags fl = 0 );
     ~QgsVectorLayerSaveAsDialog();
 
     QString format() const;
@@ -48,6 +57,14 @@ class QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVectorLayerSav
     int symbologyExport() const;
     double scaleDenominator() const;
 
+    //! setup canvas extent - for the use in extent group box
+    void setCanvasExtent( const QgsRectangle& canvasExtent, const QgsCoordinateReferenceSystem& canvasCrs );
+
+    bool hasFilterExtent() const;
+    QgsRectangle filterExtent() const;
+
+    bool onlySelected() const;
+
   private slots:
     void on_mFormatComboBox_currentIndexChanged( int idx );
     void on_mCRSSelection_currentIndexChanged( int idx );
@@ -58,7 +75,13 @@ class QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVectorLayerSav
     void accept();
 
   private:
+    void setup();
+    QList< QPair< QLabel*, QWidget* > > createControls( const QMap<QString, QgsVectorFileWriter::Option*>& options );
+
     long mCRS;
+
+    QgsRectangle mLayerExtent;
+    QgsCoordinateReferenceSystem mLayerCrs;
 };
 
 #endif // QGSVECTORLAYERSAVEASDIALOG_H

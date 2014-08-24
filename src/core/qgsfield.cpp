@@ -16,22 +16,25 @@
 
 #include "qgsfield.h"
 
-/*
-QgsField::QgsField(QString nam, QString typ, int len, int prec, bool num,
-                   QString comment)
-    :mName(nam), mType(typ), mLength(len), mPrecision(prec), mNumeric(num),
-     mComment(comment)
+#include <QSettings>
+
+#if 0
+QgsField::QgsField( QString nam, QString typ, int len, int prec, bool num,
+                    QString comment )
+    : mName( nam ), mType( typ ), mLength( len ), mPrecision( prec ), mNumeric( num )
+    , mComment( comment )
 {
   // This function used to lower case the field name since some stores
   // use upper case (eg. shapefiles), but that caused problems with
   // attribute actions getting confused between uppercase and
   // lowercase versions of the attribute names, so just leave the
   // names how they are now.
-}*/
+}
+#endif
 
 QgsField::QgsField( QString name, QVariant::Type type, QString typeName, int len, int prec, QString comment )
-    : mName( name ), mType( type ), mTypeName( typeName ),
-    mLength( len ), mPrecision( prec ), mComment( comment )
+    : mName( name ), mType( type ), mTypeName( typeName )
+    , mLength( len ), mPrecision( prec ), mComment( comment )
 {
 }
 
@@ -113,14 +116,78 @@ void QgsField::setComment( const QString & comment )
 
 QString QgsField::displayString( const QVariant& v ) const
 {
-  switch ( mType )
+  if ( v.isNull() )
   {
-    case QVariant::Double:
-      if ( mPrecision > 0 )
-      {
-        return QString::number( v.toDouble(), 'f', mPrecision );
-      }
-    default:
-      return v.toString();
+    QSettings settings;
+    return settings.value( "qgis/nullValue", "NULL" ).toString();
   }
+
+  if ( mType == QVariant::Double && mPrecision > 0 )
+    return QString::number( v.toDouble(), 'f', mPrecision );
+
+  return v.toString();
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+
+void QgsFields::clear()
+{
+  mFields.clear();
+  mNameToIndex.clear();
+}
+
+bool QgsFields::append( const QgsField& field, FieldOrigin origin, int originIndex )
+{
+  if ( mNameToIndex.contains( field.name() ) )
+    return false;
+
+  if ( originIndex == -1 && origin == OriginProvider )
+    originIndex = mFields.count();
+  mFields.append( Field( field, origin, originIndex ) );
+
+  mNameToIndex.insert( field.name(), mFields.count() - 1 );
+  return true;
+}
+
+void QgsFields::remove( int fieldIdx )
+{
+  mNameToIndex.remove( mFields[fieldIdx].field.name() );
+  mFields.remove( fieldIdx );
+}
+
+void QgsFields::extend( const QgsFields& other )
+{
+  for ( int i = 0; i < other.count(); ++i )
+  {
+    append( other.at( i ), other.fieldOrigin( i ), other.fieldOriginIndex( i ) );
+  }
+}
+
+QList<QgsField> QgsFields::toList() const
+{
+  QList<QgsField> lst;
+  for ( int i = 0; i < mFields.count(); ++i )
+    lst.append( mFields[i].field );
+  return lst;
+}
+
+int QgsFields::fieldNameIndex( const QString& fieldName ) const
+{
+  for ( int idx = 0; idx < count(); ++idx )
+  {
+    if ( QString::compare( mFields[idx].field.name(), fieldName, Qt::CaseInsensitive ) == 0 )
+    {
+      return idx;
+    }
+  }
+  return -1;
+}
+
+QgsAttributeList QgsFields::allAttributesList() const
+{
+  QgsAttributeList lst;
+  for ( int i = 0; i < mFields.count(); ++i )
+    lst.append( i );
+  return lst;
 }

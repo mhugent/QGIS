@@ -14,6 +14,8 @@
  ***************************************************************************/
 #include "qgspluginlayer.h"
 
+#include "qgsmaplayerrenderer.h"
+
 QgsPluginLayer::QgsPluginLayer( QString layerType, QString layerName )
     : QgsMapLayer( PluginLayer, layerName ), mPluginLayerType( layerType )
 {
@@ -27,4 +29,38 @@ QString QgsPluginLayer::pluginLayerType()
 void QgsPluginLayer::setExtent( const QgsRectangle &extent )
 {
   mExtent = extent;
+}
+
+QgsLegendSymbologyList QgsPluginLayer::legendSymbologyItems( const QSize& iconSize )
+{
+  Q_UNUSED( iconSize );
+  return QgsLegendSymbologyList();
+}
+
+/** Fallback layer renderer implementation for layer that do not support map renderer yet.
+ *
+ * @note added in 2.4
+ */
+class QgsPluginLayerRenderer : public QgsMapLayerRenderer
+{
+  public:
+    QgsPluginLayerRenderer( QgsPluginLayer* layer, QgsRenderContext& rendererContext )
+        : QgsMapLayerRenderer( layer->id() )
+        , mLayer( layer )
+        , mRendererContext( rendererContext )
+    {}
+
+    virtual bool render()
+    {
+      return mLayer->draw( mRendererContext );
+    }
+
+  protected:
+    QgsPluginLayer* mLayer;
+    QgsRenderContext& mRendererContext;
+};
+
+QgsMapLayerRenderer* QgsPluginLayer::createMapRenderer( QgsRenderContext& rendererContext )
+{
+  return new QgsPluginLayerRenderer( this, rendererContext );
 }

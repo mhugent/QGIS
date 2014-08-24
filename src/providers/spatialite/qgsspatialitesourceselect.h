@@ -54,7 +54,7 @@ class QgsSpatiaLiteSourceSelect: public QDialog, private Ui::QgsDbSourceSelectBa
     static bool newConnection( QWidget* parent );
 
     //! Constructor
-    QgsSpatiaLiteSourceSelect( QWidget * parent, Qt::WFlags fl = QgisGui::ModalDialogFlags, bool embedded = false );
+    QgsSpatiaLiteSourceSelect( QWidget * parent, Qt::WindowFlags fl = QgisGui::ModalDialogFlags, bool embedded = false );
     //! Destructor
     ~QgsSpatiaLiteSourceSelect();
     //! Populate the connection list combo box
@@ -80,6 +80,7 @@ class QgsSpatiaLiteSourceSelect: public QDialog, private Ui::QgsDbSourceSelectBa
     void on_btnNew_clicked();
     //! Deletes the selected connection
     void on_btnDelete_clicked();
+    void on_mSearchGroupBox_toggled( bool );
     void on_mSearchTableEdit_textChanged( const QString & text );
     void on_mSearchColumnComboBox_currentIndexChanged( const QString & text );
     void on_mSearchModeComboBox_currentIndexChanged( const QString & text );

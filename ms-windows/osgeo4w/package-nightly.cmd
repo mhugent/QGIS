@@ -1,3 +1,4 @@
+@echo off
 REM ***************************************************************************
 REM    package-nightly.cmd
 REM    ---------------------
@@ -12,48 +13,79 @@ REM *   the Free Software Foundation; either version 2 of the License, or     *
 REM *   (at your option) any later version.                                   *
 REM *                                                                         *
 REM ***************************************************************************
-@echo off
-set GRASS_VERSION=6.4.3RC4
-
-set BUILDDIR=%CD%\build
-REM set BUILDDIR=%TEMP%\qgis_unstable
-set LOG=%BUILDDIR%\build.log
-
-if not exist "%BUILDDIR%" mkdir %BUILDDIR%
-if not exist "%BUILDDIR%" goto error
-
 set VERSION=%1
 set PACKAGE=%2
 set PACKAGENAME=%3
-if "%VERSION%"=="" goto error
-if "%PACKAGE%"=="" goto error
-if "%PACKAGENAME%"=="" set PACKAGENAME=qgis-dev
+set ARCH=%4
+if "%VERSION%"=="" goto usage
+if "%PACKAGE%"=="" goto usage
+if "%PACKAGENAME%"=="" goto usage
+if "%ARCH%"=="" goto usage
 
-path %SYSTEMROOT%\system32;%SYSTEMROOT%;%SYSTEMROOT%\System32\Wbem;%PROGRAMFILES%\CMake 2.8\bin
-set PYTHONPATH=
+set BUILDDIR=%CD%\build-nightly-%ARCH%
 
-if "%PROGRAMFILES%"=="" set PROGRAMFILES=C:\Programme
-set VS90COMNTOOLS=%PROGRAMFILES%\Microsoft Visual Studio 9.0\Common7\Tools\
-call "%PROGRAMFILES%\Microsoft Visual Studio 9.0\VC\vcvarsall.bat" x86
+if "%OSGEO4W_ROOT%"=="" (
+	if "%ARCH%"=="x86" (
+		set OSGEO4W_ROOT=C:\OSGeo4W
+	) else (
+		set OSGEO4W_ROOT=C:\OSGeo4W64
+	)
+)
 
-if "%OSGEO4W_ROOT%"=="" set OSGEO4W_ROOT=%PROGRAMFILES%\OSGeo4W
-if not exist "%OSGEO4W_ROOT%\bin\o4w_env.bat" goto error
+if not exist "%BUILDDIR%" mkdir %BUILDDIR%
+if not exist "%BUILDDIR%" (echo could not create build directory %BUILDDIR% & goto error)
 
+if not exist "%OSGEO4W_ROOT%\bin\o4w_env.bat" (echo o4w_env.bat not found & goto error)
 call "%OSGEO4W_ROOT%\bin\o4w_env.bat"
 
 set O4W_ROOT=%OSGEO4W_ROOT:\=/%
 set LIB_DIR=%O4W_ROOT%
 
-set DEVENV=
-if exist "%DevEnvDir%\vcexpress.exe" set DEVENV=vcexpress
-if exist "%DevEnvDir%\devenv.exe" set DEVENV=devenv
-if "%DEVENV%"=="" goto error
+if not "%PROGRAMFILES(X86)%"=="" set PF86=%PROGRAMFILES(X86)%
+if "%PF86%"=="" set PF86=%PROGRAMFILES%
+if "%PF86%"=="" (echo PROGRAMFILES not set & goto error)
+
+if "%ARCH%"=="x86" goto devenv_x86
+goto devenv_x86_64
+
+:devenv_x86
+set GRASS_VERSION=6.4.4
+set VS90COMNTOOLS=%PF86%\Microsoft Visual Studio 9.0\Common7\Tools\
+call "%PF86%\Microsoft Visual Studio 9.0\VC\vcvarsall.bat" x86
+
+set CMAKE_OPT=^
+	-G "Visual Studio 9 2008" ^
+	-D BUILDNAME="OSGeo4W-Nightly-VC9" ^
+	-D SIP_BINARY_PATH=%O4W_ROOT%/apps/Python27/sip.exe ^
+	-D CMAKE_CXX_FLAGS_RELWITHDEBINFO="/MD /ZI /MP /Od /D NDEBUG /D QGISDEBUG"
+goto devenv
+
+:devenv_x86_64
+set GRASS_VERSION=6.4.3
+call "%PF86%\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" amd64
+if exist "c:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.Cmd" call "c:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.Cmd" /x64 /Release
+path %path%;%PF86%\Microsoft Visual Studio 10.0\VC\bin
+
+set SETUPAPI_LIBRARY=%PF86%\Microsoft SDKs\Windows\v7.0A\Lib\x64\SetupAPI.Lib
+if not exist "%SETUPAPI_LIBRARY%" set SETUPAPI_LIBRARY=%PROGRAMFILES%\Microsoft SDKs\Windows\v7.1\Lib\x64\SetupAPI.lib
+if not exist "%SETUPAPI_LIBRARY%" (echo SETUPAPI_LIBRARY not found & goto error)
+
+set CMAKE_OPT=^
+	-G "Visual Studio 10 Win64" ^
+	-D BUILDNAME="OSGeo4W-Nightly-VC10-64" ^
+	-D SPATIALINDEX_LIBRARY=%O4W_ROOT%/lib/spatialindex-64.lib ^
+	-D SIP_BINARY_PATH=%O4W_ROOT%/bin/sip.exe ^
+	-D CMAKE_CXX_FLAGS_RELWITHDEBINFO="/MD /Zi /MP /Od /D NDEBUG /D QGISDEBUG" ^
+	-D SETUPAPI_LIBRARY="%SETUPAPI_LIBRARY%" ^
+	-D CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS=TRUE
+
+:devenv
+set PYTHONPATH=
+path %PF86%\CMake 2.8\bin;%PATH%;c:\cygwin\bin
 
 PROMPT qgis%VERSION%$g 
 
 set BUILDCONF=RelWithDebInfo
-REM set BUILDCONF=Release
-
 
 cd ..\..
 set SRCDIR=%CD%
@@ -70,7 +102,7 @@ REM try renaming the logfile to see if it's locked
 REM
 
 if exist build.tmp del build.tmp
-if exist build.tmp goto error
+if exist build.tmp (echo could not remove build.tmp & goto error)
 
 ren build.log build.tmp
 if exist build.log goto locked
@@ -88,23 +120,22 @@ if exist build.tmp del build.tmp
 goto error
 
 :build
-echo Logging to %LOG%
-echo BEGIN: %DATE% %TIME%>>%LOG% 2>&1
-if errorlevel 1 goto error
+echo BEGIN: %DATE% %TIME%
 
 set >buildenv.log
 
+if exist qgsversion.h del qgsversion.h
+
 if exist CMakeCache.txt goto skipcmake
 
-echo CMAKE: %DATE% %TIME%>>%LOG% 2>&1
+echo CMAKE: %DATE% %TIME%
 if errorlevel 1 goto error
 
 set LIB=%LIB%;%OSGEO4W_ROOT%\lib
 set INCLUDE=%INCLUDE%;%OSGEO4W_ROOT%\include
 set GRASS_PREFIX=%O4W_ROOT%/apps/grass/grass-%GRASS_VERSION%
 
-cmake -G "Visual Studio 9 2008" ^
-	-D BUILDNAME="OSGeo4W-Nightly-VC9" ^
+cmake %CMAKE_OPT% ^
 	-D SITE="qgis.org" ^
 	-D PEDANTIC=TRUE ^
 	-D WITH_QSPATIALITE=TRUE ^
@@ -114,6 +145,9 @@ cmake -G "Visual Studio 9 2008" ^
 	-D WITH_GLOBE=TRUE ^
 	-D WITH_TOUCH=TRUE ^
 	-D WITH_ORACLE=TRUE ^
+	-D WITH_GRASS=TRUE ^
+	-D WITH_CUSTOM_WIDGETS=TRUE ^
+	-D CMAKE_BUILD_TYPE=%BUILDCONF% ^
 	-D CMAKE_CONFIGURATION_TYPES=%BUILDCONF% ^
 	-D GEOS_LIBRARY=%O4W_ROOT%/lib/geos_c.lib ^
 	-D SQLITE3_LIBRARY=%O4W_ROOT%/lib/sqlite3_i.lib ^
@@ -121,45 +155,54 @@ cmake -G "Visual Studio 9 2008" ^
 	-D PYTHON_EXECUTABLE=%O4W_ROOT%/bin/python.exe ^
 	-D PYTHON_INCLUDE_PATH=%O4W_ROOT%/apps/Python27/include ^
 	-D PYTHON_LIBRARY=%O4W_ROOT%/apps/Python27/libs/python27.lib ^
-	-D SIP_BINARY_PATH=%O4W_ROOT%/apps/Python27/sip.exe ^
 	-D QT_BINARY_DIR=%O4W_ROOT%/bin ^
 	-D QT_LIBRARY_DIR=%O4W_ROOT%/lib ^
 	-D QT_HEADERS_DIR=%O4W_ROOT%/include/qt4 ^
-	-D QT_ZLIB_LIBRARY=%O4W_ROOT%/lib/zlib.lib ^
-	-D QT_PNG_LIBRARY=%O4W_ROOT%/lib/libpng13.lib ^
 	-D QWT_INCLUDE_DIR=%O4W_ROOT%/include/qwt ^
 	-D QWT_LIBRARY=%O4W_ROOT%/lib/qwt5.lib ^
 	-D CMAKE_INSTALL_PREFIX=%O4W_ROOT%/apps/%PACKAGENAME% ^
-	-D CMAKE_CXX_FLAGS_RELWITHDEBINFO="/MD /ZI /Od /D NDEBUG /D QGISDEBUG" ^
 	-D FCGI_INCLUDE_DIR=%O4W_ROOT%/include ^
 	-D FCGI_LIBRARY=%O4W_ROOT%/lib/libfcgi.lib ^
-	%SRCDIR%>>%LOG% 2>&1
-if errorlevel 1 goto error
-
-REM bail out if python or grass was not found
-grep -Eq "^(Python not being built|Could not find GRASS)" %LOG%
-if not errorlevel 1 goto error
+        -D WITH_INTERNAL_JINJA2=FALSE ^
+        -D WITH_INTERNAL_MARKUPSAFE=FALSE ^
+        -D WITH_INTERNAL_PYGMENTS=FALSE ^
+        -D WITH_INTERNAL_DATEUTIL=FALSE ^
+        -D WITH_INTERNAL_PYTZ=FALSE ^
+        -D WITH_INTERNAL_SIX=FALSE ^
+	%SRCDIR%
+if errorlevel 1 (echo cmake failed & goto error)
 
 :skipcmake
+if exist noclean (echo skip clean & goto skipclean)
+echo CLEAN: %DATE% %TIME%
+cmake --build %BUILDDIR% --target clean --config %BUILDCONF%
+if errorlevel 1 (echo clean failed & goto error)
 
-echo ZERO_CHECK: %DATE% %TIME%>>%LOG% 2>&1
-%DEVENV% qgis%VERSION%.sln /Project ZERO_CHECK /Build %BUILDCONF% /Out %LOG%>>%LOG% 2>&1
-if errorlevel 1 goto error
+:skipclean
+echo ALL_BUILD: %DATE% %TIME%
+cmake --build %BUILDDIR% --config %BUILDCONF%
+if errorlevel 1 cmake --build %BUILDDIR% --config %BUILDCONF%
+if errorlevel 1 (echo build failed twice & goto error)
 
-echo ALL_BUILD: %DATE% %TIME%>>%LOG% 2>&1
-%DEVENV% qgis%VERSION%.sln /Project ALL_BUILD /Build %BUILDCONF% /Out %LOG%>>%LOG% 2>&1
-if errorlevel 1 goto error
+if not exist ..\skiptests (
+	echo RUN_TESTS: %DATE% %TIME%
+	cmake --build %BUILDDIR% --target Nightly --config %BUILDCONF%
+	if errorlevel 1 echo TESTS WERE NOT SUCCESSFUL.
+)
 
-echo RUN_TESTS: %DATE% %TIME%>>%LOG% 2>&1
-%DEVENV% qgis%VERSION%.sln /Project Nightly /Build %BUILDCONF% /Out %LOG%>>%LOG% 2>&1
-REM if errorlevel 1 echo "TESTS WERE NOT SUCCESSFUL."
+set PKGDIR=%OSGEO4W_ROOT%\apps\%PACKAGENAME%
 
-echo INSTALL: %DATE% %TIME%>>%LOG% 2>&1
-%DEVENV% qgis%VERSION%.sln /Project INSTALL /Build %BUILDCONF% /Out %LOG%>>%LOG% 2>&1
-if errorlevel 1 goto error
+if exist %PKGDIR% (
+	echo REMOVE: %DATE% %TIME%
+	rmdir /s /q %PKGDIR%
+)
+
+echo INSTALL: %DATE% %TIME%
+cmake --build %BUILDDIR% --target INSTALL --config %BUILDCONF%
+if errorlevel 1 (echo INSTALL failed & goto error)
 
 :package
-echo PACKAGE: %DATE% %TIME%>>%LOG% 2>&1
+echo PACKAGE: %DATE% %TIME%
 
 cd ..
 sed -e 's/@package@/%PACKAGENAME%/g' -e 's/@version@/%VERSION%/g' -e 's/@grassversion@/%GRASS_VERSION%/g' postinstall-dev.bat >%OSGEO4W_ROOT%\etc\postinstall\%PACKAGENAME%.bat
@@ -169,16 +212,17 @@ sed -e 's/@package@/%PACKAGENAME%/g' -e 's/@version@/%VERSION%/g' -e 's/@grassve
 sed -e 's/@package@/%PACKAGENAME%/g' -e 's/@version@/%VERSION%/g' -e 's/@grassversion@/%GRASS_VERSION%/g' qgis.reg.tmpl >%OSGEO4W_ROOT%\apps\%PACKAGENAME%\bin\qgis.reg.tmpl
 
 REM sed -e 's/%OSGEO4W_ROOT:\=\\\\\\\\%/@osgeo4w@/' %OSGEO4W_ROOT%\apps\%PACKAGENAME%\python\qgis\qgisconfig.py >%OSGEO4W_ROOT%\apps\%PACKAGENAME%\python\qgis\qgisconfig.py.tmpl
-REM if errorlevel 1 goto error
+REM if errorlevel 1 (echo creation of qgisconfig.py.tmpl failed & goto error)
 
-REM del %OSGEO4W_ROOT%\apps\%PACKAGENAME%\python\qgis\qgisconfig.py
+REM del %PKGDIR%\python\qgis\qgisconfig.py
 
 touch exclude
 
-move %OSGEO4W_ROOT%\apps\%PACKAGENAME%\bin\qgis.exe %OSGEO4W_ROOT%\bin\%PACKAGENAME%-bin.exe
-move %OSGEO4W_ROOT%\apps\%PACKAGENAME%\bin\qbrowser.exe %OSGEO4W_ROOT%\bin\%PACKAGENAME%-browser-bin.exe
+move %PKGDIR%\bin\qgis.exe %OSGEO4W_ROOT%\bin\%PACKAGENAME%-bin.exe
+move %PKGDIR%\bin\qbrowser.exe %OSGEO4W_ROOT%\bin\%PACKAGENAME%-browser-bin.exe
 
-tar -C %OSGEO4W_ROOT% -cjf %PACKAGENAME%-%VERSION%-%PACKAGE%.tar.bz2 ^
+if not exist %ARCH%\release\qgis\%PACKAGENAME% mkdir %ARCH%\release\qgis\%PACKAGENAME%
+tar -C %OSGEO4W_ROOT% -cjf %ARCH%/release/qgis/%PACKAGENAME%/%PACKAGENAME%-%VERSION%-%PACKAGE%.tar.bz2 ^
 	--exclude-from exclude ^
 	apps/%PACKAGENAME% ^
 	bin/%PACKAGENAME%-bin.exe ^
@@ -187,17 +231,22 @@ tar -C %OSGEO4W_ROOT% -cjf %PACKAGENAME%-%VERSION%-%PACKAGE%.tar.bz2 ^
 	bin/%PACKAGENAME%-browser.bat.tmpl ^
 	apps/qt4/plugins/sqldrivers/qsqlocispatial.dll ^
 	apps/qt4/plugins/sqldrivers/qsqlspatialite.dll ^
+	apps/qt4/plugins/designer/qgis_customwidgets.dll ^
 	etc/postinstall/%PACKAGENAME%.bat ^
-	etc/preremove/%PACKAGENAME%.bat ^
-	>>%LOG% 2>&1
-if errorlevel 1 goto error
+	etc/preremove/%PACKAGENAME%.bat
+if errorlevel 1 (echo tar failed & goto error)
 
 goto end
 
+:usage
+echo usage: %0 version package packagename arch
+echo sample: %0 2.1.0 38 qgis-dev x86_64
+exit
+
 :error
 echo BUILD ERROR %ERRORLEVEL%: %DATE% %TIME%
-echo BUILD ERROR %ERRORLEVEL%: %DATE% %TIME%>>%LOG% 2>&1
+echo BUILD ERROR %ERRORLEVEL%: %DATE% %TIME%
 if exist %PACKAGENAME%-%VERSION%-%PACKAGE%.tar.bz2 del %PACKAGENAME%-%VERSION%-%PACKAGE%.tar.bz2
 
 :end
-echo FINISHED: %DATE% %TIME% >>%LOG% 2>&1
+echo FINISHED: %DATE% %TIME%

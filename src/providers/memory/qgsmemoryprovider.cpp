@@ -73,15 +73,38 @@ QgsMemoryProvider::QgsMemoryProvider( QString uri )
 
   mNativeTypes
   << QgsVectorDataProvider::NativeType( tr( "Whole number (integer)" ), "integer", QVariant::Int, 0, 10 )
-  << QgsVectorDataProvider::NativeType( tr( "Decimal number (real)" ), "double", QVariant::Double, 0, 20, 0, 5 )
+  // Decimal number from OGR/Shapefile/dbf may come with length up to 32 and
+  // precision up to length-2 = 30 (default, if width is not specified in dbf is length = 24 precision = 15)
+  // We know that double (QVariant::Double) has only 15-16 significant numbers,
+  // but setting that correct limits would disable the use of memory provider with
+  // data from Shapefiles. In any case, the data are handled as doubles.
+  // So the limits set here are not correct but enable use of data from Shapefiles.
+  << QgsVectorDataProvider::NativeType( tr( "Decimal number (real)" ), "double", QVariant::Double, 0, 32, 0, 30 )
   << QgsVectorDataProvider::NativeType( tr( "Text (string)" ), "string", QVariant::String, 0, 255 )
+
+  // date type
+  << QgsVectorDataProvider::NativeType( tr( "Date" ), "date", QVariant::Date, -1, -1, -1, -1 )
+
+  // integer types
+  << QgsVectorDataProvider::NativeType( tr( "Whole number (smallint - 16bit)" ), "int2", QVariant::Int, -1, -1, 0, 0 )
+  << QgsVectorDataProvider::NativeType( tr( "Whole number (integer - 32bit)" ), "int4", QVariant::Int, -1, -1, 0, 0 )
+  << QgsVectorDataProvider::NativeType( tr( "Whole number (integer - 64bit)" ), "int8", QVariant::LongLong, -1, -1, 0, 0 )
+  << QgsVectorDataProvider::NativeType( tr( "Decimal number (numeric)" ), "numeric", QVariant::Double, 1, 20, 0, 20 )
+  << QgsVectorDataProvider::NativeType( tr( "Decimal number (decimal)" ), "decimal", QVariant::Double, 1, 20, 0, 20 )
+
+  // floating point
+  << QgsVectorDataProvider::NativeType( tr( "Decimal number (real)" ), "real", QVariant::Double, -1, -1, -1, -1 )
+  << QgsVectorDataProvider::NativeType( tr( "Decimal number (double)" ), "double precision", QVariant::Double, -1, -1, -1, -1 )
+
+  // string types
+  << QgsVectorDataProvider::NativeType( tr( "Text, unlimited length (text)" ), "text", QVariant::String, -1, -1, -1, -1 )
   ;
 
   if ( url.hasQueryItem( "field" ) )
   {
     QList<QgsField> attributes;
     QRegExp reFieldDef( "\\:"
-                        "(int|integer|real|double|string)" // type
+                        "(int|integer|real|double|string|date)" // type
                         "(?:\\((\\d+)"                // length
                         "(?:\\,(\\d+))?"                // precision
                         "\\))?"
@@ -113,6 +136,12 @@ QgsMemoryProvider::QgsMemoryProvider( QString uri )
           length = 20;
           precision = 5;
         }
+        else if ( typeName == "date" )
+        {
+          type = QVariant::Date;
+          typeName = "date";
+          length = 10;
+        }
 
         if ( reFieldDef.cap( 2 ) != "" )
         {
@@ -138,14 +167,12 @@ QgsMemoryProvider::QgsMemoryProvider( QString uri )
 
 QgsMemoryProvider::~QgsMemoryProvider()
 {
-  while ( !mActiveIterators.empty() )
-  {
-    QgsMemoryFeatureIterator *it = *mActiveIterators.begin();
-    QgsDebugMsg( "closing active iterator" );
-    it->close();
-  }
-
   delete mSpatialIndex;
+}
+
+QgsAbstractFeatureSource* QgsMemoryProvider::featureSource() const
+{
+  return new QgsMemoryFeatureSource( this );
 }
 
 QString QgsMemoryProvider::dataSourceUri() const
@@ -225,7 +252,7 @@ QString QgsMemoryProvider::storageType() const
 
 QgsFeatureIterator QgsMemoryProvider::getFeatures( const QgsFeatureRequest& request )
 {
-  return QgsFeatureIterator( new QgsMemoryFeatureIterator( this, request ) );
+  return QgsFeatureIterator( new QgsMemoryFeatureIterator( new QgsMemoryFeatureSource( this ), true, request ) );
 }
 
 
@@ -309,17 +336,19 @@ bool QgsMemoryProvider::addAttributes( const QList<QgsField> &attributes )
 {
   for ( QList<QgsField>::const_iterator it = attributes.begin(); it != attributes.end(); ++it )
   {
+    // Why are attributes restricted to int,double and string only?
     switch ( it->type() )
     {
       case QVariant::Int:
       case QVariant::Double:
       case QVariant::String:
+      case QVariant::Date:
+      case QVariant::LongLong:
         break;
       default:
         QgsDebugMsg( "Field type not supported: " + it->typeName() );
         continue;
     }
-
     // add new field as a last one
     mFields.append( *it );
 
@@ -422,6 +451,7 @@ void QgsMemoryProvider::updateExtent()
   }
   else
   {
+    mExtent.setMinimal();
     Q_FOREACH( const QgsFeature& feat, mFeatures )
     {
       if ( feat.geometry() )

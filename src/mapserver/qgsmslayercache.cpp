@@ -20,22 +20,26 @@
 #include "qgslogger.h"
 #include <QFile>
 
-//maximum number of layers in the cache
-#define DEFAULT_MAX_N_LAYERS 100
-
-QgsMSLayerCache* QgsMSLayerCache::mInstance = 0;
-
 QgsMSLayerCache* QgsMSLayerCache::instance()
 {
-  if ( !mInstance )
-  {
-    mInstance = new QgsMSLayerCache();
-  }
-  return mInstance;
+  static QgsMSLayerCache mInstance;
+  return &mInstance;
 }
 
 QgsMSLayerCache::QgsMSLayerCache()
 {
+  mDefaultMaxLayers = 100;
+  //max layer from environment variable overrides default
+  char* maxLayerEnv = getenv( "MAX_CACHE_LAYERS" );
+  if ( maxLayerEnv )
+  {
+    bool conversionOk = false;
+    int maxLayerInt = QString( maxLayerEnv ).toInt( &conversionOk );
+    if ( conversionOk )
+    {
+      mDefaultMaxLayers = maxLayerInt;
+    }
+  }
   QObject::connect( &mFileSystemWatcher, SIGNAL( fileChanged( const QString& ) ), this, SLOT( removeProjectFileLayers( const QString& ) ) );
 }
 
@@ -46,13 +50,12 @@ QgsMSLayerCache::~QgsMSLayerCache()
   {
     delete entry.layerPointer;
   }
-  delete mInstance;
 }
 
 void QgsMSLayerCache::insertLayer( const QString& url, const QString& layerName, QgsMapLayer* layer, const QString& configFile, const QList<QString>& tempFiles )
 {
   QgsDebugMsg( "inserting layer" );
-  if ( mEntries.size() > std::max( DEFAULT_MAX_N_LAYERS, mProjectMaxLayers ) ) //force cache layer examination after 10 inserted layers
+  if ( mEntries.size() > std::max( mDefaultMaxLayers, mProjectMaxLayers ) ) //force cache layer examination after 10 inserted layers
   {
     updateEntries();
   }
@@ -131,7 +134,7 @@ void QgsMSLayerCache::removeProjectFileLayers( const QString& project )
 void QgsMSLayerCache::updateEntries()
 {
   QgsDebugMsg( "updateEntries" );
-  int entriesToDelete = mEntries.size() - std::max( DEFAULT_MAX_N_LAYERS, mProjectMaxLayers );
+  int entriesToDelete = mEntries.size() - std::max( mDefaultMaxLayers, mProjectMaxLayers );
   if ( entriesToDelete < 1 )
   {
     return;

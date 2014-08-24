@@ -20,6 +20,8 @@
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsmessagelog.h"
+#include "qgssymbollayerv2utils.h"
+
 #include <QApplication>
 #include <QCoreApplication>
 #include <QCursor>
@@ -79,15 +81,10 @@ double rasterScaleFactor;
 QColor fill;
 QColor outline;
 
-QgsSvgCache* QgsSvgCache::mInstance = 0;
-
 QgsSvgCache* QgsSvgCache::instance()
 {
-  if ( !mInstance )
-  {
-    mInstance = new QgsSvgCache();
-  }
-  return mInstance;
+  static QgsSvgCache mInstance;
+  return &mInstance;
 }
 
 QgsSvgCache::QgsSvgCache( QObject *parent )
@@ -96,6 +93,7 @@ QgsSvgCache::QgsSvgCache( QObject *parent )
     , mLeastRecentEntry( 0 )
     , mMostRecentEntry( 0 )
 {
+  mMissingSvg = QString( "<svg width='10' height='10'><text x='5' y='10' font-size='10' text-anchor='middle'>?</text></svg>" ).toAscii();
 }
 
 QgsSvgCache::~QgsSvgCache()
@@ -111,6 +109,8 @@ QgsSvgCache::~QgsSvgCache()
 const QImage& QgsSvgCache::svgAsImage( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                                        double widthScaleFactor, double rasterScaleFactor, bool& fitsInCache )
 {
+  QMutexLocker locker( &mMutex );
+
   fitsInCache = true;
   QgsSvgCacheEntry* currentEntry = cacheEntry( file, size, fill, outline, outlineWidth, widthScaleFactor, rasterScaleFactor );
 
@@ -154,6 +154,8 @@ const QImage& QgsSvgCache::svgAsImage( const QString& file, double size, const Q
 const QPicture& QgsSvgCache::svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
     double widthScaleFactor, double rasterScaleFactor, bool forceVectorOutput )
 {
+  QMutexLocker locker( &mMutex );
+
   QgsSvgCacheEntry* currentEntry = cacheEntry( file, size, fill, outline, outlineWidth, widthScaleFactor, rasterScaleFactor );
 
   //if current entry picture is 0: cache picture for entry
@@ -170,7 +172,10 @@ const QPicture& QgsSvgCache::svgAsPicture( const QString& file, double size, con
 QgsSvgCacheEntry* QgsSvgCache::insertSVG( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
     double widthScaleFactor, double rasterScaleFactor )
 {
-  QgsSvgCacheEntry* entry = new QgsSvgCacheEntry( file, size, outlineWidth, widthScaleFactor, rasterScaleFactor, fill, outline );
+  // The file may be relative path (e.g. if path is data defined)
+  QString path = QgsSymbolLayerV2Utils::symbolNameToPath( file );
+
+  QgsSvgCacheEntry* entry = new QgsSvgCacheEntry( path, size, outlineWidth, widthScaleFactor, rasterScaleFactor, fill, outline );
 
   replaceParamsAndCacheSvg( entry );
 
@@ -246,20 +251,20 @@ QByteArray QgsSvgCache::getImageData( const QString &path ) const
     }
     else
     {
-      return QByteArray();
+      return mMissingSvg;
     }
   }
 
   // maybe it's a url...
   if ( !path.contains( "://" ) ) // otherwise short, relative SVG paths might be considered URLs
   {
-    return QByteArray();
+    return mMissingSvg;
   }
 
   QUrl svgUrl( path );
   if ( !svgUrl.isValid() )
   {
-    return QByteArray();
+    return mMissingSvg;
   }
 
   // check whether it's a url pointing to a local file
@@ -275,7 +280,7 @@ QByteArray QgsSvgCache::getImageData( const QString &path ) const
     }
 
     // not found...
-    return QByteArray();
+    return mMissingSvg;
   }
 
   // the url points to a remote resource, download it!
@@ -331,7 +336,7 @@ QByteArray QgsSvgCache::getImageData( const QString &path ) const
     QgsMessageLog::logMessage( tr( "SVG request error [status: %1 - reason phrase: %2]" ).arg( status.toInt() ).arg( phrase.toString() ), tr( "SVG" ) );
 
     reply->deleteLater();
-    return QByteArray();
+    return mMissingSvg;
   }
 
   QString contentType = reply->header( QNetworkRequest::ContentTypeHeader ).toString();
@@ -339,7 +344,7 @@ QByteArray QgsSvgCache::getImageData( const QString &path ) const
   if ( !contentType.startsWith( "image/svg+xml", Qt::CaseInsensitive ) )
   {
     reply->deleteLater();
-    return QByteArray();
+    return mMissingSvg;
   }
 
   // read the image data
@@ -400,6 +405,7 @@ void QgsSvgCache::cacheImage( QgsSvgCacheEntry* entry )
 
 void QgsSvgCache::cachePicture( QgsSvgCacheEntry *entry, bool forceVectorOutput )
 {
+  Q_UNUSED( forceVectorOutput );
   if ( !entry )
   {
     return;
@@ -417,24 +423,12 @@ void QgsSvgCache::cachePicture( QgsSvgCacheEntry *entry, bool forceVectorOutput 
   {
     hwRatio = r.viewBoxF().height() / r.viewBoxF().width();
   }
-  bool drawOnScreen = qgsDoubleNear( entry->rasterScaleFactor, 1.0, 0.1 );
-  if ( drawOnScreen && forceVectorOutput ) //forceVectorOutput always true in case of composer draw / composer preview
-  {
-    // fix to ensure rotated symbols scale with composer page (i.e. not map item) zoom
-    double wSize = entry->size;
-    double hSize = wSize * hwRatio;
-    QSizeF s( r.viewBoxF().size() );
-    s.scale( wSize, hSize, Qt::KeepAspectRatio );
-    rect = QRectF( -s.width() / 2.0, -s.height() / 2.0, s.width(), s.height() );
-  }
-  else
-  {
-    // output for print or image saving @ specific dpi
-    double scaledSize = entry->size / 25.4 / ( entry->rasterScaleFactor * entry->widthScaleFactor );
-    double wSize = scaledSize * picture->logicalDpiX();
-    double hSize = scaledSize * picture->logicalDpiY() * r.viewBoxF().height() / r.viewBoxF().width();
-    rect = QRectF( QPointF( -wSize / 2.0, -hSize / 2.0 ), QSizeF( wSize, hSize ) );
-  }
+
+  double wSize = entry->size;
+  double hSize = wSize * hwRatio;
+  QSizeF s( r.viewBoxF().size() );
+  s.scale( wSize, hSize, Qt::KeepAspectRatio );
+  rect = QRectF( -s.width() / 2.0, -s.height() / 2.0, s.width(), s.height() );
 
   QPainter p( picture );
   r.render( &p, rect );
@@ -453,7 +447,7 @@ QgsSvgCacheEntry* QgsSvgCache::cacheEntry( const QString& file, double size, con
   for ( ; entryIt != entries.end(); ++entryIt )
   {
     QgsSvgCacheEntry* cacheEntry = *entryIt;
-    if ( cacheEntry->file == file && qgsDoubleNear( cacheEntry->size, size ) && cacheEntry->fill == fill && cacheEntry->outline == outline &&
+    if ( qgsDoubleNear( cacheEntry->size, size ) && cacheEntry->fill == fill && cacheEntry->outline == outline &&
          cacheEntry->outlineWidth == outlineWidth && cacheEntry->widthScaleFactor == widthScaleFactor && cacheEntry->rasterScaleFactor == rasterScaleFactor )
     {
       currentEntry = cacheEntry;

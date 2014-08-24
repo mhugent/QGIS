@@ -554,7 +554,7 @@ class Table(DbItemObject):
 		schema = self.schemaName() if self.schemaName() else ''
 		geomCol = self.geomColumn if self.type in [Table.VectorType, Table.RasterType] else ""
 		uniqueCol = self.getValidQGisUniqueFields(True) if self.isView else None
-		uri.setDataSource(schema, self.name, geomCol if geomCol else "", "", uniqueCol.name if uniqueCol else "" )
+		uri.setDataSource(schema, self.name, geomCol if geomCol else None, None, uniqueCol.name if uniqueCol else "" )
 		return uri
 
 	def mimeUri(self):
@@ -985,7 +985,7 @@ class TableConstraint(TableSubItemObject):
 	types = { "c" : TypeCheck, "f" : TypeForeignKey, "p" : TypePrimaryKey, "u" : TypeUnique, "x" : TypeExclusion }
 
 	onAction = { "a" : "NO ACTION", "r" : "RESTRICT", "c" : "CASCADE", "n" : "SET NULL", "d" : "SET DEFAULT" }
-	matchTypes = { "u" : "UNSPECIFIED", "f" : "FULL", "p" : "PARTIAL" }
+	matchTypes = { "u" : "UNSPECIFIED", "f" : "FULL", "p" : "PARTIAL", "s" : "SIMPLE" }
 
 	def __init__(self, table):
 		TableSubItemObject.__init__(self, table)

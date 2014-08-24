@@ -1,9 +1,9 @@
 /***************************************************************************
-    qgssymbolv2.h
-    ---------------------
-    begin                : November 2009
-    copyright            : (C) 2009 by Martin Dobias
-    email                : wonder dot sk at gmail dot com
+ qgssymbolv2.h
+ ---------------------
+ begin                : November 2009
+ copyright            : (C) 2009 by Martin Dobias
+ email                : wonder dot sk at gmail dot com
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -19,6 +19,7 @@
 #include "qgis.h"
 #include <QList>
 #include <QMap>
+#include "qgsmapunitscale.h"
 
 class QColor;
 class QImage;
@@ -32,6 +33,7 @@ class QDomElement;
 //class
 
 class QgsFeature;
+class QgsFields;
 class QgsSymbolLayerV2;
 class QgsRenderContext;
 class QgsVectorLayer;
@@ -95,9 +97,9 @@ class CORE_EXPORT QgsSymbolV2
     QgsSymbolLayerV2* takeSymbolLayer( int index );
 
     //! delete layer at specified index and set a new one
-    bool changeSymbolLayer( int index, QgsSymbolLayerV2* layer );
+    bool changeSymbolLayer( int index, QgsSymbolLayerV2 *layer );
 
-    void startRender( QgsRenderContext& context, const QgsVectorLayer* layer = 0 );
+    void startRender( QgsRenderContext& context, const QgsFields* fields = 0 );
     void stopRender( QgsRenderContext& context );
 
     void setColor( const QColor& color );
@@ -116,6 +118,9 @@ class CORE_EXPORT QgsSymbolV2
     QgsSymbolV2::OutputUnit outputUnit() const;
     void setOutputUnit( QgsSymbolV2::OutputUnit u );
 
+    QgsMapUnitScale mapUnitScale() const;
+    void setMapUnitScale( const QgsMapUnitScale& scale );
+
     //! Get alpha transparency 1 for opaque, 0 for invisible
     qreal alpha() const { return mAlpha; }
     //! Set alpha transparency 1 for opaque, 0 for invisible
@@ -127,6 +132,9 @@ class CORE_EXPORT QgsSymbolV2
     int renderHints() const { return mRenderHints; }
 
     QSet<QString> usedAttributes() const;
+
+    void setLayer( const QgsVectorLayer* layer ) { mLayer = layer; }
+    const QgsVectorLayer* layer() const { return mLayer; }
 
   protected:
     QgsSymbolV2( SymbolType type, QgsSymbolLayerV2List layers ); // can't be instantiated
@@ -145,6 +153,8 @@ class CORE_EXPORT QgsSymbolV2
     qreal mAlpha;
 
     int mRenderHints;
+
+    const QgsVectorLayer* mLayer; //current vectorlayer
 };
 
 ///////////////////////
@@ -152,7 +162,7 @@ class CORE_EXPORT QgsSymbolV2
 class CORE_EXPORT QgsSymbolV2RenderContext
 {
   public:
-    QgsSymbolV2RenderContext( QgsRenderContext& c, QgsSymbolV2::OutputUnit u , qreal alpha = 1.0, bool selected = false, int renderHints = 0, const QgsFeature* f = 0 );
+    QgsSymbolV2RenderContext( QgsRenderContext& c, QgsSymbolV2::OutputUnit u , qreal alpha = 1.0, bool selected = false, int renderHints = 0, const QgsFeature* f = 0, const QgsFields* = 0, const QgsMapUnitScale& mapUnitScale = QgsMapUnitScale() );
     ~QgsSymbolV2RenderContext();
 
     QgsRenderContext& renderContext() { return mRenderContext; }
@@ -161,6 +171,9 @@ class CORE_EXPORT QgsSymbolV2RenderContext
 
     QgsSymbolV2::OutputUnit outputUnit() const { return mOutputUnit; }
     void setOutputUnit( QgsSymbolV2::OutputUnit u ) { mOutputUnit = u; }
+
+    QgsMapUnitScale mapUnitScale() const { return mMapUnitScale; }
+    void setMapUnitScale( const QgsMapUnitScale& scale ) { mMapUnitScale = scale; }
 
     //! Get alpha transparency 1 for opaque, 0 for invisible
     qreal alpha() const { return mAlpha; }
@@ -176,10 +189,14 @@ class CORE_EXPORT QgsSymbolV2RenderContext
     void setRenderHints( int hints ) { mRenderHints = hints; }
 
     void setFeature( const QgsFeature* f ) { mFeature = f; }
+    //! Current feature being rendered - may be null
     const QgsFeature* feature() const { return mFeature; }
 
-    void setLayer( const QgsVectorLayer* layer ) { mLayer = layer; }
-    const QgsVectorLayer* layer() const { return mLayer; }
+    //! Fields of the layer. Currently only available in startRender() calls
+    //! to allow symbols with data-defined properties prepare the expressions
+    //! (other times fields() returns null)
+    //! @note added in 2.4
+    const QgsFields* fields() const { return mFields; }
 
     double outputLineWidth( double width ) const;
     double outputPixelSize( double size ) const;
@@ -190,11 +207,12 @@ class CORE_EXPORT QgsSymbolV2RenderContext
   private:
     QgsRenderContext& mRenderContext;
     QgsSymbolV2::OutputUnit mOutputUnit;
+    QgsMapUnitScale mMapUnitScale;
     qreal mAlpha;
     bool mSelected;
     int mRenderHints;
     const QgsFeature* mFeature; //current feature
-    const QgsVectorLayer* mLayer; //current vectorlayer
+    const QgsFields* mFields;
 };
 
 
@@ -291,3 +309,5 @@ QgsLineSymbol* s = new LineSymbol( [ sl ] );
 
 rend = QgsSingleSymbolRenderer( new LineSymbol() );
 */
+
+

@@ -38,7 +38,7 @@ class QgsSpit : public QDialog, private Ui::QgsSpitBase
 {
     Q_OBJECT
   public:
-    QgsSpit( QWidget *parent = 0, Qt::WFlags fl = 0 );
+    QgsSpit( QWidget *parent = 0, Qt::WindowFlags fl = 0 );
     ~QgsSpit();
     //! Populate the list of available database connections
     void populateConnectionList();
@@ -110,7 +110,7 @@ class QgsSpit : public QDialog, private Ui::QgsSpitBase
     QStringList schema_list;
     QStringList geometry_list;
     int total_features;
-    std::vector <QgsShapeFile *> fileList;
+    QVector<QgsShapeFile *> fileList;
     int defSrid;
     QString defGeom;
     int defaultSridValue;
@@ -128,8 +128,8 @@ class ShapefileTableDelegate : public QItemDelegate
     Q_OBJECT
 
   public:
-    ShapefileTableDelegate( QObject *parent, QStringList& schema_list ) :
-        mSchemaList( schema_list )
+    ShapefileTableDelegate( QObject *parent, QStringList& schema_list )
+        : mSchemaList( schema_list )
     { Q_UNUSED( parent ); }
 
     QWidget *createEditor( QWidget *parent, const QStyleOptionViewItem &option,

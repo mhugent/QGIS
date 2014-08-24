@@ -24,6 +24,7 @@
 #include "qgisinterface.h"
 #include "qgsapplication.h"
 #include "qgsmaplayerregistry.h"
+#include "qgsmessagebar.h"
 
 //
 // Required plugin includes
@@ -75,8 +76,11 @@ QgsSpatialQueryPlugin::~QgsSpatialQueryPlugin()
 */
 void QgsSpatialQueryPlugin::initGui()
 {
+  delete mSpatialQueryAction;
+
   // Create the action for tool
   mSpatialQueryAction = new QAction( QIcon(), tr( "&Spatial Query" ), this );
+  mSpatialQueryAction->setObjectName( "mSpatialQueryAction" );
 
   // Connect the action to the spatialQuery slot
   connect( mSpatialQueryAction, SIGNAL( triggered() ), this, SLOT( run() ) );
@@ -99,7 +103,7 @@ void QgsSpatialQueryPlugin::unload()
   mIface->removePluginVectorMenu( tr( "&Spatial Query" ), mSpatialQueryAction );
 
   delete mSpatialQueryAction;
-
+  mSpatialQueryAction = 0;
   delete mDialog;
   mDialog = NULL;
 }
@@ -111,7 +115,7 @@ void QgsSpatialQueryPlugin::run()
     QString msg;
     if ( ! QgsSpatialQueryDialog::hasPossibleQuery( msg ) )
     {
-      QMessageBox::warning( mIface->mainWindow(), tr( "Query not executed" ), msg, QMessageBox::Ok );
+      mIface->messageBar()->pushMessage( tr( "Query not executed" ), msg, QgsMessageBar::INFO, mIface->messageTimeout() );
       return;
     }
     mDialog = new QgsSpatialQueryDialog( mIface->mainWindow(), mIface );
@@ -137,7 +141,8 @@ void QgsSpatialQueryPlugin::run()
 //! Set icons to the current theme
 void QgsSpatialQueryPlugin::setCurrentTheme( QString )
 {
-  mSpatialQueryAction->setIcon( getThemeIcon( "/spatialquery.png" ) );
+  if ( mSpatialQueryAction )
+    mSpatialQueryAction->setIcon( getThemeIcon( "/spatialquery.png" ) );
 }
 
 QIcon QgsSpatialQueryPlugin::getThemeIcon( const QString &theName )

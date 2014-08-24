@@ -59,7 +59,6 @@ static void _initWidgetFunctions()
 
   _initWidgetFunction( "SimpleLine", QgsSimpleLineSymbolLayerV2Widget::create );
   _initWidgetFunction( "MarkerLine", QgsMarkerLineSymbolLayerV2Widget::create );
-  _initWidgetFunction( "LineDecoration", QgsLineDecorationSymbolLayerV2Widget::create );
 
   _initWidgetFunction( "SimpleMarker", QgsSimpleMarkerSymbolLayerV2Widget::create );
   _initWidgetFunction( "SvgMarker", QgsSvgMarkerSymbolLayerV2Widget::create );
@@ -68,6 +67,8 @@ static void _initWidgetFunctions()
   _initWidgetFunction( "VectorField", QgsVectorFieldSymbolLayerWidget::create );
 
   _initWidgetFunction( "SimpleFill", QgsSimpleFillSymbolLayerV2Widget::create );
+  _initWidgetFunction( "GradientFill", QgsGradientFillSymbolLayerV2Widget::create );
+  _initWidgetFunction( "ShapeburstFill", QgsShapeburstFillSymbolLayerV2Widget::create );
   _initWidgetFunction( "SVGFill", QgsSVGFillSymbolLayerWidget::create );
   _initWidgetFunction( "CentroidFill", QgsCentroidFillSymbolLayerV2Widget::create );
   _initWidgetFunction( "LinePatternFill", QgsLinePatternFillSymbolLayerWidget::create );

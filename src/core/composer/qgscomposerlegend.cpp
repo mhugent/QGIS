@@ -23,6 +23,7 @@
 #include "qgscomposition.h"
 #include "qgslogger.h"
 #include "qgsmaplayer.h"
+#include "qgsvectorlayer.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsmaprenderer.h"
 #include "qgssymbolv2.h"
@@ -36,6 +37,7 @@ QgsComposerLegend::QgsComposerLegend( QgsComposition* composition )
     , mFontColor( QColor( 0, 0, 0 ) )
     , mBoxSpace( 2 )
     , mColumnSpace( 2 )
+    , mTitleAlignment( Qt::AlignLeft )
     , mColumnCount( 1 )
     , mComposerMap( 0 )
     , mSplitLayer( false )
@@ -54,6 +56,8 @@ QgsComposerLegend::QgsComposerLegend( QgsComposition* composition )
 
   mSymbolWidth = 7;
   mSymbolHeight = 4;
+  mWmsLegendWidth = 50;
+  mWmsLegendHeight = 25;
   mWrapChar = "";
   mlineSpacing = 1.5;
   adjustBoxSize();
@@ -104,7 +108,10 @@ QSizeF QgsComposerLegend::paintAndDetermineSize( QPainter* painter )
     }
   }
 
+  //calculate size of title
   QSizeF titleSize = drawTitle();
+  //add title margin to size of title text
+  titleSize.rwidth() += mBoxSpace * 2.0;
   double columnTop = mBoxSpace + titleSize.height() + style( QgsComposerLegendStyle::Title ).margin( QgsComposerLegendStyle::Bottom );
 
   QPointF point( mBoxSpace, columnTop );
@@ -147,37 +154,38 @@ QSizeF QgsComposerLegend::paintAndDetermineSize( QPainter* painter )
 
   size.rheight() = columnTop + columnMaxHeight + mBoxSpace;
   size.rwidth() = point.x();
-
-  // Now we know total width and can draw the title centered
   if ( !mTitle.isEmpty() )
   {
-    // For multicolumn center if we stay in totalWidth, otherwise allign to left
-    // and expand total width. With single column keep alligned to left be cause
-    // it looks better alligned with items bellow instead of centered
-    Qt::AlignmentFlag halignment;
-    if ( mColumnCount > 1 && titleSize.width() + 2 * mBoxSpace < size.width() )
-    {
-      halignment = Qt::AlignHCenter;
-      point.rx() = mBoxSpace + size.rwidth() / 2;
-    }
-    else
-    {
-      halignment = Qt::AlignLeft;
-      point.rx() = mBoxSpace;
-      size.rwidth() = qMax( titleSize.width() + 2 * mBoxSpace, size.width() );
-    }
-    point.ry() = mBoxSpace;
-    drawTitle( painter, point, halignment );
+    size.rwidth() = qMax( titleSize.width(), size.width() );
   }
 
-  //adjust box if width or height is to small
+  //adjust box if width or height is too small
   if ( painter && size.height() > rect().height() )
   {
-    setSceneRect( QRectF( transform().dx(), transform().dy(), rect().width(), size.height() ) );
+    setSceneRect( QRectF( pos().x(), pos().y(), rect().width(), size.height() ) );
   }
   if ( painter && size.width() > rect().width() )
   {
-    setSceneRect( QRectF( transform().dx(), transform().dy(), size.width(), rect().height() ) );
+    setSceneRect( QRectF( pos().x(), pos().y(), size.width(), rect().height() ) );
+  }
+
+  // Now we have set the correct total item width and can draw the title centered
+  if ( !mTitle.isEmpty() )
+  {
+    if ( mTitleAlignment == Qt::AlignLeft )
+    {
+      point.rx() = mBoxSpace;
+    }
+    else if ( mTitleAlignment == Qt::AlignHCenter )
+    {
+      point.rx() = rect().width() / 2;
+    }
+    else
+    {
+      point.rx() = rect().width() - mBoxSpace;
+    }
+    point.ry() = mBoxSpace;
+    drawTitle( painter, point, mTitleAlignment );
   }
 
   if ( painter )
@@ -198,27 +206,55 @@ QSizeF QgsComposerLegend::paintAndDetermineSize( QPainter* painter )
 QSizeF QgsComposerLegend::drawTitle( QPainter* painter, QPointF point, Qt::AlignmentFlag halignment )
 {
   QSizeF size( 0, 0 );
-  if ( mTitle.isEmpty() ) return size;
+  if ( mTitle.isEmpty() )
+  {
+    return size;
+  }
 
   QStringList lines = splitStringForWrapping( mTitle );
-
   double y = point.y();
 
-  if ( painter ) painter->setPen( mFontColor );
+  if ( painter )
+  {
+    painter->setPen( mFontColor );
+  }
+
+  //calculate width and left pos of rectangle to draw text into
+  double textBoxWidth;
+  double textBoxLeft;
+  switch ( halignment )
+  {
+    case Qt::AlignHCenter:
+      textBoxWidth = ( qMin( point.x(), rect().width() - point.x() ) - mBoxSpace ) * 2.0;
+      textBoxLeft = point.x() - textBoxWidth / 2.;
+      break;
+    case Qt::AlignRight:
+      textBoxLeft = mBoxSpace;
+      textBoxWidth = point.x() - mBoxSpace;
+      break;
+    case Qt::AlignLeft:
+    default:
+      textBoxLeft = point.x();
+      textBoxWidth = rect().width() - point.x() - mBoxSpace;
+      break;
+  }
 
   for ( QStringList::Iterator titlePart = lines.begin(); titlePart != lines.end(); ++titlePart )
   {
-    // it does not draw the last world if rectangle width is exactly text width
+    //last word is not drawn if rectangle width is exactly text width, so add 1
+    //TODO - correctly calculate size of italicized text, since QFontMetrics does not
     qreal width = textWidthMillimeters( styleFont( QgsComposerLegendStyle::Title ), *titlePart ) + 1;
     qreal height = fontAscentMillimeters( styleFont( QgsComposerLegendStyle::Title ) ) + fontDescentMillimeters( styleFont( QgsComposerLegendStyle::Title ) );
 
-    double left = halignment == Qt::AlignLeft ?  point.x() : point.x() - width / 2;
+    QRectF r( textBoxLeft, y, textBoxWidth, height );
 
-    QRectF rect( left, y, width, height );
+    if ( painter )
+    {
+      drawText( painter, r, *titlePart, styleFont( QgsComposerLegendStyle::Title ), halignment, Qt::AlignVCenter, Qt::TextDontClip );
+    }
 
-    if ( painter ) drawText( painter, rect, *titlePart, styleFont( QgsComposerLegendStyle::Title ), halignment, Qt::AlignVCenter );
-
-    size.rwidth() = qMax( width, size.width() );
+    //update max width of title
+    size.rwidth() = qMax( width, size.rwidth() );
 
     y += height;
     if ( titlePart != lines.end() )
@@ -292,7 +328,7 @@ void QgsComposerLegend::adjustBoxSize()
   QgsDebugMsg( QString( "width = %1 height = %2" ).arg( size.width() ).arg( size.height() ) );
   if ( size.isValid() )
   {
-    setSceneRect( QRectF( transform().dx(), transform().dy(), size.width(), size.height() ) );
+    setSceneRect( QRectF( pos().x(), pos().y(), size.width(), size.height() ) );
   }
 }
 
@@ -313,24 +349,22 @@ QgsComposerLegend::Nucleon QgsComposerLegend::drawSymbolItem( QgsComposerLegendI
 
   QgsComposerLayerItem* layerItem = dynamic_cast<QgsComposerLayerItem*>( symbolItem->parent() );
 
-#if 0
   int opacity = 255;
   if ( layerItem )
   {
     QgsMapLayer* currentLayer = QgsMapLayerRegistry::instance()->mapLayer( layerItem->layerID() );
     if ( currentLayer )
     {
-      opacity = currentLayer->getTransparency();
+      //vector layer
+      QgsVectorLayer* vectorLayer = dynamic_cast<QgsVectorLayer*>( currentLayer );
+      if ( vectorLayer )
+      {
+        opacity = 255 - ( 255 * vectorLayer->layerTransparency() / 100 );
+      }
     }
   }
-#endif
 
   QString text = symbolItem->text();
-  if ( text.isEmpty() )
-  {
-    // Use layer label, used for single symbols
-    text = layerItem->text();
-  }
 
   QStringList lines = splitStringForWrapping( text );
 
@@ -346,19 +380,47 @@ QgsComposerLegend::Nucleon QgsComposerLegend::drawSymbolItem( QgsComposerLegendI
   if ( symbolNg ) //item with symbol NG?
   {
     // must be called also with painter=0 to get real size
-    drawSymbolV2( painter, symbolNg, point.y() + ( itemHeight - mSymbolHeight ) / 2, x, realSymbolHeight );
+    drawSymbolV2( painter, symbolNg, point.y() + ( itemHeight - mSymbolHeight ) / 2, x, realSymbolHeight, opacity );
     symbolSize.rwidth() = qMax( x - point.x(), mSymbolWidth );
     symbolSize.rheight() = qMax( realSymbolHeight, mSymbolHeight );
   }
   else if ( rasterItem )
   {
-    if ( painter )
+    // manage WMS lengendGraphic
+    // actual code recognise if it's a legend because it has an icon and it's text is empty => this is not good MV pattern implementation :(
+    QIcon symbolIcon = symbolItem->icon();
+    if ( !symbolIcon.isNull() && symbolItem->text().isEmpty() )
     {
-      painter->setBrush( rasterItem->color() );
-      painter->drawRect( QRectF( point.x(), point.y() + ( itemHeight - mSymbolHeight ) / 2, mSymbolWidth, mSymbolHeight ) );
+      // find max size
+      QList<QSize> sizes = symbolIcon.availableSizes();
+      double maxWidth = 0;
+      double maxHeight = 0;
+      foreach ( QSize size, sizes )
+      {
+        if ( maxWidth < size.width() ) maxWidth = size.width();
+        if ( maxHeight < size.height() ) maxHeight = size.height();
+      }
+      QSize maxSize( maxWidth, maxHeight );
+
+      // get and print legend
+      QImage legend = symbolIcon.pixmap( maxWidth, maxHeight ).toImage();
+      if ( painter )
+      {
+        painter->drawImage( QRectF( point.x(), point.y(), mWmsLegendWidth, mWmsLegendHeight ), legend, QRectF( 0, 0, maxWidth, maxHeight ) );
+      }
+      symbolSize.rwidth() = mWmsLegendWidth;
+      symbolSize.rheight() = mWmsLegendHeight;
     }
-    symbolSize.rwidth() = mSymbolWidth;
-    symbolSize.rheight() = mSymbolHeight;
+    else
+    {
+      if ( painter )
+      {
+        painter->setBrush( rasterItem->color() );
+        painter->drawRect( QRectF( point.x(), point.y() + ( itemHeight - mSymbolHeight ) / 2, mSymbolWidth, mSymbolHeight ) );
+      }
+      symbolSize.rwidth() = mSymbolWidth;
+      symbolSize.rheight() = mSymbolHeight;
+    }
   }
   else //item with icon?
   {
@@ -414,14 +476,15 @@ QgsComposerLegend::Nucleon QgsComposerLegend::drawSymbolItem( QgsComposerLegendI
 }
 
 
-void QgsComposerLegend::drawSymbolV2( QPainter* p, QgsSymbolV2* s, double currentYCoord, double& currentXPosition, double& symbolHeight ) const
+void QgsComposerLegend::drawSymbolV2( QPainter* p, QgsSymbolV2* s, double currentYCoord, double& currentXPosition, double& symbolHeight, int opacity ) const
 {
   if ( !s )
   {
     return;
   }
 
-  double rasterScaleFactor = 1.0;
+  //setup painter scaling to dots so that raster symbology is drawn to scale
+  double dotsPerMM = 1.0;
   if ( p )
   {
     QPaintDevice* paintDevice = p->device();
@@ -429,7 +492,7 @@ void QgsComposerLegend::drawSymbolV2( QPainter* p, QgsSymbolV2* s, double curren
     {
       return;
     }
-    rasterScaleFactor = ( paintDevice->logicalDpiX() + paintDevice->logicalDpiY() ) / 2.0 / 25.4;
+    dotsPerMM = ( paintDevice->logicalDpiX() + paintDevice->logicalDpiY() ) / 2.0 / 25.4;
   }
 
   //consider relation to composer map for symbol sizes in mm
@@ -472,23 +535,43 @@ void QgsComposerLegend::drawSymbolV2( QPainter* p, QgsSymbolV2* s, double curren
 
   if ( p )
   {
-    p->save();
-    p->translate( currentXPosition + widthOffset, currentYCoord + heightOffset );
-    p->scale( 1.0 / rasterScaleFactor, 1.0 / rasterScaleFactor );
-
     if ( markerSymbol && sizeInMapUnits )
     {
       s->setOutputUnit( QgsSymbolV2::MM );
     }
 
-    s->drawPreviewIcon( p, QSize( width * rasterScaleFactor, height * rasterScaleFactor ) );
+    p->save();
+    p->setRenderHint( QPainter::Antialiasing );
+    if ( opacity != 255 && mComposition && mComposition->useAdvancedEffects() )
+    {
+      //semi transparent layer, so need to draw symbol to an image (to flatten it first)
+      //create image which is same size as legend rect, in case symbol bleeds outside its alloted space
+      QImage tempImage = QImage( QSize( rect().width() * dotsPerMM, rect().height() * dotsPerMM ), QImage::Format_ARGB32 );
+      QPainter imagePainter( &tempImage );
+      tempImage.fill( Qt::transparent );
+      imagePainter.translate( dotsPerMM * ( currentXPosition + widthOffset ),
+                              dotsPerMM * ( currentYCoord + heightOffset ) );
+      s->drawPreviewIcon( &imagePainter, QSize( width * dotsPerMM, height * dotsPerMM ) );
+      //reduce opacity of image
+      imagePainter.setCompositionMode( QPainter::CompositionMode_DestinationIn );
+      imagePainter.fillRect( tempImage.rect(), QColor( 0, 0, 0, opacity ) );
+      //draw rendered symbol image
+      p->scale( 1.0 / dotsPerMM, 1.0 / dotsPerMM );
+      p->drawImage( 0, 0, tempImage );
+    }
+    else
+    {
+      p->translate( currentXPosition + widthOffset, currentYCoord + heightOffset );
+      p->scale( 1.0 / dotsPerMM, 1.0 / dotsPerMM );
+      s->drawPreviewIcon( p, QSize( width * dotsPerMM, height * dotsPerMM ) );
+    }
+    p->restore();
 
     if ( markerSymbol && sizeInMapUnits )
     {
       s->setOutputUnit( QgsSymbolV2::MapUnit );
       markerSymbol->setSize( size );
     }
-    p->restore();
   }
   currentXPosition += width;
   currentXPosition += 2 * widthOffset;
@@ -501,11 +584,7 @@ QStringList QgsComposerLegend::layerIdList() const
   //take layer list from map renderer (to have legend order)
   if ( mComposition )
   {
-    QgsMapRenderer* r = mComposition->mapRenderer();
-    if ( r )
-    {
-      return r->layerSet();
-    }
+    return mComposition->mapSettings().layers();
   }
   return QStringList();
 }
@@ -551,6 +630,7 @@ bool QgsComposerLegend::writeXML( QDomElement& elem, QDomDocument & doc ) const
 
   //write general properties
   composerLegendElem.setAttribute( "title", mTitle );
+  composerLegendElem.setAttribute( "titleAlignment", QString::number(( int )mTitleAlignment ) );
   composerLegendElem.setAttribute( "columnCount", QString::number( mColumnCount ) );
   composerLegendElem.setAttribute( "splitLayer", QString::number( mSplitLayer ) );
   composerLegendElem.setAttribute( "equalColumnWidth", QString::number( mEqualColumnWidth ) );
@@ -560,6 +640,8 @@ bool QgsComposerLegend::writeXML( QDomElement& elem, QDomDocument & doc ) const
 
   composerLegendElem.setAttribute( "symbolWidth", QString::number( mSymbolWidth ) );
   composerLegendElem.setAttribute( "symbolHeight", QString::number( mSymbolHeight ) );
+  composerLegendElem.setAttribute( "wmsLegendWidth", QString::number( mWmsLegendWidth ) );
+  composerLegendElem.setAttribute( "wmsLegendHeight", QString::number( mWmsLegendHeight ) );
   composerLegendElem.setAttribute( "wrapChar", mWrapChar );
   composerLegendElem.setAttribute( "fontColor", mFontColor.name() );
 
@@ -592,6 +674,10 @@ bool QgsComposerLegend::readXML( const QDomElement& itemElem, const QDomDocument
 
   //read general properties
   mTitle = itemElem.attribute( "title" );
+  if ( !itemElem.attribute( "titleAlignment" ).isEmpty() )
+  {
+    mTitleAlignment = ( Qt::AlignmentFlag )itemElem.attribute( "titleAlignment" ).toInt();
+  }
   mColumnCount = itemElem.attribute( "columnCount", "1" ).toInt();
   if ( mColumnCount < 1 ) mColumnCount = 1;
   mSplitLayer = itemElem.attribute( "splitLayer", "0" ).toInt() == 1;
@@ -627,6 +713,8 @@ bool QgsComposerLegend::readXML( const QDomElement& itemElem, const QDomDocument
 
   mSymbolWidth = itemElem.attribute( "symbolWidth", "7.0" ).toDouble();
   mSymbolHeight = itemElem.attribute( "symbolHeight", "14.0" ).toDouble();
+  mWmsLegendWidth = itemElem.attribute( "wmsLegendWidth", "50" ).toDouble();
+  mWmsLegendHeight = itemElem.attribute( "wmsLegendHeight", "25" ).toDouble();
 
   mWrapChar = itemElem.attribute( "wrapChar" );
 
@@ -800,13 +888,12 @@ QList<QgsComposerLegend::Atom> QgsComposerLegend::createAtomList( QStandardItem*
           // append to layer atom
           // the width is not correct at this moment, we must align all symbol labels
           atom.size.rwidth() = qMax( symbolNucleon.size.width(), atom.size.width() );
-          //if ( currentLegendItem->rowCount() > 1 )
-          //if ( currentLegendItem->style() != QgsComposerLegendStyle::Hidden )
-          //{
-          //atom.size.rheight() += mSymbolSpace;
-          // TODO: for now we keep Symbol and SymbolLabel Top margin in sync
-          atom.size.rheight() += style( QgsComposerLegendStyle::Symbol ).margin( QgsComposerLegendStyle::Top );
-          //}
+          // Add symbol space only if there is already title or another item above
+          if ( atom.nucleons.size() > 0 )
+          {
+            // TODO: for now we keep Symbol and SymbolLabel Top margin in sync
+            atom.size.rheight() += style( QgsComposerLegendStyle::Symbol ).margin( QgsComposerLegendStyle::Top );
+          }
           atom.size.rheight() += symbolNucleon.size.height();
           atom.nucleons.append( symbolNucleon );
         }
@@ -1014,4 +1101,5 @@ void QgsComposerLegend::setColumns( QList<Atom>& atomList )
     }
   }
 }
+
 

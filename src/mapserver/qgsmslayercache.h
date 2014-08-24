@@ -73,8 +73,6 @@ class QgsMSLayerCache: public QObject
     void freeEntryRessources( QgsMSLayerCacheEntry& entry );
 
   private:
-    static QgsMSLayerCache* mInstance;
-
     /**Cash entries with pair url/layer name as a key. The layer name is necessary for cases where the same
       url is used several time in a request. It ensures that different layer instances are created for different
       layer names*/
@@ -85,6 +83,9 @@ class QgsMSLayerCache: public QObject
 
     /**Check for configuration file updates (remove layers from cache if configuration file changes)*/
     QFileSystemWatcher mFileSystemWatcher;
+
+    /**Maximum number of layers in the cache*/
+    int mDefaultMaxLayers;
 
     /**Maximum number of layers in the cache, overrides DEFAULT_MAX_N_LAYERS if larger*/
     int mProjectMaxLayers;

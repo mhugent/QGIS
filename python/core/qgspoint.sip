@@ -1,5 +1,7 @@
-
-
+/** \ingroup core
+ * A class to represent a point geometry.
+ * Currently no Z axis / 2.5D support is implemented.
+ */
 class QgsPoint
 {
 
@@ -125,5 +127,10 @@ class QgsPoint
         QString msg = QString("Bad index: %1").arg(a0);
         PyErr_SetString(PyExc_IndexError, msg.toAscii().constData());
     }
+%End
+
+  long __hash__() const;
+%MethodCode
+  sipRes = qHash( *sipCpp );
 %End
 }; // class QgsPoint

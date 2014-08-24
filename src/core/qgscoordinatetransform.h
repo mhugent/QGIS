@@ -88,6 +88,8 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
     //! destructor
     ~QgsCoordinateTransform();
 
+    QgsCoordinateTransform* clone() const;
+
     //! Enum used to indicate the direction (forward or inverse) of the transform
     enum TransformDirection
     {
@@ -154,6 +156,9 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
     // and y variables in place. The second one works with good old-fashioned
     // C style arrays.
     void transformInPlace( double& x, double& y, double &z, TransformDirection direction = ForwardTransform ) const;
+#ifdef QT_ARCH_ARM
+    void transformInPlace( qreal& x, qreal& y, double &z, TransformDirection direction = ForwardTransform ) const;
+#endif
 
     //! @note not available in python bindings
     void transformInPlace( QVector<double>& x, QVector<double>& y, QVector<double>& z,
@@ -211,6 +216,20 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
     * @param theCRSID -  A long representing the srsid of the srs to be used */
     void setDestCRSID( long theCRSID );
 
+    /**Returns list of datum transformations for the given src and dest CRS
+     * @note not available in python bindings
+     */
+    static QList< QList< int > > datumTransformations( const QgsCoordinateReferenceSystem& srcCRS, const QgsCoordinateReferenceSystem& destCRS );
+    static QString datumTransformString( int datumTransform );
+    /**Gets name of source and dest geographical CRS (to show in a tooltip)
+        @return epsgNr epsg code of the transformation (or 0 if not in epsg db)*/
+    static bool datumTransformCrsInfo( int datumTransform, int& epsgNr, QString& srcProjection, QString& dstProjection, QString &remarks, QString &scope, bool &preferred, bool &deprecated );
+
+    int sourceDatumTransform() const { return mSourceDatumTransform; }
+    void setSourceDatumTransform( int dt ) { mSourceDatumTransform = dt; }
+    int destinationDatumTransform() const { return mDestinationDatumTransform; }
+    void setDestinationDatumTransform( int dt ) { mDestinationDatumTransform = dt; }
+
   public slots:
     //!initialise is used to actually create the Transformer instance
     void initialise();
@@ -265,10 +284,19 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
      */
     projPJ mDestinationProjection;
 
+    int mSourceDatumTransform;
+    int mDestinationDatumTransform;
+
     /*!
      * Finder for PROJ grid files.
      */
     void setFinder();
+
+    /**Removes +nadgrids and +towgs84 from proj4 string*/
+    static QString stripDatumTransform( const QString& proj4 );
+    static void searchDatumTransform( const QString& sql, QList< int >& transforms );
+    /**In certain situations, null grid shifts have to be added to src / dst proj string*/
+    void addNullGridShifts( QString& srcProjString, QString& destProjString );
 };
 
 //! Output stream operator

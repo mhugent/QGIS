@@ -59,7 +59,7 @@ class CORE_EXPORT QgsProperty
     @param tabs is number of tabs to print; used for pretty-printing
     hierarchy
     */
-    virtual void dump( size_t tabs = 0 ) const = 0;
+    virtual void dump( int tabs = 0 ) const = 0;
 
     /** returns true if is a QgsPropertyKey */
     virtual bool isKey() const = 0;
@@ -119,36 +119,30 @@ Contains a QgsPropertyKey's value
 class CORE_EXPORT QgsPropertyValue : public QgsProperty
 {
   public:
-    QgsPropertyValue()
-    {}
+    QgsPropertyValue() {}
 
     QgsPropertyValue( const QVariant &value )
         : value_( value )
     {}
 
-    virtual ~ QgsPropertyValue()
-    {}
+    virtual ~QgsPropertyValue() {}
 
     /** returns true if is a QgsPropertyKey */
-    virtual bool isKey() const
-    { return false; }
+    virtual bool isKey() const { return false; }
 
     /** returns true if is a QgsPropertyValue */
-    virtual bool isValue() const
-    { return true; }
+    virtual bool isValue() const { return true; }
 
-    QVariant value() const
-    { return value_; }
+    QVariant value() const { return value_; }
 
     /** returns true if is a leaf node
 
     @note I suppose, in a way, value nodes can also be qualified as leaf
     nodes even though we're only counting key nodes.
     */
-    bool isLeaf() const
-    { return true; }
+    bool isLeaf() const { return true; }
 
-    void dump( size_t tabs = 0 ) const;
+    void dump( int tabs = 0 ) const;
 
     bool readXML( QDomNode & keyNode );
 
@@ -156,9 +150,7 @@ class CORE_EXPORT QgsPropertyValue : public QgsProperty
                    QDomElement   & element,
                    QDomDocument  & document );
 
-    size_t count() const
-    { return 0; }
-
+    int count() const { return 0; }
 
     /** return keys that do not contain other keys
 
@@ -198,16 +190,14 @@ class CORE_EXPORT QgsPropertyValue : public QgsProperty
 class CORE_EXPORT QgsPropertyKey : public QgsProperty
 {
   public:
-    QgsPropertyKey( const QString name = "" );
+    QgsPropertyKey( const QString &name = "" );
     virtual ~ QgsPropertyKey();
 
     /// every key has a name
     // @{
-    const QString &name() const
-    { return mName; }
+    const QString &name() const { return mName; }
 
-    QString & name()
-    { return mName; }
+    QString &name() { return mName; }
     // @}
 
 
@@ -258,27 +248,23 @@ class CORE_EXPORT QgsPropertyKey : public QgsProperty
 
 
 
-    void dump( size_t tabs = 0 ) const;
+    void dump( int tabs = 0 ) const;
 
     bool readXML( QDomNode & keyNode );
 
     bool writeXML( const QString &nodeName, QDomElement & element, QDomDocument & document );
 
     /// how many elements are contained within this one?
-    size_t count() const
-    { return mProperties.count(); }
+    int count() const { return mProperties.count(); }
 
     /// Does this property not have any subkeys or values?
-    /* virtual */ bool isEmpty() const
-    { return mProperties.isEmpty(); }
+    /* virtual */ bool isEmpty() const { return mProperties.isEmpty(); }
 
     /** returns true if is a QgsPropertyKey */
-    virtual bool isKey() const
-    { return true; }
+    virtual bool isKey() const { return true; }
 
     /** returns true if is a QgsPropertyValue */
-    virtual bool isValue() const
-    { return false; }
+    virtual bool isValue() const { return false; }
 
     /// return keys that do not contain other keys
     void entryList( QStringList & entries ) const;

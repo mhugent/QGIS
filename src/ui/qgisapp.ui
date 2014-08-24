@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1050</width>
-    <height>487</height>
+    <height>506</height>
    </rect>
   </property>
   <widget class="QWidget" name="centralwidget"/>
@@ -17,38 +17,9 @@
      <x>0</x>
      <y>0</y>
      <width>1050</width>
-     <height>31</height>
+     <height>25</height>
     </rect>
    </property>
-   <widget class="QMenu" name="mEditMenu">
-    <property name="title">
-     <string>&amp;Edit</string>
-    </property>
-    <addaction name="mActionUndo"/>
-    <addaction name="mActionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="mActionCutFeatures"/>
-    <addaction name="mActionCopyFeatures"/>
-    <addaction name="mActionPasteFeatures"/>
-    <addaction name="separator"/>
-    <addaction name="mActionAddFeature"/>
-    <addaction name="mActionMoveFeature"/>
-    <addaction name="mActionDeleteSelected"/>
-    <addaction name="separator"/>
-    <addaction name="mActionRotateFeature"/>
-    <addaction name="mActionSimplifyFeature"/>
-    <addaction name="mActionAddRing"/>
-    <addaction name="mActionAddPart"/>
-    <addaction name="mActionDeleteRing"/>
-    <addaction name="mActionDeletePart"/>
-    <addaction name="mActionReshapeFeatures"/>
-    <addaction name="mActionOffsetCurve"/>
-    <addaction name="mActionSplitFeatures"/>
-    <addaction name="mActionMergeFeatures"/>
-    <addaction name="mActionMergeFeatureAttributes"/>
-    <addaction name="mActionNodeTool"/>
-    <addaction name="mActionRotatePointSymbols"/>
-   </widget>
    <widget class="QMenu" name="mProjectMenu">
     <property name="title">
      <string>P&amp;roject</string>
@@ -76,6 +47,7 @@
     <addaction name="mActionSaveProject"/>
     <addaction name="mActionSaveProjectAs"/>
     <addaction name="mActionSaveMapAsImage"/>
+    <addaction name="mActionDxfExport"/>
     <addaction name="separator"/>
     <addaction name="mActionNewPrintComposer"/>
     <addaction name="mActionShowComposerManager"/>
@@ -96,6 +68,7 @@
      <addaction name="mActionSelectPolygon"/>
      <addaction name="mActionSelectFreehand"/>
      <addaction name="mActionSelectRadius"/>
+     <addaction name="mActionSelectByExpression"/>
      <addaction name="mActionDeselectAll"/>
     </widget>
     <widget class="QMenu" name="menuMeasure">
@@ -115,6 +88,16 @@
      <addaction name="mActionDecorationNorthArrow"/>
      <addaction name="mActionDecorationCopyright"/>
     </widget>
+    <widget class="QMenu" name="menuPreview_Mode">
+     <property name="title">
+      <string>Preview Mode</string>
+     </property>
+     <addaction name="mActionPreviewModeOff"/>
+     <addaction name="mActionPreviewModeGrayscale"/>
+     <addaction name="mActionPreviewModeMono"/>
+     <addaction name="mActionPreviewProtanope"/>
+     <addaction name="mActionPreviewDeuteranope"/>
+    </widget>
     <addaction name="mActionPan"/>
     <addaction name="mActionPanToSelected"/>
     <addaction name="mActionZoomIn"/>
@@ -132,10 +115,12 @@
     <addaction name="mActionZoomActualSize"/>
     <addaction name="separator"/>
     <addaction name="menuDecorations"/>
+    <addaction name="menuPreview_Mode"/>
     <addaction name="mActionMapTips"/>
     <addaction name="mActionNewBookmark"/>
     <addaction name="mActionShowBookmarks"/>
     <addaction name="mActionDraw"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="mLayerMenu">
     <property name="title">
@@ -150,6 +135,7 @@
     </widget>
     <addaction name="mNewLayerMenu"/>
     <addaction name="mActionEmbedLayers"/>
+    <addaction name="mActionAddLayerDefinition"/>
     <addaction name="mActionAddOgrLayer"/>
     <addaction name="mActionAddRasterLayer"/>
     <addaction name="mActionAddPgLayer"/>
@@ -171,9 +157,10 @@
     <addaction name="mActionAllEdits"/>
     <addaction name="separator"/>
     <addaction name="mActionLayerSaveAs"/>
-    <addaction name="mActionLayerSelectionSaveAs"/>
+    <addaction name="mActionSaveLayerDefinition"/>
     <addaction name="mActionRemoveLayer"/>
     <addaction name="mActionDuplicateLayer"/>
+    <addaction name="mActionSetLayerScaleVisibility"/>
     <addaction name="mActionSetLayerCRS"/>
     <addaction name="mActionSetProjectCRSFromLayer"/>
     <addaction name="mActionLayerProperties"/>
@@ -240,6 +227,45 @@
      <addaction name="mActionOSMExport"/>
     </widget>
     <addaction name="menuOpenStreetMap"/>
+   </widget>
+   <widget class="QMenu" name="mEditMenu">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <widget class="QMenu" name="mMenuPasteAs">
+     <property name="title">
+      <string>Paste Features as</string>
+     </property>
+     <addaction name="mActionPasteAsNewVector"/>
+     <addaction name="mActionPasteAsNewMemoryVector"/>
+    </widget>
+    <addaction name="mActionUndo"/>
+    <addaction name="mActionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="mActionCutFeatures"/>
+    <addaction name="mActionCopyFeatures"/>
+    <addaction name="mActionPasteFeatures"/>
+    <addaction name="mMenuPasteAs"/>
+    <addaction name="separator"/>
+    <addaction name="mActionAddFeature"/>
+    <addaction name="mActionMoveFeature"/>
+    <addaction name="mActionDeleteSelected"/>
+    <addaction name="separator"/>
+    <addaction name="mActionRotateFeature"/>
+    <addaction name="mActionSimplifyFeature"/>
+    <addaction name="mActionAddRing"/>
+    <addaction name="mActionAddPart"/>
+    <addaction name="mActionFillRing"/>
+    <addaction name="mActionDeleteRing"/>
+    <addaction name="mActionDeletePart"/>
+    <addaction name="mActionReshapeFeatures"/>
+    <addaction name="mActionOffsetCurve"/>
+    <addaction name="mActionSplitFeatures"/>
+    <addaction name="mActionSplitParts"/>
+    <addaction name="mActionMergeFeatures"/>
+    <addaction name="mActionMergeFeatureAttributes"/>
+    <addaction name="mActionNodeTool"/>
+    <addaction name="mActionRotatePointSymbols"/>
    </widget>
    <addaction name="mProjectMenu"/>
    <addaction name="mEditMenu"/>
@@ -328,11 +354,13 @@
    <addaction name="mActionSimplifyFeature"/>
    <addaction name="mActionAddRing"/>
    <addaction name="mActionAddPart"/>
+   <addaction name="mActionFillRing"/>
    <addaction name="mActionDeleteRing"/>
    <addaction name="mActionDeletePart"/>
    <addaction name="mActionReshapeFeatures"/>
    <addaction name="mActionOffsetCurve"/>
    <addaction name="mActionSplitFeatures"/>
+   <addaction name="mActionSplitParts"/>
    <addaction name="mActionMergeFeatures"/>
    <addaction name="mActionMergeFeatureAttributes"/>
    <addaction name="mActionRotatePointSymbols"/>
@@ -670,10 +698,22 @@
    </property>
    <property name="icon">
     <iconset resource="../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSplitFeatures.png</normaloff>:/images/themes/default/mActionSplitFeatures.png</iconset>
+     <normaloff>:/images/themes/default/mActionSplitFeatures.svg</normaloff>:/images/themes/default/mActionSplitFeatures.svg</iconset>
    </property>
    <property name="text">
     <string>Split Features</string>
+   </property>
+  </action>
+  <action name="mActionSplitParts">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../images/images.qrc">
+     <normaloff>:/images/themes/default/mActionSplitFeatures.svg</normaloff>:/images/themes/default/mActionSplitFeatures.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Split Parts</string>
    </property>
   </action>
   <action name="mActionDeleteSelected">
@@ -798,7 +838,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionPan.png</normaloff>:/images/themes/default/mActionPan.png</iconset>
+     <normaloff>:/images/themes/default/mActionPan.svg</normaloff>:/images/themes/default/mActionPan.svg</iconset>
    </property>
    <property name="text">
     <string>Pan Map</string>
@@ -1071,7 +1111,7 @@
     <string>Refresh</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+R</string>
+    <string>F5</string>
    </property>
   </action>
   <action name="mActionTextAnnotation">
@@ -1233,7 +1273,7 @@
      <normaloff>:/images/themes/default/mActionAddWmsLayer.svg</normaloff>:/images/themes/default/mActionAddWmsLayer.svg</iconset>
    </property>
    <property name="text">
-    <string>Add WMS Layer...</string>
+    <string>Add WMS/WMTS Layer...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+W</string>
@@ -1280,11 +1320,6 @@
     <string>Save As...</string>
    </property>
   </action>
-  <action name="mActionLayerSelectionSaveAs">
-   <property name="text">
-    <string>Save Selection as Vector File...</string>
-   </property>
-  </action>
   <action name="mActionRemoveLayer">
    <property name="icon">
     <iconset resource="../../images/images.qrc">
@@ -1319,6 +1354,9 @@
    <property name="text">
     <string>Query...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
+   </property>
   </action>
   <action name="mActionAddToOverview">
    <property name="icon">
@@ -1327,9 +1365,6 @@
    </property>
    <property name="text">
     <string>Add to Overview</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+O</string>
    </property>
   </action>
   <action name="mActionAddAllToOverview">
@@ -1388,7 +1423,7 @@
     <string>Toggle Full Screen Mode</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+F</string>
+    <string>F11</string>
    </property>
   </action>
   <action name="mActionProjectProperties">
@@ -1687,7 +1722,7 @@ Ctl (Cmd) increments by 15 deg.</string>
   <action name="mActionPanToSelected">
    <property name="icon">
     <iconset resource="../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionPanToSelected.png</normaloff>:/images/themes/default/mActionPanToSelected.png</iconset>
+     <normaloff>:/images/themes/default/mActionPanToSelected.svg</normaloff>:/images/themes/default/mActionPanToSelected.svg</iconset>
    </property>
    <property name="text">
     <string>Pan Map to Selection</string>
@@ -1701,7 +1736,7 @@ Ctl (Cmd) increments by 15 deg.</string>
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../images/images.qrc">
+    <iconset>
      <normaloff>:/images/themes/default/mActionTouch.png</normaloff>:/images/themes/default/mActionTouch.png</iconset>
    </property>
    <property name="text">
@@ -2073,7 +2108,7 @@ Acts on currently active editable layer</string>
   </action>
   <action name="mActionNeedSupport">
    <property name="text">
-    <string>Need Support?</string>
+    <string>Need commercial support?</string>
    </property>
   </action>
   <action name="mActionOpenFieldCalc">
@@ -2098,6 +2133,115 @@ Acts on currently active editable layer</string>
    </property>
    <property name="toolTip">
     <string>Add Delimited Text Layer</string>
+   </property>
+  </action>
+  <action name="mActionPasteAsNewVector">
+   <property name="text">
+    <string>New Vector Layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Paste features in clipboard into a new OGR vector layer.</string>
+   </property>
+  </action>
+  <action name="mActionPasteAsNewMemoryVector">
+   <property name="text">
+    <string>New Memory Vector Layer</string>
+   </property>
+   <property name="toolTip">
+    <string>Paste features in clipboard into a new memory vector layer.</string>
+   </property>
+  </action>
+  <action name="mActionDxfExport">
+   <property name="text">
+    <string>DXF Export...</string>
+   </property>
+  </action>
+  <action name="mActionFillRing">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>:/images/themes/default/mActionFillRing.png</normaloff>:/images/themes/default/mActionFillRing.png</iconset>
+   </property>
+   <property name="text">
+    <string>Fill Ring</string>
+   </property>
+   <property name="toolTip">
+    <string>Fill Ring</string>
+   </property>
+  </action>
+  <action name="mActionAddLayerDefinition">
+   <property name="text">
+    <string>Add from Layer Definition File...</string>
+   </property>
+  </action>
+  <action name="mActionSaveLayerDefinition">
+   <property name="text">
+    <string>Save As Layer Definition File...</string>
+   </property>
+  </action>
+  <action name="mActionPreviewModeOff">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Normal</string>
+   </property>
+   <property name="toolTip">
+    <string>Normal preview mode</string>
+   </property>
+  </action>
+  <action name="mActionPreviewModeGrayscale">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Simulate Photocopy (Grayscale)</string>
+   </property>
+   <property name="toolTip">
+    <string>Simulate photocopy (grayscale)</string>
+   </property>
+  </action>
+  <action name="mActionPreviewModeMono">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Simulate Fax (Mono)</string>
+   </property>
+   <property name="toolTip">
+    <string>Simulate fax (mono)</string>
+   </property>
+  </action>
+  <action name="mActionPreviewProtanope">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Simulate Color Blindness (Protanope)</string>
+   </property>
+   <property name="toolTip">
+    <string>Simulate color blindness (protanope)</string>
+   </property>
+  </action>
+  <action name="mActionPreviewDeuteranope">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Simulate Color Blindness (Deuteranope)</string>
+   </property>
+   <property name="toolTip">
+    <string>Simulate color blindness (deuteranope)</string>
+   </property>
+  </action>
+  <action name="mActionSetLayerScaleVisibility">
+   <property name="text">
+    <string>Set Scale Visibility of Layer(s)</string>
    </property>
   </action>
  </widget>

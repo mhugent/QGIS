@@ -47,6 +47,9 @@ QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent, QSettings* sett
   mSettings = settings;
   setupUi( this );
 
+  QSettings appSettings;
+  restoreGeometry( appSettings.value( "/Windows/Customization/geometry" ).toByteArray() );
+
   init();
   QStringList myHeaders;
   myHeaders << tr( "Object name" ) << tr( "Label" ) << tr( "Description" );
@@ -63,6 +66,8 @@ QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent, QSettings* sett
 
 QgsCustomizationDialog::~QgsCustomizationDialog()
 {
+  QSettings settings;
+  settings.setValue( "/Windows/Customization/geometry", saveGeometry() );
 }
 
 QTreeWidgetItem * QgsCustomizationDialog::item( QString thePath, QTreeWidgetItem *theItem )
@@ -477,6 +482,10 @@ void QgsCustomization::addTreeItemActions( QTreeWidgetItem* parentItem, const QL
 {
   foreach ( QAction* action, actions )
   {
+    if ( action->isSeparator() )
+    {
+      continue;
+    }
     if ( action->menu() )
     {
       // it is a submenu

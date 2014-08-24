@@ -144,7 +144,7 @@ void QgsGrassEditAttributeTableItemDelegate::setModelData( QWidget *editor,
 bool QgsGrassEdit::mRunning = false;
 
 QgsGrassEdit::QgsGrassEdit( QgisInterface *iface, QgsMapLayer* layer, bool newMap,
-                            QWidget * parent, Qt::WFlags f )
+                            QWidget * parent, Qt::WindowFlags f )
     : QMainWindow( parent, f ), QgsGrassEditBase(), mInited( false ),
     mMapTool( 0 ), mCanvasEdit( 0 ), mRubberBandLine( 0 ), mRubberBandIcon( 0 )
 {
@@ -572,12 +572,11 @@ void QgsGrassEdit::setAttributeTable( int field )
 
   if ( !key->isEmpty() )   // Database link defined
   {
-    std::vector<QgsField> *cols = mProvider->columns( field );
+    QVector<QgsField> *cols = mProvider->columns( field );
 
     mAttributeTable->setRowCount( cols->size() );
 
-
-    for ( unsigned int c = 0; c < cols->size(); c++ )
+    for ( int c = 0; c < cols->size(); c++ )
     {
       QgsField col = ( *cols )[c];
 
@@ -1164,8 +1163,8 @@ double QgsGrassEdit::threshold( void )
   {
     try
     {
-      p1 = mCanvas->mapRenderer()->mapToLayerCoordinates( mLayer, p1 );
-      p2 = mCanvas->mapRenderer()->mapToLayerCoordinates( mLayer, p2 );
+      p1 = mCanvas->mapSettings().mapToLayerCoordinates( mLayer, p1 );
+      p2 = mCanvas->mapSettings().mapToLayerCoordinates( mLayer, p2 );
     }
     catch ( QgsCsException& cse )
     {
@@ -1463,7 +1462,7 @@ void QgsGrassEdit::addAttributes( int field, int cat )
 
   if ( !key->isEmpty() )   // Database link defined
   {
-    std::vector<QgsField> *cols = mProvider->columns( field );
+    QVector<QgsField> *cols = mProvider->columns( field );
 
     if ( cols->size() == 0 )
     {
@@ -1481,7 +1480,7 @@ void QgsGrassEdit::addAttributes( int field, int cat )
       }
       else
       {
-        for ( unsigned int j = 0; j < cols->size(); j++ )
+        for ( int j = 0; j < cols->size(); j++ )
         {
           QgsField col = ( *cols )[j];
           QVariant att = ( *atts )[j];
@@ -1820,13 +1819,13 @@ void QgsGrassEdit::displayNode( int node, const QPen & pen, int size, QPainter *
 
 QgsPoint QgsGrassEdit::transformLayerToCanvas( QgsPoint point )
 {
-  point = mCanvas->mapRenderer()->layerToMapCoordinates( mLayer, point );
+  point = mCanvas->mapSettings().layerToMapCoordinates( mLayer, point );
   return mTransform->transform( point );
 }
 
 QgsPoint QgsGrassEdit::transformLayerToMap( QgsPoint point )
 {
-  return mCanvas->mapRenderer()->layerToMapCoordinates( mLayer, point );
+  return mCanvas->mapSettings().layerToMapCoordinates( mLayer, point );
 }
 
 void QgsGrassEdit::displayIcon( double x, double y, const QPen & pen,

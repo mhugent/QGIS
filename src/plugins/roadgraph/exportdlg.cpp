@@ -27,7 +27,7 @@
 
 //standard includes
 
-RgExportDlg::RgExportDlg( QWidget* parent, Qt::WFlags fl )
+RgExportDlg::RgExportDlg( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
   // create base widgets;
@@ -76,19 +76,20 @@ QgsVectorLayer* RgExportDlg::mapLayer() const
   if ( layerId == QString( "-1" ) )
   {
     // create a temporary layer
-    myLayer = new QgsVectorLayer( "LineString", "shortest path", "memory" );
+    myLayer = new QgsVectorLayer( "LineString?crs=epsg:4326", "shortest path", "memory" );
 
     QgsVectorDataProvider *prov = myLayer->dataProvider();
     if ( prov == NULL )
       return NULL;
 
     QList<QgsField> attrList;
-    attrList.append( QgsField( "one", QVariant::Int ) );
+    attrList.append( QgsField( "length", QVariant::Double, "", 20, 8 ) );
+    attrList.append( QgsField( "time", QVariant::Double, "", 20, 8 ) );
     prov->addAttributes( attrList );
+    myLayer->updateFields();
     QList<QgsMapLayer *> myList;
     myList << myLayer;
     QgsMapLayerRegistry::instance()->addMapLayers( myList );
-
   }
   else
   {

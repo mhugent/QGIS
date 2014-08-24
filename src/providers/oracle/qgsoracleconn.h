@@ -47,6 +47,13 @@ struct QgsOracleLayerProperty
 
   int size() const { Q_ASSERT( types.size() == srids.size() ); return types.size(); }
 
+  bool operator==( const QgsOracleLayerProperty& other )
+  {
+    return types == other.types && srids == other.srids && ownerName == other.ownerName &&
+           tableName == other.tableName && geometryColName == other.geometryColName &&
+           isView == other.isView && pkCols == other.pkCols && sql == other.sql;
+  }
+
   QgsOracleLayerProperty at( int i ) const
   {
     QgsOracleLayerProperty property;
@@ -96,7 +103,7 @@ struct QgsOracleLayerProperty
 #endif
 };
 
-class QgsOracleConn : public QThread
+class QgsOracleConn : public QObject
 {
     Q_OBJECT;
   public:
@@ -109,7 +116,7 @@ class QgsOracleConn : public QThread
 
     /** Quote a value for placement in a SQL string.
      */
-    static QString quotedValue( QVariant value );
+    static QString quotedValue( const QVariant &value, QVariant::Type type = QVariant::Invalid );
 
     //! Get the list of supported layers
     bool supportedLayers( QVector<QgsOracleLayerProperty> &layers,
@@ -125,7 +132,7 @@ class QgsOracleConn : public QThread
     /** get primary key candidates (all int4 columns) */
     QStringList pkCandidates( QString ownerName, QString viewName );
 
-    QString fieldExpression( const QgsField &fld );
+    static QString fieldExpression( const QgsField &fld );
 
     QString connInfo();
 

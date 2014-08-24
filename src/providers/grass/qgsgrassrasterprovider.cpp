@@ -32,7 +32,6 @@
 #include <QImage>
 #include <QSettings>
 #include <QColor>
-#include <QProcess>
 #include <QMessageBox>
 #include <QDir>
 #include <QFileInfo>
@@ -155,6 +154,7 @@ QgsGrassRasterProvider::~QgsGrassRasterProvider()
 QgsRasterInterface * QgsGrassRasterProvider::clone() const
 {
   QgsGrassRasterProvider * provider = new QgsGrassRasterProvider( dataSourceUri() );
+  provider->copyBaseSettings( *this );
   return provider;
 }
 
@@ -176,7 +176,6 @@ QImage* QgsGrassRasterProvider::draw( QgsRectangle  const & viewExtent, int pixe
                      .arg( QgsRasterBlock::printValue( viewExtent.xMaximum() ) )
                      .arg( QgsRasterBlock::printValue( viewExtent.yMaximum() ) )
                      .arg( pixelWidth ).arg( pixelHeight ) ) );
-  QProcess process( this );
   QString cmd = QgsApplication::libexecPath() + "grass/modules/qgis.d.rast";
   QByteArray data;
   try
@@ -230,7 +229,6 @@ void QgsGrassRasterProvider::readBlock( int bandNo, int xBlock, int yBlock, void
                      .arg( mCols ).arg( mYBlockSize ) ) );
 
   arguments.append( "format=value" );
-  QProcess process( this );
   QString cmd = QgsApplication::libexecPath() + "grass/modules/qgis.d.rast";
   QByteArray data;
   try
@@ -278,7 +276,6 @@ void QgsGrassRasterProvider::readBlock( int bandNo, QgsRectangle  const & viewEx
                      .arg( QgsRasterBlock::printValue( viewExtent.yMaximum() ) )
                      .arg( pixelWidth ).arg( pixelHeight ) ) );
   arguments.append( "format=value" );
-  QProcess process( this );
   QString cmd = QgsApplication::libexecPath() + "grass/modules/qgis.d.rast";
   QByteArray data;
   try

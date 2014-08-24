@@ -38,7 +38,7 @@
 #include <QPainter>
 
 
-QgsWFSSourceSelect::QgsWFSSourceSelect( QWidget* parent, Qt::WFlags fl, bool embeddedMode )
+QgsWFSSourceSelect::QgsWFSSourceSelect( QWidget* parent, Qt::WindowFlags fl, bool embeddedMode )
     : QDialog( parent, fl )
     , mCapabilities( NULL )
 {
@@ -132,14 +132,15 @@ void QgsWFSSourceSelect::populateConnectionList()
     btnConnect->setEnabled( true );
     btnEdit->setEnabled( true );
     btnDelete->setEnabled( true );
+    btnSave->setEnabled( true );
   }
-
   else
   {
     // No connections available - disable various buttons
     btnConnect->setEnabled( false );
     btnEdit->setEnabled( false );
     btnDelete->setEnabled( false );
+    btnSave->setEnabled( false );
   }
 
   //set last used connection
@@ -303,6 +304,23 @@ void QgsWFSSourceSelect::deleteEntryOfServerList()
     QgsOWSConnection::deleteConnection( "WFS", cmbConnections->currentText() );
     cmbConnections->removeItem( cmbConnections->currentIndex() );
     emit connectionsChanged();
+
+    if ( cmbConnections->count() > 0 )
+    {
+      // Connections available - enable various buttons
+      btnConnect->setEnabled( true );
+      btnEdit->setEnabled( true );
+      btnDelete->setEnabled( true );
+      btnSave->setEnabled( true );
+    }
+    else
+    {
+      // No connections available - disable various buttons
+      btnConnect->setEnabled( false );
+      btnEdit->setEnabled( false );
+      btnDelete->setEnabled( false );
+      btnSave->setEnabled( false );
+    }
   }
 }
 

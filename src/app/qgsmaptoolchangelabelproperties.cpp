@@ -61,7 +61,7 @@ void QgsMapToolChangeLabelProperties::canvasReleaseEvent( QMouseEvent *e )
       labeltext = mCurrentLabelPos.labelText;
     }
 
-    QgsLabelPropertyDialog d( mCurrentLabelPos.layerID, mCurrentLabelPos.featureId, mCurrentLabelPos.labelFont, labeltext, mCanvas->mapRenderer() );
+    QgsLabelPropertyDialog d( mCurrentLabelPos.layerID, mCurrentLabelPos.featureId, mCurrentLabelPos.labelFont, labeltext, 0 );
     if ( d.exec() == QDialog::Accepted )
     {
       const QgsAttributeMap& changes = d.changedProperties();
@@ -72,7 +72,7 @@ void QgsMapToolChangeLabelProperties::canvasReleaseEvent( QMouseEvent *e )
         QgsAttributeMap::const_iterator changeIt = changes.constBegin();
         for ( ; changeIt != changes.constEnd(); ++changeIt )
         {
-          vlayer->changeAttributeValue( mCurrentLabelPos.featureId, changeIt.key(), changeIt.value(), true );
+          vlayer->changeAttributeValue( mCurrentLabelPos.featureId, changeIt.key(), changeIt.value() );
         }
 
         vlayer->endEditCommand();

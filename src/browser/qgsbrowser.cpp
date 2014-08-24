@@ -41,7 +41,7 @@
 #define QGIS_ICON_SIZE 24
 #endif
 
-QgsBrowser::QgsBrowser( QWidget *parent, Qt::WFlags flags )
+QgsBrowser::QgsBrowser( QWidget *parent, Qt::WindowFlags flags )
     : QMainWindow( parent, flags )
     , mDirtyMetadata( true )
     , mDirtyPreview( true )
@@ -412,20 +412,9 @@ void QgsBrowser::keyReleaseEvent( QKeyEvent * e )
 
 void QgsBrowser::stopRendering()
 {
-  // you might have seen this already in QgisApp
   QgsDebugMsg( "Entered" );
   if ( mapCanvas )
-  {
-    QgsMapRenderer* mypMapRenderer = mapCanvas->mapRenderer();
-    if ( mypMapRenderer )
-    {
-      QgsRenderContext* mypRenderContext = mypMapRenderer->rendererContext();
-      if ( mypRenderContext )
-      {
-        mypRenderContext->setRenderingStopped( true );
-      }
-    }
-  }
+    mapCanvas->stopRendering();
 }
 
 QgsBrowser::Tab QgsBrowser::activeTab()

@@ -126,10 +126,10 @@ void QgsMapToolMoveLabel::canvasReleaseEvent( QMouseEvent * e )
   else
   {
     //transform to map crs first, because xdiff,ydiff are in map coordinates
-    QgsMapRenderer* r = mCanvas->mapRenderer();
-    if ( r && r->hasCrsTransformEnabled() )
+    const QgsMapSettings& ms = mCanvas->mapSettings();
+    if ( ms.hasCrsTransformEnabled() )
     {
-      QgsPoint transformedPoint = r->layerToMapCoordinates( vlayer, QgsPoint( xPosOrig, yPosOrig ) );
+      QgsPoint transformedPoint = ms.layerToMapCoordinates( vlayer, QgsPoint( xPosOrig, yPosOrig ) );
       xPosOrig = transformedPoint.x();
       yPosOrig = transformedPoint.y();
     }
@@ -140,18 +140,18 @@ void QgsMapToolMoveLabel::canvasReleaseEvent( QMouseEvent * e )
   //transform back to layer crs
   if ( mCanvas )
   {
-    QgsMapRenderer* r = mCanvas->mapRenderer();
-    if ( r && r->hasCrsTransformEnabled() )
+    const QgsMapSettings& s = mCanvas->mapSettings();
+    if ( s.hasCrsTransformEnabled() )
     {
-      QgsPoint transformedPoint = r->mapToLayerCoordinates( vlayer, QgsPoint( xPosNew, yPosNew ) );
+      QgsPoint transformedPoint = s.mapToLayerCoordinates( vlayer, QgsPoint( xPosNew, yPosNew ) );
       xPosNew = transformedPoint.x();
       yPosNew = transformedPoint.y();
     }
   }
 
   vlayer->beginEditCommand( tr( "Moved label" ) + QString( " '%1'" ).arg( currentLabelText( 24 ) ) );
-  vlayer->changeAttributeValue( mCurrentLabelPos.featureId, xCol, xPosNew, true );
-  vlayer->changeAttributeValue( mCurrentLabelPos.featureId, yCol, yPosNew, true );
+  vlayer->changeAttributeValue( mCurrentLabelPos.featureId, xCol, xPosNew );
+  vlayer->changeAttributeValue( mCurrentLabelPos.featureId, yCol, yPosNew );
 
   // set rotation to that of label, if data-defined and no rotation set yet
   // honor whether to preserve preexisting data on pin
@@ -167,7 +167,7 @@ void QgsMapToolMoveLabel::canvasReleaseEvent( QMouseEvent * e )
     if ( dataDefinedRotation( vlayer, mCurrentLabelPos.featureId, defRot, rSuccess ) )
     {
       double labelRot = mCurrentLabelPos.rotation * 180 / M_PI;
-      vlayer->changeAttributeValue( mCurrentLabelPos.featureId, rCol, labelRot, true );
+      vlayer->changeAttributeValue( mCurrentLabelPos.featureId, rCol, labelRot );
     }
   }
   vlayer->endEditCommand();

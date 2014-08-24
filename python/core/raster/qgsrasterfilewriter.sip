@@ -8,15 +8,20 @@ class QgsRasterFileWriter
 #include <qgsrasterdataprovider.h>
 %End
   public:
+    enum Mode
+    {
+      Raw,   // Raw data
+      Image, // Rendered image
+    };
     enum WriterError
     {
-      NoError = 0,
-      SourceProviderError = 1,
-      DestProviderError = 2,
-      CreateDatasourceError = 3,
-      WriteError = 4,
+      NoError,
+      SourceProviderError,
+      DestProviderError,
+      CreateDatasourceError,
+      WriteError,
       // Internal error if a value used for 'no data' was found in input
-      NoDataConflict = 5
+      NoDataConflict,
     };
 
     QgsRasterFileWriter( const QString& outputUrl );
@@ -62,7 +67,7 @@ class QgsRasterFileWriter
     void setCreateOptions( const QStringList& list );
     QStringList createOptions() const;
 
-    QStringList pyramidsConfigOptions() const;
     void setPyramidsConfigOptions( const QStringList& list );
+    QStringList pyramidsConfigOptions() const;
 };
 

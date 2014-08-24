@@ -6,20 +6,20 @@ class QgsVectorFieldSymbolLayer : QgsMarkerSymbolLayerV2
   public:
     enum VectorFieldType
     {
-      Cartesian = 0,
+      Cartesian,
       Polar,
       Height
     };
 
     enum AngleOrientation
     {
-      ClockwiseFromNorth = 0,
+      ClockwiseFromNorth,
       CounterclockwiseFromEast
     };
 
     enum AngleUnits
     {
-      Degrees = 0,
+      Degrees,
       Radians
     };
 
@@ -64,6 +64,12 @@ class QgsVectorFieldSymbolLayer : QgsMarkerSymbolLayerV2
     void setOutputUnit( QgsSymbolV2::OutputUnit unit );
     QgsSymbolV2::OutputUnit outputUnit() const;
 
+    void setMapUnitScale( const QgsMapUnitScale& scale );
+    QgsMapUnitScale mapUnitScale() const;
+
     void setDistanceUnit( QgsSymbolV2::OutputUnit unit );
     QgsSymbolV2::OutputUnit distanceUnit() const;
+
+    void setDistanceMapUnitScale( const QgsMapUnitScale& scale );
+    const QgsMapUnitScale& distanceMapUnitScale() const;
 };

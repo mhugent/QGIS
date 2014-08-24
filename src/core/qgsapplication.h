@@ -26,10 +26,18 @@
  * Extends QApplication to provide access to QGIS specific resources such
  * as theme paths, database paths etc.
  */
-class CORE_EXPORT QgsApplication: public QApplication
+
+#ifdef ANDROID
+typedef void XEvent;
+#endif
+
+class CORE_EXPORT QgsApplication : public QApplication
 {
     Q_OBJECT
   public:
+    static const char* QGIS_ORGANIZATION_NAME;
+    static const char* QGIS_ORGANIZATION_DOMAIN;
+    static const char* QGIS_APPLICATION_NAME;
     //! @note customConfigDir parameter added in v1.6
     QgsApplication( int & argc, char ** argv, bool GUIenabled, QString customConfigPath = QString() );
     virtual ~QgsApplication();
@@ -59,7 +67,7 @@ class CORE_EXPORT QgsApplication: public QApplication
      * based on the supplied theme name exists. If it does not the theme name will
      * be reverted to 'default'.
      */
-    static void setThemeName( const QString theThemeName );
+    static void setThemeName( const QString &theThemeName );
 
     /** Set the active theme to the specified theme.
      * The theme name should be a single word e.g. 'default','classic'.
@@ -91,6 +99,11 @@ class CORE_EXPORT QgsApplication: public QApplication
      * @note This was added in QGIS 1.1
      */
     static const QString translatorsFilePath();
+
+    /*!
+      Returns the path to the licence file.
+    */
+    static const QString licenceFilePath();
 
     //! Returns the path to the help application.
     static const QString helpAppPath();
@@ -147,12 +160,12 @@ class CORE_EXPORT QgsApplication: public QApplication
     //! Helper to get a theme icon. It will fall back to the
     //! default theme if the active theme does not have the required icon.
     //! @note Added in 2.0
-    static QIcon getThemeIcon( const QString theName );
+    static QIcon getThemeIcon( const QString &theName );
 
     //! Helper to get a theme icon as a pixmap. It will fall back to the
     //! default theme if the active theme does not have the required icon.
     //! @note Added in 2.0
-    static QPixmap getThemePixmap( const QString theName );
+    static QPixmap getThemePixmap( const QString &theName );
 
     //! Returns the path to user's style. Added in QGIS 1.4
     static const QString userStyleV2Path();
@@ -169,13 +182,13 @@ class CORE_EXPORT QgsApplication: public QApplication
     static const QString libexecPath();
 
     //! Alters prefix path - used by 3rd party apps
-    static void setPrefixPath( const QString thePrefixPath, bool useDefaultPaths = false );
+    static void setPrefixPath( const QString &thePrefixPath, bool useDefaultPaths = false );
 
     //! Alters plugin path - used by 3rd party apps
-    static void setPluginPath( const QString thePluginPath );
+    static void setPluginPath( const QString &thePluginPath );
 
     //! Alters pkg data path - used by 3rd party apps
-    static void setPkgDataPath( const QString thePkgDataPath );
+    static void setPkgDataPath( const QString &thePkgDataPath );
 
     //! Alters default svg paths - used by 3rd party apps. Added in QGIS 1.5
     static void setDefaultSvgPaths( const QStringList& pathList );
@@ -260,7 +273,7 @@ class CORE_EXPORT QgsApplication: public QApplication
      * GDAL_SKIP environment variable)
      * @note added in 2.0
      */
-    static QStringList skippedGdalDrivers( ) { return ABISYM( mGdalSkipList ); }
+    static QStringList skippedGdalDrivers() { return ABISYM( mGdalSkipList ); }
 
     /** Apply the skipped drivers list to gdal
      * @see skipGdalDriver
@@ -268,6 +281,22 @@ class CORE_EXPORT QgsApplication: public QApplication
      * @see skippedGdalDrivers
      * @note added in 2.0 */
     static void applyGdalSkippedDrivers();
+
+    /** Get maximum concurrent thread count
+     * @note added in 2.4 */
+    static int maxThreads() { return ABISYM( mMaxThreads ); }
+    /** Set maximum concurrent thread count
+     * @note must be between 1 and \#cores, -1 means use all available cores
+     * @note added in 2.4 */
+    static void setMaxThreads( int maxThreads );
+
+#ifdef ANDROID
+    //dummy method to workaround sip generation issue issue
+    bool x11EventFilter( XEvent * event )
+    {
+      return 0;
+    }
+#endif
 
   signals:
     //! @note not available in python bindings
@@ -302,6 +331,9 @@ class CORE_EXPORT QgsApplication: public QApplication
      * @see skipGdalDriver, restoreGdalDriver
      * @note added in 2.0 */
     static QStringList ABISYM( mGdalSkipList );
+    /**
+     * @note added in 2.4 */
+    static int ABISYM( mMaxThreads );
 };
 
 #endif

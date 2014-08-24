@@ -11,13 +11,22 @@ class QgsAttributeTableView : QTableView
     virtual void setModel( QgsAttributeTableFilterModel* filterModel );
 
     /**
-     * Autocreates the models
-     * @param layerCache The @link QgsVectorLayerCache @endlink to use ( as backend )
-     * @param canvas     The @link QgsMapCanvas @endlink to use ( for the currently visible features filter )
-     *
-     * @deprecated
+     * @brief setFeatureSelectionManager
+     * @param featureSelectionManager We will take ownership
      */
-    void setCanvasAndLayerCache( QgsMapCanvas *canvas, QgsVectorLayerCache *layerCache );
+    void setFeatureSelectionManager( QgsIFeatureSelectionManager* featureSelectionManager );
+
+    /**
+     * This event filter is installed on the verticalHeader to intercept mouse press and release
+     * events. These are used to disable / enable live synchronisation with the map canvas selection
+     * which can be slow due to recurring canvas repaints. Updating the
+     *
+     * @param object The object which is the target of the event.
+     * @param event  The intercepted event
+     *
+     * @return Returns always false, so the event gets processed
+     */
+    virtual bool eventFilter( QObject* object, QEvent* event );
 
   protected:
     /**

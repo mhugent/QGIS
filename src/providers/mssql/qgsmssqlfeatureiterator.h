@@ -18,7 +18,7 @@
 #ifndef QGSMSSQLFEATUREITERATOR_H
 #define QGSMSSQLFEATUREITERATOR_H
 
-#include "qgsmssqlprovider.h"
+#include "qgsmssqlgeometryparser.h"
 #include "qgsfeatureiterator.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
@@ -26,15 +26,53 @@
 
 class QgsMssqlProvider;
 
-class QgsMssqlFeatureIterator : public QgsAbstractFeatureIterator
+class QgsMssqlFeatureSource : public QgsAbstractFeatureSource
 {
   public:
-    QgsMssqlFeatureIterator( QgsMssqlProvider* provider, const QgsFeatureRequest& request );
+    QgsMssqlFeatureSource( const QgsMssqlProvider* p );
+    ~QgsMssqlFeatureSource();
+
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest& request );
+
+  protected:
+    QgsFields mFields;
+    QString mFidColName;
+    long mSRId;
+
+    /* sql geo type */
+    bool mIsGeography;
+
+    QString mGeometryColName;
+    QString mGeometryColType;
+
+    // current layer name
+    QString mSchemaName;
+    QString mTableName;
+
+    // login
+    QString mUserName;
+    QString mPassword;
+
+    // server access
+    QString mService;
+    QString mDatabaseName;
+    QString mHost;
+
+    // SQL statement used to limit the features retrieved
+    QString mSqlWhereClause;
+
+    // Return True if this feature source has spatial attributes.
+    bool isSpatial() { return !mGeometryColName.isEmpty() || !mGeometryColType.isEmpty(); }
+
+    friend class QgsMssqlFeatureIterator;
+};
+
+class QgsMssqlFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsMssqlFeatureSource>
+{
+  public:
+    QgsMssqlFeatureIterator( QgsMssqlFeatureSource* source, bool ownSource, const QgsFeatureRequest& request );
 
     ~QgsMssqlFeatureIterator();
-
-    //! fetch next feature, return true on success
-    virtual bool nextFeature( QgsFeature& feature );
 
     //! reset the iterator to the starting position
     virtual bool rewind();
@@ -43,11 +81,12 @@ class QgsMssqlFeatureIterator : public QgsAbstractFeatureIterator
     virtual bool close();
 
   protected:
-    QgsMssqlProvider* mProvider;
-
     void BuildStatement( const QgsFeatureRequest& request );
 
   private:
+    //! fetch next feature, return true on success
+    virtual bool fetchFeature( QgsFeature& feature );
+
     // The current database
     QSqlDatabase mDatabase;
 
@@ -60,17 +99,14 @@ class QgsMssqlFeatureIterator : public QgsAbstractFeatureIterator
     // The current sql statement
     QString mStatement;
 
-    // Open connection flag
-    bool mIsOpen;
-
     // Field index of FID column
     long mFidCol;
 
-    // Field index of geometry column
-    long mGeometryCol;
-
     // List of attribute indices to fetch with nextFeature calls
     QgsAttributeList mAttributesToFetch;
+
+    // for parsing sql geometries
+    QgsMssqlGeometryParser mParser;
 };
 
 #endif // QGSMSSQLFEATUREITERATOR_H

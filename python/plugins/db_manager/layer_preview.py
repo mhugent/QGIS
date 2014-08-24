@@ -39,7 +39,6 @@ class LayerPreview(QgsMapCanvas):
     # reuse settings from QGIS
     settings = QSettings()
     self.enableAntiAliasing( settings.value( "/qgis/enable_anti_aliasing", False, type=bool ) )
-    self.useImageToRender( settings.value( "/qgis/use_qimage_to_render", False, type=bool ) )
     action = settings.value( "/qgis/wheel_action", 0, type=float )
     zoomFactor = settings.value( "/qgis/zoom_factor", 2, type=float )
     self.setWheelAction( QgsMapCanvas.WheelAction(action), zoomFactor )
@@ -74,7 +73,11 @@ class LayerPreview(QgsMapCanvas):
   def _clear(self):
     """ remove any layers from preview canvas """
     if self.item is not None:
-      self.disconnect(self.item, SIGNAL('aboutToChange'), self.setDirty)
+      ## skip exception on RuntimeError fixes #6892
+      try:
+        self.disconnect(self.item, SIGNAL('aboutToChange'), self.setDirty)
+      except RuntimeError:
+        pass
     self.item = None
     self.dirty = False
 

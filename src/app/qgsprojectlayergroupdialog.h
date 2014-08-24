@@ -20,8 +20,10 @@
 
 class QDomElement;
 
+class QgsLayerTreeGroup;
+
 /**A dialog to select layers and groups from a qgs project*/
-class QgsProjectLayerGroupDialog: public QDialog, private Ui::QgsProjectLayerGroupDialogBase
+class APP_EXPORT QgsProjectLayerGroupDialog: public QDialog, private Ui::QgsProjectLayerGroupDialogBase
 {
     Q_OBJECT
   public:
@@ -37,16 +39,17 @@ class QgsProjectLayerGroupDialog: public QDialog, private Ui::QgsProjectLayerGro
   private slots:
     void on_mBrowseFileToolButton_clicked();
     void on_mProjectFileLineEdit_editingFinished();
-    void on_mTreeWidget_itemSelectionChanged();
+    void onTreeViewSelectionChanged();
     void on_mButtonBox_accepted();
 
   private:
     void changeProjectFile();
-    void addLegendGroupToTreeWidget( const QDomElement& groupElem, QTreeWidgetItem* parent = 0 );
-    void addLegendLayerToTreeWidget( const QDomElement& layerElem, QTreeWidgetItem* parent = 0 );
-    void unselectChildren( QTreeWidgetItem* item );
+    void removeEmbeddedNodes( QgsLayerTreeGroup* node );
+    void unselectChildren( const QModelIndex& index );
     QString mProjectPath;
     bool mShowEmbeddedContent;
+
+    QgsLayerTreeGroup* mRootGroup;
 };
 
 #endif //QGSPROJECTLAYERGROUPDIALOG_H

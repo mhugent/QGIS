@@ -62,9 +62,11 @@ static const QString icon_ = ":/gps_importer.png";
  * @param qgis Pointer to the QGIS main window
  * @param _qI Pointer to the QGIS interface object
  */
-QgsGPSPlugin::QgsGPSPlugin( QgisInterface * theQgisInterFace ):
-    QgisPlugin( name_, description_, category_, version_, type_ ),
-    mQGisInterface( theQgisInterFace )
+QgsGPSPlugin::QgsGPSPlugin( QgisInterface * theQgisInterFace )
+    : QgisPlugin( name_, description_, category_, version_, type_ )
+    , mQGisInterface( theQgisInterFace )
+    , mQActionPointer( 0 )
+    , mCreateGPXAction( 0 )
 {
   setupBabel();
 }
@@ -85,9 +87,14 @@ QgsGPSPlugin::~QgsGPSPlugin()
  */
 void QgsGPSPlugin::initGui()
 {
+  delete mQActionPointer;
+  delete mCreateGPXAction;
+
   // add an action to the toolbar
   mQActionPointer = new QAction( QIcon(), tr( "&GPS Tools" ), this );
+  mQActionPointer->setObjectName( "mQActionPointer" );
   mCreateGPXAction = new QAction( QIcon(), tr( "&Create new GPX layer" ), this );
+  mCreateGPXAction->setObjectName( "mCreateGPXAction" );
   setCurrentTheme( "" );
 
   mQActionPointer->setWhatsThis( tr( "Creates a new GPX layer and displays it on the map canvas" ) );
@@ -211,6 +218,7 @@ void QgsGPSPlugin::unload()
   mQGisInterface->removePluginVectorMenu( tr( "&GPS" ), mQActionPointer );
   mQGisInterface->removeVectorToolBarIcon( mQActionPointer );
   delete mQActionPointer;
+  mQActionPointer = 0;
 }
 
 void QgsGPSPlugin::loadGPXFile( QString fileName, bool loadWaypoints, bool loadRoutes,
@@ -665,25 +673,28 @@ void QgsGPSPlugin::setCurrentTheme( QString theThemeName )
   QString myCurThemePath = QgsApplication::activeThemePath() + "/plugins/gps_importer/";
   QString myDefThemePath = QgsApplication::defaultThemePath() + "/plugins/gps_importer/";
   QString myQrcPath = ":/";
-  if ( QFile::exists( myCurThemePath ) )
+  if ( mQActionPointer )
   {
-    mQActionPointer->setIcon( QIcon( myCurThemePath + "import_gpx.png" ) );
-    mCreateGPXAction->setIcon( QIcon( myCurThemePath + "create_gpx.png" ) );
-  }
-  else if ( QFile::exists( myDefThemePath ) )
-  {
-    mQActionPointer->setIcon( QIcon( myDefThemePath + "import_gpx.png" ) );
-    mCreateGPXAction->setIcon( QIcon( myDefThemePath + "create_gpx.png" ) );
-  }
-  else if ( QFile::exists( myQrcPath ) )
-  {
-    mQActionPointer->setIcon( QIcon( myQrcPath + "import_gpx.png" ) );
-    mCreateGPXAction->setIcon( QIcon( myQrcPath + "create_gpx.png" ) );
-  }
-  else
-  {
-    mQActionPointer->setIcon( QIcon() );
-    mCreateGPXAction->setIcon( QIcon() );
+    if ( QFile::exists( myCurThemePath ) )
+    {
+      mQActionPointer->setIcon( QIcon( myCurThemePath + "import_gpx.png" ) );
+      mCreateGPXAction->setIcon( QIcon( myCurThemePath + "create_gpx.png" ) );
+    }
+    else if ( QFile::exists( myDefThemePath ) )
+    {
+      mQActionPointer->setIcon( QIcon( myDefThemePath + "import_gpx.png" ) );
+      mCreateGPXAction->setIcon( QIcon( myDefThemePath + "create_gpx.png" ) );
+    }
+    else if ( QFile::exists( myQrcPath ) )
+    {
+      mQActionPointer->setIcon( QIcon( myQrcPath + "import_gpx.png" ) );
+      mCreateGPXAction->setIcon( QIcon( myQrcPath + "create_gpx.png" ) );
+    }
+    else
+    {
+      mQActionPointer->setIcon( QIcon() );
+      mCreateGPXAction->setIcon( QIcon() );
+    }
   }
 }
 

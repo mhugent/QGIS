@@ -204,6 +204,13 @@ class TableFieldsModel(SimpleTableModel):
 			return section+1
 		return SimpleTableModel.headerData(self, section, orientation, role)
 
+	def flags(self, index):
+		flags = SimpleTableModel.flags(self, index)
+		if index.column() == 2:  # set Null column as checkable
+			flags &= ~Qt.ItemIsEditable
+			flags |= Qt.ItemIsUserCheckable
+		return flags
+
 	def append(self, fld):
 		data = [fld.name, fld.type2String(), not fld.notNull, fld.default2String()]
 		self.appendRow( self.rowFromData(data) )
@@ -230,7 +237,7 @@ class TableFieldsModel(SimpleTableModel):
 			fld.modifier = None
 			fld.dataType = typestr
 
-		fld.notNull = self.data(self.index(row, 2)) != "true"
+		fld.notNull = self.data(self.index(row, 2), Qt.CheckStateRole) == Qt.Unchecked
 		fld.primaryKey = self.data(self.index(row, 1), Qt.UserRole)
 		return fld
 
@@ -259,8 +266,9 @@ class TableConstraintsModel(SimpleTableModel):
 		return TableConstraint(None)
 
 	def getObject(self, row):
-		val = self.data(self.index(row, 0), Qt.UserRole)
-		constr = val.toPyObject() if val.isValid() else self._getNewObject()
+		constr = self.data(self.index(row, 0), Qt.UserRole)
+		if not constr:
+			constr = self._getNewObject()
 		constr.name = self.data(self.index(row, 0)) or ""
 		constr.type = self.data(self.index(row, 1), Qt.UserRole)
 		constr.columns = self.data(self.index(row, 2), Qt.UserRole)
@@ -290,8 +298,9 @@ class TableIndexesModel(SimpleTableModel):
 		return TableIndex(None)
 
 	def getObject(self, row):
-		val = self.data(self.index(row, 0), Qt.UserRole)
-		idx = val.toPyObject() if val.isValid() else self._getNewObject()
+		idx = self.data(self.index(row, 0), Qt.UserRole)
+		if not idx:
+			idx = self._getNewObject()
 		idx.name = self.data(self.index(row, 0))
 		idx.columns = self.data(self.index(row, 1), Qt.UserRole)
 		return idx
@@ -301,4 +310,3 @@ class TableIndexesModel(SimpleTableModel):
 		for idx in self.getObjectIter():
 			idxs.append( idx )
 		return idxs
-

@@ -64,7 +64,8 @@ class QgsMapTool : QObject
 %End
 
     //! Called when rendering has finished. Default implementation does nothing.
-    virtual void renderComplete();
+    //! @deprecated since 2.4 - not called anymore - map tools must not directly depend on rendering progress
+    virtual void renderComplete() /Deprecated/;
 
 
     /** Use this to associate a QAction to this maptool. Then when the setMapTool
@@ -84,7 +85,7 @@ class QgsMapTool : QObject
     QAbstractButton* button();
 
     /** Set a user defined cursor */
-    virtual void setCursor(QCursor cursor);    
+    virtual void setCursor( QCursor cursor );
 
     /** Check whether this MapTool performs a zoom or pan operation.
      * If it does, we will be able to perform the zoom  and then
@@ -104,6 +105,33 @@ class QgsMapTool : QObject
 
     //! returns pointer to the tool's map canvas
     QgsMapCanvas* canvas();
+
+    //! Emit map tool changed with the old tool
+    //! @note added in 2.3
+    QString toolName();
+
+    /** Get search radius in mm. Used by identify, tip etc.
+     *  The values is currently set in identify tool options (move somewhere else?)
+     *  and defaults to QGis::DEFAULT_SEARCH_RADIUS_MM.
+     *  @note added in 2.3 */
+    static double searchRadiusMM();
+
+    /** Get search radius in map units for given context. Used by identify, tip etc.
+     *  The values is calculated from searchRadiusMM().
+     *  @note added in 2.3 */
+    static double searchRadiusMU( const QgsRenderContext& context );
+
+    /** Get search radius in map units for given canvas. Used by identify, tip etc.
+     *  The values is calculated from searchRadiusMM().
+     *  @note added in 2.3 */
+    static double searchRadiusMU( QgsMapCanvas * canvas );
+
+  signals:
+    //! emit a message
+    void messageEmitted( QString message, QgsMessageBar::MessageLevel = QgsMessageBar::INFO );
+
+    //! emit signal to clear previous message
+    void messageDiscarded();
 
   protected:
 

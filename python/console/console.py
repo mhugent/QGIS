@@ -96,8 +96,6 @@ class PythonConsoleWidget(QWidget):
 
         self.settings = QSettings()
 
-        self.options = optionsDialog(self)
-
         self.shell = ShellScintilla(self)
         self.setFocusProxy(self.shell)
         self.shellOut = ShellOutputScintilla(self)
@@ -307,16 +305,16 @@ class PythonConsoleWidget(QWidget):
         self.actionClass.setIconVisibleInMenu(True)
         self.actionClass.setToolTip(actionClassBt)
         self.actionClass.setText(actionClassBt)
-        ## Import Sextante class
-        loadSextanteBt = QCoreApplication.translate("PythonConsole", "Import Sextante class")
-        self.loadSextanteButton = QAction(self)
-        self.loadSextanteButton.setCheckable(False)
-        self.loadSextanteButton.setEnabled(True)
-        self.loadSextanteButton.setIcon(QgsApplication.getThemeIcon("console/iconSextanteConsole.png"))
-        self.loadSextanteButton.setMenuRole(QAction.PreferencesRole)
-        self.loadSextanteButton.setIconVisibleInMenu(True)
-        self.loadSextanteButton.setToolTip(loadSextanteBt)
-        self.loadSextanteButton.setText(loadSextanteBt)
+        ## Import Processing class
+        loadProcessingBt = QCoreApplication.translate("PythonConsole", "Import Processing class")
+        self.loadProcessingButton = QAction(self)
+        self.loadProcessingButton.setCheckable(False)
+        self.loadProcessingButton.setEnabled(True)
+        self.loadProcessingButton.setIcon(QgsApplication.getThemeIcon("console/iconProcessingConsole.png"))
+        self.loadProcessingButton.setMenuRole(QAction.PreferencesRole)
+        self.loadProcessingButton.setIconVisibleInMenu(True)
+        self.loadProcessingButton.setToolTip(loadProcessingBt)
+        self.loadProcessingButton.setText(loadProcessingBt)
         ## Import QtCore class
         loadQtCoreBt = QCoreApplication.translate("PythonConsole", "Import PyQt.QtCore class")
         self.loadQtCoreButton = QAction(self)
@@ -414,7 +412,7 @@ class PythonConsoleWidget(QWidget):
 
         ## Menu Import Class
         self.classMenu = QMenu()
-        self.classMenu.addAction(self.loadSextanteButton)
+        self.classMenu.addAction(self.loadProcessingButton)
         self.classMenu.addAction(self.loadQtCoreButton)
         self.classMenu.addAction(self.loadQtGuiButton)
         cM = self.toolBar.widgetForAction(self.actionClass)
@@ -526,7 +524,7 @@ class PythonConsoleWidget(QWidget):
         self.showEditorButton.toggled.connect(self.toggleEditor)
         self.clearButton.triggered.connect(self.shellOut.clearConsole)
         self.optionsButton.triggered.connect(self.openSettings)
-        self.loadSextanteButton.triggered.connect(self.sextante)
+        self.loadProcessingButton.triggered.connect(self.processing)
         self.loadQtCoreButton.triggered.connect(self.qtCore)
         self.loadQtGuiButton.triggered.connect(self.qtGui)
         self.runButton.triggered.connect(self.shell.entered)
@@ -534,8 +532,6 @@ class PythonConsoleWidget(QWidget):
         self.saveFileButton.triggered.connect(self.saveScriptFile)
         self.saveAsFileButton.triggered.connect(self.saveAsScriptFile)
         self.helpButton.triggered.connect(self.openHelp)
-        self.connect(self.options.buttonBox, SIGNAL("accepted()"),
-                     self.prefChanged)
         self.connect(self.listClassMethod, SIGNAL('itemClicked(QTreeWidgetItem*, int)'),
                      self.onClickGoToLine)
         self.lineEditFind.returnPressed.connect(self._findText)
@@ -577,8 +573,8 @@ class PythonConsoleWidget(QWidget):
             objName = itemName
         tabEditor.goToLine(objName, linenr)
 
-    def sextante(self):
-       self.shell.commandConsole('sextante')
+    def processing(self):
+       self.shell.commandConsole('processing')
 
     def qtCore(self):
        self.shell.commandConsole('qtCore')
@@ -641,18 +637,15 @@ class PythonConsoleWidget(QWidget):
         except (IOError, OSError), error:
             errTr = QCoreApplication.translate("PythonConsole", "Save Error")
             msgText = QCoreApplication.translate('PythonConsole',
-                                                 'The file <b>{0}</b> could not be saved. Error: {1}'.format(unicode(tabWidget.path),
-                                                                                                           error.strerror))
+                                                 'The file <b>{0}</b> could not be saved. Error: {1}').format(tabWidget.path,
+                                                                                                              error.strerror)
             self.callWidgetMessageBarEditor(msgText, 2, False)
 
-    def saveAsScriptFile(self, index=-1):
+    def saveAsScriptFile(self, index=None):
         tabWidget = self.tabEditorWidget.currentWidget()
-        if index != -1:
-            tabWidget = self.tabEditorWidget.widget(index)
-        index = self.tabEditorWidget.currentIndex()
-        if tabWidget is None:
-            return
-        if tabWidget.path is None:
+        if not index:
+            index = self.tabEditorWidget.currentIndex()
+        if not tabWidget.path:
             pathFileName = self.tabEditorWidget.tabText(index) + '.py'
             fileNone = True
         else:
@@ -668,8 +661,8 @@ class PythonConsoleWidget(QWidget):
             except (IOError, OSError), error:
                 errTr = QCoreApplication.translate("PythonConsole", "Save Error")
                 msgText = QCoreApplication.translate('PythonConsole',
-                                                     'The file <b>{0}</b> could not be saved. Error: {1}'.format(unicode(tabWidget.path),
-                                                                                                            error.strerror))
+                                                     'The file <b>{0}</b> could not be saved. Error: {1}').format(tabWidget.path,
+                                                                                                                  error.strerror)
                 self.callWidgetMessageBarEditor(msgText, 2, False)
                 if fileNone:
                     tabWidget.path = None
@@ -684,12 +677,11 @@ class PythonConsoleWidget(QWidget):
         QgsContextHelp.run( "PythonConsole" )
 
     def openSettings(self):
-        self.options.exec_()
-
-    def prefChanged(self):
-        self.shell.settingsShell()
-        self.shellOut.refreshLexerProperties()
-        self.tabEditorWidget.refreshSettingsEditor()
+        options = optionsDialog(self)
+        if options.exec_():
+            self.shell.refreshSettingsShell()
+            self.shellOut.refreshSettingsOutput()
+            self.tabEditorWidget.refreshSettingsEditor()
 
     def callWidgetMessageBar(self, text):
         self.shellOut.widgetMessageBar(iface, text)

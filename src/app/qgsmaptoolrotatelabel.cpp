@@ -172,7 +172,7 @@ void QgsMapToolRotateLabel::canvasReleaseEvent( QMouseEvent *e )
   }
 
   vlayer->beginEditCommand( tr( "Rotated label" ) + QString( " '%1'" ).arg( currentLabelText( 24 ) ) );
-  vlayer->changeAttributeValue( mCurrentLabelPos.featureId, rotationCol, rotation, true );
+  vlayer->changeAttributeValue( mCurrentLabelPos.featureId, rotationCol, rotation );
   vlayer->endEditCommand();
   mCanvas->refresh();
 }
@@ -198,7 +198,7 @@ QgsRubberBand* QgsMapToolRotateLabel::createRotationPreviewBox()
   }
 
   mRotationPreviewBox = new QgsRubberBand( mCanvas, QGis::Line );
-  mRotationPreviewBox->setColor( Qt::blue );
+  mRotationPreviewBox->setColor( QColor( 0, 0, 255, 65 ) );
   mRotationPreviewBox->setWidth( 3 );
   setRotationPreviewBox( mCurrentRotation - mStartRotation );
   return mRotationPreviewBox;

@@ -54,10 +54,16 @@ class QgsFeatureRendererV2
 
     QString type() const;
 
-    // to be overridden
+    /** to be overridden
+     * @param feature feature
+     * @return returns pointer to symbol or 0 if symbol was not found
+     */
     virtual QgsSymbolV2* symbolForFeature( QgsFeature& feature ) = 0;
 
-    virtual void startRender( QgsRenderContext& context, const QgsVectorLayer *vlayer ) = 0;
+    virtual void startRender( QgsRenderContext& context, const QgsFields& fields ) = 0;
+
+    //! @deprecated since 2.4 - not using QgsVectorLayer directly anymore
+    virtual void startRender( QgsRenderContext& context, const QgsVectorLayer *vlayer ) /Deprecated/;
 
     virtual void stopRender( QgsRenderContext& context ) = 0;
 
@@ -74,11 +80,11 @@ class QgsFeatureRendererV2
 
     enum Capabilities
     {
-      SymbolLevels = 1,     // rendering with symbol levels (i.e. implements symbols(), symbolForFeature())
-      RotationField = 2,    // rotate symbols by attribute value
-      MoreSymbolsPerFeature = 4  // may use more than one symbol to render a feature: symbolsForFeature() will return them
-      Filter         = 8,   // features may be filtered, i.e. some features may not be rendered (categorized, rule based ...)
-      ScaleDependent = 16   // depends on scale if feature will be rendered (rule based )
+      SymbolLevels,           // rendering with symbol levels (i.e. implements symbols(), symbolForFeature())
+      RotationField,          // rotate symbols by attribute value
+      MoreSymbolsPerFeature,  // may use more than one symbol to render a feature: symbolsForFeature() will return them
+      Filter,                 // features may be filtered, i.e. some features may not be rendered (categorized, rule based ...)
+      ScaleDependent          // depends on scale if feature will be rendered (rule based )
     };
 
     //! returns bitwise OR-ed capabilities of the renderer
@@ -123,8 +129,8 @@ class QgsFeatureRendererV2
 
     //! return a list of item text / symbol
     //! @note: this method was added in version 1.5
-    //! @note: not available in python bindings
-    // virtual QgsLegendSymbolList legendSymbolItems();
+    //! @note not available in python bindings
+    // virtual QgsLegendSymbolList legendSymbolItems( double scaleDenominator = -1, QString rule = "" );
 
     //! set type and size of editing vertex markers for subsequent rendering
     void setVertexMarkerAppearance( int type, int size );
@@ -170,4 +176,8 @@ class QgsFeatureRendererV2
     static const unsigned char* _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, const unsigned char* wkb );
 
     void setScaleMethodToSymbol( QgsSymbolV2* symbol, int scaleMethod );
+  private:
+    QgsFeatureRendererV2( const QgsFeatureRendererV2 & );
+    QgsFeatureRendererV2 & operator=( const QgsFeatureRendererV2 & );
+
 };

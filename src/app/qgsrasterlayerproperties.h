@@ -38,7 +38,7 @@ class QgsRasterHistogramWidget;
   *@author Tim Sutton
   */
 
-class QgsRasterLayerProperties : public QgsOptionsDialogBase, private Ui::QgsRasterLayerPropertiesBase
+class APP_EXPORT QgsRasterLayerProperties : public QgsOptionsDialogBase, private Ui::QgsRasterLayerPropertiesBase
 {
     Q_OBJECT
 
@@ -46,7 +46,7 @@ class QgsRasterLayerProperties : public QgsOptionsDialogBase, private Ui::QgsRas
     /** \brief Constructor
      * @param ml Map layer for which properties will be displayed
      */
-    QgsRasterLayerProperties( QgsMapLayer *lyr, QgsMapCanvas* theCanvas, QWidget *parent = 0, Qt::WFlags = QgisGui::ModalDialogFlags );
+    QgsRasterLayerProperties( QgsMapLayer *lyr, QgsMapCanvas* theCanvas, QWidget *parent = 0, Qt::WindowFlags = QgisGui::ModalDialogFlags );
     /** \brief Destructor */
     ~QgsRasterLayerProperties();
 
@@ -98,8 +98,6 @@ class QgsRasterLayerProperties : public QgsOptionsDialogBase, private Ui::QgsRas
     void on_pbnSaveStyleAs_clicked();
     /** Help button */
     void on_buttonBox_helpRequested() { QgsContextHelp::run( metaObject()->className() ); }
-    void on_mMinimumScaleSetCurrentPushButton_clicked();
-    void on_mMaximumScaleSetCurrentPushButton_clicked();
 
     /** Slot to reset all color rendering options to default
      * @note added in 1.9

@@ -22,6 +22,8 @@
 #include <QBrush>
 #include <QPen>
 
+class QgsFillSymbolV2;
+
 /**A composer items that draws common shapes (ellipse, triangle, rectangle)*/
 class CORE_EXPORT QgsComposerShape: public QgsComposerItem
 {
@@ -58,35 +60,77 @@ class CORE_EXPORT QgsComposerShape: public QgsComposerItem
     bool readXML( const QDomElement& itemElem, const QDomDocument& doc );
 
     //setters and getters
-    QgsComposerShape::Shape shapeType() const {return mShape;}
-    void setShapeType( QgsComposerShape::Shape s ) {mShape = s;}
+    QgsComposerShape::Shape shapeType() const { return mShape; }
+    void setShapeType( QgsComposerShape::Shape s ) { mShape = s; }
 
-    /**Sets this items bound in scene coordinates such that 1 item size units
-     corresponds to 1 scene size unit. Also, the shape is scaled*/
+    /**Sets radius for rounded rectangle corners. Added in v2.1 */
+    void setCornerRadius( double radius );
+    /**Returns the radius for rounded rectangle corners*/
+    double cornerRadius() const { return mCornerRadius; };
+
+    /**Sets the QgsFillSymbolV2 used to draw the shape. Must also call setUseSymbolV2( true ) to
+     * enable drawing with a symbol.
+     * Note: added in version 2.1*/
+    void setShapeStyleSymbol( QgsFillSymbolV2* symbol );
+    /**Returns the QgsFillSymbolV2 used to draw the shape.
+     * Note: added in version 2.1*/
+    QgsFillSymbolV2* shapeStyleSymbol() { return mShapeStyleSymbol; }
+
+    /**Controls whether the shape should be drawn using a QgsFillSymbolV2.
+     * Note: Added in v2.1 */
+    void setUseSymbolV2( bool useSymbolV2 );
+
+    /**Depending on the symbol style, the bounding rectangle can be larger than the shape
+    @note this function was added in version 2.3*/
+    QRectF boundingRect() const;
+
+    /**Sets new scene rectangle bounds and recalculates hight and extent. Reimplemented from
+     * QgsComposerItem as it needs to call updateBoundingRect after the shape's size changes
+    */
     void setSceneRect( const QRectF& rectangle );
-
-  public slots:
-    /**Sets item rotation and resizes item bounds such that the shape always has the same size*/
-    virtual void setRotation( double r );
-
 
   protected:
     /* reimplement drawFrame, since it's not a rect, but a custom shape */
     virtual void drawFrame( QPainter* p );
     /* reimplement drawBackground, since it's not a rect, but a custom shape */
     virtual void drawBackground( QPainter* p );
+    /**reimplement estimatedFrameBleed, since frames on shapes are drawn using symbology
+     * rather than the item's pen */
+    virtual double estimatedFrameBleed() const;
 
+  public slots:
+    /**Should be called after the shape's symbol is changed. Redraws the shape and recalculates
+     * its selection bounds.
+     * Note: added in version 2.1*/
+    void refreshSymbol();
 
   private:
     /**Ellipse, rectangle or triangle*/
     Shape mShape;
 
+    double mCornerRadius;
+
+    bool mUseSymbolV2;
+
+    QgsFillSymbolV2* mShapeStyleSymbol;
+    double mMaxSymbolBleed;
+    /**Current bounding rectangle of shape*/
+    QRectF mCurrentRectangle;
+
     /* draws the custom shape */
     void drawShape( QPainter* p );
 
+    /* draws the custom shape using symbol v2*/
+    void drawShapeUsingSymbol( QPainter* p );
+
+    /* creates the default shape symbol */
+    void createDefaultShapeStyleSymbol();
 
     /**Returns a point on the line from startPoint to directionPoint that is a certain distance away from the starting point*/
     QPointF pointOnLineWithDistance( const QPointF& startPoint, const QPointF& directionPoint, double distance ) const;
+
+    /**Updates the bounding rect of this item*/
+    void updateBoundingRect();
 };
 
 #endif // QGSCOMPOSERSHAPEITEM_H

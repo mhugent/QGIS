@@ -28,12 +28,12 @@ class QgsCharacterSelectorDialog;
 
 #include "qgspallabeling.h"
 
-class QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
+class APP_EXPORT QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
 {
     Q_OBJECT
 
   public:
-    QgsLabelingGui( QgsPalLabeling *lbl, QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, QWidget* parent );
+    QgsLabelingGui( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, QWidget* parent );
     ~QgsLabelingGui();
 
     QgsPalLayerSettings layerSettings();
@@ -45,7 +45,6 @@ class QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
     void apply();
     void changeTextColor( const QColor &color );
     void showEngineConfigDialog();
-    void showExpressionDialog();
     void changeBufferColor( const QColor &color );
 
     void updateUi();
@@ -63,10 +62,10 @@ class QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
     void on_mFontStrikethroughBtn_toggled( bool ckd );
     void on_mFontWordSpacingSpinBox_valueChanged( double spacing );
     void on_mFontLetterSpacingSpinBox_valueChanged( double spacing );
-    void on_mFontSizeUnitComboBox_currentIndexChanged( int index );
+    void on_mFontSizeUnitWidget_changed();
     void on_mFontMinPixelSpinBox_valueChanged( int px );
     void on_mFontMaxPixelSpinBox_valueChanged( int px );
-    void on_mBufferUnitComboBox_currentIndexChanged( int index );
+    void on_mBufferUnitWidget_changed();
     void on_mCoordXDDBtn_dataDefinedActivated( bool active );
     void on_mCoordYDDBtn_dataDefinedActivated( bool active );
 
@@ -96,7 +95,6 @@ class QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
     void updateFont( QFont font );
 
   private:
-    QgsPalLabeling* mLBL;
     QgsVectorLayer* mLayer;
     QgsMapCanvas* mMapCanvas;
     QFontDatabase mFontDB;
@@ -128,3 +126,5 @@ class QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
 };
 
 #endif
+
+

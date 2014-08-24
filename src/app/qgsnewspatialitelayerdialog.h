@@ -29,12 +29,12 @@ extern "C"
 #include <spatialite.h>
 }
 
-class QgsNewSpatialiteLayerDialog: public QDialog, private Ui::QgsNewSpatialiteLayerDialogBase
+class APP_EXPORT QgsNewSpatialiteLayerDialog: public QDialog, private Ui::QgsNewSpatialiteLayerDialogBase
 {
     Q_OBJECT
 
   public:
-    QgsNewSpatialiteLayerDialog( QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags );
+    QgsNewSpatialiteLayerDialog( QWidget *parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags );
     ~QgsNewSpatialiteLayerDialog();
 
   protected slots:

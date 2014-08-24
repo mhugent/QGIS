@@ -21,6 +21,7 @@
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
+#include "qgsmaptool.h"
 #include "qgsvectorlayer.h"
 #include <QDomElement>
 #include <QDir>
@@ -37,6 +38,7 @@ QgsFormAnnotationItem::QgsFormAnnotationItem( QgsMapCanvas* canvas, QgsVectorLay
     mHasAssociatedFeature( hasFeature ), mFeature( feature )
 {
   mWidgetContainer = new QGraphicsProxyWidget( this );
+  mWidgetContainer->setData( 0, "AnnotationItem" ); //mark embedded widget as belonging to an annotation item (composer knows it needs to be printed)
   if ( mVectorLayer && mMapCanvas ) //default to the layers edit form
   {
     mDesignerForm = mVectorLayer->annotationForm();
@@ -224,9 +226,7 @@ void QgsFormAnnotationItem::setFeatureForMapPosition()
     return;
   }
 
-  QSettings settings;
-  double identifyValue = settings.value( "/Map/identifyRadius", QGis::DEFAULT_IDENTIFY_RADIUS ).toDouble();
-  double halfIdentifyWidth = mMapCanvas->extent().width() / 100 / 2 * identifyValue;
+  double halfIdentifyWidth = QgsMapTool::searchRadiusMU( mMapCanvas );
   QgsRectangle searchRect( mMapPosition.x() - halfIdentifyWidth, mMapPosition.y() - halfIdentifyWidth,
                            mMapPosition.x() + halfIdentifyWidth, mMapPosition.y() + halfIdentifyWidth );
 

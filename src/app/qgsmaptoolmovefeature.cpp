@@ -69,7 +69,7 @@ void QgsMapToolMoveFeature::canvasPressEvent( QMouseEvent * e )
   //find first geometry under mouse cursor and store iterator to it
   QgsPoint layerCoords = toLayerCoordinates( vlayer, e->pos() );
   QSettings settings;
-  double searchRadius = QgsTolerance::vertexSearchRadius( mCanvas->currentLayer(), mCanvas->mapRenderer() );
+  double searchRadius = QgsTolerance::vertexSearchRadius( mCanvas->currentLayer(), mCanvas->mapSettings() );
   QgsRectangle selectRect( layerCoords.x() - searchRadius, layerCoords.y() - searchRadius,
                            layerCoords.x() + searchRadius, layerCoords.y() + searchRadius );
 
@@ -127,7 +127,7 @@ void QgsMapToolMoveFeature::canvasPressEvent( QMouseEvent * e )
   }
 
   mStartPointMapCoords = toMapCoordinates( e->pos() );
-  mRubberBand->setColor( Qt::red );
+  mRubberBand->setColor( QColor( 255, 0, 0, 65 ) );
   mRubberBand->setWidth( 2 );
   mRubberBand->show();
 

@@ -44,14 +44,13 @@ sudo apt-get update
 == Install build dependencies ==
 
 || Distribution | install command for packages |
-| lucid | ``apt-get install bison cmake doxygen flex git-core graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| maverick | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| natty | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| oneiric | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| precise | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| sid | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| squeeze | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-| wheezy | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
+| precise | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+| quantal | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+| raring | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libpython2.7-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+| saucy | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libpython2.7-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+| wheezy | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+| jessie | ``apt-get install bison cmake flex grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev`` |
+| sid | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python-all python-all-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
 
 (extracted from the respective control files in ``debian/``)
 
@@ -91,9 +90,10 @@ sudo update-alternatives --config linguist
 Use the simple command line dialog that appears after running each of the
 above commands to select the Qt4 version of the relevant applications.
 
-/!\ **Note:** For python language bindings SIP >= 4.5 and PyQt4 >= 4.1 is required! Some stable GNU/Linux
-distributions (e.g. Debian or SuSE) only provide SIP < 4.5 and PyQt4 < 4.1. To include support for python 
-language bindings you may need to build and install those packages from source.
+/!\ Note: For python language bindings. If your distributions ships with older
+versions of SIP or PyQt4 than specified in Section 2: Overview, you will need
+to build and install those packages from source if you want to include support 
+for python language bindings.
 
 
 == Setup ccache (Optional) ==
@@ -131,14 +131,14 @@ if you do not have edit privileges for the QGIS source repository, or use
 
 ``` 
 cd ${HOME}/dev/cpp 
-git clone git://github.com/qgis/Quantum-GIS.git
+git clone git://github.com/qgis/QGIS.git
 ```
 
 2. Developer Checkout
 
 ``` 
 cd ${HOME}/dev/cpp 
-git clone git@github.com:qgis/Quantum-GIS.git
+git clone git@github.com:qgis/QGIS.git
 ```
 
 == Starting the compile ==
@@ -155,7 +155,7 @@ mkdir -p ${HOME}/apps
 Now we create a build directory and run ccmake:
 
 ```
-cd Quantum-GIS
+cd QGIS
 mkdir build-master
 cd build-master
 ccmake ..
@@ -215,12 +215,19 @@ The QGIS packages will be created with:
 dpkg-buildpackage -us -uc -b
 ```
 
+/!\ **Note:** Install ``devscripts`` to get ``dch``.
+
 /!\ **Note:** If ``dpkg-buildpackage`` complains about unmet build dependencies
 you can install them using ``apt-get`` and re-run the command.
 
 /!\ **Note:** If you have ``libqgis1-dev`` installed, you need to remove it first
 using ``dpkg -r libqgis1-dev``.  Otherwise ``dpkg-buildpackage`` will complain about a
 build conflict.
+
+/!\ **Note:** By default tests are run in the process of building and their
+results are uploaded to http://dash.orfeo-toolbox.org/index.php?project=QGIS.
+You can turn the tests off using DEB_BUILD_OPTIONS=nocheck in front of the
+build command. The upload of results can be avoided with DEB_TEST_TARGET=test.
 
 The packages are created in the parent directory (ie. one level up).
 Install them using dpkg.  E.g.:
@@ -437,7 +444,7 @@ As for GRASS you can obtain the QGIS source code from different sources as descr
 in section 2 above. Once you have the sources, create a build directory in them:
 
 ``` 
-cd Quantum-GIS
+cd QGIS
 mkdir build
 cd build
 ```

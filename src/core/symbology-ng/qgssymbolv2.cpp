@@ -1,9 +1,9 @@
 /***************************************************************************
-    qgssymbolv2.cpp
-    ---------------------
-    begin                : November 2009
-    copyright            : (C) 2009 by Martin Dobias
-    email                : wonder dot sk at gmail dot com
+ qgssymbolv2.cpp
+ ---------------------
+ begin                : November 2009
+ copyright            : (C) 2009 by Martin Dobias
+ email                : wonder dot sk at gmail dot com
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -34,7 +34,7 @@
 #include <cmath>
 
 QgsSymbolV2::QgsSymbolV2( SymbolType type, QgsSymbolLayerV2List layers )
-    : mType( type ), mLayers( layers ), mAlpha( 1.0 ), mRenderHints( 0 )
+    : mType( type ), mLayers( layers ), mAlpha( 1.0 ), mRenderHints( 0 ), mLayer( NULL )
 {
 
   // check they're all correct symbol layers
@@ -62,25 +62,47 @@ QgsSymbolV2::~QgsSymbolV2()
 
 QgsSymbolV2::OutputUnit QgsSymbolV2::outputUnit() const
 {
-  QgsSymbolV2::OutputUnit unit( QgsSymbolV2::Mixed );
-
-  QgsSymbolLayerV2List::const_iterator it = mLayers.constBegin();
-  for ( ; it != mLayers.constEnd(); ++it )
+  if ( mLayers.empty() )
   {
-    if ( it == mLayers.constBegin() )
-    {
-      unit = ( *it )->outputUnit();
-    }
-    else
-    {
-      if (( *it )->outputUnit() != unit )
-      {
-        return QgsSymbolV2::Mixed;
-      }
-    }
+    return QgsSymbolV2::Mixed;
   }
 
+  QgsSymbolLayerV2List::const_iterator it = mLayers.constBegin();
+
+  QgsSymbolV2::OutputUnit unit = ( *it )->outputUnit();
+
+  for ( ; it != mLayers.constEnd(); ++it )
+  {
+    if (( *it )->outputUnit() != unit )
+    {
+      return QgsSymbolV2::Mixed;
+    }
+  }
   return unit;
+}
+
+QgsMapUnitScale QgsSymbolV2::mapUnitScale() const
+{
+  if ( mLayers.empty() )
+  {
+    return QgsMapUnitScale();
+  }
+
+  QgsSymbolLayerV2List::const_iterator it = mLayers.constBegin();
+  if ( it == mLayers.constEnd() )
+    return QgsMapUnitScale();
+
+  QgsMapUnitScale scale = ( *it )->mapUnitScale();
+  ++it;
+
+  for ( ; it != mLayers.constEnd(); ++it )
+  {
+    if (( *it )->mapUnitScale() != scale )
+    {
+      return QgsMapUnitScale();
+    }
+  }
+  return scale;
 }
 
 void QgsSymbolV2::setOutputUnit( QgsSymbolV2::OutputUnit u )
@@ -89,6 +111,15 @@ void QgsSymbolV2::setOutputUnit( QgsSymbolV2::OutputUnit u )
   for ( ; it != mLayers.end(); ++it )
   {
     ( *it )->setOutputUnit( u );
+  }
+}
+
+void QgsSymbolV2::setMapUnitScale( const QgsMapUnitScale &scale )
+{
+  QgsSymbolLayerV2List::iterator it = mLayers.begin();
+  for ( ; it != mLayers.end(); ++it )
+  {
+    ( *it )->setMapUnitScale( scale );
   }
 }
 
@@ -213,19 +244,23 @@ bool QgsSymbolV2::changeSymbolLayer( int index, QgsSymbolLayerV2* layer )
 }
 
 
-void QgsSymbolV2::startRender( QgsRenderContext& context, const QgsVectorLayer* layer )
+void QgsSymbolV2::startRender( QgsRenderContext& context, const QgsFields* fields )
 {
-  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, false, mRenderHints );
-  symbolContext.setLayer( layer );
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, false, mRenderHints, 0, fields, mapUnitScale() );
+
+
   for ( QgsSymbolLayerV2List::iterator it = mLayers.begin(); it != mLayers.end(); ++it )
     ( *it )->startRender( symbolContext );
 }
 
 void QgsSymbolV2::stopRender( QgsRenderContext& context )
 {
-  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, false, mRenderHints );
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, false, mRenderHints, 0, 0, mapUnitScale() );
+
   for ( QgsSymbolLayerV2List::iterator it = mLayers.begin(); it != mLayers.end(); ++it )
     ( *it )->stopRender( symbolContext );
+
+  mLayer = NULL;
 }
 
 void QgsSymbolV2::setColor( const QColor& color )
@@ -251,7 +286,8 @@ QColor QgsSymbolV2::color() const
 void QgsSymbolV2::drawPreviewIcon( QPainter* painter, QSize size )
 {
   QgsRenderContext context = QgsSymbolLayerV2Utils::createRenderContext( painter );
-  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, false, mRenderHints );
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, false, mRenderHints, 0, 0, mapUnitScale() );
+
   for ( QgsSymbolLayerV2List::iterator it = mLayers.begin(); it != mLayers.end(); ++it )
   {
     if ( mType == Fill && ( *it )->type() == Line )
@@ -375,8 +411,8 @@ QSet<QString> QgsSymbolV2::usedAttributes() const
 ////////////////////
 
 
-QgsSymbolV2RenderContext::QgsSymbolV2RenderContext( QgsRenderContext& c, QgsSymbolV2::OutputUnit u, qreal alpha, bool selected, int renderHints, const QgsFeature* f )
-    : mRenderContext( c ), mOutputUnit( u ), mAlpha( alpha ), mSelected( selected ), mRenderHints( renderHints ), mFeature( f ), mLayer( 0 )
+QgsSymbolV2RenderContext::QgsSymbolV2RenderContext( QgsRenderContext& c, QgsSymbolV2::OutputUnit u, qreal alpha, bool selected, int renderHints, const QgsFeature* f, const QgsFields* fields, const QgsMapUnitScale& mapUnitScale )
+    : mRenderContext( c ), mOutputUnit( u ), mMapUnitScale( mapUnitScale ), mAlpha( alpha ), mSelected( selected ), mRenderHints( renderHints ), mFeature( f ), mFields( fields )
 {
 
 }
@@ -389,12 +425,12 @@ QgsSymbolV2RenderContext::~QgsSymbolV2RenderContext()
 
 double QgsSymbolV2RenderContext::outputLineWidth( double width ) const
 {
-  return width * QgsSymbolLayerV2Utils::lineWidthScaleFactor( mRenderContext, mOutputUnit );
+  return width * QgsSymbolLayerV2Utils::lineWidthScaleFactor( mRenderContext, mOutputUnit, mMapUnitScale );
 }
 
 double QgsSymbolV2RenderContext::outputPixelSize( double size ) const
 {
-  return size * QgsSymbolLayerV2Utils::pixelSizeScaleFactor( mRenderContext, mOutputUnit );
+  return size * QgsSymbolLayerV2Utils::pixelSizeScaleFactor( mRenderContext, mOutputUnit, mMapUnitScale );
 }
 
 QgsSymbolV2RenderContext& QgsSymbolV2RenderContext::operator=( const QgsSymbolV2RenderContext& )
@@ -531,7 +567,8 @@ QgsSymbolV2::ScaleMethod QgsMarkerSymbolV2::scaleMethod()
 
 void QgsMarkerSymbolV2::renderPoint( const QPointF& point, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
 {
-  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f );
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f, 0, mapUnitScale() );
+
   if ( layer != -1 )
   {
     if ( layer >= 0 && layer < mLayers.count() )
@@ -599,7 +636,8 @@ double QgsLineSymbolV2::width()
 
 void QgsLineSymbolV2::renderPolyline( const QPolygonF& points, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
 {
-  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f );
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f, 0, mapUnitScale() );
+
   if ( layer != -1 )
   {
     if ( layer >= 0 && layer < mLayers.count() )
@@ -634,7 +672,8 @@ QgsFillSymbolV2::QgsFillSymbolV2( QgsSymbolLayerV2List layers )
 
 void QgsFillSymbolV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected )
 {
-  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f );
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f, 0, mapUnitScale() );
+
   if ( layer != -1 )
   {
     if ( layer >= 0 && layer < mLayers.count() )
@@ -680,3 +719,5 @@ void QgsFillSymbolV2::setAngle( double angle )
     layer->setAngle( angle );
   }
 }
+
+

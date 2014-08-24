@@ -23,7 +23,7 @@ class QgsRubberBand;
 class QKeyEvent;
 
 /**Base class for map tools that edit vector geometry*/
-class QgsMapToolEdit: public QgsMapTool
+class APP_EXPORT QgsMapToolEdit: public QgsMapTool
 {
   public:
     QgsMapToolEdit( QgsMapCanvas* canvas );
@@ -50,10 +50,13 @@ class QgsMapToolEdit: public QgsMapTool
        @return the snapped point in map coordinates*/
     QgsPoint snapPointFromResults( const QList<QgsSnappingResult>& snapResults, const QPoint& screenCoords );
 
-    /**Creates a rubber band with the color/line width from
-     the QGIS settings. The caller takes ownership of the
-    returned object*/
-    QgsRubberBand* createRubberBand( QGis::GeometryType geometryType = QGis::Line );
+    /** Creates a rubber band with the color/line width from
+    *   the QGIS settings. The caller takes ownership of the
+    *   returned object
+    *   @param geometryType
+    *   @param alternativeBand if true, rubber band will be set with more transparency and a dash pattern. defaut is false.
+    */
+    QgsRubberBand* createRubberBand( QGis::GeometryType geometryType = QGis::Line , bool alternativeBand = false );
 
     /**Returns the current vector layer of the map canvas or 0*/
     QgsVectorLayer* currentVectorLayer();
@@ -69,7 +72,6 @@ class QgsMapToolEdit: public QgsMapTool
     /**Display a timed message bar noting the active vector layer is not editable.
        @note added in QGIS 1.9*/
     void notifyNotEditableLayer();
-
 };
 
 #endif

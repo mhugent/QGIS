@@ -23,7 +23,16 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -54,9 +63,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-348</y>
         <width>438</width>
-        <height>1454</height>
+        <height>1415</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -123,16 +132,16 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="mRotationLabel">
+           <widget class="QLabel" name="mMapRotationLabel">
             <property name="text">
-             <string>Rotation</string>
+             <string>Map rotation</string>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QDoubleSpinBox" name="mRotationSpinBox">
+           <widget class="QDoubleSpinBox" name="mMapRotationSpinBox">
             <property name="suffix">
-             <string> degrees</string>
+             <string> °</string>
             </property>
             <property name="maximum">
              <double>360.000000000000000</double>
@@ -174,24 +183,24 @@
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="mYMaxLineEdit"/>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="mXMaxLineEdit"/>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="mXMaxLabel">
+          <item row="0" column="0">
+           <widget class="QLabel" name="mXMinLabel">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="text">
-             <string>X max</string>
+             <string>X min</string>
             </property>
             <property name="wordWrap">
              <bool>false</bool>
             </property>
             <property name="buddy">
-             <cstring>mXMaxLineEdit</cstring>
+             <cstring>mXMinLineEdit</cstring>
             </property>
            </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="mXMinLineEdit"/>
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="mYMinLabel">
@@ -206,6 +215,25 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="mYMinLineEdit"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="mXMaxLabel">
+            <property name="text">
+             <string>X max</string>
+            </property>
+            <property name="wordWrap">
+             <bool>false</bool>
+            </property>
+            <property name="buddy">
+             <cstring>mXMaxLineEdit</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="mXMaxLineEdit"/>
+          </item>
           <item row="3" column="0">
            <widget class="QLabel" name="mYMaxLabel">
             <property name="text">
@@ -219,32 +247,90 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="mXMinLineEdit"/>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="mYMaxLineEdit"/>
           </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="mYMinLineEdit"/>
-          </item>
-          <item row="4" column="0" colspan="4">
+          <item row="4" column="0" colspan="2">
            <widget class="QPushButton" name="mSetToMapCanvasExtentButton">
             <property name="text">
              <string>Set to map canvas extent</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="mXMinLabel">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
+          <item row="5" column="0" colspan="2">
+           <widget class="QPushButton" name="mViewExtentInCanvasButton">
             <property name="text">
-             <string>X min</string>
+             <string>View extent in map canvas</string>
             </property>
-            <property name="wordWrap">
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QgsCollapsibleGroupBoxBasic" name="mAtlasCheckBox">
+         <property name="title">
+          <string>Controlled by atlas</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="collapsed" stdset="0">
+          <bool>true</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <widget class="QRadioButton" name="mAtlasMarginRadio">
+            <property name="enabled">
              <bool>false</bool>
             </property>
-            <property name="buddy">
-             <cstring>mXMinLineEdit</cstring>
+            <property name="text">
+             <string>Margin around feature</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="mAtlasMarginSpinBox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="suffix">
+             <string>%</string>
+            </property>
+            <property name="maximum">
+             <number>9999</number>
+            </property>
+            <property name="value">
+             <number>10</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QRadioButton" name="mAtlasFixedScaleRadio">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Fixed scale</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QRadioButton" name="mAtlasPredefinedScaleRadio">
+            <property name="toolTip">
+             <string>Use one of the predefined scales of the project where the atlas feature best fits.</string>
+            </property>
+            <property name="text">
+             <string>Predefined scale (best fit)</string>
             </property>
            </widget>
           </item>
@@ -302,12 +388,12 @@
             <item row="1" column="1">
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
-               <widget class="QDoubleSpinBox" name="mIntervalYSpinBox">
+               <widget class="QDoubleSpinBox" name="mIntervalXSpinBox">
                 <property name="prefix">
                  <string>X </string>
                 </property>
                 <property name="decimals">
-                 <number>5</number>
+                 <number>12</number>
                 </property>
                 <property name="maximum">
                  <double>9999999.000000000000000</double>
@@ -315,12 +401,12 @@
                </widget>
               </item>
               <item>
-               <widget class="QDoubleSpinBox" name="mIntervalXSpinBox">
+               <widget class="QDoubleSpinBox" name="mIntervalYSpinBox">
                 <property name="prefix">
                  <string>Y </string>
                 </property>
                 <property name="decimals">
-                 <number>5</number>
+                 <number>12</number>
                 </property>
                 <property name="maximum">
                  <double>9999999.000000000000000</double>
@@ -350,7 +436,7 @@
                  <string>X </string>
                 </property>
                 <property name="decimals">
-                 <number>5</number>
+                 <number>12</number>
                 </property>
                 <property name="maximum">
                  <double>9999999.000000000000000</double>
@@ -363,7 +449,7 @@
                  <string>Y </string>
                 </property>
                 <property name="decimals">
-                 <number>5</number>
+                 <number>12</number>
                 </property>
                 <property name="maximum">
                  <double>9999999.000000000000000</double>
@@ -387,38 +473,15 @@
             </item>
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="mCrossWidthSpinBox">
+              <property name="suffix">
+               <string> mm</string>
+              </property>
               <property name="decimals">
                <number>5</number>
               </property>
              </widget>
             </item>
             <item row="4" column="0">
-             <widget class="QLabel" name="mFrameStyleLabel">
-              <property name="text">
-               <string>Frame style</string>
-              </property>
-              <property name="wordWrap">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
-             <widget class="QComboBox" name="mFrameStyleComboBox"/>
-            </item>
-            <item row="5" column="0">
-             <widget class="QLabel" name="mFrameWidthLabel">
-              <property name="text">
-               <string>Frame width</string>
-              </property>
-              <property name="wordWrap">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="QDoubleSpinBox" name="mFrameWidthSpinBox"/>
-            </item>
-            <item row="6" column="0">
              <widget class="QLabel" name="mLineStyleLabel">
               <property name="text">
                <string>Line style</string>
@@ -428,17 +491,17 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
+            <item row="4" column="1">
              <widget class="QPushButton" name="mGridLineStyleButton">
               <property name="text">
                <string>change...</string>
               </property>
              </widget>
             </item>
-            <item row="7" column="1">
+            <item row="5" column="1">
              <widget class="QgsBlendModeComboBox" name="mGridBlendComboBox"/>
             </item>
-            <item row="7" column="0">
+            <item row="5" column="0">
              <widget class="QLabel" name="mGridBlendLabel">
               <property name="text">
                <string>Blend mode</string>
@@ -454,11 +517,101 @@
                <bool>false</bool>
               </property>
               <property name="buddy">
-               <cstring>mIntervalXSpinBox</cstring>
+               <cstring>mIntervalYSpinBox</cstring>
               </property>
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QgsCollapsibleGroupBoxBasic" name="mGridFrameGroupBox">
+            <property name="title">
+             <string>Grid frame</string>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
+            </property>
+            <property name="checkable">
+             <bool>false</bool>
+            </property>
+            <property name="collapsed" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_3">
+             <item row="0" column="0">
+              <widget class="QLabel" name="mFrameStyleLabel">
+               <property name="text">
+                <string>Frame style</string>
+               </property>
+               <property name="wordWrap">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1" colspan="2">
+              <widget class="QComboBox" name="mFrameStyleComboBox"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="mFrameWidthLabel">
+               <property name="text">
+                <string>Frame size</string>
+               </property>
+               <property name="wordWrap">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1" colspan="2">
+              <widget class="QDoubleSpinBox" name="mFrameWidthSpinBox">
+               <property name="suffix">
+                <string> mm</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="mFramePenLabel">
+               <property name="text">
+                <string>Frame line thickness</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="mGridFramePenSizeSpinBox">
+               <property name="suffix">
+                <string> mm</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QgsColorButton" name="mGridFramePenColorButton">
+               <property name="text">
+                <string>Color...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="mFrameFillLabel">
+               <property name="text">
+                <string>Frame fill colors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QgsColorButton" name="mGridFrameFill1ColorButton">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QgsColorButton" name="mGridFrameFill2ColorButton">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
           <item>
            <widget class="QgsCollapsibleGroupBoxBasic" name="mDrawAnnotationCheckableGroupBox">
@@ -607,7 +760,11 @@
               </widget>
              </item>
              <item row="11" column="1">
-              <widget class="QDoubleSpinBox" name="mDistanceToMapFrameSpinBox"/>
+              <widget class="QDoubleSpinBox" name="mDistanceToMapFrameSpinBox">
+               <property name="suffix">
+                <string> mm</string>
+               </property>
+              </widget>
              </item>
              <item row="12" column="0">
               <widget class="QLabel" name="mCoordinatePrecisionLabel">
@@ -697,6 +854,13 @@
             </property>
            </widget>
           </item>
+          <item row="4" column="0">
+           <widget class="QCheckBox" name="mOverviewCenterCheckbox">
+            <property name="text">
+             <string>Center on overview</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -711,18 +875,18 @@
   <customwidget>
    <class>QgsCollapsibleGroupBoxBasic</class>
    <extends>QGroupBox</extends>
-   <header location="global">qgscollapsiblegroupbox.h</header>
+   <header>qgscollapsiblegroupbox.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QgsBlendModeComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgsblendmodecombobox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsColorButton</class>
    <extends>QPushButton</extends>
    <header>qgscolorbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsBlendModeComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsblendmodecombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

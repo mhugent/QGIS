@@ -24,16 +24,52 @@ typedef QMap<QgsFeatureId, QgsFeature> QgsFeatureMap;
 class QgsVectorLayer;
 class QgsVectorLayerEditBuffer;
 struct QgsVectorJoinInfo;
+class QgsVectorLayerJoinBuffer;
 
-class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureIterator
+
+class QgsVectorLayerFeatureIterator;
+
+/** Partial snapshot of vector layer's state (only the members necessary for access to features) */
+class QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
 {
   public:
-    QgsVectorLayerFeatureIterator( QgsVectorLayer* layer, const QgsFeatureRequest& request );
+    QgsVectorLayerFeatureSource( QgsVectorLayer* layer );
+    ~QgsVectorLayerFeatureSource();
+
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest& request );
+
+    friend class QgsVectorLayerFeatureIterator;
+
+  protected:
+
+    QgsAbstractFeatureSource* mProviderFeatureSource;
+
+    QgsVectorLayerJoinBuffer* mJoinBuffer;
+
+    QgsFields mFields;
+
+    bool mHasEditBuffer;
+
+    bool mCanBeSimplified;
+
+    // A deep-copy is only performed, if the original maps change
+    // see here https://github.com/qgis/Quantum-GIS/pull/673
+    // for explanation
+    QgsFeatureMap mAddedFeatures;
+    QgsGeometryMap mChangedGeometries;
+    QgsFeatureIds mDeletedFeatureIds;
+    QList<QgsField> mAddedAttributes;
+    QgsChangedAttributesMap mChangedAttributeValues;
+    QgsAttributeList mDeletedAttributeIds;
+};
+
+
+class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsVectorLayerFeatureSource>
+{
+  public:
+    QgsVectorLayerFeatureIterator( QgsVectorLayerFeatureSource* source, bool ownSource, const QgsFeatureRequest& request );
 
     ~QgsVectorLayerFeatureIterator();
-
-    //! fetch next feature, return true on success
-    virtual bool nextFeature( QgsFeature& feature );
 
     //! reset the iterator to the starting position
     virtual bool rewind();
@@ -42,19 +78,22 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
     virtual bool close();
 
   protected:
-    QgsVectorLayer* L;
+    //! fetch next feature, return true on success
+    virtual bool fetchFeature( QgsFeature& feature );
+
+    //! Overrides default method as we only need to filter features in the edit buffer
+    //! while for others filtering is left to the provider implementation.
+    inline virtual bool nextFeatureFilterExpression( QgsFeature &f ) { return fetchFeature( f ); }
+
+    //! Setup the simplification of geometries to fetch using the specified simplify method
+    virtual bool prepareSimplification( const QgsSimplifyMethod& simplifyMethod );
+
 
     QgsFeatureRequest mProviderRequest;
     QgsFeatureIterator mProviderIterator;
+    QgsFeatureRequest mChangedFeaturesRequest;
+    QgsFeatureIterator mChangedFeaturesIterator;
 
-#if 0
-    // general stuff
-    bool mFetching;
-    QgsRectangle mFetchRect;
-    QgsAttributeList mFetchAttributes;
-    QgsAttributeList mFetchProvAttributes;
-    bool mFetchGeometry;
-#endif
 
     // only related to editing
     QSet<QgsFeatureId> mFetchConsidered;
@@ -67,6 +106,7 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
     void prepareJoins();
     bool fetchNextAddedFeature( QgsFeature& f );
     bool fetchNextChangedGeomFeature( QgsFeature& f );
+    bool fetchNextChangedAttributeFeature( QgsFeature& f );
     void useAddedFeature( const QgsFeature& src, QgsFeature& f );
     void useChangedAttributeFeature( QgsFeatureId fid, const QgsGeometry& geom, QgsFeature& f );
     bool nextFeatureFid( QgsFeature& f );
@@ -94,19 +134,16 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
       void addJoinedAttributesDirect( QgsFeature& f, const QVariant& joinValue ) const;
     };
 
-    // A deep-copy is only performed, if the original maps change
-    // see here https://github.com/qgis/Quantum-GIS/pull/673
-    // for explanation
-    QgsFeatureMap mAddedFeatures;
-    QgsGeometryMap mChangedGeometries;
-    QgsFeatureIds mDeletedFeatureIds;
-    QList<QgsField> mAddedAttributes;
-    QgsChangedAttributesMap mChangedAttributeValues;
-    QgsAttributeList mDeletedAttributeIds;
-
-    /** Informations about joins used in the current select() statement.
+    /** information about joins used in the current select() statement.
       Allows faster mapping of attribute ids compared to mVectorJoins */
     QMap<QgsVectorLayer*, FetchJoinInfo> mFetchJoinInfo;
+
+  private:
+    //! optional object to locally simplify edited (changed or added) geometries fetched by this feature iterator
+    QgsAbstractGeometrySimplifier* mEditGeometrySimplifier;
+
+    //! returns whether the iterator supports simplify geometries on provider side
+    virtual bool providerCanSimplify( QgsSimplifyMethod::MethodType methodType ) const;
 };
 
 #endif // QGSVECTORLAYERFEATUREITERATOR_H

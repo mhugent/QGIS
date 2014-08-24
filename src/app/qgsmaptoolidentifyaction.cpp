@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "qgsapplication.h"
 #include "qgscursors.h"
 #include "qgsdistancearea.h"
 #include "qgsfeature.h"
@@ -57,6 +58,7 @@ QgsMapToolIdentifyAction::~QgsMapToolIdentifyAction()
   {
     mResultsDialog->done( 0 );
   }
+  deleteRubberBands();
 }
 
 QgsIdentifyResultsDialog *QgsMapToolIdentifyAction::resultsDialog()
@@ -84,44 +86,39 @@ void QgsMapToolIdentifyAction::canvasPressEvent( QMouseEvent *e )
 
 void QgsMapToolIdentifyAction::canvasReleaseEvent( QMouseEvent *e )
 {
-  if ( !mCanvas || mCanvas->isDrawing() )
-  {
-    return;
-  }
-
   resultsDialog()->clear();
-
   connect( this, SIGNAL( identifyProgress( int, int ) ), QgisApp::instance(), SLOT( showProgress( int, int ) ) );
   connect( this, SIGNAL( identifyMessage( QString ) ), QgisApp::instance(), SLOT( showStatusMessage( QString ) ) );
+
   QList<IdentifyResult> results = QgsMapToolIdentify::identify( e->x(), e->y() );
+
   disconnect( this, SIGNAL( identifyProgress( int, int ) ), QgisApp::instance(), SLOT( showProgress( int, int ) ) );
   disconnect( this, SIGNAL( identifyMessage( QString ) ), QgisApp::instance(), SLOT( showStatusMessage( QString ) ) );
 
-
-  QList<IdentifyResult>::const_iterator result;
-  for ( result = results.begin(); result != results.end(); ++result )
-  {
-    resultsDialog()->addFeature( *result );
-  }
-
   if ( !results.isEmpty() )
   {
+    // Show the dialog before items are inserted so that items can resize themselves
+    // according to dialog size also the first time, see also #9377
+    if ( results.size() != 1 || !QSettings().value( "/Map/identifyAutoFeatureForm", false ).toBool() )
+      resultsDialog()->QDialog::show();
+
+    QList<IdentifyResult>::const_iterator result;
+    for ( result = results.begin(); result != results.end(); ++result )
+    {
+      resultsDialog()->addFeature( *result );
+    }
+
+    // Call QgsIdentifyResultsDialog::show() to adjust with items
     resultsDialog()->show();
   }
   else
   {
-    QSettings mySettings;
-    bool myDockFlag = mySettings.value( "/qgis/dockIdentifyResults", false ).toBool();
-    if ( !myDockFlag )
-    {
-      resultsDialog()->hide();
-    }
-    else
-    {
-      resultsDialog()->clear();
-    }
+    resultsDialog()->clear();
     QgisApp::instance()->statusBar()->showMessage( tr( "No features at this position found." ) );
   }
+
+  // update possible view modes
+  resultsDialog()->updateViewModes();
 }
 
 void QgsMapToolIdentifyAction::handleChangedRasterResults( QList<IdentifyResult> &results )
@@ -148,6 +145,7 @@ void QgsMapToolIdentifyAction::deactivate()
 {
   resultsDialog()->deactivate();
   QgsMapTool::deactivate();
+  deleteRubberBands();
 }
 
 QGis::UnitType QgsMapToolIdentifyAction::displayUnits()
@@ -162,4 +160,5 @@ void QgsMapToolIdentifyAction::handleCopyToClipboard( QgsFeatureStore & featureS
   QgsDebugMsg( QString( "features count = %1" ).arg( featureStore.features().size() ) );
   emit copyToClipboard( featureStore );
 }
+
 

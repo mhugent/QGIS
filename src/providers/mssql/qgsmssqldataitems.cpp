@@ -37,6 +37,14 @@ QgsMssqlConnectionItem::QgsMssqlConnectionItem( QgsDataItem* parent, QString nam
     : QgsDataCollectionItem( parent, name, path )
 {
   mIcon = QgsApplication::getThemeIcon( "mIconConnect.png" );
+}
+
+QgsMssqlConnectionItem::~QgsMssqlConnectionItem()
+{
+}
+
+void QgsMssqlConnectionItem::readConnectionSettings()
+{
   QSettings settings;
   QString key = "/MSSQL/connections/" + mName;
   mService = settings.value( key + "/service" ).toString();
@@ -61,10 +69,6 @@ QgsMssqlConnectionItem::QgsMssqlConnectionItem( QgsDataItem* parent, QString nam
     mConnInfo += " service='" + mService + "'";
   if ( mUseEstimatedMetadata )
     mConnInfo += " estimatedmetadata=true";
-}
-
-QgsMssqlConnectionItem::~QgsMssqlConnectionItem()
-{
 }
 
 void QgsMssqlConnectionItem::refresh()
@@ -95,8 +99,9 @@ QVector<QgsDataItem*> QgsMssqlConnectionItem::createChildren()
 
   QVector<QgsDataItem*> children;
 
-  QSqlDatabase db = QgsMssqlProvider::GetDatabase( mService,
-                    mHost, mDatabase, mUsername, mPassword );
+  readConnectionSettings();
+
+  QSqlDatabase db = QgsMssqlProvider::GetDatabase( mService, mHost, mDatabase, mUsername, mPassword );
 
   if ( !QgsMssqlProvider::OpenDatabase( db ) )
   {
@@ -104,24 +109,7 @@ QVector<QgsDataItem*> QgsMssqlConnectionItem::createChildren()
     return children;
   }
 
-  QString connectionName;
-  if ( mService.isEmpty() )
-  {
-    if ( mHost.isEmpty() )
-    {
-      children.append( new QgsErrorItem( this, "QgsMssqlProvider host name not specified", mPath + "/error" ) );
-      return children;
-    }
-
-    if ( mDatabase.isEmpty() )
-    {
-      children.append( new QgsErrorItem( this, "QgsMssqlProvider database name not specified", mPath + "/error" ) );
-      return children;
-    }
-    connectionName = mHost + "." + mDatabase;
-  }
-  else
-    connectionName = mService;
+  QString connectionName = db.connectionName();
 
   QgsMssqlGeomColumnTypeThread *columnTypeThread = 0;
 
@@ -255,16 +243,16 @@ void QgsMssqlConnectionItem::setLayerType( QgsMssqlLayerProperty layerProperty )
     }
   }
 
-  foreach ( QgsDataItem *layerItem, schemaItem->children() )
-  {
-    if ( layerItem->name() == layerProperty.tableName )
-      return; // already added
-  }
-
   if ( !schemaItem )
   {
     QgsDebugMsg( QString( "schema item for %1 not found." ).arg( layerProperty.schemaName ) );
     return;
+  }
+
+  foreach ( QgsDataItem *layerItem, schemaItem->children() )
+  {
+    if ( layerItem->name() == layerProperty.tableName )
+      return; // already added
   }
 
   QStringList typeList = layerProperty.type.split( ",", QString::SkipEmptyParts );
@@ -301,6 +289,12 @@ QList<QAction*> QgsMssqlConnectionItem::actions()
 {
   QList<QAction*> lst;
 
+  QAction* actionShowNoGeom = new QAction( tr( "Show non-spatial tables" ), this );
+  actionShowNoGeom->setCheckable( true );
+  actionShowNoGeom->setChecked( mAllowGeometrylessTables );
+  connect( actionShowNoGeom, SIGNAL( toggled( bool ) ), this, SLOT( setAllowGeometrylessTables( bool ) ) );
+  lst.append( actionShowNoGeom );
+
   QAction* actionEdit = new QAction( tr( "Edit..." ), this );
   connect( actionEdit, SIGNAL( triggered() ), this, SLOT( editConnection() ) );
   lst.append( actionEdit );
@@ -310,6 +304,15 @@ QList<QAction*> QgsMssqlConnectionItem::actions()
   lst.append( actionDelete );
 
   return lst;
+}
+
+void QgsMssqlConnectionItem::setAllowGeometrylessTables( bool allow )
+{
+  mAllowGeometrylessTables = allow;
+  QString key = "/MSSQL/connections/" + mName;
+  QSettings settings;
+  settings.setValue( key + "/allowGeometrylessTables", allow );
+  refresh();
 }
 
 void QgsMssqlConnectionItem::editConnection()

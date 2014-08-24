@@ -1,10 +1,10 @@
 class QgsFeatureSelectionModel : QItemSelectionModel
 {
 %TypeHeaderCode
-#include <qgsfeatureselectionmodel.h>
+#include <attributetable/qgsfeatureselectionmodel.h>
 %End
   public:
-    explicit QgsFeatureSelectionModel( QAbstractItemModel* model, QgsFeatureModel* featureModel, QgsVectorLayer* layer, QObject* parent );
+    explicit QgsFeatureSelectionModel( QAbstractItemModel* model, QgsFeatureModel* featureModel, QgsIFeatureSelectionManager* featureSelectionManager, QObject* parent );
 
     /**
      * Enables or disables synchronisation to the {@link QgsVectorLayer}
@@ -72,4 +72,6 @@ class QgsFeatureSelectionModel : QItemSelectionModel
      * @param command    The command to apply. Select, Deselect and ClearAndSelect are processed.
      */
     virtual void selectFeatures( const QItemSelection &selection, SelectionFlags command );
+
+    virtual void setFeatureSelectionManager( QgsIFeatureSelectionManager* featureSelectionManager );
 };

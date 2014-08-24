@@ -52,7 +52,7 @@ def showWarning(message, category, filename, lineno, file=None, line=None):
     stk += s.decode('utf-8', 'replace')
   QgsMessageLog.logMessage(
     "warning:%s\ntraceback:%s" % ( warnings.formatwarning(message, category, filename, lineno), stk),
-    QCoreApplication.translate( "Python", "Python" )
+    QCoreApplication.translate( "Python", "Python warning" )
   )
 warnings.showwarning = showWarning
 
@@ -60,10 +60,10 @@ def showException(type, value, tb, msg):
   lst = traceback.format_exception(type, value, tb)
   if msg == None:
     msg = QCoreApplication.translate('Python', 'An error has occured while executing Python code:')
-  txt = '<font color="red">%s</font><br><br>' % msg
+  txt = '<font color="red">%s</font><br><br><pre>' % msg
   for s in lst:
     txt += s.decode('utf-8', 'replace')
-  txt += '<br>%s<br>%s<br><br>' % (QCoreApplication.translate('Python','Python version:'), sys.version)
+  txt += '</pre><br>%s<br>%s<br><br>' % (QCoreApplication.translate('Python','Python version:'), sys.version)
   txt += '<br>%s<br>%s %s, %s<br><br>' % (QCoreApplication.translate('Python','QGIS version:'), QGis.QGIS_VERSION, QGis.QGIS_RELEASE_NAME, QGis.QGIS_DEV_VERSION)
   txt += '%s %s' % (QCoreApplication.translate('Python','Python path:'), str(sys.path))
   txt = txt.replace('\n', '<br>')
@@ -342,7 +342,7 @@ def reloadProjectMacros():
 
   from qgis.core import QgsProject
   code, ok = QgsProject.instance().readEntry("Macros", "/pythonCode")
-  if not ok or code.isEmpty():
+  if not ok or not code or code == '':
     return
 
   # create a new empty python module
@@ -418,21 +418,22 @@ def qgsfunction(args, group, **kwargs):
   """
   helptemplate = Template("""<h3>$name function</h3><br>$doc""")
   class QgsExpressionFunction(QgsExpression.Function):
-    def __init__(self, name, args, group, helptext=''):
-      QgsExpression.Function.__init__(self, name, args, group, helptext)
+    def __init__(self, name, args, group, helptext='', usesgeometry=False):
+      QgsExpression.Function.__init__(self, name, args, group, helptext, usesgeometry)
 
     def func(self, values, feature, parent):
       pass
 
   def wrapper(func):
     name = kwargs.get('name', func.__name__)
+    usesgeometry = kwargs.get('usesgeometry', False)
     help = func.__doc__ or ''
     help = help.strip()
     if args == 0 and not name[0] == '$':
       name = '${0}'.format(name)
     func.__name__ = name
     help = helptemplate.safe_substitute(name=name, doc=help)
-    f = QgsExpressionFunction(name, args, group, help)
+    f = QgsExpressionFunction(name, args, group, help, usesgeometry)
     f.func = func
     register = kwargs.get('register', True)
     if register:

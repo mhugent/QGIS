@@ -37,60 +37,7 @@ class QgsMssqlFeatureIterator;
 
 #include "qgsdatasourceuri.h"
 #include "qgsgeometry.h"
-
-
-/**
-\class QgsMssqlGeometryParser
-\brief Geometry parser for SqlGeometry/SqlGeography.
-*
-*/
-
-class QgsMssqlGeometryParser
-{
-
-  protected:
-    unsigned char* pszData;
-    unsigned char* pszWkb;
-    int nWkbLen;
-    int nWkbMaxLen;
-    /* byte order */
-    char chByteOrder;
-    /* serialization properties */
-    char chProps;
-    /* point array */
-    int nPointSize;
-    int nPointPos;
-    int nNumPoints;
-    /* figure array */
-    int nFigurePos;
-    int nNumFigures;
-    /* shape array */
-    int nShapePos;
-    int nNumShapes;
-    int nSRSId;
-
-  protected:
-    void CopyBytes( void* src, int len );
-    void CopyCoordinates( int iPoint );
-    void CopyPoint( int iPoint );
-    void ReadPoint( int iShape );
-    void ReadMultiPoint( int iShape );
-    void ReadLineString( int iShape );
-    void ReadMultiLineString( int iShape );
-    void ReadPolygon( int iShape );
-    void ReadMultiPolygon( int iShape );
-    void ReadGeometryCollection( int iShape );
-
-  public:
-    QgsMssqlGeometryParser();
-    unsigned char* ParseSqlGeometry( unsigned char* pszInput, int nLen );
-    int GetSRSId() { return nSRSId; };
-    int GetWkbLen() { return nWkbLen; };
-    void DumpMemoryToLog( const char* pszMsg, unsigned char* pszInput, int nLen );
-    /* sql geo type */
-    bool IsGeography;
-};
-
+#include "qgsmssqlgeometryparser.h"
 
 /**
 \class QgsMssqlProvider
@@ -107,7 +54,10 @@ class QgsMssqlProvider : public QgsVectorDataProvider
 
     virtual ~QgsMssqlProvider();
 
-    static QSqlDatabase GetDatabase( QString driver, QString host, QString database, QString username, QString password );
+    static QSqlDatabase GetDatabase( QString service, QString host, QString database, QString username, QString password );
+
+    virtual QgsAbstractFeatureSource* featureSource() const;
+
     static bool OpenDatabase( QSqlDatabase db );
 
     /* Implementation of functions from QgsVectorDataProvider */
@@ -281,7 +231,7 @@ class QgsMssqlProvider : public QgsVectorDataProvider
     /** Import a vector layer into the database */
     static QgsVectorLayerImport::ImportError createEmptyLayer(
       const QString& uri,
-      const QgsFieldMap &fields,
+      const QgsFields &fields,
       QGis::WkbType wkbType,
       const QgsCoordinateReferenceSystem *srs,
       bool overwrite,
@@ -304,7 +254,7 @@ class QgsMssqlProvider : public QgsVectorDataProvider
     QgsFields mAttributeFields;
     QMap<int, QVariant> mDefaultValues;
 
-    QgsMssqlGeometryParser parser;
+    QgsMssqlGeometryParser mParser;
 
     //! Layer extent
     QgsRectangle mExtent;
@@ -343,6 +293,16 @@ class QgsMssqlProvider : public QgsVectorDataProvider
     // current layer name
     QString mSchemaName;
     QString mTableName;
+
+    // login
+    QString mUserName;
+    QString mPassword;
+
+    // server access
+    QString mService;
+    QString mDatabaseName;
+    QString mHost;
+
     // available tables
     QStringList mTables;
 
@@ -358,7 +318,9 @@ class QgsMssqlProvider : public QgsVectorDataProvider
     static void mssqlWkbTypeAndDimension( QGis::WkbType wkbType, QString &geometryType, int &dim );
     static QGis::WkbType getWkbType( QString geometryType, int dim );
 
-    friend class QgsMssqlFeatureIterator;
+    friend class QgsMssqlFeatureSource;
+
+    static int sConnectionId;
 };
 
 #endif // QGSMSSQLPROVIDER_H

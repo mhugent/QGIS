@@ -32,14 +32,17 @@ class CORE_EXPORT QgsCoordinateTransformCache
     ~QgsCoordinateTransformCache();
     /**Returns coordinate transformation. Cache keeps ownership
         @param srcAuthId auth id string of source crs
-        @param destAuthId auth id string of dest crs*/
-    const QgsCoordinateTransform* transform( const QString& srcAuthId, const QString& destAuthId );
+        @param destAuthId auth id string of dest crs
+        @param srcDatumTransform id of source's datum transform
+        @param destDatumTransform id of destinations's datum transform
+     */
+    const QgsCoordinateTransform* transform( const QString& srcAuthId, const QString& destAuthId, int srcDatumTransform = -1, int destDatumTransform = -1 );
     /**Removes transformations where a changed crs is involved from the cache*/
     void invalidateCrs( const QString& crsAuthId );
 
   private:
     static QgsCoordinateTransformCache* mInstance;
-    QHash< QPair< QString, QString >, QgsCoordinateTransform* > mTransforms;
+    QMultiHash< QPair< QString, QString >, QgsCoordinateTransform* > mTransforms; //same auth_id pairs might have different datum transformations
 };
 
 class CORE_EXPORT QgsCRSCache
@@ -57,7 +60,6 @@ class CORE_EXPORT QgsCRSCache
     QgsCRSCache();
 
   private:
-    static QgsCRSCache* mInstance;
     QHash< QString, QgsCoordinateReferenceSystem > mCRS;
     /**CRS that is not initialised (returned in case of error)*/
     QgsCoordinateReferenceSystem mInvalidCRS;

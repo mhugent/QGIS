@@ -21,18 +21,15 @@
 #include "qgsapplication.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
-#include "qgslegend.h"
 #include "qgsvectorlayer.h"
 
 #include "qgsmaptoolselectutils.h"
-#include "qgshighlight.h"
 #include "qgsrubberband.h"
 #include <qgslogger.h>
 #include <QMouseEvent>
 
 QgsMapToolPinLabels::QgsMapToolPinLabels( QgsMapCanvas* canvas ): QgsMapToolLabel( canvas )
 {
-  mRender = 0;
   mRubberBand = 0;
   mShowPinned = false;
 
@@ -138,34 +135,22 @@ void QgsMapToolPinLabels::updatePinnedLabels()
   }
 }
 
-void QgsMapToolPinLabels::highlightLabel( QgsVectorLayer* vlayer,
-    const QgsLabelPosition& labelpos,
+void QgsMapToolPinLabels::highlightLabel( const QgsLabelPosition& labelpos,
     const QString& id,
     const QColor& color )
 {
   QgsRectangle rect = labelpos.labelRect;
+  QgsRubberBand *rb = new QgsRubberBand( mCanvas, QGis::Polygon );
+  rb->addPoint( QgsPoint( rect.xMinimum(), rect.yMinimum() ) );
+  rb->addPoint( QgsPoint( rect.xMinimum(), rect.yMaximum() ) );
+  rb->addPoint( QgsPoint( rect.xMaximum(), rect.yMaximum() ) );
+  rb->addPoint( QgsPoint( rect.xMaximum(), rect.yMinimum() ) );
+  rb->addPoint( QgsPoint( rect.xMinimum(), rect.yMinimum() ) );
+  rb->setColor( color );
+  rb->setWidth( 0 );
+  rb->show();
 
-  if ( vlayer->crs().isValid() && mRender->destinationCrs().isValid() )
-  {
-    // if label's layer is on-fly transformed, reverse-transform label rect
-    // QgsHighlight will convert it, yet again, to the correct map coords
-    if ( vlayer->crs() != mRender->destinationCrs() )
-    {
-      rect = mRender->mapToLayerCoordinates( vlayer, rect );
-      QgsDebugMsg( QString( "Reverse transform needed for highlight rectangle" ) );
-    }
-  }
-
-  QgsGeometry* highlightgeom = QgsGeometry::fromRect( rect );
-
-  QgsHighlight *h = new QgsHighlight( mCanvas, highlightgeom, vlayer );
-  if ( h )
-  {
-    h->setWidth( 0 );
-    h->setColor( color );
-    h->show();
-    mHighlights.insert( id, h );
-  }
+  mHighlights.insert( id, rb );
 }
 
 // public slot to render highlight rectangles around pinned labels
@@ -178,21 +163,11 @@ void QgsMapToolPinLabels::highlightPinnedLabels()
     return;
   }
 
-  if ( mCanvas )
-  {
-    mRender = mCanvas->mapRenderer();
-    if ( !mRender )
-    {
-      QgsDebugMsg( QString( "Failed to acquire map renderer" ) );
-      return;
-    }
-  }
-
   QgsDebugMsg( QString( "Highlighting pinned labels" ) );
 
   // get list of all drawn labels from all layers within given extent
-  QgsPalLabeling* labelEngine = dynamic_cast<QgsPalLabeling*>( mRender->labelingEngine() );
-  if ( !labelEngine )
+  const QgsLabelingResults* labelingResults = mCanvas->labelingResults();
+  if ( !labelingResults )
   {
     QgsDebugMsg( QString( "No labeling engine" ) );
     return;
@@ -201,7 +176,7 @@ void QgsMapToolPinLabels::highlightPinnedLabels()
   QgsRectangle ext = mCanvas->extent();
   QgsDebugMsg( QString( "Getting labels from canvas extent" ) );
 
-  QList<QgsLabelPosition> labelPosList = labelEngine->labelsWithinRect( ext );
+  QList<QgsLabelPosition> labelPosList = labelingResults->labelsWithinRect( ext );
 
   QApplication::setOverrideCursor( Qt::WaitCursor );
   QList<QgsLabelPosition>::const_iterator it;
@@ -219,7 +194,7 @@ void QgsMapToolPinLabels::highlightPinnedLabels()
         continue;
       }
 
-      QColor lblcolor = QColor( 54, 129, 255, 255 );
+      QColor lblcolor = QColor( 54, 129, 255, 63 );
       QgsMapLayer* layer = QgsMapLayerRegistry::instance()->mapLayer( mCurrentLabelPos.layerID );
       if ( !layer )
       {
@@ -233,10 +208,10 @@ void QgsMapToolPinLabels::highlightPinnedLabels()
       }
       if ( vlayer->isEditable() )
       {
-        lblcolor = QColor( 54, 129, 0, 255 );
+        lblcolor = QColor( 54, 129, 0, 63 );
       }
 
-      highlightLabel( vlayer, ( *it ), labelStringID, lblcolor );
+      highlightLabel(( *it ), labelStringID, lblcolor );
     }
   }
   QApplication::restoreOverrideCursor();
@@ -245,9 +220,9 @@ void QgsMapToolPinLabels::highlightPinnedLabels()
 void QgsMapToolPinLabels::removePinnedHighlights()
 {
   QApplication::setOverrideCursor( Qt::BusyCursor );
-  foreach ( QgsHighlight *h, mHighlights )
+  foreach ( QgsRubberBand *rb, mHighlights )
   {
-    delete h;
+    delete rb;
   }
   mHighlights.clear();
   QApplication::restoreOverrideCursor();
@@ -262,24 +237,14 @@ void QgsMapToolPinLabels::pinUnpinLabels( const QgsRectangle& ext, QMouseEvent *
   // get list of all drawn labels from all layers within, or touching, chosen extent
   bool labelChanged = false;
 
-  if ( mCanvas )
-  {
-    mRender = mCanvas->mapRenderer();
-    if ( !mRender )
-    {
-      QgsDebugMsg( QString( "Failed to acquire map renderer" ) );
-      return;
-    }
-  }
-
-  QgsPalLabeling* labelEngine = dynamic_cast<QgsPalLabeling*>( mRender->labelingEngine() );
-  if ( !labelEngine )
+  const QgsLabelingResults* labelingResults = mCanvas->labelingResults();
+  if ( !labelingResults )
   {
     QgsDebugMsg( QString( "No labeling engine" ) );
     return;
   }
 
-  QList<QgsLabelPosition> labelPosList = labelEngine->labelsWithinRect( ext );
+  QList<QgsLabelPosition> labelPosList = labelingResults->labelsWithinRect( ext );
 
   QList<QgsLabelPosition>::const_iterator it;
   for ( it = labelPosList.constBegin() ; it != labelPosList.constEnd(); ++it )
@@ -410,30 +375,34 @@ bool QgsMapToolPinLabels::pinUnpinLabel( QgsVectorLayer* vlayer,
     double labelR = labelpos.rotation * 180 / M_PI;
 
     // transform back to layer crs, if on-fly on
-    if ( mRender->hasCrsTransformEnabled() )
+    if ( mCanvas->mapSettings().hasCrsTransformEnabled() )
     {
-      QgsPoint transformedPoint = mRender->mapToLayerCoordinates( vlayer, referencePoint );
+      QgsPoint transformedPoint = mCanvas->mapSettings().mapToLayerCoordinates( vlayer, referencePoint );
       labelX = transformedPoint.x();
       labelY = transformedPoint.y();
     }
 
     vlayer->beginEditCommand( tr( "Pinned label" ) + QString( " '%1'" ).arg( labelText ) );
-    writeFailed = !vlayer->changeAttributeValue( fid, xCol, labelX, true );
-    writeFailed = !vlayer->changeAttributeValue( fid, yCol, labelY, true );
+    writeFailed = !vlayer->changeAttributeValue( fid, xCol, labelX );
+    if ( !vlayer->changeAttributeValue( fid, yCol, labelY ) )
+      writeFailed = true;
     if ( hasRCol && !preserveRot )
     {
-      writeFailed = !vlayer->changeAttributeValue( fid, rCol, labelR, true );
+      if ( !vlayer->changeAttributeValue( fid, rCol, labelR ) )
+        writeFailed = true;
     }
     vlayer->endEditCommand();
   }
   else
   {
     vlayer->beginEditCommand( tr( "Unpinned label" ) + QString( " '%1'" ).arg( labelText ) );
-    writeFailed = !vlayer->changeAttributeValue( fid, xCol, QVariant( QString::null ), true );
-    writeFailed = !vlayer->changeAttributeValue( fid, yCol, QVariant( QString::null ), true );
+    writeFailed = !vlayer->changeAttributeValue( fid, xCol, QVariant( QString::null ) );
+    if ( !vlayer->changeAttributeValue( fid, yCol, QVariant( QString::null ) ) )
+      writeFailed = true;
     if ( hasRCol && !preserveRot )
     {
-      writeFailed = !vlayer->changeAttributeValue( fid, rCol, QVariant( QString::null ), true );
+      if ( !vlayer->changeAttributeValue( fid, rCol, QVariant( QString::null ) ) )
+        writeFailed = true;
     }
     vlayer->endEditCommand();
   }

@@ -48,6 +48,7 @@ class VisualDialog( QDialog, Ui_Dialog ):
     self.lineEditShpError.hide()
     self.label_6.hide()
     self.line.hide()
+    self.addToCanvasCheck.hide()
     self.buttonBox_2.setOrientation(Qt.Horizontal)
 
     if self.myFunction == 2 or self.myFunction == 3:
@@ -68,10 +69,10 @@ class VisualDialog( QDialog, Ui_Dialog ):
       items = ""
       if self.myFunction in ( 1, 2 ):
         for rec in range( self.tblUnique.rowCount() ):
-          items.append( self.tblUnique.item( rec, 0 ).text() + "\n" )
+          items += self.tblUnique.item( rec, 0 ).text() + "\n"
       else:
         for rec in range( self.tblUnique.rowCount() ):
-          items.append( self.tblUnique.item( rec, 0 ).text() + ":" + self.tblUnique.item( rec, 1 ).text() + "\n" )
+          items += self.tblUnique.item( rec, 0 ).text() + ":" + self.tblUnique.item( rec, 1 ).text() + "\n"
       if items:
         clip_board = QApplication.clipboard()
         clip_board.setText( items )

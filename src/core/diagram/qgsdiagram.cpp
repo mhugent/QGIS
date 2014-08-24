@@ -15,8 +15,45 @@
 #include "qgsdiagram.h"
 #include "qgsdiagramrendererv2.h"
 #include "qgsrendercontext.h"
+#include "qgsexpression.h"
 
 #include <QPainter>
+
+
+
+QgsDiagram::QgsDiagram()
+{
+
+}
+
+QgsDiagram::QgsDiagram( const QgsDiagram& other )
+{
+  Q_UNUSED( other );
+  // do not copy the cached expression map - the expressions need to be created and prepared with getExpression(...) call
+}
+
+
+void QgsDiagram::clearCache()
+{
+  QMapIterator<QString, QgsExpression*> i( mExpressions );
+  while ( i.hasNext() )
+  {
+    i.next();
+    delete i.value();
+  }
+  mExpressions.clear();
+}
+
+QgsExpression* QgsDiagram::getExpression( const QString& expression, const QgsFields* fields )
+{
+  if ( !mExpressions.contains( expression ) )
+  {
+    QgsExpression* expr = new QgsExpression( expression );
+    expr->prepare( *fields );
+    mExpressions[expression] = expr;
+  }
+  return mExpressions[expression];
+}
 
 void QgsDiagram::setPenWidth( QPen& pen, const QgsDiagramSettings& s, const QgsRenderContext& c )
 {
@@ -68,4 +105,18 @@ QFont QgsDiagram::scaledFont( const QgsDiagramSettings& s, const QgsRenderContex
   }
 
   return f;
+}
+
+void QgsDiagram::renderDiagram( const QgsAttributes& attributes, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position )
+{
+  QgsFeature feature;
+  feature.setAttributes( attributes );
+  renderDiagram( feature, c, s, position );
+}
+
+QSizeF QgsDiagram::diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is )
+{
+  QgsFeature feature;
+  feature.setAttributes( attributes );
+  return diagramSize( feature, c, s, is );
 }

@@ -55,13 +55,19 @@ class CORE_EXPORT QgsDistanceArea
     //! sets source spatial reference system (by QGIS CRS)
     void setSourceCrs( long srsid );
 
+    /**
+     * Sets source spatial reference system (by QGIS CRS)
+     * @note: missing in Python bindings in QGIS < 2.2
+     */
+    void setSourceCrs( const QgsCoordinateReferenceSystem& srcCRS );
+
     //! sets source spatial reference system by authid
     void setSourceAuthId( QString authid );
 
     //! returns source spatial reference system
-    long sourceCrs() { return mSourceRefSys; }
+    long sourceCrs() const { return mCoordTransform->sourceCrs().srsid(); }
     //! What sort of coordinate system is being used?
-    bool geographic() { return mCoordTransform->sourceCrs().geographicFlag(); }
+    bool geographic() const { return mCoordTransform->sourceCrs().geographicFlag(); }
 
     //! sets ellipsoid by its acronym
     bool setEllipsoid( const QString& ellipsoid );
@@ -71,14 +77,14 @@ class CORE_EXPORT QgsDistanceArea
     bool setEllipsoid( double semiMajor, double semiMinor );
 
     //! returns ellipsoid's acronym
-    const QString& ellipsoid() { return mEllipsoid; }
+    const QString& ellipsoid() const { return mEllipsoid; }
 
     //! returns ellipsoid's semi major axis
-    double ellipsoidSemiMajor() { return mSemiMajor; }
+    double ellipsoidSemiMajor() const { return mSemiMajor; }
     //! returns ellipsoid's semi minor axis
-    double ellipsoidSemiMinor() { return mSemiMinor; }
+    double ellipsoidSemiMinor() const { return mSemiMinor; }
     //! returns ellipsoid's inverse flattening
-    double ellipsoidInverseFlattening() { return mInvFlattening; }
+    double ellipsoidInverseFlattening() const { return mInvFlattening; }
 
     //! general measurement (line distance or polygon area)
     double measure( QgsGeometry* geometry );
@@ -105,8 +111,10 @@ class CORE_EXPORT QgsDistanceArea
 
   protected:
     //! measures line distance, line points are extracted from WKB
+    // @note available in python bindings
     const unsigned char* measureLine( const unsigned char* feature, double* area, bool hasZptr = false );
     //! measures polygon area and perimeter, vertices are extracted from WKB
+    // @note available in python bindings
     const unsigned char* measurePolygon( const unsigned char* feature, double* area, double* perimeter, bool hasZptr = false );
 
     /**
@@ -122,6 +130,11 @@ class CORE_EXPORT QgsDistanceArea
     double computeDistanceBearing( const QgsPoint& p1, const QgsPoint& p2,
                                    double* course1 = NULL, double* course2 = NULL );
 
+    //! uses flat / planimetric / Euclidean distance
+    double computeDistanceFlat( const QgsPoint& p1, const QgsPoint& p2 );
+
+    //! calculate distance with given coordinates (does not do a transform anymore)
+    double computeDistance( const QList<QgsPoint>& points );
 
     /**
      calculates area of polygon on ellipsoid
@@ -148,9 +161,6 @@ class CORE_EXPORT QgsDistanceArea
     //! indicates whether we will transform coordinates
     bool mEllipsoidalMode;
 
-    //! id of the source spatial reference system
-    long mSourceRefSys;
-
     //! ellipsoid acronym (from table tbl_ellipsoids)
     QString mEllipsoid;
 
@@ -174,3 +184,4 @@ class CORE_EXPORT QgsDistanceArea
 };
 
 #endif
+

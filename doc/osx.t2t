@@ -327,10 +327,10 @@ python configure.py -n -d /Library/Python/2.5/site-packages -b /usr/local/bin \
 __Snow Leopard system Python__
 
 Similar to Leopard, you should install outside the system Python path.
-Also, you need to specify the architecture you want (requires at least SIP
-4.9), and make sure to run the versioned python binary (this one responds to
-the 'arch' command, 'python' does not).
-Substitute '2.7' for python version and 10.7 for SDK version below for Lion.
+Also, you need to specify the architecture you want and make sure to run the
+versioned python binary (this one responds to the 'arch' command, 'python' does
+not).  Substitute '2.7' for python version and 10.7 for SDK version below for
+Lion.
 
 If you are using 32-bit Qt (Qt Carbon):
 
@@ -762,19 +762,19 @@ this.
 If you want to experiment with the latest development sources, go to the github
 QGIS project page:
 
-http://github.com/qgis/Quantum-GIS
+http://github.com/qgis/QGIS
 
 It should default to the master branch.  Click the __Downloads__ button and
 select __Download .tar.gz__. Double-click the tarball to unzip it.
 
 //Alternatively//, install git from http://git-scm.com and do the following.
 
-Make a specific repository directory somewhere, e.g. ~/QGIS/Quantum-GIS, and cd
+Make a specific repository directory somewhere, e.g. ~/QGIS/QGIS, and cd
 into it. The following will read-only clone the master branch to the directory:
 
 ```
 git init
-git remote add -f -t master -m master qgisupstream git://github.com/qgis/Quantum-GIS.git
+git remote add -f -t master -m master qgisupstream git://github.com/qgis/QGIS.git
 git merge qgisupstream
 
 ```

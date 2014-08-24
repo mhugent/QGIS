@@ -19,7 +19,13 @@ class QgsPluginLayerType
 
 };
 
+//=============================================================================
 
+/** \ingroup core
+    a registry of plugin layers types
+
+  \note added in v1.5
+*/
 class QgsPluginLayerRegistry
 {
 %TypeHeaderCode
@@ -33,6 +39,10 @@ class QgsPluginLayerRegistry
 
     ~QgsPluginLayerRegistry();
 
+    /** list all known layer types
+     *  \note added in v2.1 */
+    QStringList pluginLayerTypes();
+
     /** add plugin layer type (take ownership) and return true on success */
     bool addPluginLayerType( QgsPluginLayerType* pluginLayerType /Transfer/ );
 
@@ -40,10 +50,10 @@ class QgsPluginLayerRegistry
     bool removePluginLayerType( QString typeName );
 
     /** return plugin layer type metadata or NULL if doesn't exist */
-    QgsPluginLayerType* pluginLayerType(QString typeName);
+    QgsPluginLayerType* pluginLayerType( QString typeName );
 
     /** return new layer if corresponding plugin has been found, else return NULL */
-    QgsPluginLayer* createLayer(QString typeName) /Factory/;
+    QgsPluginLayer* createLayer( QString typeName ) /Factory/;
 
   private:
 

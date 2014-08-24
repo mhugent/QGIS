@@ -61,7 +61,7 @@ void QgsHttpRequestHandler::sendHttpResponse( QByteArray* ba, const QString& for
   printf( "\n" );
   printf( "Content-Length: %d\n", ba->size() );
   printf( "\n" );
-  int result = fwrite( ba->data(), ba->size(), 1, FCGI_stdout );
+  size_t result = fwrite( ba->data(), ba->size(), 1, FCGI_stdout );
 #ifdef QGISDEBUG
   QgsDebugMsg( QString( "Sent %1 bytes" ).arg( result ) );
 #else
@@ -90,7 +90,7 @@ QString QgsHttpRequestHandler::formatToMimeType( const QString& format ) const
   return format;
 }
 
-void QgsHttpRequestHandler::sendGetMapResponse( const QString& service, QImage* img ) const
+void QgsHttpRequestHandler::sendGetMapResponse( const QString& service, QImage* img, int imageQuality = -1 ) const
 {
   Q_UNUSED( service );
   QgsDebugMsg( "Sending getmap response..." );
@@ -112,28 +112,35 @@ void QgsHttpRequestHandler::sendGetMapResponse( const QString& service, QImage* 
     QBuffer buffer( &ba );
     buffer.open( QIODevice::WriteOnly );
 
+    // Do not use imageQuality for PNG images
+    // For now, QImage expects quality to be a range 0-9 for PNG
+    if ( mFormat == "PNG" )
+    {
+      imageQuality = -1;
+    }
+
     if ( png8Bit )
     {
       QVector<QRgb> colorTable;
       medianCut( colorTable, 256, *img );
       QImage palettedImg = img->convertToFormat( QImage::Format_Indexed8, colorTable, Qt::ColorOnly | Qt::ThresholdDither |
                            Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection );
-      palettedImg.save( &buffer, "PNG", -1 );
+      palettedImg.save( &buffer, "PNG", imageQuality );
     }
     else if ( png16Bit )
     {
       QImage palettedImg = img->convertToFormat( QImage::Format_ARGB4444_Premultiplied );
-      palettedImg.save( &buffer, "PNG", -1 );
+      palettedImg.save( &buffer, "PNG", imageQuality );
     }
     else if ( png1Bit )
     {
       QImage palettedImg = img->convertToFormat( QImage::Format_Mono, Qt::MonoOnly | Qt::ThresholdDither |
                            Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection );
-      palettedImg.save( &buffer, "PNG", -1 );
+      palettedImg.save( &buffer, "PNG", imageQuality );
     }
     else
     {
-      img->save( &buffer, mFormat.toLocal8Bit().data(), -1 );
+      img->save( &buffer, mFormat.toLocal8Bit().data(), imageQuality );
     }
 
     if ( isBase64 )
@@ -162,7 +169,7 @@ void QgsHttpRequestHandler::sendGetFeatureInfoResponse( const QDomDocument& info
   QByteArray ba;
   QgsDebugMsg( "Info format is:" + infoFormat );
 
-  if ( infoFormat == "text/xml" )
+  if ( infoFormat == "text/xml" || infoFormat.startsWith( "application/vnd.ogc.gml" ) )
   {
     ba = infoDoc.toByteArray();
   }
@@ -362,6 +369,11 @@ void QgsHttpRequestHandler::endGetFeatureResponse( QByteArray* ba ) const
   fwrite( ba->data(), ba->size(), 1, FCGI_stdout );
 }
 
+void QgsHttpRequestHandler::sendGetCoverageResponse( QByteArray* ba ) const
+{
+  sendHttpResponse( ba, "image/tiff" );
+}
+
 void QgsHttpRequestHandler::requestStringToParameterMap( const QString& request, QMap<QString, QString>& parameters )
 {
   parameters.clear();
@@ -453,6 +465,7 @@ void QgsHttpRequestHandler::requestStringToParameterMap( const QString& request,
       mFormat = formatString;
     }
   }
+
 }
 
 QString QgsHttpRequestHandler::readPostBody() const

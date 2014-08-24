@@ -23,6 +23,7 @@ QgsHtmlAnnotationDialog::QgsHtmlAnnotationDialog( QgsHtmlAnnotationItem* item, Q
     : QDialog( parent, f ), mItem( item ), mEmbeddedWidget( 0 )
 {
   setupUi( this );
+  setWindowTitle( tr( "HTML annotation" ) );
   mEmbeddedWidget = new QgsAnnotationWidget( mItem );
   mEmbeddedWidget->show();
   mStackedWidget->addWidget( mEmbeddedWidget );
@@ -73,7 +74,7 @@ void QgsHtmlAnnotationDialog::on_mBrowseToolButton_clicked()
   {
     directory = fi.absolutePath();
   }
-  QString filename = QFileDialog::getOpenFileName( 0, tr( "html" ), directory, "*.html" );
+  QString filename = QFileDialog::getOpenFileName( 0, tr( "html" ), directory, "HTML (*.html *.htm);;All files (*.*)" );
   mFileLineEdit->setText( filename );
 }
 

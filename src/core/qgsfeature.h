@@ -100,9 +100,8 @@ typedef QMap<int, QVariant> QgsAttributeMap;
 typedef QVector<QVariant> QgsAttributes;
 
 class QgsField;
-typedef QMap<int, QgsField> QgsFieldMap;
 
-
+#include "qgsfield.h"
 
 
 /** \ingroup core
@@ -221,13 +220,17 @@ class CORE_EXPORT QgsFeature
      *                        C++: Defaults to false
      *                        Python: Defaults to true
      *  @note added in 2.0
+     *
+     * TODO: QGIS3 - take reference, not pointer
      */
     void setFields( const QgsFields* fields, bool initAttributes = false );
 
-    /** Get associated field map. may be NULL
+    /** Get associated field map.
      *  @note added in 2.0
+     *
+     * TODO: QGIS 3 - return reference or value, not pointer
      */
-    const QgsFields* fields() const { return mFields; }
+    const QgsFields* fields() const { return &mFields; }
 
     /** Insert a value into attribute. Returns false if attribute name could not be converted to index.
      *  Field map must be associated to make this work.
@@ -242,7 +245,8 @@ class CORE_EXPORT QgsFeature
      */
     bool setAttribute( const QString& name, QVariant value );
 
-    /** Remove an attribute value. Returns false if attribute name could not be converted to index.
+    /** Remove an attribute value.
+     *  Returns false if attribute name could not be converted to index.
      *  Field map must be associated to make this work.
      *
      *  @param name The name of the field to delete
@@ -308,7 +312,7 @@ class CORE_EXPORT QgsFeature
     bool mValid;
 
     //! Optional field map for name-based attribute lookups
-    const QgsFields* mFields;
+    QgsFields mFields;
 
 }; // class QgsFeature
 
@@ -325,6 +329,6 @@ typedef QMap<int, QString> QgsFieldNameMap;
 
 typedef QList<QgsFeature> QgsFeatureList;
 
-Q_DECLARE_METATYPE( QgsFeatureList );
+Q_DECLARE_METATYPE( QgsFeatureList )
 
 #endif

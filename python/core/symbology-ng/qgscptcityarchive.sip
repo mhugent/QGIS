@@ -20,6 +20,7 @@ class QgsCptCityArchive
     static QString findFileName( const QString & target, const QString & startDir, const QString & baseDir );
     static QMap< QString, QString > copyingInfo( const QString& fileName );
     static QMap< QString, QString > description( const QString& fileName );
+    //! note not available in python bindings
     // static QMap< double, QPair<QColor, QColor> > gradientColorMap( const QString& fileName );
 
     // archive management
@@ -50,7 +51,8 @@ class QgsCptCityDataItem : QObject
       ColorRamp,
       Collection,
       Directory,
-      Selection
+      Selection,
+      AllRamps
     };
 
     QgsCptCityDataItem( QgsCptCityDataItem::Type type, QgsCptCityDataItem* parent,
@@ -60,6 +62,8 @@ class QgsCptCityDataItem : QObject
     bool hasChildren();
 
     int rowCount();
+    // retrieve total count of "leaf" items (all children which are end nodes)
+    virtual int leafCount() const;
 
     //
 
@@ -144,15 +148,18 @@ class QgsCptCityColorRampItem : QgsCptCityDataItem
   public:
     QgsCptCityColorRampItem( QgsCptCityDataItem* parent,
                              QString name, QString path,
-                             QString variantName = QString() );
+                             QString variantName = QString(),
+                             bool initialize = false );
     QgsCptCityColorRampItem( QgsCptCityDataItem* parent,
                              QString name, QString path,
-                             QStringList variantList );
+                             QStringList variantList,
+                             bool initialize = false );
     ~QgsCptCityColorRampItem();
 
     // --- reimplemented from QgsCptCityDataItem ---
 
     virtual bool equal( const QgsCptCityDataItem *other );
+    virtual int leafCount() const;
 
     // --- New virtual methods for layer item derived classes ---
     const QgsCptCityColorRampV2& ramp() const;
@@ -223,6 +230,19 @@ class QgsCptCitySelectionItem : QgsCptCityCollectionItem
     void parseXML();
 };
 
+/** An "All ramps item", which contains all items in a flat hierarchy */
+class QgsCptCityAllRampsItem : QgsCptCityCollectionItem
+{
+%TypeHeaderCode
+#include <qgscptcityarchive.h>
+%End
+  public:
+    QgsCptCityAllRampsItem( QgsCptCityDataItem* parent, QString name,
+                            QVector<QgsCptCityDataItem*> items );
+    ~QgsCptCityAllRampsItem();
+
+    QVector<QgsCptCityDataItem*> createChildren();
+};
 
 
 class QgsCptCityBrowserModel : QAbstractItemModel
@@ -235,9 +255,9 @@ class QgsCptCityBrowserModel : QAbstractItemModel
 
     enum ViewType
     {
-      Authors = 0,
-      Selections = 1,
-      List = 2
+      Authors,
+      Selections,
+      List // not used anymore
     };
 
     QgsCptCityBrowserModel( QObject* parent = 0,

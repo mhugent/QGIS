@@ -320,9 +320,7 @@ void QgsSLRootItem::createDatabase()
     QMessageBox::information( 0, tr( "Create SpatiaLite database" ), tr( "The database has been created" ) );
 
     // add connection
-    QString baseKey = "/SpatiaLite/connections/";
-    QSettings settings;
-    settings.setValue( baseKey + "/sqlitepath", filename );
+    settings.setValue( "/SpatiaLite/connections/" + QFileInfo( filename ).fileName() + "/sqlitepath", filename );
 
     refresh();
   }
@@ -330,12 +328,11 @@ void QgsSLRootItem::createDatabase()
   {
     QMessageBox::critical( 0, tr( "Create SpatiaLite database" ), tr( "Failed to create the database:\n" ) + errCause );
   }
-
 }
 
 // ---------------------------------------------------------------------------
 
-QGISEXTERN QgsSpatiaLiteSourceSelect * selectWidget( QWidget * parent, Qt::WFlags fl )
+QGISEXTERN QgsSpatiaLiteSourceSelect * selectWidget( QWidget * parent, Qt::WindowFlags fl )
 {
   // TODO: this should be somewhere else
   return new QgsSpatiaLiteSourceSelect( parent, fl, false );

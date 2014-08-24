@@ -19,6 +19,7 @@
 #include "qgis.h"
 #include "qgsapplication.h"
 #include "qgsdataprovider.h"
+#include "qgserror.h"
 #include "qgsfeature.h"
 #include "qgsfield.h"
 #include "qgslogger.h"
@@ -71,7 +72,7 @@ class CORE_EXPORT QgsGmlFeatureClass
     QStringList mGeometryAttributes;
 };
 
-class CORE_EXPORT QgsGmlSchema: public QObject
+class CORE_EXPORT QgsGmlSchema : public QObject
 {
     Q_OBJECT
   public:
@@ -84,6 +85,7 @@ class CORE_EXPORT QgsGmlSchema: public QObject
 
     /** Guess GML schema from data if XSD does not exist.
       * Currently only recognizes UMN Mapserver GetFeatureInfo GML response.
+      * Supports only UTF-8, UTF-16, ISO-8859-1, US-ASCII XML encodings.
       * @param data GML data
       * @return true in case of success */
     bool guessSchema( const QByteArray &data );
@@ -97,12 +99,16 @@ class CORE_EXPORT QgsGmlSchema: public QObject
     /** Get list of geometry attributes for type/class name */
     QStringList geometryAttributes( const QString & typeName );
 
+    /** Get error if parseXSD() or guessSchema() failed */
+    QgsError error() const { return mError; }
+
   private:
 
     enum ParseMode
     {
       none,
       boundingBox,
+      featureMembers, // gml:featureMembers
       featureMember, // gml:featureMember
       feature,  // feature element containint attrs and geo (inside gml:featureMember)
       attribute,
@@ -125,6 +131,8 @@ class CORE_EXPORT QgsGmlSchema: public QObject
     {
       static_cast<QgsGmlSchema*>( data )->characters( chars, len );
     }
+    // Add attribute or reset its type according to value of current feature
+    void addAttribute( const QString& name, const QString& value );
 
     //helper routines
 
@@ -199,6 +207,9 @@ class CORE_EXPORT QgsGmlSchema: public QObject
 
     /* Feature classes map with element paths as keys */
     QMap<QString, QgsGmlFeatureClass> mFeatureClassMap;
+
+    /* Error set if something failed */
+    QgsError mError;
 };
 
 #endif

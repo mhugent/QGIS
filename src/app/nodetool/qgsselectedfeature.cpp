@@ -23,7 +23,7 @@
 #include <qgsrubberband.h>
 #include <qgisapp.h>
 #include <qgsmaprenderer.h>
-#include <qgslegend.h>
+#include <qgslayertreeview.h>
 #include <qgsproject.h>
 
 QgsSelectedFeature::QgsSelectedFeature( QgsFeatureId featureId,
@@ -107,7 +107,7 @@ void QgsSelectedFeature::setSelectedFeature( QgsFeatureId featureId, QgsVectorLa
   mGeometry = 0;
 
   // signal changing of current layer
-  connect( QgisApp::instance()->legend(), SIGNAL( currentLayerChanged( QgsMapLayer* ) ), this, SLOT( currentLayerChanged( QgsMapLayer* ) ) );
+  connect( QgisApp::instance()->layerTreeView(), SIGNAL( currentLayerChanged( QgsMapLayer* ) ), this, SLOT( currentLayerChanged( QgsMapLayer* ) ) );
 
   // feature was deleted
   connect( mVlayer, SIGNAL( featureDeleted( QgsFeatureId ) ), this, SLOT( featureDeleted( QgsFeatureId ) ) );
@@ -116,7 +116,7 @@ void QgsSelectedFeature::setSelectedFeature( QgsFeatureId featureId, QgsVectorLa
   connect( mVlayer, SIGNAL( beforeRollBack() ), this, SLOT( beforeRollBack() ) );
 
   // projection or extents changed
-  connect( canvas->mapRenderer(), SIGNAL( destinationSrsChanged() ), this, SLOT( updateVertexMarkersPosition() ) );
+  connect( canvas, SIGNAL( destinationCrsChanged() ), this, SLOT( updateVertexMarkersPosition() ) );
   connect( canvas, SIGNAL( extentsChanged() ), this, SLOT( updateVertexMarkersPosition() ) );
 
   // geometry was changed
@@ -218,7 +218,7 @@ void QgsSelectedFeature::addError( QgsGeometry::Error e )
   if ( e.hasWhere() )
   {
     QgsVertexMarker *marker = new QgsVertexMarker( mCanvas );
-    marker->setCenter( mCanvas->mapRenderer()->layerToMapCoordinates( mVlayer, e.where() ) );
+    marker->setCenter( mCanvas->mapSettings().layerToMapCoordinates( mVlayer, e.where() ) );
     marker->setIconType( QgsVertexMarker::ICON_X );
     marker->setColor( Qt::green );
     marker->setZValue( marker->zValue() + 1 );
@@ -258,7 +258,7 @@ void QgsSelectedFeature::deleteSelectedVertexes()
   beginGeometryChange();
 
   int count = 0;
-  for ( int i = mVertexMap.size() - 1; i > -1; i-- )
+  for ( int i = mVertexMap.size() - 1; i > -1 && nSelected > 0; i-- )
   {
     if ( mVertexMap[i]->isSelected() )
     {
@@ -535,6 +535,9 @@ void QgsSelectedFeature::createVertexMap()
 
 void QgsSelectedFeature::selectVertex( int vertexNr )
 {
+  if ( vertexNr < 0 || vertexNr >= mVertexMap.size() )
+    return;
+
   QgsVertexEntry *entry = mVertexMap[vertexNr];
   entry->setSelected();
   entry->update();
@@ -550,6 +553,9 @@ void QgsSelectedFeature::selectVertex( int vertexNr )
 
 void QgsSelectedFeature::deselectVertex( int vertexNr )
 {
+  if ( vertexNr < 0 || vertexNr >= mVertexMap.size() )
+    return;
+
   QgsVertexEntry *entry = mVertexMap[vertexNr];
   entry->setSelected( false );
   entry->update();
@@ -574,6 +580,9 @@ void QgsSelectedFeature::deselectAllVertexes()
 
 void QgsSelectedFeature::invertVertexSelection( int vertexNr, bool invert )
 {
+  if ( vertexNr < 0 || vertexNr >= mVertexMap.size() )
+    return;
+
   QgsVertexEntry *entry = mVertexMap[vertexNr];
 
   bool selected = !entry->isSelected();

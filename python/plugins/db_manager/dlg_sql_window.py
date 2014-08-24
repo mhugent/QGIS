@@ -31,9 +31,6 @@ from .dlg_db_error import DlgDbError
 
 from .ui.ui_DlgSqlWindow import Ui_DbManagerDlgSqlWindow as Ui_Dialog
 
-from .highlighter import SqlHighlighter
-from .completer import SqlCompleter
-
 import re
 
 class DlgSqlWindow(QDialog, Ui_Dialog):
@@ -50,9 +47,9 @@ class DlgSqlWindow(QDialog, Ui_Dialog):
     settings = QSettings()
     self.restoreGeometry(settings.value("/DB_Manager/sqlWindow/geometry", QByteArray(), type=QByteArray))
 
-    self.editSql.setAcceptRichText(False)
-    SqlCompleter(self.editSql, self.db)
-    SqlHighlighter(self.editSql, self.db)
+    self.editSql.setFocus()
+    self.editSql.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    self.editSql.initCompleter(self.db)
 
     # allow to copy results
     copyAction = QAction("copy", self)
@@ -94,7 +91,7 @@ class DlgSqlWindow(QDialog, Ui_Dialog):
     self.presetCombo.setCurrentIndex(-1)
 
   def storePreset(self):
-    query = self.editSql.toPlainText()
+    query = self.editSql.text()
     name = self.presetName.text()
     QgsProject.instance().writeEntry('DBManager','savedQueries/q'+str(name.__hash__())+'/name', name )
     QgsProject.instance().writeEntry('DBManager','savedQueries/q'+str(name.__hash__())+'/query', query )
@@ -127,24 +124,14 @@ class DlgSqlWindow(QDialog, Ui_Dialog):
     self.loadAsLayerGroup.setChecked( checked )
     self.loadAsLayerWidget.setVisible( checked )
 
-  def getSql(self):
-    # If the selection obtained from an editor spans a line break,
-    # the text will contain a Unicode U+2029 paragraph separator
-    # character instead of a newline \n character
-    # (see https://qt-project.org/doc/qt-4.8/qtextcursor.html#selectedText)
-    sql = self.editSql.textCursor().selectedText().replace(unichr(0x2029), "\n")
-    if sql == "":
-      sql = self.editSql.toPlainText()
-    # try to sanitize query
-    sql = re.sub( ";\\s*$", "", sql )
-    return sql
-
   def clearSql(self):
     self.editSql.clear()
+    self.editSql.setFocus()
 
   def executeSql(self):
-    sql = self.getSql()
-    if sql == "": return
+    sql = self.editSql.text()
+    if sql == "":
+        return
 
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
@@ -183,7 +170,7 @@ class DlgSqlWindow(QDialog, Ui_Dialog):
       QMessageBox.warning(self, self.tr( "Sorry" ), self.tr( "You must fill the required fields: \ngeometry column - column with unique integer values" ) )
       return
 
-    query = self.getSql()
+    query = self.editSql.text()
     if query == "":
       return
 
@@ -214,7 +201,7 @@ class DlgSqlWindow(QDialog, Ui_Dialog):
     QApplication.restoreOverrideCursor()
 
   def fillColumnCombos(self):
-    query = self.getSql()
+    query = self.editSql.text()
     if query == "": return
 
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
@@ -225,8 +212,8 @@ class DlgSqlWindow(QDialog, Ui_Dialog):
     aliasIndex = 0
     while True:
       alias = "_%s__%d" % ("subQuery", aliasIndex)
-      escaped = '\\b("?)' + QRegExp.escape(alias) + '\\1\\b'
-      if not query.contains( QRegExp(escaped, Qt.CaseInsensitive) ):
+      escaped = re.compile('\\b("?)' + re.escape(alias) + '\\1\\b')
+      if not escaped.search(query):
         break
       aliasIndex += 1
 

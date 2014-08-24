@@ -56,7 +56,7 @@ class CORE_EXPORT QgsComposerLegendItem: public QStandardItem
     // Get text defined by user
     virtual QString userText() const { return mUserText; }
     // Set text defined by user
-    virtual void  setUserText( const QString & text ) { mUserText = text; }
+    virtual void setUserText( const QString & text ) { mUserText = text; }
 
 
   protected:
@@ -138,7 +138,7 @@ class CORE_EXPORT QgsComposerLayerItem : public QgsComposerLegendItem
     void setShowFeatureCount( bool show ) { mShowFeatureCount = show; }
     bool showFeatureCount() const { return mShowFeatureCount; }
 
-    void setDefaultStyle();
+    void setDefaultStyle( double scaleDenominator = -1, QString rule = "" );
 
   private:
     QString mLayerID;

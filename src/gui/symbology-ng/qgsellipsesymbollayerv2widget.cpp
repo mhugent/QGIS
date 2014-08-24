@@ -1,9 +1,9 @@
 /***************************************************************************
-    qgsellipsesymbollayerv2widget.cpp
-    ---------------------
-    begin                : June 2011
-    copyright            : (C) 2011 by Marco Hugentobler
-    email                : marco dot hugentobler at sourcepole dot ch
+ qgsellipsesymbollayerv2widget.cpp
+ ---------------------
+ begin                : June 2011
+ copyright            : (C) 2011 by Marco Hugentobler
+ email                : marco dot hugentobler at sourcepole dot ch
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -57,6 +57,7 @@ void QgsEllipseSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )
   mWidthSpinBox->setValue( mLayer->symbolWidth() );
   mHeightSpinBox->setValue( mLayer->symbolHeight() );
   mRotationSpinBox->setValue( mLayer->angle() );
+  mOutlineStyleComboBox->setPenStyle( mLayer->outlineStyle() );
   mOutlineWidthSpinBox->setValue( mLayer->outlineWidth() );
 
   btnChangeColorBorder->setColor( mLayer->outlineColor() );
@@ -74,14 +75,19 @@ void QgsEllipseSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )
   blockComboSignals( true );
   if ( mLayer )
   {
-    mSymbolWidthUnitComboBox->setCurrentIndex( mLayer->symbolWidthUnit() );
-    mOutlineWidthUnitComboBox->setCurrentIndex( mLayer->outlineWidthUnit() );
-    mSymbolHeightUnitComboBox->setCurrentIndex( mLayer->symbolHeightUnit() );
+    mSymbolWidthUnitWidget->setUnit( mLayer->symbolWidthUnit() );
+    mSymbolWidthUnitWidget->setMapUnitScale( mLayer->symbolWidthMapUnitScale() );
+    mOutlineWidthUnitWidget->setUnit( mLayer->outlineWidthUnit() );
+    mOutlineWidthUnitWidget->setMapUnitScale( mLayer->outlineWidthMapUnitScale() );
+    mSymbolHeightUnitWidget->setUnit( mLayer->symbolHeightUnit() );
+    mSymbolHeightUnitWidget->setMapUnitScale( mLayer->symbolHeightMapUnitScale() );
   }
 
   QPointF offsetPt = mLayer->offset();
   spinOffsetX->setValue( offsetPt.x() );
   spinOffsetY->setValue( offsetPt.y() );
+  mHorizontalAnchorComboBox->setCurrentIndex( mLayer->horizontalAnchorPoint() );
+  mVerticalAnchorComboBox->setCurrentIndex( mLayer->verticalAnchorPoint() );
   blockComboSignals( false );
 }
 
@@ -126,6 +132,17 @@ void QgsEllipseSymbolLayerV2Widget::on_mRotationSpinBox_valueChanged( double d )
   if ( mLayer )
   {
     mLayer->setAngle( d );
+    emit changed();
+  }
+}
+
+void QgsEllipseSymbolLayerV2Widget::on_mOutlineStyleComboBox_currentIndexChanged( int index )
+{
+  Q_UNUSED( index );
+
+  if ( mLayer )
+  {
+    mLayer->setOutlineStyle( mOutlineStyleComboBox->penStyle() );
     emit changed();
   }
 }
@@ -199,9 +216,29 @@ void QgsEllipseSymbolLayerV2Widget::on_mOffsetUnitComboBox_currentIndexChanged( 
 
 void QgsEllipseSymbolLayerV2Widget::blockComboSignals( bool block )
 {
-  mSymbolWidthUnitComboBox->blockSignals( block );
-  mOutlineWidthUnitComboBox->blockSignals( block );
-  mSymbolHeightUnitComboBox->blockSignals( block );
+  mSymbolWidthUnitWidget->blockSignals( block );
+  mOutlineWidthUnitWidget->blockSignals( block );
+  mSymbolHeightUnitWidget->blockSignals( block );
+  mHorizontalAnchorComboBox->blockSignals( block );
+  mVerticalAnchorComboBox->blockSignals( block );
+}
+
+void QgsEllipseSymbolLayerV2Widget::on_mHorizontalAnchorComboBox_currentIndexChanged( int index )
+{
+  if ( mLayer )
+  {
+    mLayer->setHorizontalAnchorPoint(( QgsMarkerSymbolLayerV2::HorizontalAnchorPoint ) index );
+    emit changed();
+  }
+}
+
+void QgsEllipseSymbolLayerV2Widget::on_mVerticalAnchorComboBox_currentIndexChanged( int index )
+{
+  if ( mLayer )
+  {
+    mLayer->setVerticalAnchorPoint(( QgsMarkerSymbolLayerV2::VerticalAnchorPoint ) index );
+    emit changed();
+  }
 }
 
 void QgsEllipseSymbolLayerV2Widget::on_mDataDefinedPropertiesButton_clicked()
@@ -228,6 +265,10 @@ void QgsEllipseSymbolLayerV2Widget::on_mDataDefinedPropertiesButton_clicked()
       "'circle'|'rectangle'|'cross'|'triangle'" );
   dataDefinedProperties << QgsDataDefinedSymbolDialog::DataDefinedSymbolEntry( "offset", tr( "Offset" ), mLayer->dataDefinedPropertyString( "offset" ),
       QgsDataDefinedSymbolDialog::offsetHelpText() );
+  dataDefinedProperties << QgsDataDefinedSymbolDialog::DataDefinedSymbolEntry( "horizontal_anchor_point", tr( "Horizontal anchor point" ), mLayer->dataDefinedPropertyString( "horizontal_anchor_point" ),
+      QgsDataDefinedSymbolDialog::horizontalAnchorHelpText() );
+  dataDefinedProperties << QgsDataDefinedSymbolDialog::DataDefinedSymbolEntry( "vertical_anchor_point", tr( "Vertical anchor point" ), mLayer->dataDefinedPropertyString( "vertical_anchor_point" ),
+      QgsDataDefinedSymbolDialog::verticalAnchorHelpText() );
   QgsDataDefinedSymbolDialog d( dataDefinedProperties, mVectorLayer );
   if ( d.exec() == QDialog::Accepted )
   {

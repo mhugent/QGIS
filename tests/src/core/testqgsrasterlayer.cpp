@@ -32,6 +32,7 @@
 #include <qgsrasterpyramid.h>
 #include <qgsrasterbandstats.h>
 #include <qgsrasterpyramid.h>
+#include <qgsrasteridentifyresult.h>
 #include <qgsmaplayerregistry.h>
 #include <qgsapplication.h>
 #include <qgsmaprenderer.h>
@@ -43,7 +44,6 @@
 
 //qgis unit test includes
 #include <qgsrenderchecker.h>
-
 
 /** \ingroup UnitTests
  * This is a unit test for the QgsRasterLayer class.
@@ -67,9 +67,11 @@ class TestQgsRasterLayer: public QObject
     void landsatBasic875Qml();
     void checkDimensions();
     void checkStats();
+    void checkScaleOffset();
     void buildExternalOverviews();
     void registry();
     void transparency();
+    void setRenderer();
   private:
     bool render( QString theFileName );
     bool setQml( QString theType );
@@ -82,8 +84,24 @@ class TestQgsRasterLayer: public QObject
     QgsRasterLayer * mpRasterLayer;
     QgsRasterLayer * mpLandsatRasterLayer;
     QgsRasterLayer * mpFloat32RasterLayer;
-    QgsMapRenderer * mpMapRenderer;
+    QgsMapSettings mMapSettings;
     QString mReport;
+};
+
+class TestSignalReceiver : public QObject
+{
+    Q_OBJECT;
+
+  public:
+    TestSignalReceiver() : QObject( 0 ),
+        rendererChanged( false )
+    {}
+    bool rendererChanged;
+  public slots:
+    void onRendererChanged()
+    {
+      rendererChanged = true;
+    }
 };
 
 //runs before all tests
@@ -127,10 +145,7 @@ void TestQgsRasterLayer::initTestCase()
     QList<QgsMapLayer *>() << mpFloat32RasterLayer );
 
   // add the test layer to the maprender
-  mpMapRenderer = new QgsMapRenderer();
-  QStringList myLayers;
-  myLayers << mpRasterLayer->id();
-  mpMapRenderer->setLayerSet( myLayers );
+  mMapSettings.setLayers( QStringList() << mpRasterLayer->id() );
   mReport += "<h1>Raster Layer Tests</h1>\n";
   mReport += "<p>" + mySettings + "</p>";
 }
@@ -146,14 +161,13 @@ void TestQgsRasterLayer::cleanupTestCase()
     myFile.close();
     //QDesktopServices::openUrl( "file:///" + myReportFile );
   }
-
 }
 
 void TestQgsRasterLayer::isValid()
 {
   QVERIFY( mpRasterLayer->isValid() );
   mpRasterLayer->setContrastEnhancement( QgsContrastEnhancement::StretchToMinimumMaximum, QgsRaster::ContrastEnhancementMinMax );
-  mpMapRenderer->setExtent( mpRasterLayer->extent() );
+  mMapSettings.setExtent( mpRasterLayer->extent() );
   QVERIFY( render( "raster" ) );
 }
 
@@ -186,7 +200,7 @@ void TestQgsRasterLayer::pseudoColor()
   rasterShader->setRasterShaderFunction( colorRampShader );
   QgsSingleBandPseudoColorRenderer* r = new QgsSingleBandPseudoColorRenderer( mpRasterLayer->dataProvider(), 1, rasterShader );
   mpRasterLayer->setRenderer( r );
-  mpMapRenderer->setExtent( mpRasterLayer->extent() );
+  mMapSettings.setExtent( mpRasterLayer->extent() );
   QVERIFY( render( "raster_pseudo" ) );
 }
 
@@ -247,7 +261,7 @@ bool TestQgsRasterLayer::testColorRamp( QString name, QgsVectorColorRampV2* colo
   rasterShader->setRasterShaderFunction( colorRampShader );
   QgsSingleBandPseudoColorRenderer* r = new QgsSingleBandPseudoColorRenderer( mpRasterLayer->dataProvider(), 1, rasterShader );
   mpRasterLayer->setRenderer( r );
-  mpMapRenderer->setExtent( mpRasterLayer->extent() );
+  mMapSettings.setExtent( mpRasterLayer->extent() );
   return render( name );
 }
 
@@ -291,19 +305,16 @@ void TestQgsRasterLayer::colorRamp4()
 void TestQgsRasterLayer::landsatBasic()
 {
   mpLandsatRasterLayer->setContrastEnhancement( QgsContrastEnhancement::StretchToMinimumMaximum, QgsRaster::ContrastEnhancementMinMax );
-  QStringList myLayers;
-  myLayers << mpLandsatRasterLayer->id();
-  mpMapRenderer->setLayerSet( myLayers );
-  mpMapRenderer->setExtent( mpLandsatRasterLayer->extent() );
+  mMapSettings.setLayers( QStringList() << mpLandsatRasterLayer->id() );
+  mMapSettings.setExtent( mpLandsatRasterLayer->extent() );
   QVERIFY( render( "landsat_basic" ) );
 }
+
 void TestQgsRasterLayer::landsatBasic875Qml()
 {
   //a qml that orders the rgb bands as 8,7,5
-  QStringList myLayers;
-  myLayers << mpLandsatRasterLayer->id();
-  mpMapRenderer->setLayerSet( myLayers );
-  mpMapRenderer->setExtent( mpLandsatRasterLayer->extent() );
+  mMapSettings.setLayers( QStringList() << mpLandsatRasterLayer->id() );
+  mMapSettings.setExtent( mpLandsatRasterLayer->extent() );
   QVERIFY( setQml( "875" ) );
   QVERIFY( render( "landsat_875" ) );
 }
@@ -320,6 +331,7 @@ void TestQgsRasterLayer::checkDimensions()
 }
 void TestQgsRasterLayer::checkStats()
 {
+
   mReport += "<h2>Check Stats</h2>\n";
   QgsRasterBandStats myStatistics = mpRasterLayer->dataProvider()->bandStatistics( 1,
                                     QgsRasterBandStats::Min | QgsRasterBandStats::Max |
@@ -336,6 +348,87 @@ void TestQgsRasterLayer::checkStats()
   QVERIFY( fabs( myStatistics.stdDev - stdDev )
            < 0.0000000000000001 );
   mReport += "<p>Passed</p>";
+}
+
+// test scale_factor and offset - uses netcdf file which may not be supported
+// see http://hub.qgis.org/issues/8417
+void TestQgsRasterLayer::checkScaleOffset()
+{
+  mReport += "<h2>Check Stats with scale/offset</h2>\n";
+
+  QFileInfo myRasterFileInfo( mTestDataDir + "scaleoffset.tif" );
+  QgsRasterLayer * myRasterLayer;
+  myRasterLayer = new QgsRasterLayer( myRasterFileInfo.filePath(),
+                                      myRasterFileInfo.completeBaseName() );
+  QVERIFY( myRasterLayer );
+  if ( ! myRasterLayer->isValid() )
+  {
+    qDebug() << QString( "raster layer %1 invalid" ).arg( myRasterFileInfo.filePath() ) ;
+    mReport += QString( "raster layer %1 invalid" ).arg( myRasterFileInfo.filePath() ) ;
+    delete myRasterLayer;
+    QVERIFY( false );
+  }
+
+  QFile::remove( myRasterFileInfo.filePath() + ".aux.xml" ); // remove cached stats
+  QgsRasterBandStats myStatistics = myRasterLayer->dataProvider()->bandStatistics( 1,
+                                    QgsRasterBandStats::Min | QgsRasterBandStats::Max |
+                                    QgsRasterBandStats::Mean | QgsRasterBandStats::StdDev );
+  mReport += QString( "raster min: %1 max: %2 mean: %3" ).arg( myStatistics.minimumValue ).arg( myStatistics.maximumValue ).arg( myStatistics.mean );
+  QVERIFY( myRasterLayer->width() == 10 );
+  QVERIFY( myRasterLayer->height() == 10 );
+  //QVERIFY( myStatistics.elementCount == 100 );
+  double minVal = 0.0;
+  mReport += QString( "min = %1 expected = %2 diff = %3<br>\n" ).arg( myStatistics.minimumValue ).arg( minVal ).arg( fabs( myStatistics.minimumValue - minVal ) );
+  double maxVal = 9.0;
+  mReport += QString( "max = %1 expected = %2 diff = %3<br>\n" ).arg( myStatistics.maximumValue ).arg( maxVal ).arg( fabs( myStatistics.maximumValue - maxVal ) );
+  double meanVal = 4.5;
+  mReport += QString( "min = %1 expected = %2 diff = %3<br>\n" ).arg( myStatistics.mean ).arg( meanVal ).arg( fabs( myStatistics.mean - meanVal ) );
+  QVERIFY( fabs( myStatistics.minimumValue - minVal ) < 0.0000001 );
+  QVERIFY( fabs( myStatistics.maximumValue - maxVal ) < 0.0000001 );
+  QVERIFY( fabs( myStatistics.mean - meanVal ) < 0.0000001 );
+
+  double stdDev = 2.87228615;
+  // TODO: verify why GDAL stdDev is so different from generic (2.88675)
+  mReport += QString( "stdDev = %1 expected = %2 diff = %3<br>\n" ).arg( myStatistics.stdDev ).arg( stdDev ).arg( fabs( myStatistics.stdDev - stdDev ) );
+  QVERIFY( fabs( myStatistics.stdDev - stdDev ) < 0.0000001 );
+
+  QgsRasterDataProvider* myProvider = myRasterLayer->dataProvider();
+  QgsPoint myPoint( 1535030, 5083350 );
+  QgsRectangle myRect( 1535030 - 5, 5083350 - 5, 1535030 + 5, 5083350 + 5 );
+  QgsRasterIdentifyResult identifyResult = myProvider->identify( myPoint, QgsRaster::IdentifyFormatValue, myRect, 1, 1 );
+
+  if ( identifyResult.isValid() )
+  {
+    QMap<int, QVariant> values = identifyResult.results();
+    foreach ( int bandNo, values.keys() )
+    {
+      QString valueString;
+      if ( values.value( bandNo ).isNull() )
+      {
+        valueString = tr( "no data" );
+        mReport += QString( " %1 = %2 <br>\n" ).arg( myProvider->generateBandName( bandNo ) ).arg( valueString );
+        delete myRasterLayer;
+        QVERIFY( false );
+      }
+      else
+      {
+        double expected = 0.99995432;
+        double value = values.value( bandNo ).toDouble();
+        valueString = QgsRasterBlock::printValue( value );
+        mReport += QString( " %1 = %2 <br>\n" ).arg( myProvider->generateBandName( bandNo ) ).arg( valueString );
+        mReport += QString( " value = %1 expected = %2 diff = %3 <br>\n" ).arg( value ).arg( expected ).arg( fabs( value - expected ) );
+        QVERIFY( fabs( value - expected ) < 0.0000001 );
+      }
+    }
+  }
+  else
+  {
+    delete myRasterLayer;
+    QVERIFY( false );
+  }
+
+  mReport += "<p>Passed</p>";
+  delete myRasterLayer;
 }
 
 void TestQgsRasterLayer::buildExternalOverviews()
@@ -415,7 +508,7 @@ bool TestQgsRasterLayer::render( QString theTestType )
   mReport += "<h2>" + theTestType + "</h2>\n";
   QgsRenderChecker myChecker;
   myChecker.setControlName( "expected_" + theTestType );
-  myChecker.setMapRenderer( mpMapRenderer );
+  myChecker.setMapSettings( mMapSettings );
   bool myResultFlag = myChecker.runTest( theTestType );
   mReport += "\n\n\n" + myChecker.report();
   return myResultFlag;
@@ -443,6 +536,7 @@ bool TestQgsRasterLayer::setQml( QString theType )
 
 void TestQgsRasterLayer::transparency()
 {
+
   QVERIFY( mpFloat32RasterLayer->isValid() );
   QgsSingleBandGrayRenderer* renderer = new QgsSingleBandGrayRenderer( mpRasterLayer->dataProvider(), 1 );
   mpFloat32RasterLayer->setRenderer( renderer );
@@ -471,12 +565,22 @@ void TestQgsRasterLayer::transparency()
   QVERIFY( rasterRenderer != 0 );
   rasterRenderer->setRasterTransparency( rasterTransparency );
 
-  QStringList myLayers;
-  myLayers << mpFloat32RasterLayer->id();
-  mpMapRenderer->setLayerSet( myLayers );
-
-  mpMapRenderer->setExtent( mpFloat32RasterLayer->extent() );
+  mMapSettings.setLayers( QStringList() << mpFloat32RasterLayer->id() );
+  mMapSettings.setExtent( mpFloat32RasterLayer->extent() );
   QVERIFY( render( "raster_transparency" ) );
+}
+
+void TestQgsRasterLayer::setRenderer()
+{
+  TestSignalReceiver receiver;
+  QObject::connect( mpRasterLayer, SIGNAL( rendererChanged() ),
+                    &receiver, SLOT( onRendererChanged() ) );
+  QgsRasterRenderer* renderer = ( QgsRasterRenderer* ) mpRasterLayer->renderer()->clone();
+  QCOMPARE( receiver.rendererChanged, false );
+  mpRasterLayer->setRenderer( renderer );
+  QCOMPARE( receiver.rendererChanged, true );
+  QCOMPARE( mpRasterLayer->renderer(), renderer );
+  delete renderer;
 }
 
 QTEST_MAIN( TestQgsRasterLayer )

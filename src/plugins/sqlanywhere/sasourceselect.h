@@ -101,7 +101,7 @@ class SaSourceSelect : public QDialog, private Ui::SaSourceSelectBase
   public:
 
     //! Constructor
-    SaSourceSelect( QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags );
+    SaSourceSelect( QWidget *parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags );
     //! Destructor
     ~SaSourceSelect();
     //! Populate the connection list combo box
@@ -199,6 +199,7 @@ class SaGeomColTypeThread : public QThread
 {
     Q_OBJECT
   public:
+    SaGeomColTypeThread() {}
 
     void setConnInfo( QString s, bool estMeta, bool otherSchemas );
     void addGeometryColumn( QString schema, QString table, QString column, QString geomtype, QString sridstr, QString lineinterp );
@@ -217,7 +218,6 @@ class SaGeomColTypeThread : public QThread
 
   public slots:
     void stop();
-
 
   private:
     QString mConnInfo;

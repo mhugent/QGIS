@@ -72,11 +72,7 @@ void TestVectorLayerCache::initTestCase()
 
   foreach ( QString f, backupFiles )
   {
-    QTemporaryFile* tmpFile = new QTemporaryFile();
-    tmpFile->open();
-    QString tmpFileName = tmpFile->fileName();
-    tmpFile->remove();
-
+    QString tmpFileName = QDir::tempPath() + QDir::separator() + f + "_" + QString::number( qApp->applicationPid() );
     QString origFileName = myTestDataDir + f;
 
     qDebug() << "Copy " << origFileName << " " << tmpFileName;
@@ -104,7 +100,6 @@ void TestVectorLayerCache::init()
 void TestVectorLayerCache::cleanup()
 {
   delete mVectorLayerCache;
-  delete mFeatureIdIndex;
 }
 
 //runs after all tests
@@ -137,7 +132,11 @@ void TestVectorLayerCache::cleanupTestCase()
     qDebug() << "Copy " << tmpFileName << " " << origFileName;
     QFile( origFileName ).remove();
     qDebug() << QFile::copy( tmpFileName, origFileName );
+    QFile::remove( tmpFileName );
   }
+
+  // also clean up newly created .qix file
+  QFile::remove( QString( TEST_DATA_DIR ) + QDir::separator() + "points.qix" );
 }
 
 void TestVectorLayerCache::testCacheOverflow()
@@ -145,7 +144,7 @@ void TestVectorLayerCache::testCacheOverflow()
   QgsFeature f;
 
   // Verify we get all features, even if there are too many to fit into the cache
-  QgsFeatureIterator it = mVectorLayerCache->getFeatures( QgsFeatureRequest() );
+  QgsFeatureIterator it = mVectorLayerCache->getFeatures();
 
   int i = 0;
   while ( it.nextFeature( f ) )
@@ -178,7 +177,7 @@ void TestVectorLayerCache::testCacheAttrActions()
   mPointsLayer->commitChanges();
 
   QVERIFY( mVectorLayerCache->featureAtId( 15, f ) );
-  QVERIFY( false == f.attribute( "newAttr" ).isValid() );
+  QVERIFY( !f.attribute( "newAttr" ).isValid() );
 }
 
 void TestVectorLayerCache::testFeatureActions()
@@ -204,7 +203,7 @@ void TestVectorLayerCache::testFeatureActions()
   mPointsLayer->startEditing();
   QVERIFY( mPointsLayer->deleteFeature( fid ) );
 
-  QVERIFY( false == mVectorLayerCache->featureAtId( fid, f ) );
+  QVERIFY( !mVectorLayerCache->featureAtId( fid, f ) );
   mPointsLayer->rollBack();
 }
 

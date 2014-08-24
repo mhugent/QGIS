@@ -49,9 +49,10 @@ static const QString sPluginIcon = ":/topology/topol.png";
  * an interface object that provides access to exposed functions in QGIS.
  * @param theQGisInterface - Pointer to the QGIS interface object
  */
-Topol::Topol( QgisInterface * theQgisInterface ):
-    QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType ),
-    mQGisIface( theQgisInterface )
+Topol::Topol( QgisInterface * theQgisInterface )
+    : QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType )
+    , mQGisIface( theQgisInterface )
+    , mQActionPointer( 0 )
 {
   mDock = 0;
 }
@@ -66,7 +67,10 @@ Topol::~Topol()
  */
 void Topol::initGui()
 {
+  delete mQActionPointer;
+
   mQActionPointer = new QAction( QIcon( ":/topology/topol.png" ), tr( "TopologyChecker" ), this );
+  mQActionPointer->setObjectName( "mQActionPointer" );
   //mQActionPointer = new QAction( QIcon(), tr( "Topology Checker" ), this );
   mQActionPointer->setCheckable( true );
 
@@ -115,7 +119,7 @@ void Topol::run()
 void Topol::unload()
 {
   // remove the GUI
-  mQGisIface->removePluginVectorMenu( "&Topology Checker", mQActionPointer );
+  mQGisIface->removePluginVectorMenu( tr( "&Topology Checker" ), mQActionPointer );
   mQGisIface->removeVectorToolBarIcon( mQActionPointer );
   delete mQActionPointer;
 }

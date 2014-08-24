@@ -15,6 +15,9 @@
  *                                                                         *
  ***************************************************************************/
 
+#define CPL_SUPRESS_CPLUSPLUS
+#include "cpl_conv.h"
+
 #include "qgsapplication.h"
 #include "qgslogger.h"
 #include "qgsgdalproviderbase.h"
@@ -56,6 +59,20 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
   if ( myGdalColorTable )
   {
     QgsDebugMsg( "Color table found" );
+
+    // load category labels
+    char ** categoryNames = GDALGetRasterCategoryNames( myGdalBand );
+    QVector<QString> labels;
+    if ( categoryNames )
+    {
+      int i = 0;
+      while ( categoryNames[i] )
+      {
+        labels.append( QString( categoryNames[i] ) );
+        i++;
+      }
+    }
+
     int myEntryCount = GDALGetColorEntryCount( myGdalColorTable );
     GDALColorInterp myColorInterpretation =  GDALGetRasterColorInterpretation( myGdalBand );
     QgsDebugMsg( "Color Interpretation: " + QString::number(( int )myColorInterpretation ) );
@@ -73,12 +90,17 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
       }
       else
       {
+        QString label = labels.value( myIterator );
+        if ( label.isEmpty() )
+        {
+          label = QString::number( myIterator );
+        }
         //Branch on the color interpretation type
         if ( myColorInterpretation == GCI_GrayIndex )
         {
           QgsColorRampShader::ColorRampItem myColorRampItem;
-          myColorRampItem.label = "";
           myColorRampItem.value = ( double )myIterator;
+          myColorRampItem.label = label;
           myColorRampItem.color = QColor::fromRgb( myColorEntry->c1, myColorEntry->c1, myColorEntry->c1, myColorEntry->c4 );
           ct.append( myColorRampItem );
         }
@@ -86,7 +108,7 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
         {
           QgsColorRampShader::ColorRampItem myColorRampItem;
           myColorRampItem.value = ( double )myIterator;
-          myColorRampItem.label = QString::number( myColorRampItem.value );
+          myColorRampItem.label = label;
           //Branch on palette interpretation
           if ( myPaletteInterpretation  == GPI_RGB )
           {
@@ -272,4 +294,64 @@ QgsRectangle QgsGdalProviderBase::extent( GDALDatasetH gdalDataset )const
 
   QgsRectangle extent( myGeoTransform[0], myYMin, myXMax, myGeoTransform[3] );
   return extent;
+}
+
+GDALDatasetH QgsGdalProviderBase::gdalOpen( const char *pszFilename, GDALAccess eAccess )
+{
+  // See http://hub.qgis.org/issues/8356 and http://trac.osgeo.org/gdal/ticket/5170
+#if GDAL_VERSION_MAJOR == 1 && ( (GDAL_VERSION_MINOR == 9 && GDAL_VERSION_REV <= 2) || (GDAL_VERSION_MINOR == 10 && GDAL_VERSION_REV <= 0) )
+  char* pszOldVal = CPLStrdup( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) );
+  CPLSetThreadLocalConfigOption( "VSI_CACHE", "FALSE" );
+  QgsDebugMsg( "Disabled VSI_CACHE" );
+#endif
+
+  GDALDatasetH hDS = GDALOpen( pszFilename, eAccess );
+
+#if GDAL_VERSION_MAJOR == 1 && ( (GDAL_VERSION_MINOR == 9 && GDAL_VERSION_REV <= 2) || (GDAL_VERSION_MINOR == 10 && GDAL_VERSION_REV <= 0) )
+  CPLSetThreadLocalConfigOption( "VSI_CACHE", pszOldVal );
+  CPLFree( pszOldVal );
+  QgsDebugMsg( "Reset VSI_CACHE" );
+#endif
+
+  return hDS;
+}
+
+CPLErr QgsGdalProviderBase::gdalRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, void * pData, int nBufXSize, int nBufYSize, GDALDataType eBufType, int nPixelSpace, int nLineSpace )
+{
+  // See http://hub.qgis.org/issues/8356 and http://trac.osgeo.org/gdal/ticket/5170
+#if GDAL_VERSION_MAJOR == 1 && ( (GDAL_VERSION_MINOR == 9 && GDAL_VERSION_REV <= 2) || (GDAL_VERSION_MINOR == 10 && GDAL_VERSION_REV <= 0) )
+  char* pszOldVal = CPLStrdup( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) );
+  CPLSetThreadLocalConfigOption( "VSI_CACHE", "FALSE" );
+  QgsDebugMsg( "Disabled VSI_CACHE" );
+#endif
+
+  CPLErr err = GDALRasterIO( hBand, eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace );
+
+#if GDAL_VERSION_MAJOR == 1 && ( (GDAL_VERSION_MINOR == 9 && GDAL_VERSION_REV <= 2) || (GDAL_VERSION_MINOR == 10 && GDAL_VERSION_REV <= 0) )
+  CPLSetThreadLocalConfigOption( "VSI_CACHE", pszOldVal );
+  CPLFree( pszOldVal );
+  QgsDebugMsg( "Reset VSI_CACHE" );
+#endif
+
+  return err;
+}
+
+int QgsGdalProviderBase::gdalGetOverviewCount( GDALRasterBandH hBand )
+{
+  // See http://hub.qgis.org/issues/8356 and http://trac.osgeo.org/gdal/ticket/5170
+#if GDAL_VERSION_MAJOR == 1 && ( (GDAL_VERSION_MINOR == 9 && GDAL_VERSION_REV <= 2) || (GDAL_VERSION_MINOR == 10 && GDAL_VERSION_REV <= 0) )
+  char* pszOldVal = CPLStrdup( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) );
+  CPLSetThreadLocalConfigOption( "VSI_CACHE", "FALSE" );
+  QgsDebugMsg( "Disabled VSI_CACHE" );
+#endif
+
+  int count = GDALGetOverviewCount( hBand );
+
+#if GDAL_VERSION_MAJOR == 1 && ( (GDAL_VERSION_MINOR == 9 && GDAL_VERSION_REV <= 2) || (GDAL_VERSION_MINOR == 10 && GDAL_VERSION_REV <= 0) )
+  CPLSetThreadLocalConfigOption( "VSI_CACHE", pszOldVal );
+  CPLFree( pszOldVal );
+  QgsDebugMsg( "Reset VSI_CACHE" );
+#endif
+
+  return count;
 }

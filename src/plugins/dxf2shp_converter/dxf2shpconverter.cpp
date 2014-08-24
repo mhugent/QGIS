@@ -51,9 +51,11 @@ static const QString sPluginIcon = ":/dxf2shp_converter.png";
  * an interface object that provides access to exposed functions in QGIS.
  * @param theQGisInterface - Pointer to the QGIS interface object
  */
-dxf2shpConverter::dxf2shpConverter( QgisInterface *theQgisInterface ): QgisPlugin
-    ( sName, sDescription, sCategory, sPluginVersion, sPluginType ), mQGisIface
-    ( theQgisInterface ) {}
+dxf2shpConverter::dxf2shpConverter( QgisInterface *theQgisInterface )
+    : QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType )
+    , mQGisIface( theQgisInterface )
+    , mQActionPointer( 0 )
+{}
 
 dxf2shpConverter::~dxf2shpConverter()
 {
@@ -67,7 +69,9 @@ dxf2shpConverter::~dxf2shpConverter()
 void dxf2shpConverter::initGui()
 {
   // Create the action for tool
+  delete mQActionPointer;
   mQActionPointer = new QAction( QIcon(), "Dxf2Shp Converter", this );
+  mQActionPointer->setObjectName( "mQActionPointer" );
 
   // Set the icon
   setCurrentTheme( "" );
@@ -115,6 +119,7 @@ void dxf2shpConverter::unload()
   mQGisIface->removePluginVectorMenu( tr( "&Dxf2Shp" ), mQActionPointer );
   mQGisIface->removeVectorToolBarIcon( mQActionPointer );
   delete mQActionPointer;
+  mQActionPointer = 0;
 }
 
 void dxf2shpConverter::addMyLayer( QString myfname, QString mytitle )
@@ -129,21 +134,24 @@ void dxf2shpConverter::setCurrentTheme( QString theThemeName )
   QString myCurThemePath = QgsApplication::activeThemePath() + "/plugins/dxf2shp_converter.png";
   QString myDefThemePath = QgsApplication::defaultThemePath() + "/plugins/dxf2shp_converter.png";
   QString myQrcPath = ":/dxf2shp_converter.png";
-  if ( QFile::exists( myCurThemePath ) )
+  if ( mQActionPointer )
   {
-    mQActionPointer->setIcon( QIcon( myCurThemePath ) );
-  }
-  else if ( QFile::exists( myDefThemePath ) )
-  {
-    mQActionPointer->setIcon( QIcon( myDefThemePath ) );
-  }
-  else if ( QFile::exists( myQrcPath ) )
-  {
-    mQActionPointer->setIcon( QIcon( myQrcPath ) );
-  }
-  else
-  {
-    mQActionPointer->setIcon( QIcon() );
+    if ( QFile::exists( myCurThemePath ) )
+    {
+      mQActionPointer->setIcon( QIcon( myCurThemePath ) );
+    }
+    else if ( QFile::exists( myDefThemePath ) )
+    {
+      mQActionPointer->setIcon( QIcon( myDefThemePath ) );
+    }
+    else if ( QFile::exists( myQrcPath ) )
+    {
+      mQActionPointer->setIcon( QIcon( myQrcPath ) );
+    }
+    else
+    {
+      mQActionPointer->setIcon( QIcon() );
+    }
   }
 }
 

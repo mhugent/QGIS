@@ -14,7 +14,9 @@
  ***************************************************************************/
 
 #include "qgsrenderchecker.h"
+
 #include "qgis.h"
+#include "qgsmaprenderersequentialjob.h"
 
 #include <QColor>
 #include <QPainter>
@@ -27,16 +29,15 @@
 
 QgsRenderChecker::QgsRenderChecker( ) :
     mReport( "" ),
-    mExpectedImageFile( "" ),
-    mRenderedImageFile( "" ),
-    mMismatchCount( 0 ),
     mMatchTarget( 0 ),
     mElapsedTime( 0 ),
+    mRenderedImageFile( "" ),
+    mExpectedImageFile( "" ),
+    mMismatchCount( 0 ),
+    mColorTolerance( 0 ),
     mElapsedTimeTarget( 0 ),
-    mpMapRenderer( NULL ),
     mControlPathPrefix( "" )
 {
-
 }
 
 QString QgsRenderChecker::controlImagePath() const
@@ -67,6 +68,16 @@ QString QgsRenderChecker::imageToHash( QString theImageFile )
   return myHash.result().toHex().constData();
 }
 
+void QgsRenderChecker::setMapRenderer( QgsMapRenderer* thepMapRenderer )
+{
+  mMapSettings = thepMapRenderer->mapSettings();
+}
+
+void QgsRenderChecker::setMapSettings( const QgsMapSettings& mapSettings )
+{
+  mMapSettings = mapSettings;
+}
+
 bool QgsRenderChecker::isKnownAnomaly( QString theDiffImageFile )
 {
   QString myControlImageDir = controlImagePath() + mControlName
@@ -78,7 +89,7 @@ bool QgsRenderChecker::isKnownAnomaly( QString theDiffImageFile )
                                   QDir::Files | QDir::NoSymLinks );
   //remove the control file from the list as the anomalies are
   //all files except the control file
-  myList.removeAt( myList.indexOf( mExpectedImageFile ) );
+  myList.removeAt( myList.indexOf( QFileInfo( mExpectedImageFile ).fileName() ) );
 
   QString myImageHash = imageToHash( theDiffImageFile );
 
@@ -92,10 +103,10 @@ bool QgsRenderChecker::isKnownAnomaly( QString theDiffImageFile )
     QString myAnomalyHash = imageToHash( controlImagePath() + mControlName
                                          + QDir::separator() + myFile );
     QString myHashMessage = QString(
-                              "Checking if anomaly %1 (hash %2)" )
+                              "Checking if anomaly %1 (hash %2)<br>" )
                             .arg( myFile )
                             .arg( myAnomalyHash );
-    myHashMessage += QString( " matches %1 (hash %2)" )
+    myHashMessage += QString( "&nbsp; matches %1 (hash %2)" )
                      .arg( theDiffImageFile )
                      .arg( myImageHash );
     //foo CDash
@@ -138,29 +149,30 @@ bool QgsRenderChecker::runTest( QString theTestName,
   //
   // Now render our layers onto a pixmap
   //
-  QImage myImage( myExpectedImage.width(),
-                  myExpectedImage.height(),
-                  QImage::Format_RGB32 );
-  myImage.setDotsPerMeterX( myExpectedImage.dotsPerMeterX() );
-  myImage.setDotsPerMeterY( myExpectedImage.dotsPerMeterY() );
-  myImage.fill( qRgb( 152, 219, 249 ) );
-  QPainter myPainter( &myImage );
-  myPainter.setRenderHint( QPainter::Antialiasing );
-  mpMapRenderer->setOutputSize( QSize(
-                                  myExpectedImage.width(),
-                                  myExpectedImage.height() ),
-                                myExpectedImage.logicalDpiX() );
+  mMapSettings.setBackgroundColor( qRgb( 152, 219, 249 ) );
+  mMapSettings.setFlag( QgsMapSettings::Antialiasing );
+  mMapSettings.setOutputSize( QSize( myExpectedImage.width(), myExpectedImage.height() ) );
+
   QTime myTime;
   myTime.start();
-  mpMapRenderer->render( &myPainter );
+
+  QgsMapRendererSequentialJob job( mMapSettings );
+  job.start();
+  job.waitForFinished();
+
   mElapsedTime = myTime.elapsed();
-  myPainter.end();
+
+  QImage myImage = job.renderedImage();
+
   //
   // Save the pixmap to disk so the user can make a
   // visual assessment if needed
   //
   mRenderedImageFile = QDir::tempPath() + QDir::separator() +
                        theTestName + "_result.png";
+
+  myImage.setDotsPerMeterX( myExpectedImage.dotsPerMeterX() );
+  myImage.setDotsPerMeterY( myExpectedImage.dotsPerMeterY() );
   myImage.save( mRenderedImageFile, "PNG", 100 );
 
   //create a world file to go with the image...
@@ -168,14 +180,14 @@ bool QgsRenderChecker::runTest( QString theTestName,
   QFile wldFile( QDir::tempPath() + QDir::separator() + theTestName + "_result.wld" );
   if ( wldFile.open( QIODevice::WriteOnly ) )
   {
-    QgsRectangle r = mpMapRenderer->extent();
+    QgsRectangle r = mMapSettings.extent();
 
     QTextStream stream( &wldFile );
     stream << QString( "%1\r\n0 \r\n0 \r\n%2\r\n%3\r\n%4\r\n" )
-    .arg( qgsDoubleToString( mpMapRenderer->mapUnitsPerPixel() ) )
-    .arg( qgsDoubleToString( -mpMapRenderer->mapUnitsPerPixel() ) )
-    .arg( qgsDoubleToString( r.xMinimum() + mpMapRenderer->mapUnitsPerPixel() / 2.0 ) )
-    .arg( qgsDoubleToString( r.yMaximum() - mpMapRenderer->mapUnitsPerPixel() / 2.0 ) );
+    .arg( qgsDoubleToString( mMapSettings.mapUnitsPerPixel() ) )
+    .arg( qgsDoubleToString( -mMapSettings.mapUnitsPerPixel() ) )
+    .arg( qgsDoubleToString( r.xMinimum() + mMapSettings.mapUnitsPerPixel() / 2.0 ) )
+    .arg( qgsDoubleToString( r.yMaximum() - mMapSettings.mapUnitsPerPixel() / 2.0 ) );
   }
 
   return compareImages( theTestName, theMismatchCount );
@@ -204,7 +216,7 @@ bool QgsRenderChecker::compareImages( QString theTestName,
     qDebug( "QgsRenderChecker::runTest failed - Rendered Image File not set." );
     mReport = "<table>"
               "<tr><td>Test Result:</td><td>Expected Result:</td></tr>\n"
-              "<tr><td>Nothing rendered</td>\n<td>Failed because Expected "
+              "<tr><td>Nothing rendered</td>\n<td>Failed because Rendered "
               "Image File not set.</td></tr></table>\n";
     return false;
   }
@@ -233,23 +245,38 @@ bool QgsRenderChecker::compareImages( QString theTestName,
   mReport += "<tr><td colspan=2>";
   mReport += "Test image and result image for " + theTestName + "<br>"
              "Expected size: " + QString::number( myExpectedImage.width() ).toLocal8Bit() + "w x " +
-             QString::number( myExpectedImage.width() ).toLocal8Bit() + "h (" +
+             QString::number( myExpectedImage.height() ).toLocal8Bit() + "h (" +
              QString::number( mMatchTarget ).toLocal8Bit() + " pixels)<br>"
              "Actual   size: " + QString::number( myResultImage.width() ).toLocal8Bit() + "w x " +
-             QString::number( myResultImage.width() ).toLocal8Bit() + "h (" +
+             QString::number( myResultImage.height() ).toLocal8Bit() + "h (" +
              QString::number( myPixelCount ).toLocal8Bit() + " pixels)";
   mReport += "</td></tr>";
   mReport += "<tr><td colspan = 2>\n";
   mReport += "Expected Duration : <= " + QString::number( mElapsedTimeTarget ) +
              "ms (0 indicates not specified)<br>";
   mReport += "Actual Duration :  " + QString::number( mElapsedTime ) + "ms<br>";
+
+  // limit image size in page to something reasonable
+  int imgWidth = 420;
+  int imgHeight = 280;
+  if ( ! myExpectedImage.isNull() )
+  {
+    imgWidth = qMin( myExpectedImage.width(), imgWidth );
+    imgHeight = myExpectedImage.height() * imgWidth / myExpectedImage.width();
+  }
   QString myImagesString = "</td></tr>"
                            "<tr><td>Test Result:</td><td>Expected Result:</td><td>Difference (all blue is good, any red is bad)</td></tr>\n"
-                           "<tr><td><img src=\"file://" +
+                           "<tr><td><img width=" + QString::number( imgWidth ) +
+                           " height=" + QString::number( imgHeight ) +
+                           " src=\"file://" +
                            mRenderedImageFile +
-                           "\"></td>\n<td><img src=\"file://" +
+                           "\"></td>\n<td><img width=" + QString::number( imgWidth ) +
+                           " height=" + QString::number( imgHeight ) +
+                           " src=\"file://" +
                            mExpectedImageFile +
-                           "\"></td><td><img src=\"file://" +
+                           "\"></td>\n<td><img width=" + QString::number( imgWidth ) +
+                           " height=" + QString::number( imgHeight ) +
+                           " src=\"file://" +
                            myDiffImageFile  +
                            "\"></td>\n</tr>\n</table>";
   //
@@ -287,16 +314,31 @@ bool QgsRenderChecker::compareImages( QString theTestName,
   //
 
   mMismatchCount = 0;
+  int colorTolerance = ( int ) mColorTolerance;
   for ( int x = 0; x < myExpectedImage.width(); ++x )
   {
     for ( int y = 0; y < myExpectedImage.height(); ++y )
     {
       QRgb myExpectedPixel = myExpectedImage.pixel( x, y );
       QRgb myActualPixel = myResultImage.pixel( x, y );
-      if ( myExpectedPixel != myActualPixel )
+      if ( mColorTolerance == 0 )
       {
-        ++mMismatchCount;
-        myDifferenceImage.setPixel( x, y, qRgb( 255, 0, 0 ) );
+        if ( myExpectedPixel != myActualPixel )
+        {
+          ++mMismatchCount;
+          myDifferenceImage.setPixel( x, y, qRgb( 255, 0, 0 ) );
+        }
+      }
+      else
+      {
+        if ( qAbs( qRed( myExpectedPixel ) - qRed( myActualPixel ) ) > colorTolerance ||
+             qAbs( qGreen( myExpectedPixel ) - qGreen( myActualPixel ) ) > colorTolerance ||
+             qAbs( qBlue( myExpectedPixel ) - qBlue( myActualPixel ) ) > colorTolerance ||
+             qAbs( qAlpha( myExpectedPixel ) - qAlpha( myActualPixel ) ) > colorTolerance )
+        {
+          ++mMismatchCount;
+          myDifferenceImage.setPixel( x, y, qRgb( 255, 0, 0 ) );
+        }
       }
     }
   }
@@ -308,7 +350,7 @@ bool QgsRenderChecker::compareImages( QString theTestName,
   //
   // Send match result to debug
   //
-  qDebug( "%d/%d pixels mismatched", mMismatchCount, mMatchTarget );
+  qDebug( "%d/%d pixels mismatched (%d allowed)", mMismatchCount, mMatchTarget, theMismatchCount );
 
   //
   // Send match result to report
@@ -317,7 +359,9 @@ bool QgsRenderChecker::compareImages( QString theTestName,
              QString::number( mMismatchCount ) + "/" +
              QString::number( mMatchTarget ) +
              " pixels mismatched (allowed threshold: " +
-             QString::number( theMismatchCount ) + ")";
+             QString::number( theMismatchCount ) +
+             ", allowed color component tolerance: " +
+             QString::number( mColorTolerance ) + ")";
   mReport += "</td></tr>";
 
   //

@@ -78,9 +78,9 @@ QgsWMSConnection::QgsWMSConnection( QString theConnName ) :
   bool ignoreAxisOrientation = settings.value( key + "/ignoreAxisOrientation", false ).toBool();
   bool invertAxisOrientation = settings.value( key + "/invertAxisOrientation", false ).toBool();
   bool smoothPixmapTransform = settings.value( key + "/smoothPixmapTransform", false ).toBool();
+  QString dpiMode = settings.value( key + "/dpiMode", "all" ).toString();
 
   QString connArgs, delim;
-
 
   if ( ignoreGetMap )
   {
@@ -117,6 +117,13 @@ QgsWMSConnection::QgsWMSConnection( QString theConnName ) :
     mUri.setParam( "SmoothPixmapTransform", "1" );
   }
 
+  if ( !dpiMode.isEmpty() )
+  {
+    connArgs += delim + "dpiMode=" + dpiMode;
+    delim = ";";
+    mUri.setParam( "dpiMode", dpiMode );
+  }
+
   if ( !connArgs.isEmpty() )
   {
     connArgs.prepend( "ignoreUrl=" );
@@ -148,20 +155,6 @@ QgsDataSourceURI QgsWMSConnection::uri()
 {
   return mUri;
 }
-
-QgsWmsProvider * QgsWMSConnection::provider( )
-{
-  // TODO: Create and bind to data provider
-
-  // load the server data provider plugin
-  QgsProviderRegistry * pReg = QgsProviderRegistry::instance();
-
-  QgsWmsProvider *wmsProvider =
-    ( QgsWmsProvider* ) pReg->provider( "wms", mUri.encodedUri() );
-
-  return wmsProvider;
-}
-
 
 
 QStringList QgsWMSConnection::connectionList()

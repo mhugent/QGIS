@@ -81,6 +81,8 @@ void usage( std::string const & appName )
             << "\t[--configpath path]\tuse the given path for all user configuration\n"
             << "\t[--prefix path]\tpath to a different build of qgis, may be used to test old versions\n"
             << "\t[--quality]\trenderer hint(s), comma separated, possible values: Antialiasing,TextAntialiasing,SmoothPixmapTransform,NonCosmeticDefaultPen\n"
+            << "\t[--parallel]\trender layers in parallel instead of sequentially\n"
+            << "\t[--print type]\twhat kind of time to print, possible values: wall,total,user,sys. Default is total.\n"
             << "\t[--help]\t\tthis text\n\n"
             << "  FILES:\n"
             << "    Files specified on the command line can include rasters,\n"
@@ -135,6 +137,8 @@ int main( int argc, char *argv[] )
   int mySnapshotWidth = 800;
   int mySnapshotHeight = 600;
   QString myQuality = "";
+  bool myParallel = false;
+  QString myPrintTime = "total";
 
   // This behaviour will set initial extent of map canvas, but only if
   // there are no command line arguments. This gives a usable map
@@ -173,6 +177,8 @@ int main( int argc, char *argv[] )
       {"configpath", required_argument, 0, 'c'},
       {"prefix", required_argument, 0, 'r'},
       {"quality", required_argument, 0, 'q'},
+      {"parallel", no_argument, 0, 'P'},
+      {"print", required_argument, 0, 'R'},
       {0, 0, 0, 0}
     };
 
@@ -203,11 +209,11 @@ int main( int argc, char *argv[] )
         break;
 
       case 's':
-        mySnapshotFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
+        mySnapshotFileName = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
         break;
 
       case 'l':
-        myLogFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
+        myLogFileName = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
         break;
 
       case 'w':
@@ -219,7 +225,7 @@ int main( int argc, char *argv[] )
         break;
 
       case 'p':
-        myProjectFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
+        myProjectFileName = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
         break;
 
       case 'e':
@@ -240,6 +246,14 @@ int main( int argc, char *argv[] )
 
       case 'q':
         myQuality = optarg;
+        break;
+
+      case 'P':
+        myParallel = true;
+        break;
+
+      case 'R':
+        myPrintTime = optarg;
         break;
 
       case '?':
@@ -264,7 +278,7 @@ int main( int argc, char *argv[] )
       int idx = optind;
       QgsDebugMsg( QString( "%1: %2" ).arg( idx ).arg( argv[idx] ) );
 #endif
-      myFileList.append( QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[optind++] ) ).absoluteFilePath() ) );
+      myFileList.append( QDir::toNativeSeparators( QFileInfo( QFile::decodeName( argv[optind++] ) ).absoluteFilePath() ) );
     }
   }
 #else
@@ -283,11 +297,11 @@ int main( int argc, char *argv[] )
     }
     else if ( i + 1 < argc && ( arg == "--snapshot" || arg == "-s" ) )
     {
-      mySnapshotFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
+      mySnapshotFileName = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
     }
     else if ( i + 1 < argc && ( arg == "--log" || arg == "-l" ) )
     {
-      myLogFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
+      myLogFileName = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
     }
     else if ( i + 1 < argc && ( arg == "--width" || arg == "-w" ) )
     {
@@ -299,7 +313,7 @@ int main( int argc, char *argv[] )
     }
     else if ( i + 1 < argc && ( arg == "--project" || arg == "-p" ) )
     {
-      myProjectFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
+      myProjectFileName = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
     }
     else if ( i + 1 < argc && ( arg == "--extent" || arg == "-e" ) )
     {
@@ -322,9 +336,17 @@ int main( int argc, char *argv[] )
     {
       myQuality = argv[++i];
     }
+    else if ( arg == "--parallel" || arg == "-P" )
+    {
+      myParallel = true;
+    }
+    else if ( i + 1 < argc && ( arg == "--print" || arg == "-R" ) )
+    {
+      myPrintTime = argv[++i];
+    }
     else
     {
-      myFileList.append( QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[i] ) ).absoluteFilePath() ) );
+      myFileList.append( QDir::toNativeSeparators( QFileInfo( QFile::decodeName( argv[i] ) ).absoluteFilePath() ) );
     }
   }
 #endif //WIN32
@@ -435,7 +457,7 @@ int main( int argc, char *argv[] )
     // check for a .qgs
     for ( int i = 0; i < argc; i++ )
     {
-      QString arg = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[i] ) ).absoluteFilePath() );
+      QString arg = QDir::toNativeSeparators( QFileInfo( QFile::decodeName( argv[i] ) ).absoluteFilePath() );
       if ( arg.contains( ".qgs" ) )
       {
         myProjectFileName = arg;
@@ -475,6 +497,8 @@ int main( int argc, char *argv[] )
     QgsDebugMsg( QString( "hints: %1" ).arg( hints ) );
     qbench->setRenderHints( hints );
   }
+
+  qbench->setParallel( myParallel );
 
   /////////////////////////////////////////////////////////////////////
   // autoload any file names that were passed in on the command line
@@ -551,7 +575,7 @@ int main( int argc, char *argv[] )
     qbench->saveLog( myLogFileName );
   }
 
-  qbench->printLog();
+  qbench->printLog( myPrintTime );
 
   delete qbench;
   delete myApp;

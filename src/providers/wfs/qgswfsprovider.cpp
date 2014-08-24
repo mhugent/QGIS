@@ -27,6 +27,7 @@
 #include "qgscoordinatereferencesystem.h"
 #include "qgswfsfeatureiterator.h"
 #include "qgswfsprovider.h"
+#include "qgsdatasourceuri.h"
 #include "qgsspatialindex.h"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
@@ -42,6 +43,8 @@
 #include <QUrl>
 #include <QWidget>
 #include <QPair>
+#include <QTimer>
+
 #include <cfloat>
 
 static const QString TEXT_PROVIDER_KEY = "WFS";
@@ -61,9 +64,12 @@ QgsWFSProvider::QgsWFSProvider( const QString& uri )
     , mSourceCRS( 0 )
     , mFeatureCount( 0 )
     , mValid( true )
+    , mPendingRetrieval( false )
+#if 0
     , mLayer( 0 )
     , mGetRenderedOnly( false )
     , mInitGro( false )
+#endif
 {
   mSpatialIndex = 0;
   if ( uri.isEmpty() )
@@ -89,6 +95,9 @@ QgsWFSProvider::QgsWFSProvider( const QString& uri )
     mSourceCRS.createFromOgcWmsCrs( srsname );
   }
 
+  mAuth.mUserName = parameterFromUrl( "username" );
+  mAuth.mPassword = parameterFromUrl( "password" );
+
   //fetch attributes of layer and type of its geometry attribute
   //WBC 111221: extracting geometry type here instead of getFeature allows successful
   //layer creation even when no features are retrieved (due to, e.g., BBOX or FILTER)
@@ -111,7 +120,8 @@ QgsWFSProvider::QgsWFSProvider( const QString& uri )
     setDataSourceUri( bkUri );
   }
 
-  if ( ! uri.contains( "BBOX" ) )
+  mCached = !uri.contains( "BBOX=" );
+  if ( mCached )
   { //"Cache Features" option; get all features in layer immediately
     reloadData();
   } //otherwise, defer feature retrieval until layer is first rendered
@@ -120,27 +130,34 @@ QgsWFSProvider::QgsWFSProvider( const QString& uri )
   {
     getLayerCapabilities();
   }
+
+  qRegisterMetaType<QgsRectangle>( "QgsRectangle" );
 }
 
 QgsWFSProvider::~QgsWFSProvider()
 {
-  while ( !mActiveIterators.empty() )
-  {
-    QgsWFSFeatureIterator *it = *mActiveIterators.begin();
-    QgsDebugMsg( "closing active iterator" );
-    it->close();
-  }
-
   deleteData();
   delete mSpatialIndex;
 }
 
+QgsAbstractFeatureSource* QgsWFSProvider::featureSource() const
+{
+  QgsWFSFeatureSource *fs = new QgsWFSFeatureSource( this );
+  connect( fs, SIGNAL( extentRequested( const QgsRectangle & ) ),
+           this, SLOT( extendExtent( const QgsRectangle & ) ) );
+  return fs;
+}
+
 void QgsWFSProvider::reloadData()
 {
+  mPendingRetrieval = false;
   deleteData();
   delete mSpatialIndex;
   mSpatialIndex = new QgsSpatialIndex();
   mValid = !getFeature( dataSourceUri() );
+
+  if ( !mCached )
+    emit dataChanged();
 }
 
 void QgsWFSProvider::deleteData()
@@ -153,46 +170,6 @@ void QgsWFSProvider::deleteData()
   mFeatures.clear();
 }
 
-void QgsWFSProvider::copyFeature( QgsFeature* f, QgsFeature& feature, bool fetchGeometry )
-{
-  Q_UNUSED( fetchGeometry );
-
-  if ( !f )
-  {
-    return;
-  }
-
-  //copy the geometry
-  QgsGeometry* geometry = f->geometry();
-  if ( geometry && fetchGeometry )
-  {
-    const unsigned char *geom = geometry->asWkb();
-    int geomSize = geometry->wkbSize();
-    unsigned char* copiedGeom = new unsigned char[geomSize];
-    memcpy( copiedGeom, geom, geomSize );
-    feature.setGeometryAndOwnership( copiedGeom, geomSize );
-  }
-  else
-  {
-    feature.setGeometry( 0 );
-  }
-
-  //and the attributes
-  feature.initAttributes( mFields.size() );
-  for ( int i = 0; i < mFields.size(); i++ )
-  {
-    const QVariant &v = f->attributes().value( i );
-    if ( v.type() != mFields[i].type() )
-      feature.setAttribute( i, convertValue( mFields[i].type(), v.toString() ) );
-    else
-      feature.setAttribute( i, v );
-  }
-
-  //id and valid
-  feature.setValid( true );
-  feature.setFeatureId( f->id() );
-  feature.setFields( &mFields ); // allow name-based attribute lookups
-}
 
 QGis::WkbType QgsWFSProvider::geometryType() const
 {
@@ -231,6 +208,7 @@ bool QgsWFSProvider::isValid()
 
 QgsFeatureIterator QgsWFSProvider::getFeatures( const QgsFeatureRequest& request )
 {
+#if 0
   if ( !( request.flags() & QgsFeatureRequest::NoGeometry ) )
   {
     QgsRectangle rect = request.filterRect();
@@ -241,7 +219,7 @@ QgsFeatureIterator QgsWFSProvider::getFeatures( const QgsFeatureRequest& request
       //ctor cannot initialize because layer object not available then
       if ( ! mInitGro )
       { //did user check "Cache Features" in WFS layer source selection?
-        if ( dsURI.contains( "BBOX" ) )
+        if ( dsURI.contains( "BBOX=" ) )
         { //no: initialize incremental getFeature
           if ( initGetRenderedOnly( rect ) )
           {
@@ -299,7 +277,8 @@ QgsFeatureIterator QgsWFSProvider::getFeatures( const QgsFeatureRequest& request
     }
 
   }
-  return QgsFeatureIterator( new QgsWFSFeatureIterator( this, request ) );
+#endif
+  return new QgsWFSFeatureIterator( new QgsWFSFeatureSource( this ), true, request );
 }
 
 int QgsWFSProvider::getFeature( const QString& uri )
@@ -339,13 +318,6 @@ bool QgsWFSProvider::addFeatures( QgsFeatureList &flist )
 
     QDomElement featureElem = transactionDoc.createElementNS( mWfsNamespace, tname );
 
-    //add thematic attributes
-    const QgsFields* fields = featureIt->fields();
-    if ( !fields )
-    {
-      continue;
-    }
-
     QgsAttributes featureAttributes = featureIt->attributes();
     int nAttrs = featureAttributes.size();
     for ( int i = 0; i < nAttrs; ++i )
@@ -353,7 +325,7 @@ bool QgsWFSProvider::addFeatures( QgsFeatureList &flist )
       const QVariant& value = featureAttributes.at( i );
       if ( value.isValid() && !value.isNull() )
       {
-        QDomElement fieldElem = transactionDoc.createElementNS( mWfsNamespace, fields->field( i ).name() );
+        QDomElement fieldElem = transactionDoc.createElementNS( mWfsNamespace, mFields.at( i ).name() );
         QDomText fieldText = transactionDoc.createTextNode( value.toString() );
         fieldElem.appendChild( fieldText );
         featureElem.appendChild( fieldElem );
@@ -703,7 +675,7 @@ int QgsWFSProvider::getFeatureGET( const QString& uri, const QString& geometryAt
   QString typeName = parameterFromUrl( "typename" );
   QgsGml dataReader( typeName, geometryAttribute, mFields );
 
-  QObject::connect( &dataReader, SIGNAL( dataProgressAndSteps( int , int ) ), this, SLOT( handleWFSProgressMessage( int, int ) ) );
+  connect( &dataReader, SIGNAL( dataProgressAndSteps( int , int ) ), this, SLOT( handleWFSProgressMessage( int, int ) ) );
 
   //also connect to statusChanged signal of qgisapp (if it exists)
   QWidget* mainWindow = 0;
@@ -720,11 +692,15 @@ int QgsWFSProvider::getFeatureGET( const QString& uri, const QString& geometryAt
 
   if ( mainWindow )
   {
-    QObject::connect( this, SIGNAL( dataReadProgressMessage( QString ) ), mainWindow, SLOT( showStatusMessage( QString ) ) );
+    connect( this, SIGNAL( dataReadProgressMessage( QString ) ), mainWindow, SLOT( showStatusMessage( QString ) ) );
   }
 
   //if ( dataReader.getWFSData() != 0 )
-  if ( dataReader.getFeatures( uri, &mWKBType, &mExtent ) != 0 )
+  QUrl getFeatureUrl( uri );
+  getFeatureUrl.removeQueryItem( "username" );
+  getFeatureUrl.removeQueryItem( "password" );
+  QgsRectangle extent;
+  if ( dataReader.getFeatures( getFeatureUrl.toString(), &mWKBType, mCached ? &mExtent : &extent, mAuth.mUserName, mAuth.mPassword ) != 0 )
   {
     QgsDebugMsg( "getWFSData returned with error" );
     return 1;
@@ -733,7 +709,6 @@ int QgsWFSProvider::getFeatureGET( const QString& uri, const QString& geometryAt
   mIdMap = dataReader.idsMap();
 
   QgsDebugMsg( QString( "feature count after request is: %1" ).arg( mFeatures.size() ) );
-  QgsDebugMsg( QString( "mExtent after request is: %1" ).arg( mExtent.toString() ) );
 
   if ( mWKBType != QGis::WKBNoGeometry )
   {
@@ -768,7 +743,8 @@ int QgsWFSProvider::getFeatureFILE( const QString& uri, const QString& geometryA
 
   QDomElement featureCollectionElement = gmlDoc.documentElement();
   //get and set Extent
-  if ( mWKBType != QGis::WKBNoGeometry && getExtentFromGML2( &mExtent, featureCollectionElement ) != 0 )
+  QgsRectangle extent;
+  if ( mWKBType != QGis::WKBNoGeometry && getExtentFromGML2( mCached ? &mExtent : &extent, featureCollectionElement ) != 0 )
   {
     return 3;
   }
@@ -793,10 +769,13 @@ int QgsWFSProvider::describeFeatureTypeGET( const QString& uri, QString& geometr
   mNetworkRequestFinished = false;
 
   QUrl describeFeatureUrl( uri );
+  describeFeatureUrl.removeQueryItem( "username" );
+  describeFeatureUrl.removeQueryItem( "password" );
   describeFeatureUrl.removeQueryItem( "SRSNAME" );
   describeFeatureUrl.removeQueryItem( "REQUEST" );
   describeFeatureUrl.addQueryItem( "REQUEST", "DescribeFeatureType" );
   QNetworkRequest request( describeFeatureUrl.toString() );
+  mAuth.setAuthorization( request );
   QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
 
   connect( reply, SIGNAL( finished() ), this, SLOT( networkRequestFinished() ) );
@@ -1141,7 +1120,6 @@ int QgsWFSProvider::getExtentFromGML2( QgsRectangle* extent, const QDomElement& 
 
 int QgsWFSProvider::setCRSFromGML2( const QDomElement& wfsCollectionElement )
 {
-  QgsDebugMsg( "entering." );
   //search <gml:boundedBy>
   QDomNodeList boundedByList = wfsCollectionElement.elementsByTagNameNS( GML_NAMESPACE, "boundedBy" );
   if ( boundedByList.size() < 1 )
@@ -1380,6 +1358,8 @@ bool QgsWFSProvider::sendTransactionDocument( const QDomDocument& doc, QDomDocum
   mNetworkRequestFinished = false;
 
   QUrl typeDetectionUri( dataSourceUri() );
+  typeDetectionUri.removeQueryItem( "username" );
+  typeDetectionUri.removeQueryItem( "password" );
   typeDetectionUri.removeQueryItem( "REQUEST" );
   typeDetectionUri.removeQueryItem( "TYPENAME" );
   typeDetectionUri.removeQueryItem( "BBOX" );
@@ -1391,6 +1371,7 @@ bool QgsWFSProvider::sendTransactionDocument( const QDomDocument& doc, QDomDocum
   QString serverUrl = typeDetectionUri.toString();
 
   QNetworkRequest request( serverUrl );
+  mAuth.setAuthorization( request );
   request.setHeader( QNetworkRequest::ContentTypeHeader, "text/xml" );
   QNetworkReply* reply = QgsNetworkAccessManager::instance()->post( request, doc.toByteArray( -1 ) );
 
@@ -1500,7 +1481,7 @@ QgsFeatureId QgsWFSProvider::findNewKey() const
 
   //else return highest key + 1
   QMap<QgsFeatureId, QgsFeature*>::const_iterator lastIt = mFeatures.end();
-  lastIt--;
+  --lastIt;
   QgsFeatureId id = lastIt.key();
   return ++id;
 }
@@ -1517,7 +1498,11 @@ void QgsWFSProvider::getLayerCapabilities()
 
   QString uri = dataSourceUri();
   uri.replace( QString( "GetFeature" ), QString( "GetCapabilities" ) );
-  QNetworkRequest request( uri );
+  QUrl getCapabilitiesUrl( uri );
+  getCapabilitiesUrl.removeQueryItem( "username" );
+  getCapabilitiesUrl.removeQueryItem( "password" );
+  QNetworkRequest request( getCapabilitiesUrl.toString() );
+  mAuth.setAuthorization( request );
   QNetworkReply* reply = QgsNetworkAccessManager::instance()->get( request );
 
   connect( reply, SIGNAL( finished() ), this, SLOT( networkRequestFinished() ) );
@@ -1555,6 +1540,26 @@ void QgsWFSProvider::getLayerCapabilities()
     QString name = featureTypeList.at( i ).firstChildElement( "Name" ).text();
     if ( name == thisLayerName )
     {
+      if ( !mCached && mExtent.isEmpty() )
+      {
+        QDomElement e = featureTypeList.at( i ).firstChildElement( "LatLongBoundingBox" );
+        if ( !e.isNull() )
+        {
+          QgsRectangle r( e.attribute( "minx" ).toDouble(), e.attribute( "miny" ).toDouble(),
+                          e.attribute( "maxx" ).toDouble(), e.attribute( "maxy" ).toDouble() );
+          QgsCoordinateReferenceSystem src;
+          src.createFromOgcWmsCrs( "CRS:84" );
+          QgsCoordinateTransform ct( src, mSourceCRS );
+
+          QgsDebugMsg( "latlon ext:" + r.toString() );
+          QgsDebugMsg( "src:" + src.authid() );
+          QgsDebugMsg( "dst:" + mSourceCRS.authid() );
+
+          mExtent = ct.transformBoundingBox( r, QgsCoordinateTransform::ForwardTransform );
+
+          QgsDebugMsg( "layer ext:" + mExtent.toString() );
+        }
+      }
       appendSupportedOperations( featureTypeList.at( i ).firstChildElement( "Operations" ), capabilities );
       break;
     }
@@ -1590,9 +1595,10 @@ void QgsWFSProvider::appendSupportedOperations( const QDomElement& operationsEle
   }
 }
 
+#if 0
 //initialization for getRenderedOnly option
 //(formerly "Only request features overlapping the current view extent")
-bool QgsWFSProvider::initGetRenderedOnly( const QgsRectangle rect )
+bool QgsWFSProvider::initGetRenderedOnly( const QgsRectangle &rect )
 {
   Q_UNUSED( rect );
 
@@ -1617,6 +1623,7 @@ bool QgsWFSProvider::initGetRenderedOnly( const QgsRectangle rect )
   }
   return true;
 }
+#endif
 
 QGis::WkbType QgsWFSProvider::geomTypeFromPropertyType( QString attName, QString propType )
 {
@@ -1649,33 +1656,73 @@ void QgsWFSProvider::handleException( const QDomDocument& serverResponse )
   QDomElement exceptionElem = serverResponse.documentElement();
   if ( exceptionElem.isNull() )
   {
-    pushError( QObject::tr( "empty response" ) );
+    pushError( tr( "empty response" ) );
     return;
   }
 
   if ( exceptionElem.tagName() == "ServiceExceptionReport" )
   {
-    pushError( QObject::tr( "WFS service exception:%1" ).arg( exceptionElem.firstChildElement( "ServiceException" ).text() ) );
+    pushError( tr( "WFS service exception:%1" ).arg( exceptionElem.firstChildElement( "ServiceException" ).text() ) );
     return;
   }
 
   if ( exceptionElem.tagName() == "WFS_TransactionResponse" )
   {
-    pushError( QObject::tr( "unsuccessful service response: %1" ).arg( exceptionElem.firstChildElement( "TransactionResult" ).firstChildElement( "Message" ).text() ) );
+    pushError( tr( "unsuccessful service response: %1" ).arg( exceptionElem.firstChildElement( "TransactionResult" ).firstChildElement( "Message" ).text() ) );
     return;
   }
 
   if ( exceptionElem.tagName() == "ExceptionReport" )
   {
     QDomElement exception = exceptionElem.firstChildElement( "Exception" );
-    pushError( QObject::tr( "WFS exception report (code=%1 text=%2)" )
-               .arg( exception.attribute( "exceptionCode", QObject::tr( "missing" ) ) )
+    pushError( tr( "WFS exception report (code=%1 text=%2)" )
+               .arg( exception.attribute( "exceptionCode", tr( "missing" ) ) )
                .arg( exception.firstChildElement( "ExceptionText" ).text() )
              );
     return;
   }
 
-  pushError( QObject::tr( "unhandled response: %1" ).arg( exceptionElem.tagName() ) );
+  pushError( tr( "unhandled response: %1" ).arg( exceptionElem.tagName() ) );
+}
+
+void QgsWFSProvider::extendExtent( const QgsRectangle &extent )
+{
+  if ( mCached )
+    return;
+
+  QgsRectangle r( mExtent.intersect( &extent ) );
+
+  if ( mGetExtent.contains( r ) )
+    return;
+
+  if ( mGetExtent.isEmpty() )
+  {
+    mGetExtent = r;
+  }
+  else if ( qgsDoubleNear( mGetExtent.xMinimum(), r.xMinimum() ) &&
+            qgsDoubleNear( mGetExtent.yMinimum(), r.yMinimum() ) &&
+            qgsDoubleNear( mGetExtent.xMaximum(), r.xMaximum() ) &&
+            qgsDoubleNear( mGetExtent.yMaximum(), r.yMaximum() ) )
+  {
+    return;
+  }
+  else
+  {
+    mGetExtent.combineExtentWith( &r );
+  }
+
+  setDataSourceUri( dataSourceUri().replace( QRegExp( "BBOX=[^&]*" ),
+                    QString( "BBOX=%1,%2,%3,%4" )
+                    .arg( qgsDoubleToString( mGetExtent.xMinimum() ) )
+                    .arg( qgsDoubleToString( mGetExtent.yMinimum() ) )
+                    .arg( qgsDoubleToString( mGetExtent.xMaximum() ) )
+                    .arg( qgsDoubleToString( mGetExtent.yMaximum() ) ) ) );
+
+  if ( !mPendingRetrieval )
+  {
+    mPendingRetrieval = true;
+    QTimer::singleShot( 100, this, SLOT( reloadData() ) );
+  }
 }
 
 QGISEXTERN QgsWFSProvider* classFactory( const QString *uri )

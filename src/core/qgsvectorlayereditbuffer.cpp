@@ -40,7 +40,7 @@ bool QgsVectorLayerEditBuffer::isModified() const
 
 void QgsVectorLayerEditBuffer::undoIndexChanged( int index )
 {
-  qDebug( "undo index changed %d", index );
+  QgsDebugMsg( QString( "undo index changed %1" ).arg( index ) );
   Q_UNUSED( index );
   emit layerModified();
 }
@@ -85,7 +85,7 @@ void QgsVectorLayerEditBuffer::updateChangedAttributes( QgsFeature &f )
   if ( mChangedAttributeValues.contains( f.id() ) )
   {
     const QgsAttributeMap &map = mChangedAttributeValues[f.id()];
-    for ( QgsAttributeMap::const_iterator it = map.begin(); it != map.end(); it++ )
+    for ( QgsAttributeMap::const_iterator it = map.begin(); it != map.end(); ++it )
       attrs[it.key()] = it.value();
   }
 }
@@ -169,7 +169,7 @@ bool QgsVectorLayerEditBuffer::changeGeometry( QgsFeatureId fid, QgsGeometry* ge
 }
 
 
-bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field, QVariant value )
+bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field, const QVariant &newValue, const QVariant &oldValue )
 {
   if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::ChangeAttributeValues ) )
     return false;
@@ -184,7 +184,7 @@ bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field
        L->pendingFields().fieldOrigin( field ) == QgsFields::OriginJoin )
     return false;
 
-  L->undoStack()->push( new QgsVectorLayerUndoCommandChangeAttribute( this, fid, field, value ) );
+  L->undoStack()->push( new QgsVectorLayerUndoCommandChangeAttribute( this, fid, field, newValue, oldValue ) );
   return true;
 }
 
@@ -244,8 +244,6 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
   bool success = true;
 
   QgsFields oldFields = L->pendingFields();
-
-  bool hadPendingDeletes = !mDeletedFeatureIds.isEmpty();
 
   //
   // delete attributes
@@ -321,13 +319,30 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       attributeChangesOk = false;   // don't try attribute updates - they'll fail.
     }
 
-    for ( int i = 0; i < oldFields.count(); ++i )
+    for ( int i = 0; i < qMin( oldFields.count(), newFields.count() ); ++i )
     {
       const QgsField& oldField = oldFields[i];
       const QgsField& newField = newFields[i];
       if ( attributeChangesOk && oldField != newField )
       {
-        commitErrors << tr( "ERROR: field with index %1 is not the same!" ).arg( i );
+        commitErrors
+        << tr( "ERROR: field with index %1 is not the same!" ).arg( i )
+        << tr( "Provider: %1" ).arg( L->providerType() )
+        << tr( "Storage: %1" ).arg( L->storageType() )
+        << QString( "%1: name=%2 type=%3 typeName=%4 len=%5 precision=%6" )
+        .arg( tr( "expected field" ) )
+        .arg( oldField.name() )
+        .arg( QVariant::typeToName( oldField.type() ) )
+        .arg( oldField.typeName() )
+        .arg( oldField.length() )
+        .arg( oldField.precision() )
+        << QString( "%1: name=%2 type=%3 typeName=%4 len=%5 precision=%6" )
+        .arg( tr( "retrieved field" ) )
+        .arg( newField.name() )
+        .arg( QVariant::typeToName( newField.type() ) )
+        .arg( newField.typeName() )
+        .arg( newField.length() )
+        .arg( newField.precision() );
         attributeChangesOk = false;   // don't try attribute updates - they'll fail.
       }
     }
@@ -377,7 +392,7 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       {
         commitErrors << tr( "SUCCESS: %n feature(s) deleted.", "deleted features count", mDeletedFeatureIds.size() );
         // TODO[MD]: we should not need this here
-        for ( QgsFeatureIds::const_iterator it = mDeletedFeatureIds.begin(); it != mDeletedFeatureIds.end(); it++ )
+        for ( QgsFeatureIds::const_iterator it = mDeletedFeatureIds.begin(); it != mDeletedFeatureIds.end(); ++it )
         {
           mChangedAttributeValues.remove( *it );
           mChangedGeometries.remove( *it );
@@ -485,13 +500,6 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
       commitErrors << tr( "ERROR: %n geometries not changed.", "not changed geometries count", mChangedGeometries.size() );
       success = false;
     }
-  }
-
-  // for shapes run a REPACK after each transaction
-  // TODO: enhance provider interface to allow moving this there
-  if ( success && hadPendingDeletes && L->providerType() == "ogr" && L->storageType() == "ESRI Shapefile" )
-  {
-    provider->createSpatialIndex();
   }
 
   if ( !success && provider->hasErrors() )

@@ -5,6 +5,7 @@ class QgsDualView : QStackedWidget
 %End
 
   public:
+
     /**
      * The view modes, in which this widget can present information.
      * Relates to the QStackedWidget stacks.
@@ -37,9 +38,10 @@ class QgsDualView : QStackedWidget
      * @param layer      The layer which should be used to fetch features
      * @param mapCanvas  The mapCanvas (used for the FilterMode
      *                   {@link QgsAttributeTableFilterModel::ShowVisible}
-     * @param myDa       Used for attribute dialog creation
+     * @param request    Use a modified request to limit the shown features
+     * @param context    The context in which this view is shown
      */
-    void init( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, QgsDistanceArea myDa );
+    void init( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, const QgsFeatureRequest& request = QgsFeatureRequest(), QgsAttributeEditorContext context = QgsAttributeEditorContext() );
 
     /**
      * Change the current view mode.
@@ -54,6 +56,8 @@ class QgsDualView : QStackedWidget
      * @param filterMode
      */
     void setFilterMode( QgsAttributeTableFilterModel::FilterMode filterMode );
+
+    QgsAttributeTableFilterModel::FilterMode filterMode();
 
     /**
      * Toggle the selectedOnTop flag. If enabled, selected features will be moved to top.
@@ -86,12 +90,18 @@ class QgsDualView : QStackedWidget
      */
     void setFilteredFeatures( QgsFeatureIds filteredFeatures );
 
+    QgsFeatureIds filteredFeatures();
+
     /**
      * Returns the model which has the information about all features (not only filtered)
      *
      * @return The master model
      */
     QgsAttributeTableModel* masterModel() const;
+
+    void setRequest( const QgsFeatureRequest& request );
+
+    void setFeatureSelectionManager( QgsIFeatureSelectionManager* featureSelectionManager );
 
   protected:
     /**
@@ -112,9 +122,11 @@ class QgsDualView : QStackedWidget
 
     /**
      * @brief saveEditChanges
+     *
+     * @return true if the saving was ok. false is possible due to connected
+     *         validation logic.
      */
-
-    void saveEditChanges();
+    bool saveEditChanges();
 
   signals:
     /**
@@ -141,4 +153,18 @@ class QgsAttributeTableAction : QAction
   public slots:
     void execute();
     void featureForm();
+};
+
+class QgsAttributeTableMapLayerAction : QAction
+{
+%TypeHeaderCode
+#include <qgsdualview.h>
+%End
+
+  public:
+    QgsAttributeTableMapLayerAction( const QString &name, QgsDualView *dualView, QgsMapLayerAction* action, const QModelIndex &fieldIdx );
+
+  public slots:
+    void execute();
+
 };

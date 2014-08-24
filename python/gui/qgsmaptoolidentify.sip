@@ -1,4 +1,3 @@
-
 class QgsMapToolIdentify : QgsMapTool
 {
 %TypeHeaderCode
@@ -9,15 +8,16 @@ class QgsMapToolIdentify : QgsMapTool
 
     enum IdentifyMode
     {
-      DefaultQgsSetting = -1,
+      DefaultQgsSetting,
       ActiveLayer,
       TopDownStopAtFirst,
-      TopDownAll
+      TopDownAll,
+      LayerSelection
     };
 
     enum LayerType
     {
-      AllLayers = -1,
+      AllLayers,
       VectorLayer,
       RasterLayer
     };
@@ -65,7 +65,7 @@ class QgsMapToolIdentify : QgsMapTool
     @param layerList Performs the identification within the given list of layers. Default value is an empty list, i.e. uses all the layers.
     @param mode Identification mode. Can use Qgis default settings or a defined mode. Default mode is DefaultQgsSetting.
     @return a list of IdentifyResult*/
-    QList<QgsMapToolIdentify::IdentifyResult> identify(int x, int y, QList<QgsMapLayer*> layerList = QList<QgsMapLayer*>(), IdentifyMode mode = DefaultQgsSetting);
+    QList<QgsMapToolIdentify::IdentifyResult> identify( int x, int y, QList<QgsMapLayer*> layerList = QList<QgsMapLayer*>(), IdentifyMode mode = DefaultQgsSetting );
 
     /** Performs the identification.
     To avoid beeing forced to specify IdentifyMode with a list of layers
@@ -75,10 +75,15 @@ class QgsMapToolIdentify : QgsMapTool
     @param mode Identification mode. Can use Qgis default settings or a defined mode.
     @param layerType Only performs identification in a certain type of layers (raster, vector). Default value is AllLayers.
     @return a list of IdentifyResult*/
-    QList<QgsMapToolIdentify::IdentifyResult> identify(int x, int y, IdentifyMode mode, LayerType layerType = AllLayers);
+    QList<QgsMapToolIdentify::IdentifyResult> identify( int x, int y, IdentifyMode mode, LayerType layerType = AllLayers );
+
+  protected:
+    //! rubber bands for layer select mode
+    void deleteRubberBands();
 
   public slots:
     void formatChanged( QgsRasterLayer *layer );
+    void layerDestroyed();
 
   signals:
     void identifyProgress( int, int );

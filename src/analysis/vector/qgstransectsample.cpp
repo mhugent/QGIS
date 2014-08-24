@@ -6,7 +6,9 @@
 #include "qgsvectorlayer.h"
 #include <QProgressDialog>
 #include <QFileInfo>
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 #include "mersenne-twister.h"
 #include <limits>
 
@@ -188,7 +190,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
 
     while ( nCreatedTransects < nTransects && nIterations < nMaxIterations )
     {
-      double randomPosition = (( double )mt_rand() / std::numeric_limits<int32_t>::max() ) * clippedBaseline->length();
+      double randomPosition = (( double )mt_rand() / MD_RAND_MAX ) * clippedBaseline->length();
       QgsGeometry* samplePoint = clippedBaseline->interpolate( randomPosition );
       ++nIterations;
       if ( !samplePoint )

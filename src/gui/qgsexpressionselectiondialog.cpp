@@ -25,6 +25,8 @@ QgsExpressionSelectionDialog::QgsExpressionSelectionDialog( QgsVectorLayer* laye
 {
   setupUi( this );
 
+  setWindowTitle( QString( "Select by expression - %1" ).arg( layer->name() ) );
+
   mActionSelect->setIcon( QgsApplication::getThemeIcon( "/mIconExpressionSelect.svg" ) );
   mActionAddToSelection->setIcon( QgsApplication::getThemeIcon( "/mIconSelectAdd.svg" ) );
   mActionRemoveFromSelection->setIcon( QgsApplication::getThemeIcon( "/mIconSelectRemove.svg" ) );
@@ -39,6 +41,7 @@ QgsExpressionSelectionDialog::QgsExpressionSelectionDialog( QgsVectorLayer* laye
   mExpressionBuilder->setLayer( layer );
   mExpressionBuilder->setExpressionText( startText );
   mExpressionBuilder->loadFieldNames();
+  mExpressionBuilder->loadRecent( "Selection" );
 
   QSettings settings;
   restoreGeometry( settings.value( "/Windows/ExpressionSelectionDialog/geometry" ).toByteArray() );
@@ -90,6 +93,7 @@ void QgsExpressionSelectionDialog::on_mActionSelect_triggered()
   mLayer->setSelectedFeatures( newSelection );
 
   delete expression;
+  saveRecent();
 }
 
 void QgsExpressionSelectionDialog::on_mActionAddToSelection_triggered()
@@ -117,6 +121,7 @@ void QgsExpressionSelectionDialog::on_mActionAddToSelection_triggered()
   mLayer->setSelectedFeatures( newSelection );
 
   delete expression;
+  saveRecent();
 }
 
 void QgsExpressionSelectionDialog::on_mActionSelectInstersect_triggered()
@@ -153,6 +158,7 @@ void QgsExpressionSelectionDialog::on_mActionSelectInstersect_triggered()
   mLayer->setSelectedFeatures( newSelection );
 
   delete expression;
+  saveRecent();
 }
 
 void QgsExpressionSelectionDialog::on_mActionRemoveFromSelection_triggered()
@@ -189,6 +195,8 @@ void QgsExpressionSelectionDialog::on_mActionRemoveFromSelection_triggered()
   mLayer->setSelectedFeatures( newSelection );
 
   delete expression;
+
+  saveRecent();
 }
 
 void QgsExpressionSelectionDialog::closeEvent( QCloseEvent *closeEvent )
@@ -208,4 +216,9 @@ void QgsExpressionSelectionDialog::done( int r )
 {
   QDialog::done( r );
   close();
+}
+
+void QgsExpressionSelectionDialog::saveRecent()
+{
+  mExpressionBuilder->saveToRecent( "Selection" );
 }

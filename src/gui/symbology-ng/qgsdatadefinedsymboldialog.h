@@ -33,16 +33,15 @@ class GUI_EXPORT QgsDataDefinedSymbolDialog: public QDialog, private Ui::QgsData
     static QString colorHelpText();
     static QString offsetHelpText();
     static QString fileNameHelpText();
-
-  private slots:
-    void expressionButtonClicked();
+    static QString horizontalAnchorHelpText();
+    static QString verticalAnchorHelpText();
+    static QString gradientTypeHelpText();
+    static QString gradientCoordModeHelpText();
+    static QString gradientSpreadHelpText();
+    static QString boolHelpText();
 
   private:
     const QgsVectorLayer* mVectorLayer;
-
-    /**Tries to fiend a combo box field for an expression string (considering whitespaces, brackets around attribute names)
-        @return index or -1 in case not found*/
-    int comboIndexForExpressionString( const QString& expr, const QComboBox* cb );
 };
 
 #endif // QGSDATADEFINEDSYMBOLLAYERDIALOG_H

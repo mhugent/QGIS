@@ -21,6 +21,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFont>
+#include <QFontDatabase>
 #include <QPixmap>
 #include <QLocale>
 #include <QSettings>
@@ -34,6 +35,7 @@
 #include <QMessageBox>
 
 #include "qgscustomization.h"
+#include "qgsfontutils.h"
 #include "qgspluginregistry.h"
 #include "qgsmessagelog.h"
 #include "qgspythonrunner.h"
@@ -41,6 +43,7 @@
 #include <cstdio>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #ifdef WIN32
 // Open files in binary mode
@@ -66,6 +69,9 @@ int _fmode = _O_BINARY;
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
 typedef SInt32 SRefCon;
 #endif
+// For setting the maximum open files limit higher
+#include <sys/resource.h>
+#include <limits.h>
 #endif
 
 #include "qgisapp.h"
@@ -83,12 +89,8 @@ typedef SInt32 SRefCon;
 #include <unistd.h>
 #include <execinfo.h>
 #include <signal.h>
-#endif
-
-// (if Windows/Mac, use icon from resource)
-#if !defined(Q_WS_WIN) && !defined(Q_WS_MAC)
-#include "../../images/themes/default/qgis.xpm" // Linux
-#include <QIcon>
+#include <sys/wait.h>
+#include <errno.h>
 #endif
 
 /** print usage text
@@ -113,6 +115,7 @@ void usage( std::string const & appName )
             << "\t[--optionspath path]\tuse the given QSettings path\n"
             << "\t[--configpath path]\tuse the given path for all user configuration\n"
             << "\t[--code path]\trun the given python file on load\n"
+            << "\t[--defaultui]\tstart by resetting user ui settings to default\n"
             << "\t[--help]\t\tthis text\n\n"
             << "  FILE:\n"
             << "    Files specified on the command line can include rasters,\n"
@@ -151,60 +154,29 @@ bool bundleclicked( int argc, char *argv[] )
   return ( argc > 1 && memcmp( argv[1], "-psn_", 5 ) == 0 );
 }
 
-#ifdef Q_OS_WIN
-LONG WINAPI qgisCrashDump( struct _EXCEPTION_POINTERS *ExceptionInfo )
+void myPrint( const char *fmt, ... )
 {
-  QString dumpName = QDir::toNativeSeparators(
-                       QString( "%1\\qgis-%2-%3-%4-%5.dmp" )
-                       .arg( QDir::tempPath() )
-                       .arg( QDateTime::currentDateTime().toString( "yyyyMMdd-hhmmss" ) )
-                       .arg( GetCurrentProcessId() )
-                       .arg( GetCurrentThreadId() )
-                       .arg( QGis::QGIS_DEV_VERSION )
-                     );
-
-  QString msg;
-  HANDLE hDumpFile = CreateFile( dumpName.toLocal8Bit(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0 );
-  if ( hDumpFile != INVALID_HANDLE_VALUE )
-  {
-    MINIDUMP_EXCEPTION_INFORMATION ExpParam;
-    ExpParam.ThreadId = GetCurrentThreadId();
-    ExpParam.ExceptionPointers = ExceptionInfo;
-    ExpParam.ClientPointers = TRUE;
-
-    if ( MiniDumpWriteDump( GetCurrentProcess(), GetCurrentProcessId(), hDumpFile, MiniDumpWithDataSegs, ExceptionInfo ? &ExpParam : NULL, NULL, NULL ) )
-    {
-      msg = QObject::tr( "minidump written to %1" ).arg( dumpName );
-    }
-    else
-    {
-      msg = QObject::tr( "writing of minidump to %1 failed (%2)" ).arg( dumpName ).arg( GetLastError(), 0, 16 );
-    }
-
-    CloseHandle( hDumpFile );
-  }
-  else
-  {
-    msg = QObject::tr( "creation of minidump to %1 failed (%2)" ).arg( dumpName ).arg( GetLastError(), 0, 16 );
-  }
-
-  QMessageBox::critical( 0, QObject::tr( "Crash dumped" ), msg );
-
-  return EXCEPTION_EXECUTE_HANDLER;
-}
+  va_list ap;
+  va_start( ap, fmt );
+#if defined(Q_OS_WIN)
+  char buffer[1024];
+  vsnprintf( buffer, sizeof buffer, fmt, ap );
+  OutputDebugString( buffer );
+#else
+  vfprintf( stderr, fmt, ap );
 #endif
+}
+
+static void dumpBacktrace( unsigned int depth )
+{
+  if ( depth == 0 )
+    depth = 20;
 
 #if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
-void qgisCrash( int signal )
-{
-  qFatal( "QGIS died on signal %d", signal );
-}
-
-void dumpBacktrace()
-{
-  if ( access( "/usr/bin/c++filt", X_OK ) )
+  int stderr_fd = -1;
+  if ( access( "/usr/bin/c++filt", X_OK ) < 0 )
   {
-    ( void ) write( STDERR_FILENO, "Stacktrace (c++filt NOT FOUND):\n", 32 );
+    myPrint( "Stacktrace (c++filt NOT FOUND):\n" );
   }
   else
   {
@@ -212,23 +184,123 @@ void dumpBacktrace()
 
     if ( pipe( fd ) == 0 && fork() == 0 )
     {
-      close( STDIN_FILENO );
-      close( fd[1] );
-      dup( fd[0] );
+      close( STDIN_FILENO ); // close stdin
+
+      // stdin from pipe
+      if ( dup( fd[0] ) != STDIN_FILENO )
+      {
+        QgsDebugMsg( "dup to stdin failed" );
+      }
+
+      close( fd[1] );        // close writing end
       execl( "/usr/bin/c++filt", "c++filt", ( char * ) 0 );
+      perror( "could not start c++filt" );
       exit( 1 );
     }
 
-    ( void ) write( STDERR_FILENO, "Stacktrace (piped through c++filt):\n", 36 );
+    myPrint( "Stacktrace (piped through c++filt):\n" );
+    stderr_fd = dup( STDERR_FILENO );
+    close( fd[0] );          // close reading end
+    close( STDERR_FILENO );  // close stderr
 
-    close( STDERR_FILENO );
-    close( fd[0] );
-    dup( fd[1] );
+    // stderr to pipe
+    if ( dup( fd[1] ) != STDERR_FILENO )
+    {
+      QgsDebugMsg( "dup to stderr failed" );
+    }
+
+    close( fd[1] );          // close duped pipe
   }
 
-  void *buffer[256];
-  int nptrs = backtrace( buffer, sizeof( buffer ) / sizeof( *buffer ) );
+  void **buffer = new void *[ depth ];
+  int nptrs = backtrace( buffer, depth );
   backtrace_symbols_fd( buffer, nptrs, STDERR_FILENO );
+  delete [] buffer;
+  if ( stderr_fd >= 0 )
+  {
+    int status;
+    close( STDERR_FILENO );
+    if ( dup( stderr_fd ) != STDERR_FILENO )
+    {
+      QgsDebugMsg( "dup to stderr failed" );
+    }
+    close( stderr_fd );
+    wait( &status );
+  }
+#elif defined(Q_OS_WIN)
+  void **buffer = new void *[ depth ];
+
+  SymSetOptions( SYMOPT_DEFERRED_LOADS | SYMOPT_INCLUDE_32BIT_MODULES | SYMOPT_UNDNAME );
+  SymInitialize( GetCurrentProcess(), "http://msdl.microsoft.com/download/symbols", TRUE );
+
+  unsigned short nFrames = CaptureStackBackTrace( 1, depth, buffer, NULL );
+  SYMBOL_INFO *symbol = ( SYMBOL_INFO * ) qgsMalloc( sizeof( SYMBOL_INFO ) + 256 );
+  symbol->MaxNameLen = 255;
+  symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
+
+  for ( int i = 0; i < nFrames; i++ )
+  {
+    SymFromAddr( GetCurrentProcess(), ( DWORD64 )( buffer[ i ] ), 0, symbol );
+    symbol->Name[ 255 ] = 0;
+    myPrint( "%d: %s [%x]\n", i, symbol->Name, symbol->Address );
+  }
+
+  qgsFree( symbol );
+#endif
+}
+
+#if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
+void qgisCrash( int signal )
+{
+  fprintf( stderr, "QGIS died on signal %d", signal );
+
+  if ( access( "/usr/bin/gdb", X_OK ) == 0 )
+  {
+    // take full stacktrace using gdb
+    // http://stackoverflow.com/questions/3151779/how-its-better-to-invoke-gdb-from-program-to-print-its-stacktrace
+    // unfortunately, this is not so simple. the proper method is way more OS-specific
+    // than this code would suggest, see http://stackoverflow.com/a/1024937
+
+    char exename[512];
+#if defined(__FreeBSD__)
+    int len = readlink( "/proc/curproc/file", exename, sizeof( exename ) - 1 );
+#else
+    int len = readlink( "/proc/self/exe", exename, sizeof( exename ) - 1 );
+#endif
+    if ( len < 0 )
+    {
+      myPrint( "Could not read link (%d:%s)\n", errno, strerror( errno ) );
+    }
+    else
+    {
+      exename[ len ] = 0;
+
+      char pidstr[32];
+      snprintf( pidstr, sizeof pidstr, "--pid=%d", getpid() );
+
+      int gdbpid = fork();
+      if ( gdbpid == 0 )
+      {
+        // attach, backtrace and continue
+        execl( "/usr/bin/gdb", "gdb", "-q", "-batch", "-n", pidstr, "-ex", "thread", "-ex", "bt full", exename, NULL );
+        perror( "cannot exec gdb" );
+        exit( 1 );
+      }
+      else if ( gdbpid >= 0 )
+      {
+        int status;
+        waitpid( gdbpid, &status, 0 );
+        myPrint( "gdb returned %d\n", status );
+      }
+      else
+      {
+        myPrint( "Cannot fork (%d:%s)\n", errno, strerror( errno ) );
+        dumpBacktrace( 256 );
+      }
+    }
+  }
+
+  abort();
 }
 #endif
 
@@ -248,29 +320,23 @@ void myMessageOutput( QtMsgType type, const char *msg )
   switch ( type )
   {
     case QtDebugMsg:
-      fprintf( stderr, "Debug: %s\n", msg );
-#if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
+      myPrint( "%s\n", msg );
       if ( strncmp( msg, "Backtrace", 9 ) == 0 )
-        dumpBacktrace();
-#endif
+        dumpBacktrace( atoi( msg + 9 ) );
       break;
     case QtCriticalMsg:
-      fprintf( stderr, "Critical: %s\n", msg );
+      myPrint( "Critical: %s\n", msg );
       break;
     case QtWarningMsg:
-      fprintf( stderr, "Warning: %s\n", msg );
+      myPrint( "Warning: %s\n", msg );
 
 #ifdef QGISDEBUG
-      if ( 0 == strncmp( msg, "Object::", 8 )
-           || 0 == strncmp( msg, "QWidget::", 9 )
-           || 0 == strncmp( msg, "QPainter::", 10 )
-         )
+      // Print all warnings except setNamedColor.
+      // Only seems to happen on windows
+      if ( 0 != strncmp( msg, "QColor::setNamedColor: Unknown color name 'param", 48 ) )
       {
-#if 0
-#if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
-        dumpBacktrace();
-#endif
-#endif
+        // TODO: Verify this code in action.
+        dumpBacktrace( 20 );
         QgsMessageLog::logMessage( msg, "Qt" );
       }
 #endif
@@ -285,17 +351,54 @@ void myMessageOutput( QtMsgType type, const char *msg )
       break;
     case QtFatalMsg:
     {
-      fprintf( stderr, "Fatal: %s\n", msg );
+      myPrint( "Fatal: %s\n", msg );
 #if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
-      dumpBacktrace();
+      qgisCrash( -1 );
+#else
+      dumpBacktrace( 256 );
+      abort();                    // deliberately dump core
 #endif
-      abort();                    // deliberately core dump
     }
   }
 }
 
 int main( int argc, char *argv[] )
 {
+#ifdef Q_OS_MACX
+  // Increase file resource limits (i.e., number of allowed open files)
+  // (from code provided by Larry Biehl, Purdue University, USA, from 'MultiSpec' project)
+  // This is generally 256 for the soft limit on Mac
+  // NOTE: setrlimit() must come *before* initialization of stdio strings,
+  //       e.g. before any debug messages, or setrlimit() gets ignored
+  // see: http://stackoverflow.com/a/17726104/2865523
+  struct rlimit rescLimit;
+  if ( getrlimit( RLIMIT_NOFILE, &rescLimit ) == 0 )
+  {
+    rlim_t oldSoft( rescLimit.rlim_cur );
+    rlim_t oldHard( rescLimit.rlim_max );
+#ifdef OPEN_MAX
+    rlim_t newSoft( OPEN_MAX );
+    rlim_t newHard( std::min( oldHard, newSoft ) );
+#else
+    rlim_t newSoft( 4096 );
+    rlim_t newHard( std::min(( rlim_t )8192, oldHard ) );
+#endif
+    if ( rescLimit.rlim_cur < newSoft )
+    {
+      rescLimit.rlim_cur = newSoft;
+      rescLimit.rlim_max = newHard;
+
+      if ( setrlimit( RLIMIT_NOFILE, &rescLimit ) == 0 )
+      {
+        QgsDebugMsg( QString( "Mac RLIMIT_NOFILE Soft/Hard NEW: %1 / %2" )
+                     .arg( rescLimit.rlim_cur ).arg( rescLimit.rlim_max ) );
+      }
+    }
+    QgsDebugMsg( QString( "Mac RLIMIT_NOFILE Soft/Hard ORIG: %1 / %2" )
+                 .arg( oldSoft ).arg( oldHard ) );
+  }
+#endif
+
   QgsDebugMsg( QString( "Starting qgis main" ) );
 #ifdef WIN32  // Windows
 #ifdef _MSC_VER
@@ -305,10 +408,12 @@ int main( int argc, char *argv[] )
 #endif  // _MSC_VER
 #endif  // WIN32
 
-#if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
   // Set up the custom qWarning/qDebug custom handler
+#ifndef ANDROID
   qInstallMsgHandler( myMessageOutput );
+#endif
 
+#if (defined(linux) && !defined(ANDROID)) || defined(__FreeBSD__)
   signal( SIGQUIT, qgisCrash );
   signal( SIGILL, qgisCrash );
   signal( SIGFPE, qgisCrash );
@@ -321,7 +426,7 @@ int main( int argc, char *argv[] )
 #endif
 
 #ifdef Q_OS_WIN
-  SetUnhandledExceptionFilter( qgisCrashDump );
+  SetUnhandledExceptionFilter( QgisApp::qgisCrashDump );
 #endif
 
   // initialize random number seed
@@ -349,6 +454,7 @@ int main( int argc, char *argv[] )
   myHideSplash = true;
 #endif
 
+  bool myRestoreDefaultWindowState = false;
   bool myRestorePlugins = true;
   bool myCustomization = true;
 
@@ -376,210 +482,110 @@ int main( int argc, char *argv[] )
 #if defined(ANDROID)
   QgsDebugMsg( QString( "Android: All params stripped" ) );// Param %1" ).arg( argv[0] ) );
   //put all QGIS settings in the same place
-  configpath = QgsApplication::qgisSettingsPath();
+  configpath = QgsApplication::qgisSettingsDirPath();
   QgsDebugMsg( QString( "Android: configpath set to %1" ).arg( configpath ) );
-#elif defined(Q_WS_WIN)
-  for ( int i = 1; i < argc; i++ )
-  {
-    QString arg = argv[i];
+#endif
 
-    if ( arg == "--help" || arg == "-?" )
-    {
-      usage( argv[0] );
-      return 2;
-    }
-    else if ( arg == "-nologo" || arg == "-n" )
-    {
-      myHideSplash = true;
-    }
-    else if ( arg == "--noplugins" || arg == "-P" )
-    {
-      myRestorePlugins = false;
-    }
-    else if ( arg == "--nocustomization" || arg == "-C" )
-    {
-      myCustomization = false;
-    }
-    else if ( i + 1 < argc && ( arg == "--snapshot" || arg == "-s" ) )
-    {
-      mySnapshotFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
-    }
-    else if ( i + 1 < argc && ( arg == "--width" || arg == "-w" ) )
-    {
-      mySnapshotWidth = QString( argv[++i] ).toInt();
-    }
-    else if ( i + 1 < argc && ( arg == "--height" || arg == "-h" ) )
-    {
-      mySnapshotHeight = QString( argv[++i] ).toInt();
-    }
-    else if ( i + 1 < argc && ( arg == "--lang" || arg == "-l" ) )
-    {
-      myTranslationCode = argv[++i];
-    }
-    else if ( i + 1 < argc && ( arg == "--project" || arg == "-p" ) )
-    {
-      myProjectFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[++i] ) ).absoluteFilePath() );
-    }
-    else if ( i + 1 < argc && ( arg == "--extent" || arg == "-e" ) )
-    {
-      myInitialExtent = argv[++i];
-    }
-    else if ( i + 1 < argc && ( arg == "--optionspath" || arg == "-o" ) )
-    {
-      optionpath = argv[++i];
-    }
-    else if ( i + 1 < argc && ( arg == "--configpath" || arg == "-c" ) )
-    {
-      configpath = argv[++i];
-    }
-    else if ( i + 1 < argc && ( arg == "--code" || arg == "-f" ) )
-    {
-      pythonfile = argv[++i];
-    }
-    else if ( i + 1 < argc && ( arg == "--customizationfile" || arg == "-z" ) )
-    {
-      customizationfile = argv[++i];
-    }
-    else
-    {
-      myFileList.append( QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[i] ) ).absoluteFilePath() ) );
-    }
-  }
-#else
+  QStringList args;
+
   if ( !bundleclicked( argc, argv ) )
   {
+    // Build a local QCoreApplication from arguments. This way, arguments are correctly parsed from their native locale
+    // It will use QString::fromLocal8Bit( argv ) under Unix and GetCommandLine() under Windows.
+    QCoreApplication coreApp( argc, argv );
+    args = QCoreApplication::arguments();
 
-    ////////////////////////////////////////////////////////////////
-    // Use the GNU Getopts utility to parse cli arguments
-    // Invokes ctor `GetOpt (int argc, char **argv,  char *optstring);'
-    ///////////////////////////////////////////////////////////////
-    int optionChar;
-    while ( 1 )
+    for ( int i = 1; i < args.size(); ++i )
     {
-      static struct option long_options[] =
+      QString arg = args[i];
+
+      if ( arg == "--help" || arg == "-?" )
       {
-        /* These options set a flag. */
-        {"help", no_argument, 0, '?'},
-        {"nologo", no_argument, 0, 'n'},
-        {"noplugins", no_argument, 0, 'P'},
-        {"nocustomization", no_argument, 0, 'C'},
-        /* These options don't set a flag.
-         *  We distinguish them by their indices. */
-        {"snapshot", required_argument, 0, 's'},
-        {"width",    required_argument, 0, 'w'},
-        {"height",   required_argument, 0, 'h'},
-        {"lang",     required_argument, 0, 'l'},
-        {"project",  required_argument, 0, 'p'},
-        {"extent",   required_argument, 0, 'e'},
-        {"optionspath", required_argument, 0, 'o'},
-        {"configpath", required_argument, 0, 'c'},
-        {"customizationfile", required_argument, 0, 'z'},
-        {"code", required_argument, 0, 'f'},
-        {"android", required_argument, 0, 'a'},
-        {0, 0, 0, 0}
-      };
-
-      /* getopt_long stores the option index here. */
-      int option_index = 0;
-
-      optionChar = getopt_long( argc, argv, "swhlpeoc",
-                                long_options, &option_index );
-      QgsDebugMsg( QString( "Qgis main Debug" ) + optionChar );
-      /* Detect the end of the options. */
-      if ( optionChar == -1 )
-        break;
-
-      switch ( optionChar )
-      {
-        case 0:
-          /* If this option set a flag, do nothing else now. */
-          if ( long_options[option_index].flag != 0 )
-            break;
-          printf( "option %s", long_options[option_index].name );
-          if ( optarg )
-            printf( " with arg %s", optarg );
-          printf( "\n" );
-          break;
-
-        case 's':
-          mySnapshotFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
-          break;
-
-        case 'w':
-          mySnapshotWidth = QString( optarg ).toInt();
-          break;
-
-        case 'h':
-          mySnapshotHeight = QString( optarg ).toInt();
-          break;
-
-        case 'n':
-          myHideSplash = true;
-          break;
-
-        case 'l':
-          myTranslationCode = optarg;
-          break;
-
-        case 'p':
-          myProjectFileName = QDir::convertSeparators( QFileInfo( QFile::decodeName( optarg ) ).absoluteFilePath() );
-          break;
-
-        case 'P':
-          myRestorePlugins = false;
-          break;
-
-        case 'C':
-          myCustomization = false;
-          break;
-
-        case 'e':
-          myInitialExtent = optarg;
-          break;
-
-        case 'o':
-          optionpath = optarg;
-          break;
-
-        case 'c':
-          configpath = optarg;
-          break;
-
-        case 'f':
-          pythonfile = optarg;
-          break;
-
-        case 'z':
-          customizationfile = optarg;
-          break;
-
-        case '?':
-          usage( argv[0] );
-          return 2;   // XXX need standard exit codes
-          break;
-
-        default:
-          QgsDebugMsg( QString( "%1: getopt returned character code %2" ).arg( argv[0] ).arg( optionChar ) );
-          return 1;   // XXX need standard exit codes
+        usage( args[0].toStdString() );
+        return 2;
       }
-    }
-
-    // Add any remaining args to the file list - we will attempt to load them
-    // as layers in the map view further down....
-    QgsDebugMsg( QString( "Files specified on command line: %1" ).arg( optind ) );
-    if ( optind < argc )
-    {
-      while ( optind < argc )
+      else if ( arg == "--nologo" || arg == "-n" )
       {
-#ifdef QGISDEBUG
-        int idx = optind;
-        QgsDebugMsg( QString( "%1: %2" ).arg( idx ).arg( argv[idx] ) );
-#endif
-        myFileList.append( QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[optind++] ) ).absoluteFilePath() ) );
+        myHideSplash = true;
+      }
+      else if ( arg == "--noplugins" || arg == "-P" )
+      {
+        myRestorePlugins = false;
+      }
+      else if ( arg == "--nocustomization" || arg == "-C" )
+      {
+        myCustomization = false;
+      }
+      else if ( i + 1 < argc && ( arg == "--snapshot" || arg == "-s" ) )
+      {
+        mySnapshotFileName = QDir::toNativeSeparators( QFileInfo( args[++i] ).absoluteFilePath() );
+      }
+      else if ( i + 1 < argc && ( arg == "--width" || arg == "-w" ) )
+      {
+        mySnapshotWidth = QString( args[++i] ).toInt();
+      }
+      else if ( i + 1 < argc && ( arg == "--height" || arg == "-h" ) )
+      {
+        mySnapshotHeight = QString( args[++i] ).toInt();
+      }
+      else if ( i + 1 < argc && ( arg == "--lang" || arg == "-l" ) )
+      {
+        myTranslationCode = args[++i];
+      }
+      else if ( i + 1 < argc && ( arg == "--project" || arg == "-p" ) )
+      {
+        myProjectFileName = QDir::toNativeSeparators( QFileInfo( args[++i] ).absoluteFilePath() );
+      }
+      else if ( i + 1 < argc && ( arg == "--extent" || arg == "-e" ) )
+      {
+        myInitialExtent = args[++i];
+      }
+      else if ( i + 1 < argc && ( arg == "--optionspath" || arg == "-o" ) )
+      {
+        optionpath = QDir::toNativeSeparators( QDir( args[++i] ).absolutePath() );
+      }
+      else if ( i + 1 < argc && ( arg == "--configpath" || arg == "-c" ) )
+      {
+        configpath = QDir::toNativeSeparators( QDir( args[++i] ).absolutePath() );
+      }
+      else if ( i + 1 < argc && ( arg == "--code" || arg == "-f" ) )
+      {
+        pythonfile = QDir::toNativeSeparators( QFileInfo( args[++i] ).absoluteFilePath() );
+      }
+      else if ( i + 1 < argc && ( arg == "--customizationfile" || arg == "-z" ) )
+      {
+        customizationfile = QDir::toNativeSeparators( QFileInfo( args[++i] ).absoluteFilePath() );
+      }
+      else if ( arg == "--defaultui" || arg == "-d" )
+      {
+        myRestoreDefaultWindowState = true;
+      }
+      else
+      {
+        myFileList.append( QDir::toNativeSeparators( QFileInfo( args[i] ).absoluteFilePath() ) );
       }
     }
   }
-#endif
+
+  /////////////////////////////////////////////////////////////////////
+  // If no --project was specified, parse the args to look for a     //
+  // .qgs file and set myProjectFileName to it. This allows loading  //
+  // of a project file by clicking on it in various desktop managers //
+  // where an appropriate mime-type has been set up.                 //
+  /////////////////////////////////////////////////////////////////////
+  if ( myProjectFileName.isEmpty() )
+  {
+    // check for a .qgs
+    for ( int i = 0; i < args.size(); i++ )
+    {
+      QString arg = QDir::toNativeSeparators( QFileInfo( args[i] ).absoluteFilePath() );
+      if ( arg.contains( ".qgs" ) )
+      {
+        myProjectFileName = arg;
+        break;
+      }
+    }
+  }
 
 
   /////////////////////////////////////////////////////////////////////
@@ -623,14 +629,14 @@ int main( int argc, char *argv[] )
 
 // (if Windows/Mac, use icon from resource)
 #if !defined(Q_WS_WIN) && !defined(Q_WS_MAC)
-  myApp.setWindowIcon( QPixmap( qgis_xpm ) );        // Linux
+  myApp.setWindowIcon( QIcon( QgsApplication::iconsPath() + "qgis-icon-60x60.png" ) );
 #endif
 
   //
   // Set up the QSettings environment must be done after qapp is created
-  QCoreApplication::setOrganizationName( "NIWA" );
-  QCoreApplication::setOrganizationDomain( "niwa.co.nz" );
-  QCoreApplication::setApplicationName( "NIWA Quantum Map" );
+  QCoreApplication::setOrganizationName( QgsApplication::QGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( QgsApplication::QGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( QgsApplication::QGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   QSettings* customizationsettings;
@@ -737,6 +743,10 @@ int main( int argc, char *argv[] )
     }
   }
 
+#ifdef QGISDEBUG
+  QgsFontUtils::loadStandardTestFonts( QStringList() << "Roman" << "Bold" );
+#endif
+
   // Set the application style.  If it's not set QT will use the platform style except on Windows
   // as it looks really ugly so we use QPlastiqueStyle.
   QString style = mySettings.value( "/qgis/style" ).toString();
@@ -781,33 +791,63 @@ int main( int argc, char *argv[] )
     }
   }
 
-#ifdef QGISDEBUG
-// QgsDebugMsg(QString("Setting translation to %1/qgis_%2").arg(i18nPath).arg(myTranslationCode));
-#endif
   QTranslator qgistor( 0 );
-  if ( qgistor.load( QString( "qgis_" ) + myTranslationCode, i18nPath ) )
+  QTranslator qttor( 0 );
+  if ( myTranslationCode != "C" )
   {
-    myApp.installTranslator( &qgistor );
-  }
-  else
-  {
-    qWarning( "loading of qgis translation failed [%s]", QString( "%1/qgis_%2" ).arg( i18nPath ).arg( myTranslationCode ).toLocal8Bit().constData() );
+    if ( qgistor.load( QString( "qgis_" ) + myTranslationCode, i18nPath ) )
+    {
+      myApp.installTranslator( &qgistor );
+    }
+    else
+    {
+      qWarning( "loading of qgis translation failed [%s]", QString( "%1/qgis_%2" ).arg( i18nPath ).arg( myTranslationCode ).toLocal8Bit().constData() );
+    }
+
+    /* Translation file for Qt.
+     * The strings from the QMenuBar context section are used by Qt/Mac to shift
+     * the About, Preferences and Quit items to the Mac Application menu.
+     * These items must be translated identically in both qt_ and qgis_ files.
+     */
+    if ( qttor.load( QString( "qt_" ) + myTranslationCode, QLibraryInfo::location( QLibraryInfo::TranslationsPath ) ) )
+    {
+      myApp.installTranslator( &qttor );
+    }
+    else
+    {
+      qWarning( "loading of qt translation failed [%s]", QString( "%1/qt_%2" ).arg( QLibraryInfo::location( QLibraryInfo::TranslationsPath ) ).arg( myTranslationCode ).toLocal8Bit().constData() );
+    }
   }
 
-  /* Translation file for Qt.
-   * The strings from the QMenuBar context section are used by Qt/Mac to shift
-   * the About, Preferences and Quit items to the Mac Application menu.
-   * These items must be translated identically in both qt_ and qgis_ files.
-   */
-  QTranslator qttor( 0 );
-  if ( qttor.load( QString( "qt_" ) + myTranslationCode, QLibraryInfo::location( QLibraryInfo::TranslationsPath ) ) )
+  // For non static builds on mac and win (static builds are not supported)
+  // we need to be sure we can find the qt image
+  // plugins. In mac be sure to look in the
+  // application bundle...
+#ifdef Q_WS_WIN
+  QCoreApplication::addLibraryPath( QApplication::applicationDirPath()
+                                    + QDir::separator() + "qtplugins" );
+#endif
+#ifdef Q_OS_MACX
+  // IMPORTANT: do before Qt uses any plugins, e.g. before loading splash screen
+  QString  myPath( QCoreApplication::applicationDirPath().append( "/../PlugIns" ) );
+  // Check if it contains a standard Qt-specific plugin subdirectory
+  if ( !QFile::exists( myPath + "/imageformats" ) )
   {
-    myApp.installTranslator( &qttor );
+    // We are either running from build dir bundle, or launching binary directly.
+    // Use system Qt plugins, since they are not bundled.
+    // An app bundled with QGIS_MACAPP_BUNDLE=0 will still have Plugins/qgis in it
+    myPath = QT_PLUGINS_DIR;
   }
-  else
-  {
-    qWarning( "loading of qt translation failed [%s]", QString( "%1/qt_%2" ).arg( QLibraryInfo::location( QLibraryInfo::TranslationsPath ) ).arg( myTranslationCode ).toLocal8Bit().constData() );
-  }
+
+  // First clear the plugin search paths so we can be sure only plugins we define
+  // are being used. Note: this strips QgsApplication::pluginPath()
+  QStringList myPathList;
+  QCoreApplication::setLibraryPaths( myPathList );
+
+  QgsDebugMsg( QString( "Adding Mac QGIS and Qt plugins dirs to search path: %1" ).arg( myPath ) );
+  QCoreApplication::addLibraryPath( QgsApplication::pluginPath() );
+  QCoreApplication::addLibraryPath( myPath );
+#endif
 
   //set up splash screen
   QString mySplashPath( QgsCustomization::instance()->splashPath() );
@@ -824,57 +864,18 @@ int main( int argc, char *argv[] )
     mypSplash->show();
   }
 
-  // For non static builds on mac and win (static builds are not supported)
-  // we need to be sure we can find the qt image
-  // plugins. In mac be sure to look in the
-  // application bundle...
-#ifdef Q_WS_WIN
-  QCoreApplication::addLibraryPath( QApplication::applicationDirPath()
-                                    + QDir::separator() + "qtplugins" );
-#endif
-#ifdef Q_OS_MACX
-  //qDebug("Adding qt image plugins to plugin search path...");
-  CFURLRef myBundleRef = CFBundleCopyBundleURL( CFBundleGetMainBundle() );
-  CFStringRef myMacPath = CFURLCopyFileSystemPath( myBundleRef, kCFURLPOSIXPathStyle );
-  const char *mypPathPtr = CFStringGetCStringPtr( myMacPath, CFStringGetSystemEncoding() );
-  CFRelease( myBundleRef );
-  CFRelease( myMacPath );
-  QString myPath( mypPathPtr );
-  // if we are not in a bundle assume that the app is built
-  // as a non bundle app and that image plugins will be
-  // in system Qt frameworks. If the app is a bundle
-  // lets try to set the qt plugin search path...
-  QFileInfo myInfo( myPath );
-  if ( myInfo.isBundle() )
+  // optionally restore default window state
+  // use restoreDefaultWindowState setting only if NOT using command line (then it is set already)
+  if ( myRestoreDefaultWindowState || mySettings.value( "/qgis/restoreDefaultWindowState", false ).toBool() )
   {
-    // First clear the plugin search paths so we can be sure
-    // only plugins from the bundle are being used
-    QStringList myPathList;
-    QCoreApplication::setLibraryPaths( myPathList );
-    // Now set the paths inside the bundle
-    myPath += "/Contents/Plugins";
-    QCoreApplication::addLibraryPath( myPath );
-    if ( QgsApplication::isRunningFromBuildDir() )
-    {
-      QCoreApplication::addLibraryPath( QTPLUGINSDIR );
-    }
-    //next two lines should not be needed, testing only
-#if 0
-    QCoreApplication::addLibraryPath( myPath + "/imageformats" );
-    QCoreApplication::addLibraryPath( myPath + "/sqldrivers" );
-    foreach ( myPath, myApp.libraryPaths() )
-    {
-      qDebug( "Path:" + myPath.toLocal8Bit() );
-    }
-    qDebug( "Added %s to plugin search path", qPrintable( myPath ) );
-    QList<QByteArray> myFormats = QImageReader::supportedImageFormats();
-    for ( int x = 0; x < myFormats.count(); ++x )
-    {
-      qDebug( "Format: " + myFormats[x] );
-    }
-#endif
+    QgsDebugMsg( "Resetting /UI/state settings!" );
+    mySettings.remove( "/UI/state" );
+    mySettings.remove( "/qgis/restoreDefaultWindowState" );
   }
-#endif
+
+  // set max. thread count
+  // this should be done in QgsApplication::init() but it doesn't know the settings dir.
+  QgsApplication::setMaxThreads( QSettings().value( "/qgis/max_threads", -1 ).toInt() );
 
   QgisApp *qgis = new QgisApp( mypSplash, myRestorePlugins ); // "QgisApp" used to find canonical instance
   qgis->setObjectName( "QgisApp" );
@@ -884,26 +885,6 @@ int main( int argc, char *argv[] )
     //qgis, SLOT( preNotify( QObject *, QEvent *))
     QgsCustomization::instance(), SLOT( preNotify( QObject *, QEvent *, bool * ) )
   );
-
-  /////////////////////////////////////////////////////////////////////
-  // If no --project was specified, parse the args to look for a     //
-  // .qgs file and set myProjectFileName to it. This allows loading  //
-  // of a project file by clicking on it in various desktop managers //
-  // where an appropriate mime-type has been set up.                 //
-  /////////////////////////////////////////////////////////////////////
-  if ( myProjectFileName.isEmpty() )
-  {
-    // check for a .qgs
-    for ( int i = 0; i < argc; i++ )
-    {
-      QString arg = QDir::convertSeparators( QFileInfo( QFile::decodeName( argv[i] ) ).absoluteFilePath() );
-      if ( arg.contains( ".qgs" ) )
-      {
-        myProjectFileName = arg;
-        break;
-      }
-    }
-  }
 
   /////////////////////////////////////////////////////////////////////
   // Load a project file if one was specified
@@ -1026,6 +1007,12 @@ int main( int argc, char *argv[] )
   delete mypSplash;
 
   qgis->completeInitialization();
+
+#if defined(ANDROID)
+  // fix for Qt Ministro hiding app's menubar in favor of native Android menus
+  qgis->menuBar()->setNativeMenuBar( false );
+  qgis->menuBar()->setVisible( true );
+#endif
 
   int retval = myApp.exec();
   delete qgis;

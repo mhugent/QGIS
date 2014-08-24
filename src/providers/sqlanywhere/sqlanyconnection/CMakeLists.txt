@@ -1,7 +1,7 @@
 ########################################################
 # Files
 
-SET (SACONN_SRCS 
+SET (SACONN_SRCS
     sqlanystatement.cpp
     sqlanyconnection.cpp
     sacapi/sacapidll.c
@@ -9,10 +9,10 @@ SET (SACONN_SRCS
 
 IF (WIN32)
   IF (MSVC)
-    ADD_DEFINITIONS("-DSACONN_EXPORT=__declspec(dllexport)")
+    ADD_DEFINITIONS("-DSACONN_EXPORT=${DLLEXPORT}")
     SET_SOURCE_FILES_PROPERTIES(sacapi/sacapidll.c PROPERTIES COMPILE_FLAGS "-wd4152 -wd4055")
   ELSE (MSVC)
-    ADD_DEFINITIONS("-USACONN_EXPORT \"-DSACONN_EXPORT=__declspec(dllexport)\"")
+    ADD_DEFINITIONS("-USACONN_EXPORT \"-DSACONN_EXPORT=${DLLEXPORT}\"")
   ENDIF (MSVC)
 ELSE (WIN32)
   ADD_DEFINITIONS(-DSACONN_EXPORT=)
@@ -22,7 +22,7 @@ ENDIF (WIN32)
 # Build
 
 INCLUDE_DIRECTORIES(
-     ../../../core 
+     ../../../core
 )
 
 ADD_LIBRARY (qgissqlanyconnection SHARED ${SACONN_SRCS})

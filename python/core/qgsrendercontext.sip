@@ -10,6 +10,10 @@ class QgsRenderContext
     QgsRenderContext();
     ~QgsRenderContext();
 
+    //! create initialized QgsRenderContext instance from given QgsMapSettings
+    //! @note added in 2.4
+    static QgsRenderContext fromMapSettings( const QgsMapSettings& mapSettings );
+
     //getters
 
     QPainter* painter();
@@ -29,6 +33,13 @@ class QgsRenderContext
 
     bool forceVectorOutput() const;
 
+    /**Returns true if advanced effects such as blend modes such be used
+      @note added in 1.9*/
+    bool useAdvancedEffects() const;
+    /**Used to enable or disable advanced effects such as blend modes
+      @note: added in version 1.9*/
+    void setUseAdvancedEffects( bool enabled );
+
     bool drawEditingInformation() const;
 
     double rendererScale() const;
@@ -38,6 +49,14 @@ class QgsRenderContext
 
     //! Added in QGIS v2.0
     QColor selectionColor() const;
+
+    /**Returns true if vector selections should be shown in the rendered map
+     * @returns true if selections should be shown
+     * @see setShowSelection
+     * @see selectionColor
+     * @note Added in QGIS v2.4
+    */
+    bool showSelection() const;
 
     //setters
 
@@ -54,7 +73,23 @@ class QgsRenderContext
     //! Added in QGIS v1.5
     void setForceVectorOutput( bool force );
     //! Added in QGIS v1.4
-    void setLabelingEngine(QgsLabelingEngineInterface* iface);
+    void setLabelingEngine( QgsLabelingEngineInterface* iface );
     //! Added in QGIS v2.0
     void setSelectionColor( const QColor& color );
+
+    /**Sets whether vector selections should be shown in the rendered map
+     * @param showSelection set to true if selections should be shown
+     * @see showSelection
+     * @see setSelectionColor
+     * @note Added in QGIS v2.4
+    */
+    void setShowSelection( const bool showSelection );
+
+    /**Returns true if the rendering optimization (geometry simplification) can be executed*/
+    bool useRenderingOptimization() const;
+    void setUseRenderingOptimization( bool enabled );
+
+    //! Added in QGIS v2.4
+    const QgsVectorSimplifyMethod& vectorSimplifyMethod() const;
+    void setVectorSimplifyMethod( const QgsVectorSimplifyMethod& simplifyMethod );
 };

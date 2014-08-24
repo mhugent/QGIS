@@ -27,21 +27,27 @@
 #include "qgsmaplayer.h"
 #include "qgsfeature.h"
 #include "qgsfeatureiterator.h"
+#include "qgseditorwidgetconfig.h"
 #include "qgsfield.h"
 #include "qgssnapper.h"
 #include "qgsfield.h"
+#include "qgsrelation.h"
+#include "qgsvectorsimplifymethod.h"
 
 class QPainter;
 class QImage;
 
 class QgsAttributeAction;
 class QgsCoordinateTransform;
+class QgsEditorWidgetWrapper;
 class QgsFeatureRequest;
 class QgsGeometry;
 class QgsGeometryVertexIndex;
-class QgsMapToPixel;
 class QgsLabel;
+class QgsMapToPixel;
 class QgsRectangle;
+class QgsRelation;
+class QgsRelationManager;
 class QgsVectorDataProvider;
 class QgsSingleSymbolRendererV2;
 class QgsRectangle;
@@ -52,6 +58,7 @@ class QgsDiagramLayerSettings;
 class QgsGeometryCache;
 class QgsVectorLayerEditBuffer;
 class QgsSymbolV2;
+class QgsAbstractGeometrySimplifier;
 
 typedef QList<int> QgsAttributeList;
 typedef QSet<int> QgsAttributeIds;
@@ -66,6 +73,7 @@ class CORE_EXPORT QgsAttributeEditorElement : public QObject
     {
       AeTypeContainer,
       AeTypeField,
+      AeTypeRelation,
       AeTypeInvalid
     };
 
@@ -89,15 +97,21 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
 {
   public:
     QgsAttributeEditorContainer( QString name, QObject *parent )
-        : QgsAttributeEditorElement( AeTypeContainer, name, parent ) {}
+        : QgsAttributeEditorElement( AeTypeContainer, name, parent )
+        , mIsGroupBox( true )
+    {}
 
     ~QgsAttributeEditorContainer() {}
 
     virtual QDomElement toDomElement( QDomDocument& doc ) const;
     virtual void addChildElement( QgsAttributeEditorElement *widget );
+    virtual void setIsGroupBox( bool isGroupBox ) { mIsGroupBox = isGroupBox; }
+    virtual bool isGroupBox() const { return mIsGroupBox; }
     QList<QgsAttributeEditorElement*> children() const { return mChildren; }
+    virtual QList<QgsAttributeEditorElement*> findElements( AttributeEditorType type ) const;
 
   private:
+    bool mIsGroupBox;
     QList<QgsAttributeEditorElement*> mChildren;
 };
 
@@ -115,6 +129,37 @@ class CORE_EXPORT QgsAttributeEditorField : public QgsAttributeEditorElement
 
   private:
     int mIdx;
+};
+
+/** @note Added in 2.1 */
+class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
+{
+  public:
+    QgsAttributeEditorRelation( QString name, const QString &relationId, QObject *parent )
+        : QgsAttributeEditorElement( AeTypeRelation, name, parent )
+        , mRelationId( relationId ) {}
+
+    QgsAttributeEditorRelation( QString name, const QgsRelation& relation, QObject *parent )
+        : QgsAttributeEditorElement( AeTypeRelation, name, parent )
+        , mRelationId( relation.id() )
+        , mRelation( relation ) {}
+
+    ~QgsAttributeEditorRelation() {}
+
+    virtual QDomElement toDomElement( QDomDocument& doc ) const;
+    const QgsRelation& relation() const { return mRelation; }
+
+    /**
+     * Initializes the relation from the id
+     *
+     * @param relManager The relation manager to use for the initialization
+     * @return true if the relation was found in the relationmanager
+     */
+    bool init( QgsRelationManager *relManager );
+
+  private:
+    QString mRelationId;
+    QgsRelation mRelation;
 };
 
 /** @note added in 1.7 */
@@ -138,7 +183,6 @@ struct CORE_EXPORT QgsVectorJoinInfo
   /**Join field index in the source layer. For backward compatibility with 1.x (x>=7)*/
   int joinFieldIndex;
 };
-
 
 /** \ingroup core
  * Represents a vector layer which manages a vector based data sets.
@@ -421,6 +465,9 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
       UiFileLayout = 2
     };
 
+    /**
+     * @deprecated Use the editorWidgetV2() system instead
+     */
     enum EditType
     {
       LineEdit,
@@ -430,24 +477,34 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
       Classification,
       EditRange,
       SliderRange,
-      CheckBox,      /* added in 1.4 */
+      CheckBox,       /**< @note added in 1.4 */
       FileName,
       Enumeration,
-      Immutable,     /* The attribute value should not be changed in the attribute form */
-      Hidden,        /* The attribute value should not be shown in the attribute form @added in 1.4 */
-      TextEdit,      /* multiline edit @added in 1.4*/
-      Calendar,      /* calendar widget @added in 1.5 */
-      DialRange,     /* dial range @added in 1.5 */
-      ValueRelation, /* value map from an table @added in 1.8 */
-      UuidGenerator, /* uuid generator - readonly and automatically intialized @added in 1.9 */
-      Photo,         /* phote widget @added in 1.9 */
-      WebView,       /* webview widget @added in 1.9 */
-      Color,         /* color @added in 1.9 */
+      Immutable,      /**< The attribute value should not be changed in the attribute form */
+      Hidden,         /**< The attribute value should not be shown in the attribute form @note added in 1.4 */
+      TextEdit,       /**< multiline edit @note added in 1.4*/
+      Calendar,       /**< calendar widget @note added in 1.5 */
+      DialRange,      /**< dial range @note added in 1.5 */
+      ValueRelation,  /**< value map from an table @note added in 1.8 */
+      UuidGenerator,  /**< uuid generator - readonly and automatically intialized @note added in 1.9 */
+      Photo,          /**< phote widget @note added in 1.9 */
+      WebView,        /**< webview widget @note added in 1.9 */
+      Color,          /**< color @note added in 1.9 */
+      EditorWidgetV2, /**< modularized edit widgets @note added in 2.1 */
+    };
+
+    /** Types of feature form suppression after feature creation
+     * @note added in 2.1 */
+    enum FeatureFormSuppress
+    {
+      SuppressDefault = 0, // use the application-wide setting
+      SuppressOn = 1,
+      SuppressOff = 2
     };
 
     struct RangeData
     {
-      RangeData() {}
+      RangeData() { mMin = QVariant( 0 ); mMax = QVariant( 5 ); mStep = QVariant( 1 );}
       RangeData( QVariant theMin, QVariant theMax, QVariant theStep )
           : mMin( theMin ), mMax( theMax ), mStep( theStep ) {}
 
@@ -540,7 +597,7 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      *                           for this layer
      *  @note added in 2.0
      */
-    void setDisplayExpression( const QString displayExpression );
+    void setDisplayExpression( const QString &displayExpression );
 
     /**
      *  Get the preview expression, used to create a human readable preview string.
@@ -621,6 +678,9 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     /** Select all the features */
     void selectAll();
 
+    /** Get all feature Ids */
+    QgsFeatureIds allFeatureIds();
+
     /**
      * Invert selection of features found within the search rectangle (in layer's coordinates)
      *
@@ -673,16 +733,6 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      * @note added in 1.4
      */
     void setRendererV2( QgsFeatureRendererV2* r );
-
-    /** Draw layer with renderer V2. QgsFeatureRenderer::startRender() needs to be called before using this method
-     * @note added in 1.4
-     */
-    void drawRendererV2( QgsFeatureIterator &fit, QgsRenderContext& rendererContext, bool labeling );
-
-    /** Draw layer with renderer V2 using symbol levels. QgsFeatureRenderer::startRender() needs to be called before using this method
-     * @note added in 1.4
-     */
-    void drawRendererV2Levels( QgsFeatureIterator &fit, QgsRenderContext& rendererContext, bool labeling );
 
     /** Returns point, line or polygon */
     QGis::GeometryType geometryType() const;
@@ -742,13 +792,13 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      * @param theResultFlag will be set to true if a named style is correctly loaded
      * @param loadFromLocalDb if true forces to load from local db instead of datasource one
      */
-    virtual QString loadNamedStyle( const QString theURI, bool &theResultFlag, bool loadFromLocalDb );
+    virtual QString loadNamedStyle( const QString &theURI, bool &theResultFlag, bool loadFromLocalDb );
 
     /**
      * Calls loadNamedStyle( theURI, theResultFlag, false );
      * Retained for backward compatibility
      */
-    virtual QString loadNamedStyle( const QString theURI, bool &theResultFlag );
+    virtual QString loadNamedStyle( const QString &theURI, bool &theResultFlag );
 
     virtual bool applyNamedStyle( QString namedStyle , QString errorMsg );
 
@@ -827,10 +877,12 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      */
     bool addFeature( QgsFeature& f, bool alsoUpdateExtent = true );
 
-    /** Updates an existing feature
-        @param f feature to update
-        @return                    True in case of success and False in case of error
-        @note added in 1.8
+    /** Updates an existing feature. This method needs to query the datasource
+        on every call. Consider using {@link changeAttributeValue()} or
+        {@link changeGeometry()} instead.
+        @param f  Feature to update
+        @return   True in case of success and False in case of error
+        @note     Added in 1.8
      */
     bool updateFeature( QgsFeature &f );
 
@@ -885,6 +937,15 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
        @return 0 in case of success*/
     int translateFeature( QgsFeatureId featureId, double dx, double dy );
 
+    /**Splits parts cut by the given line
+     *  @param splitLine line that splits the layer features
+     *  @param topologicalEditing true if topological editing is enabled
+     *  @return
+     *   0 in case of success,
+     *   4 if there is a selection but no feature split
+     */
+    int splitParts( const QList<QgsPoint>& splitLine, bool topologicalEditing = false );
+
     /**Splits features cut by the given line
      *  @param splitLine line that splits the layer features
      *  @param topologicalEditing true if topological editing is enabled
@@ -899,8 +960,10 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      *  @param geom geometry to modify
      *  @param ignoreFeatures list of feature ids where intersections should be ignored
      *  @return 0 in case of success
+     *
+     *  @deprecated since 2.2 - not being used for "avoid intersections" functionality anymore
      */
-    int removePolygonIntersections( QgsGeometry* geom, QgsFeatureIds ignoreFeatures = QgsFeatureIds() );
+    Q_DECL_DEPRECATED int removePolygonIntersections( QgsGeometry* geom, QgsFeatureIds ignoreFeatures = QgsFeatureIds() );
 
     /** Adds topological points for every vertex of the geometry.
      * @param geom the geometry where each vertex is added to segments of other features
@@ -966,6 +1029,11 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
       @note added in version 1.6*/
     virtual void reload();
 
+    /** Return new instance of QgsMapLayerRenderer that will be used for rendering of given context
+     * @note added in 2.4
+     */
+    virtual QgsMapLayerRenderer* createMapRenderer( QgsRenderContext& rendererContext );
+
     /** Draws the layer
      *  @return false if an error occurred during drawing
      */
@@ -1004,34 +1072,104 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
       @note added in version 1.2 */
     bool changeGeometry( QgsFeatureId fid, QgsGeometry* geom );
 
-    /** changed an attribute value (but does not commit it) */
-    bool changeAttributeValue( QgsFeatureId fid, int field, QVariant value, bool emitSignal = true );
+    /**
+     * Changes an attribute value (but does not commit it)
+     *
+     * @deprecated The emitSignal parameter is obsolete and not considered at the moment. It will
+     *             be removed in future releases. Remove it to be prepared for the future. (Since 2.1)
+     */
+    Q_DECL_DEPRECATED bool changeAttributeValue( QgsFeatureId fid, int field, QVariant value, bool emitSignal );
+
+    /**
+     * Changes an attribute value (but does not commit it)
+     *
+     * @param fid   The feature id of the feature to be changed
+     * @param field The index of the field to be updated
+     * @param newValue The value which will be assigned to the field
+     * @param oldValue The previous value to restore on undo (will otherwise be retrieved)
+     *
+     * @return true in case of success
+     */
+    bool changeAttributeValue( QgsFeatureId fid, int field, const QVariant &newValue, const QVariant &oldValue = QVariant() );
 
     /** add an attribute field (but does not commit it)
         returns true if the field was added
       @note added in version 1.2 */
     bool addAttribute( const QgsField &field );
 
-    /**Sets an alias (a display name) for attributes to display in dialogs
-      @note added in version 1.2*/
+    /**
+     * Sets an alias (a display name) for attributes to display in dialogs
+     * @note added in version 1.2
+     */
     void addAttributeAlias( int attIndex, QString aliasString );
 
-    /**Adds a tab (for the attribute editor form) holding groups and fields
-      @note added in version 1.9*/
+    /**
+     * Adds a tab (for the attribute editor form) holding groups and fields
+     * @note added in version 2.0
+     */
     void addAttributeEditorWidget( QgsAttributeEditorElement* data );
-    /**Returns a list of tabs holding groups and fields
-      @note added in version 1.9*/
+
+    /**
+     * Get the id for the editor widget used to represent the field at the given index
+     *
+     * @param fieldIdx  The index of the field
+     *
+     * @return The id for the editor widget or a NULL string if not applicable
+     */
+    const QString editorWidgetV2( int fieldIdx ) const;
+
+    /**
+     * Get the id for the editor widget used to represent the field at the given index
+     *
+     * @param fieldName  The name of the field
+     *
+     * @return The id for the editor widget or a NULL string if not applicable
+     *
+     * @note python method name editorWidgetV2ByName
+     */
+    const QString editorWidgetV2( const QString& fieldName ) const;
+
+    /**
+     * Get the configuration for the editor widget used to represent the field at the given index
+     *
+     * @param fieldIdx  The index of the field
+     *
+     * @return The configuration for the editor widget or an empty config if the field does not exist
+     */
+    const QgsEditorWidgetConfig editorWidgetV2Config( int fieldIdx ) const;
+
+    /**
+     * Get the configuration for the editor widget used to represent the field at the given index
+     *
+     * @param fieldName The name of the field
+     *
+     * @return The configuration for the editor widget or an empty config if the field does not exist
+     *
+     * @note python method name is editorWidgetV2ConfigByName
+     */
+    const QgsEditorWidgetConfig editorWidgetV2Config( const QString& fieldName ) const;
+
+    /**
+     * Returns a list of tabs holding groups and fields
+     * @note added in version 2.0
+     */
     QList< QgsAttributeEditorElement* > &attributeEditorElements();
-    /**Clears all the tabs for the attribute editor form
-      @note added in version 1.9*/
+    /**
+     * Clears all the tabs for the attribute editor form
+     * @note added in version 2.0
+     */
     void clearAttributeEditorWidgets();
 
-    /**Returns the alias of an attribute name or an empty string if there is no alias
-      @note added in version 1.2*/
+    /**
+     * Returns the alias of an attribute name or an empty string if there is no alias
+     * @note added in version 1.2
+     */
     QString attributeAlias( int attributeIndex ) const;
 
-    /**Convenience function that returns the attribute alias if defined or the field name else
-      @note added in version 1.2*/
+    /**
+     * Convenience function that returns the attribute alias if defined or the field name else
+     * @note added in version 1.2
+     */
     QString attributeDisplayName( int attributeIndex ) const;
 
     const QMap< QString, QString >& attributeAliases() const { return mAttributeAliasMap; }
@@ -1083,11 +1221,19 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      */
     bool rollBack( bool deleteBuffer = true );
 
-    /**get edit type*/
-    EditType editType( int idx );
+    /**
+     * Get edit type
+     *
+     * @deprecated Use @see{editorWidgetV2} instead
+     */
+    Q_DECL_DEPRECATED EditType editType( int idx );
 
-    /**set edit type*/
-    void setEditType( int idx, EditType edit );
+    /**
+     * Get edit type
+     *
+     * @deprecated Use @see{setEditorWidgetV2} instead
+     */
+    Q_DECL_DEPRECATED void setEditType( int idx, EditType edit );
 
     /** get the active layout for the attribute editor for this layer (added in 1.9) */
     EditorLayout editorLayout();
@@ -1095,20 +1241,42 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     /** set the active layout for the attribute editor for this layer (added in 1.9) */
     void setEditorLayout( EditorLayout editorLayout );
 
-    /** set string representing 'true' for a checkbox (added in 1.4) */
-    void setCheckedState( int idx, QString checked, QString notChecked );
-
-    /** return string representing 'true' for a checkbox (added in 1.4)
-     * @note not available in python bindings
-     * FIXME: need SIP binding for QPair<QString, QString>
+    /**
+     * Set the editor widget type for a field
+     *
+     * @param attrIdx     Index of the field
+     * @param widgetType  Type id of the editor widget to use
      */
-    QPair<QString, QString> checkedState( int idx );
+    void setEditorWidgetV2( int attrIdx, const QString& widgetType );
+
+    /**
+     * Set the editor widget config for a field
+     *
+     * @param attrIdx     Index of the field
+     * @param config      The config to set for this field
+     */
+    void setEditorWidgetV2Config( int attrIdx, const QgsEditorWidgetConfig& config );
+
+    /**
+     * Set string representing 'true' for a checkbox (added in 1.4)
+     *
+     * @deprecated Use @see{setEditorWidgetV2Config} instead
+     */
+    Q_DECL_DEPRECATED void setCheckedState( int idx, QString checked, QString notChecked );
 
     /** get edit form (added in 1.4) */
     QString editForm();
 
     /** set edit form (added in 1.4) */
     void setEditForm( QString ui );
+
+    /** Type of feature form pop-up suppression after feature creation (overrides app setting)
+     * @note added in 2.1 */
+    QgsVectorLayer::FeatureFormSuppress featureFormSuppress() const { return mFeatureFormSuppress; }
+
+    /** Set type of feature form pop-up suppression after feature creation (overrides app setting)
+     * @note added in 2.1 */
+    void setFeatureFormSuppress( QgsVectorLayer::FeatureFormSuppress s ) { mFeatureFormSuppress = s; }
 
     /** get annotation form (added in 1.5)*/
     QString annotationForm() const { return mAnnotationForm; }
@@ -1122,26 +1290,51 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     /** set python function for edit form initialization (added in 1.4) */
     void setEditFormInit( QString function );
 
-    /**access value map*/
-    QMap<QString, QVariant> &valueMap( int idx );
+    /**
+     * Access value map
+     * @deprecated Use @see{editorWidgetV2Config} instead
+     */
+    Q_DECL_DEPRECATED QMap<QString, QVariant> valueMap( int idx );
 
-    /**access range */
-    RangeData &range( int idx );
+    /**
+     * Access range widget config data
+     *
+     * @deprecated Use @see{editorWidgetV2Config} instead
+     */
+    Q_DECL_DEPRECATED RangeData range( int idx );
 
-    /**access relations
+    /**
+     * Access value relation widget data
+     *
      * @note added in 1.8
-     **/
-    ValueRelationData &valueRelation( int idx );
-
-    /**access date format
-     * @note added in 1.9
      */
-    QString &dateFormat( int idx );
+    ValueRelationData valueRelation( int idx );
 
-    /**access widget size for photo and webview widget
-     * @note added in 1.9
+    /**
+     * Get relations, where the foreign key is on this layer
+     *
+     * @param idx Only get relations, where idx forms part of the foreign key
+     * @return A list of relations
      */
-    QSize &widgetSize( int idx );
+    QList<QgsRelation> referencingRelations( int idx );
+
+    /**
+     * Access date format
+     *
+     * @note added in 1.9
+     *
+     * @deprecated Use @see{setEditorWdigetV2Config} instead
+     */
+    Q_DECL_DEPRECATED QString dateFormat( int idx );
+
+    /**
+     * Access widget size for photo and webview widget
+     *
+     * @note added in 1.9
+     *
+     * @deprecated Use @see{setEditorWdigetV2Config} instead
+     */
+    Q_DECL_DEPRECATED QSize widgetSize( int idx );
 
     /**is edit widget editable
      * @note added in 1.9
@@ -1222,7 +1415,7 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     /* Set the blending mode used for rendering each feature
      * @note added in 2.0
      */
-    void setFeatureBlendMode( const QPainter::CompositionMode blendMode );
+    void setFeatureBlendMode( const QPainter::CompositionMode &blendMode );
     /* Returns the current blending mode for features
      * @note added in 2.0
      */
@@ -1236,6 +1429,26 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      * @note added in 2.0
      */
     int layerTransparency() const;
+
+    QString metadata();
+
+    /** @note not available in python bindings */
+    inline QgsGeometryCache* cache() { return mCache; }
+
+    /** Set the simplification settings for fast rendering of features
+     *  @note added in 2.2
+     */
+    void setSimplifyMethod( const QgsVectorSimplifyMethod& simplifyMethod ) { mSimplifyMethod = simplifyMethod; }
+    /** Returns the simplification settings for fast rendering of features
+     *  @note added in 2.2
+     */
+    inline const QgsVectorSimplifyMethod& simplifyMethod() const { return mSimplifyMethod; }
+
+    /** Returns whether the VectorLayer can apply the specified simplification hint
+     *  @note Do not use in 3rd party code - may be removed in future version!
+     *  @note added in 2.2
+     */
+    bool simplifyDrawingCanbeApplied( const QgsRenderContext& renderContext, QgsVectorSimplifyMethod::SimplifyHint simplifyHint ) const;
 
   public slots:
     /**
@@ -1292,16 +1505,8 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
       @note added in 1.7 */
     void checkJoinLayerRemove( QString theLayerId );
 
-    QString metadata();
-
-    /** @note not available in python bindings */
-    inline QgsGeometryCache* cache() { return mCache; }
-
-    /**
-     * @brief Is called when the cache image is being deleted. Overwrite and use to clean up.
-     * @note added in 2.0
-     */
-    virtual void onCacheImageDelete();
+  protected slots:
+    void invalidateSymbolCountedFlag();
 
   signals:
 
@@ -1319,6 +1524,9 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
 
     /** This signal is emitted when modifications has been done on layer */
     void layerModified();
+
+    /** Is emitted, when layer is checked for modifications. Use for last-minute additions */
+    void beforeModifiedCheck() const;
 
     /** Is emitted, when editing on this layer has started*/
     void editingStarted();
@@ -1373,10 +1581,42 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     void committedAttributeValuesChanges( const QString& layerId, const QgsChangedAttributesMap& changedAttributesValues );
     void committedGeometriesChanges( const QString& layerId, const QgsGeometryMap& changedGeometries );
 
+    void saveLayerToProject();
+
     /** Emitted when the font family defined for labeling layer is not found on system
      * @note added in 1.9
      */
     void labelingFontNotFound( QgsVectorLayer* layer, const QString& fontfamily );
+
+    /** Signal emitted when setFeatureBlendMode() is called */
+    void featureBlendModeChanged( const QPainter::CompositionMode &blendMode );
+
+    /** Signal emitted when setLayerTransparency() is called */
+    void layerTransparencyChanged( int layerTransparency );
+
+    /**
+     * Signal emitted when a new edit command has been started
+     *
+     * @param text Description for this edit command
+     */
+    void editCommandStarted( const QString& text );
+
+    /**
+     * Signal emitted, when an edit command successfully ended
+     * @note This does not mean it is also committed, only that it is written
+     * to the edit buffer. See {@link beforeCommitChanges()}
+     */
+    void editCommandEnded();
+
+    /**
+     * Signal emitted, whan an edit command is destroyed
+     * @note This is not a rollback, it is only related to the current edit command.
+     * See {@link beforeRollBack()}
+     */
+    void editCommandDestroyed();
+
+  private slots:
+    void onRelationsLoaded();
 
   protected:
     /** Set the extent */
@@ -1414,41 +1654,16 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
                          QMultiMap<double, QgsSnappingResult>& snappingResults,
                          QgsSnapper::SnappingType snap_to ) const;
 
-    /**Reads vertex marker type from settings*/
-    static QgsVectorLayer::VertexMarkerType currentVertexMarkerType();
-
-    /**Reads vertex marker size from settings*/
-    static int currentVertexMarkerSize();
-
     /** Add joined attributes to a feature */
     //void addJoinedAttributes( QgsFeature& f, bool all = false );
 
-    /** Stop version 2 renderer and selected renderer (if required) */
-    void stopRendererV2( QgsRenderContext& rendererContext, QgsSingleSymbolRendererV2* selRenderer );
-
-    /**Registers label and diagram layer
-      @param rendererContext render context
-      @param attributes attributes needed for labeling and diagrams will be added to the list
-      @param labeling out: true if there will be labeling (ng) for this layer*/
-    void prepareLabelingAndDiagrams( QgsRenderContext& rendererContext, QgsAttributeList& attributes, bool& labeling );
+    /** Read labeling from SLD */
+    void readSldLabeling( const QDomNode& node );
 
   private:                       // Private attributes
 
-    /** Update threshold for drawing features as they are read. A value of zero indicates
-     *  that no features will be drawn until all have been read
-     */
-    int mUpdateThreshold;
-
-    /** Enables backbuffering for the map window. This improves graphics performance,
-     *  but the possibility to cancel rendering and incremental feature drawing will be lost.
-     *
-     */
-    bool mEnableBackbuffer;
-
     /** Pointer to data provider derived from the abastract base class QgsDataProvider */
     QgsVectorDataProvider *mDataProvider;
-
-    QgsFeatureIterator mProviderIterator;
 
     /** index of the primary label field */
     QString mDisplayField;
@@ -1494,6 +1709,9 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     /** Renderer object which holds the information about how to display the features */
     QgsFeatureRendererV2 *mRendererV2;
 
+    /** Simplification object which holds the information about how to simplify the features for fast rendering */
+    QgsVectorSimplifyMethod mSimplifyMethod;
+
     /** Label */
     QgsLabel *mLabel;
 
@@ -1520,20 +1738,21 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
 
     QStringList mCommitErrors;
 
-    QMap< QString, EditType > mEditTypes;
     QMap< QString, bool> mFieldEditables;
     QMap< QString, bool> mLabelOnTop;
-    QMap< QString, QMap<QString, QVariant> > mValueMaps;
-    QMap< QString, RangeData > mRanges;
-    QMap< QString, QPair<QString, QString> > mCheckedStates;
-    QMap< QString, ValueRelationData > mValueRelations;
-    QMap< QString, QString> mDateFormats;
-    QMap< QString, QSize> mWidgetSize;
+
+    QMap<QString, QString> mEditorWidgetV2Types;
+    QMap<QString, QgsEditorWidgetConfig > mEditorWidgetV2Configs;
 
     /** Defines the default layout to use for the attribute editor (Drag and drop, UI File, Generated) */
     EditorLayout mEditorLayout;
 
     QString mEditForm, mEditFormInit;
+
+    /** Type of feature form suppression after feature creation
+     * @note added in 2.1 */
+    QgsVectorLayer::FeatureFormSuppress mFeatureFormSuppress;
+
     //annotation form for this layer
     QString mAnnotationForm;
 
@@ -1554,6 +1773,7 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     QgsDiagramLayerSettings *mDiagramLayerSettings;
 
     bool mValidExtent;
+    bool mLazyExtent;
 
     // Features in renderer classes counted
     bool mSymbolFeatureCounted;
@@ -1561,9 +1781,7 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
     // Feature counts for each renderer symbol
     QMap<QgsSymbolV2*, long> mSymbolFeatureCountMap;
 
-    QgsRenderContext* mCurrentRendererContext;
-
-    friend class QgsVectorLayerFeatureIterator;
+    friend class QgsVectorLayerFeatureSource;
 };
 
 #endif

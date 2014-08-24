@@ -18,7 +18,7 @@ class QgsNewVectorLayerDialog : QDialog
     static QString runAndCreateLayer( QWidget* parent = 0, QString* enc = 0, QGis::GeometryType geom = QGis::Point,
                                       const QList< QgsNewVectorLayerDialog::AttributeEntry >& att = QList<QgsNewVectorLayerDialog::AttributeEntry>() );
 
-    QgsNewVectorLayerDialog( QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags );
+    QgsNewVectorLayerDialog( QWidget *parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags );
     ~QgsNewVectorLayerDialog();
     /**Returns the selected geometry type*/
     QGis::WkbType selectedType() const;
@@ -30,6 +30,8 @@ class QgsNewVectorLayerDialog : QDialog
     void attributes( QList< QPair<QString, QString> >& at ) const;
     /**Returns the file format for storage*/
     QString selectedFileFormat() const;
+    /**Returns the file format for storage*/
+    QString selectedFileEncoding() const;
     /**Returns the selected crs id*/
     int selectedCrsId() const;
 

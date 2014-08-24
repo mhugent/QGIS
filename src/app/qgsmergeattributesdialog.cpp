@@ -23,6 +23,7 @@
 #include "qgsmapcanvas.h"
 #include "qgsrubberband.h"
 #include "qgsvectorlayer.h"
+#include "qgsvectordataprovider.h"
 #include "qgsattributeeditor.h"
 
 #include <limits>
@@ -89,8 +90,8 @@ void QgsMergeAttributesDialog::createTableWidgetContents()
   int col = 0;
   for ( int idx = 0; idx < fields.count(); ++idx )
   {
-    if ( mVectorLayer->editType( idx ) == QgsVectorLayer::Hidden ||
-         mVectorLayer->editType( idx ) == QgsVectorLayer::Immutable )
+    if ( mVectorLayer->editorWidgetV2( idx ) == "Hidden" ||
+         mVectorLayer->editorWidgetV2( idx ) == "Immutable" )
       continue;
 
     mTableWidget->setColumnCount( col + 1 );
@@ -98,7 +99,7 @@ void QgsMergeAttributesDialog::createTableWidgetContents()
     QComboBox *cb = createMergeComboBox( fields[idx].type() );
     if ( pkAttrList.contains( idx ) )
     {
-      cb->setCurrentIndex( cb->findText( tr( "Skip attribute" ) ) );
+      cb->setCurrentIndex( cb->findData( "skip" ) );
     }
     mTableWidget->setCellWidget( 0, col, cb );
 
@@ -146,26 +147,26 @@ QComboBox *QgsMergeAttributesDialog::createMergeComboBox( QVariant::Type columnT
   QgsFeatureList::const_iterator f_it = mFeatureList.constBegin();
   for ( ; f_it != mFeatureList.constEnd(); ++f_it )
   {
-    newComboBox->addItem( tr( "Feature %1" ).arg( f_it->id() ) );
+    newComboBox->addItem( tr( "Feature %1" ).arg( f_it->id() ), QString::number( f_it->id() ) );
   }
 
   if ( columnType == QVariant::Double || columnType == QVariant::Int )
   {
-    newComboBox->addItem( tr( "Minimum" ) );
-    newComboBox->addItem( tr( "Maximum" ) );
-    newComboBox->addItem( tr( "Median" ) );
-    newComboBox->addItem( tr( "Sum" ) );
+    newComboBox->addItem( tr( "Minimum" ), "minimum" );
+    newComboBox->addItem( tr( "Maximum" ), "maximum" );
+    newComboBox->addItem( tr( "Median" ), "median" );
+    newComboBox->addItem( tr( "Sum" ), "sum" );
   }
   else if ( columnType == QVariant::String )
   {
-    newComboBox->addItem( tr( "Concatenation" ) );
+    newComboBox->addItem( tr( "Concatenation" ), "concat" );
   }
   else if ( columnType == QVariant::Double )
   {
-    newComboBox->addItem( tr( "Mean" ) );
+    newComboBox->addItem( tr( "Mean" ), "mean" );
   }
 
-  newComboBox->addItem( tr( "Skip attribute" ) );
+  newComboBox->addItem( tr( "Skip attribute" ), "skip" );
 
   QObject::connect( newComboBox, SIGNAL( currentIndexChanged( const QString& ) ),
                     this, SLOT( comboValueChanged( const QString& ) ) );
@@ -242,39 +243,39 @@ void QgsMergeAttributesDialog::refreshMergedValue( int col )
   }
 
   //evaluate behaviour (feature value or min / max / mean )
-  QString mergeBehaviourString = comboBox->currentText();
+  QString mergeBehaviourString = comboBox->itemData( comboBox->currentIndex() ).toString();
   QVariant mergeResult; // result to show in the merge result field
-  if ( mergeBehaviourString == tr( "Minimum" ) )
+  if ( mergeBehaviourString == "minimum" )
   {
     mergeResult = minimumAttribute( col );
   }
-  else if ( mergeBehaviourString == tr( "Maximum" ) )
+  else if ( mergeBehaviourString == "maximum" )
   {
     mergeResult = maximumAttribute( col );
   }
-  else if ( mergeBehaviourString == tr( "Mean" ) )
+  else if ( mergeBehaviourString == "mean" )
   {
     mergeResult = meanAttribute( col );
   }
-  else if ( mergeBehaviourString == tr( "Median" ) )
+  else if ( mergeBehaviourString == "median" )
   {
     mergeResult = medianAttribute( col );
   }
-  else if ( mergeBehaviourString == tr( "Sum" ) )
+  else if ( mergeBehaviourString == "sum" )
   {
     mergeResult = sumAttribute( col );
   }
-  else if ( mergeBehaviourString == tr( "Concatenation" ) )
+  else if ( mergeBehaviourString == "concat" )
   {
     mergeResult = concatenationAttribute( col );
   }
-  else if ( mergeBehaviourString == tr( "Skip attribute" ) )
+  else if ( mergeBehaviourString == "skip" )
   {
     mergeResult = tr( "Skipped" );
   }
   else //an existing feature value
   {
-    int featureId = mergeBehaviourString.split( " " ).value( 1 ).toInt(); //probably not very robust for translations...
+    int featureId = mergeBehaviourString.toInt();
     mergeResult = featureAttribute( featureId, col );
   }
 
@@ -493,7 +494,7 @@ void QgsMergeAttributesDialog::on_mFromSelectedPushButton_clicked()
     QComboBox* currentComboBox = qobject_cast<QComboBox *>( mTableWidget->cellWidget( 0, i ) );
     if ( currentComboBox )
     {
-      currentComboBox->setCurrentIndex( currentComboBox->findText( tr( "Feature %1" ).arg( featureId ) ) );
+      currentComboBox->setCurrentIndex( currentComboBox->findData( QString::number( featureId ) ) );
     }
   }
 }
@@ -546,7 +547,7 @@ void QgsMergeAttributesDialog::on_mRemoveFeatureFromSelectionButton_clicked()
       continue;
 
     currentComboBox->blockSignals( true );
-    currentComboBox->removeItem( currentComboBox->findText( tr( "feature %1" ).arg( featureId ) ) );
+    currentComboBox->removeItem( currentComboBox->findData( QString::number( featureId ) ) );
     currentComboBox->blockSignals( false );
   }
 
@@ -568,7 +569,7 @@ void QgsMergeAttributesDialog::createRubberBandForFeature( int featureId )
   //create rubber band to highlight the feature
   delete mSelectionRubberBand;
   mSelectionRubberBand = new QgsRubberBand( mMapCanvas, mVectorLayer->geometryType() == QGis::Polygon );
-  mSelectionRubberBand->setColor( QColor( 255, 0, 0 ) );
+  mSelectionRubberBand->setColor( QColor( 255, 0, 0, 65 ) );
   QgsFeature featureToSelect;
   mVectorLayer->getFeatures( QgsFeatureRequest().setFilterFid( featureId ).setSubsetOfAttributes( QgsAttributeList() ) ).nextFeature( featureToSelect );
   mSelectionRubberBand->setToGeometry( featureToSelect.geometry(), mVectorLayer );
@@ -588,18 +589,25 @@ QgsAttributes QgsMergeAttributesDialog::mergedAttributes() const
   {
     int idx = mTableWidget->horizontalHeaderItem( i )->data( Qt::UserRole ).toInt();
 
-    QComboBox* comboBox = qobject_cast<QComboBox *>( mTableWidget->cellWidget( 0, i ) );
-    if ( comboBox && comboBox->currentText() == tr( "Skip attribute" ) )
+    QComboBox *comboBox = qobject_cast<QComboBox *>( mTableWidget->cellWidget( 0, i ) );
+    if ( !comboBox )
       continue;
 
-    QTableWidgetItem* currentItem = mTableWidget->item( mFeatureList.size() + 1, i );
+    QTableWidgetItem *currentItem = mTableWidget->item( mFeatureList.size() + 1, i );
     if ( !currentItem )
       continue;
 
     if ( idx >= results.count() )
       results.resize( idx + 1 ); // make sure the results vector is long enough (maybe not necessary)
 
-    results[idx] = currentItem->data( Qt::DisplayRole );
+    if ( comboBox->itemData( comboBox->currentIndex() ) != "skip" )
+    {
+      results[idx] = currentItem->data( Qt::DisplayRole );
+    }
+    else if ( mVectorLayer->dataProvider() )
+    {
+      results[idx] = mVectorLayer->dataProvider()->defaultValue( idx );
+    }
   }
 
   return results;

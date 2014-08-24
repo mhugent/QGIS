@@ -29,7 +29,7 @@ class GUI_EXPORT QgsProjectionSelector : public QWidget, private Ui::QgsProjecti
 {
     Q_OBJECT
   public:
-    QgsProjectionSelector( QWidget* parent, const char *name = "", Qt::WFlags fl = 0 );
+    QgsProjectionSelector( QWidget* parent, const char *name = "", Qt::WindowFlags fl = 0 );
 
     ~QgsProjectionSelector();
 
@@ -103,6 +103,9 @@ class GUI_EXPORT QgsProjectionSelector : public QWidget, private Ui::QgsProjecti
     void on_lstRecent_currentItemChanged( QTreeWidgetItem *current, QTreeWidgetItem *prev );
     void on_cbxHideDeprecated_stateChanged();
     void on_leSearch_textChanged( const QString & );
+
+    //! mark selected projection for push to front
+    void pushProjectionToFront();
 
   protected:
     /** Used to ensure the projection list view is actually populated */
@@ -181,7 +184,7 @@ class GUI_EXPORT QgsProjectionSelector : public QWidget, private Ui::QgsProjecti
     int mSearchColumn;
     QString mSearchValue;
 
-    bool mSkipFirstRecent;
+    bool mPushProjectionToFront;
 
     //! The set of OGC WMS CRSs that want to be applied to this widget
     QSet<QString> mCrsFilter;
@@ -202,6 +205,9 @@ class GUI_EXPORT QgsProjectionSelector : public QWidget, private Ui::QgsProjecti
     void refresh();
     //! Let listeners know if find has focus so they can adjust the default button
     void searchBoxHasFocus( bool );
+    //! Notify others that the widget is now fully initialized, including deferred selection of projection
+    //! @note added in 2.4
+    void initialized();
 };
 
 #endif

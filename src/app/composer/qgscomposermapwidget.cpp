@@ -15,6 +15,8 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "qgisapp.h"
+#include "qgsmapcanvas.h"
 #include "qgscomposermapwidget.h"
 #include "qgscomposeritemwidget.h"
 #include "qgscomposition.h"
@@ -30,6 +32,7 @@
 #include "qgscomposershape.h"
 #include "qgspaperitem.h"
 #include "qgsexpressionbuilderdialog.h"
+#include "qgsproject.h"
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QMessageBox>
@@ -61,6 +64,9 @@ QgsComposerMapWidget::QgsComposerMapWidget( QgsComposerMap* composerMap ): QWidg
   mAnnotationFormatComboBox->insertItem( 1, tr( "DegreeMinute" ) );
   mAnnotationFormatComboBox->insertItem( 2, tr( "DegreeMinuteSecond" ) );
 
+  mAnnotationFontColorButton->setColorDialogTitle( tr( "Select font color" ) );
+  mAnnotationFontColorButton->setColorDialogOptions( QColorDialog::ShowAlphaChannel );
+
   insertAnnotationPositionEntries( mAnnotationPositionLeftComboBox );
   insertAnnotationPositionEntries( mAnnotationPositionRightComboBox );
   insertAnnotationPositionEntries( mAnnotationPositionTopComboBox );
@@ -74,12 +80,32 @@ QgsComposerMapWidget::QgsComposerMapWidget( QgsComposerMap* composerMap ): QWidg
   mFrameStyleComboBox->insertItem( 0, tr( "No frame" ) );
   mFrameStyleComboBox->insertItem( 1, tr( "Zebra" ) );
 
+  mGridFramePenColorButton->setColorDialogTitle( tr( "Select grid frame color" ) );
+  mGridFramePenColorButton->setColorDialogOptions( QColorDialog::ShowAlphaChannel );
+  mGridFrameFill1ColorButton->setColorDialogTitle( tr( "Select grid frame fill color" ) );
+  mGridFrameFill1ColorButton->setColorDialogOptions( QColorDialog::ShowAlphaChannel );
+  mGridFrameFill2ColorButton->setColorDialogTitle( tr( "Select grid frame fill color" ) );
+  mGridFrameFill2ColorButton->setColorDialogOptions( QColorDialog::ShowAlphaChannel );
+
+  //set initial state of frame style controls
+  toggleFrameControls( false );
+
   connect( mGridCheckBox, SIGNAL( toggled( bool ) ),
            mDrawAnnotationCheckableGroupBox, SLOT( setEnabled( bool ) ) );
 
   if ( composerMap )
   {
     connect( composerMap, SIGNAL( itemChanged() ), this, SLOT( setGuiElementValues() ) );
+
+    //get composition
+    QgsComposition* composition = mComposerMap->composition();
+    if ( composition )
+    {
+      QgsAtlasComposition* atlas = &composition->atlasComposition();
+      connect( atlas, SIGNAL( coverageLayerChanged( QgsVectorLayer* ) ),
+               this, SLOT( atlasLayerChanged( QgsVectorLayer* ) ) );
+      connect( atlas, SIGNAL( toggled( bool ) ), this, SLOT( compositionAtlasToggled( bool ) ) );
+    }
   }
 
   updateOverviewSymbolMarker();
@@ -91,6 +117,143 @@ QgsComposerMapWidget::QgsComposerMapWidget( QgsComposerMap* composerMap ): QWidg
 
 QgsComposerMapWidget::~QgsComposerMapWidget()
 {
+}
+
+void QgsComposerMapWidget::compositionAtlasToggled( bool atlasEnabled )
+{
+  if ( atlasEnabled )
+  {
+    mAtlasCheckBox->setEnabled( true );
+  }
+  else
+  {
+    mAtlasCheckBox->setEnabled( false );
+    mAtlasCheckBox->setChecked( false );
+  }
+}
+
+void QgsComposerMapWidget::on_mAtlasCheckBox_toggled( bool checked )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  mAtlasFixedScaleRadio->setEnabled( checked );
+  mAtlasMarginRadio->setEnabled( checked );
+
+  if ( mAtlasMarginRadio->isEnabled() && mAtlasMarginRadio->isChecked() )
+  {
+    mAtlasMarginSpinBox->setEnabled( true );
+  }
+  else
+  {
+    mAtlasMarginSpinBox->setEnabled( false );
+  }
+
+  mAtlasPredefinedScaleRadio->setEnabled( checked );
+
+  if ( checked )
+  {
+    //check atlas coverage layer type
+    QgsComposition* composition = mComposerMap->composition();
+    if ( composition )
+    {
+      toggleAtlasScalingOptionsByLayerType();
+    }
+  }
+
+  // disable predefined scales if none are defined
+  if ( !hasPredefinedScales() )
+  {
+    mAtlasPredefinedScaleRadio->setEnabled( false );
+  }
+
+  mComposerMap->setAtlasDriven( checked );
+  updateMapForAtlas();
+}
+
+void QgsComposerMapWidget::updateMapForAtlas()
+{
+  //update map if in atlas preview mode
+  QgsComposition* composition = mComposerMap->composition();
+  if ( !composition )
+  {
+    return;
+  }
+  if ( composition->atlasMode() == QgsComposition::AtlasOff )
+  {
+    return;
+  }
+
+  //update atlas based extent for map
+  QgsAtlasComposition* atlas = &composition->atlasComposition();
+  atlas->prepareMap( mComposerMap );
+
+  //redraw map
+  mComposerMap->cache();
+  mComposerMap->update();
+}
+
+void QgsComposerMapWidget::on_mAtlasMarginRadio_toggled( bool checked )
+{
+  mAtlasMarginSpinBox->setEnabled( checked );
+
+  if ( checked && mComposerMap )
+  {
+    mComposerMap->setAtlasScalingMode( QgsComposerMap::Auto );
+    updateMapForAtlas();
+  }
+}
+
+void QgsComposerMapWidget::on_mAtlasMarginSpinBox_valueChanged( int value )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  mComposerMap->setAtlasMargin( value / 100. );
+  updateMapForAtlas();
+}
+
+void QgsComposerMapWidget::on_mAtlasFixedScaleRadio_toggled( bool checked )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  if ( checked )
+  {
+    mComposerMap->setAtlasScalingMode( QgsComposerMap::Fixed );
+    updateMapForAtlas();
+  }
+}
+
+void QgsComposerMapWidget::on_mAtlasPredefinedScaleRadio_toggled( bool checked )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  if ( hasPredefinedScales() )
+  {
+    if ( checked )
+    {
+      mComposerMap->setAtlasScalingMode( QgsComposerMap::Predefined );
+      updateMapForAtlas();
+    }
+  }
+  else
+  {
+    // restore to fixed scale if no predefined scales exist
+    mAtlasFixedScaleRadio->blockSignals( true );
+    mAtlasFixedScaleRadio->setChecked( true );
+    mAtlasFixedScaleRadio->blockSignals( false );
+    mComposerMap->setAtlasScalingMode( QgsComposerMap::Fixed );
+  }
 }
 
 void QgsComposerMapWidget::on_mPreviewModeComboBox_activated( int i )
@@ -143,12 +306,15 @@ void QgsComposerMapWidget::on_mScaleLineEdit_editingFinished()
     return;
   }
 
+  if ( qRound( scaleDenominator ) == qRound( mComposerMap->scale() ) )
+    return;
+
   mComposerMap->beginCommand( tr( "Map scale changed" ) );
   mComposerMap->setNewScale( scaleDenominator );
   mComposerMap->endCommand();
 }
 
-void QgsComposerMapWidget::on_mRotationSpinBox_valueChanged( double value )
+void QgsComposerMapWidget::on_mMapRotationSpinBox_valueChanged( double value )
 {
   if ( !mComposerMap )
   {
@@ -166,40 +332,56 @@ void QgsComposerMapWidget::on_mSetToMapCanvasExtentButton_clicked()
 {
   if ( mComposerMap )
   {
-    const QgsMapRenderer* renderer = mComposerMap->mapRenderer();
-    if ( renderer )
+    QgsRectangle newExtent = mComposerMap->composition()->mapSettings().visibleExtent();
+
+    //Make sure the width/height ratio is the same as in current composer map extent.
+    //This is to keep the map item frame and the page layout fixed
+    QgsRectangle currentMapExtent = *( mComposerMap->currentMapExtent() );
+    double currentWidthHeightRatio = currentMapExtent.width() / currentMapExtent.height();
+    double newWidthHeightRatio = newExtent.width() / newExtent.height();
+
+    if ( currentWidthHeightRatio < newWidthHeightRatio )
     {
-      QgsRectangle newExtent = renderer->extent();
-
-      //Make sure the width/height ratio is the same as in current composer map extent.
-      //This is to keep the map item frame and the page layout fixed
-      QgsRectangle currentMapExtent = mComposerMap->extent();
-      double currentWidthHeightRatio = currentMapExtent.width() / currentMapExtent.height();
-      double newWidthHeightRatio = newExtent.width() / newExtent.height();
-
-      if ( currentWidthHeightRatio < newWidthHeightRatio )
-      {
-        //enlarge height of new extent
-        double newHeight = newExtent.width() / currentWidthHeightRatio;
-        newExtent.setYMinimum( newExtent.yMaximum() - newHeight );
-      }
-      else if ( currentWidthHeightRatio > newWidthHeightRatio )
-      {
-        //enlarge width of new extent
-        double newWidth = currentWidthHeightRatio * newExtent.height();
-        newExtent.setXMaximum( newExtent.xMinimum() + newWidth );
-      }
-
-      //fill text into line edits
-      mXMinLineEdit->setText( QString::number( newExtent.xMinimum() ) );
-      mXMaxLineEdit->setText( QString::number( newExtent.xMaximum() ) );
-      mYMinLineEdit->setText( QString::number( newExtent.yMinimum() ) );
-      mYMaxLineEdit->setText( QString::number( newExtent.yMaximum() ) );
-
-      mComposerMap->beginCommand( tr( "Map extent changed" ) );
-      mComposerMap->setNewExtent( newExtent );
-      mComposerMap->endCommand();
+      //enlarge height of new extent, ensuring the map center stays the same
+      double newHeight = newExtent.width() / currentWidthHeightRatio;
+      double deltaHeight = newHeight - newExtent.height();
+      newExtent.setYMinimum( newExtent.yMinimum() - deltaHeight / 2 );
+      newExtent.setYMaximum( newExtent.yMaximum() + deltaHeight / 2 );
     }
+    else
+    {
+      //enlarge width of new extent, ensuring the map center stays the same
+      double newWidth = currentWidthHeightRatio * newExtent.height();
+      double deltaWidth = newWidth - newExtent.width();
+      newExtent.setXMinimum( newExtent.xMinimum() - deltaWidth / 2 );
+      newExtent.setXMaximum( newExtent.xMaximum() + deltaWidth / 2 );
+    }
+
+    //fill text into line edits
+    mXMinLineEdit->setText( QString::number( newExtent.xMinimum() ) );
+    mXMaxLineEdit->setText( QString::number( newExtent.xMaximum() ) );
+    mYMinLineEdit->setText( QString::number( newExtent.yMinimum() ) );
+    mYMaxLineEdit->setText( QString::number( newExtent.yMaximum() ) );
+
+    mComposerMap->beginCommand( tr( "Map extent changed" ) );
+    mComposerMap->setNewExtent( newExtent );
+    mComposerMap->endCommand();
+  }
+}
+
+void QgsComposerMapWidget::on_mViewExtentInCanvasButton_clicked()
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  QgsRectangle currentMapExtent = *( mComposerMap->currentMapExtent() );
+
+  if ( !currentMapExtent.isEmpty() )
+  {
+    QgisApp::instance()->mapCanvas()->setExtent( currentMapExtent );
+    QgisApp::instance()->mapCanvas()->refresh();
   }
 }
 
@@ -241,8 +423,24 @@ void QgsComposerMapWidget::updateGuiElements()
     blockAllSignals( true );
 
     //width, height, scale
-//    QRectF composerMapRect = mComposerMap->rect();
-    mScaleLineEdit->setText( QString::number( mComposerMap->scale(), 'f', 0 ) );
+    double scale = mComposerMap->scale();
+
+    //round scale to an appropriate number of decimal places
+    if ( scale >= 10 )
+    {
+      //round scale to integer if it's greater than 10
+      mScaleLineEdit->setText( QString::number( mComposerMap->scale(), 'f', 0 ) );
+    }
+    else if ( scale >= 1 )
+    {
+      //don't round scale if it's less than 10, instead use 4 decimal places
+      mScaleLineEdit->setText( QString::number( mComposerMap->scale(), 'f', 4 ) );
+    }
+    else
+    {
+      //if scale < 1 then use 10 decimal places
+      mScaleLineEdit->setText( QString::number( mComposerMap->scale(), 'f', 10 ) );
+    }
 
     //preview mode
     QgsComposerMap::PreviewMode previewMode = mComposerMap->previewMode();
@@ -268,13 +466,13 @@ void QgsComposerMapWidget::updateGuiElements()
     }
 
     //composer map extent
-    QgsRectangle composerMapExtent = mComposerMap->extent();
+    QgsRectangle composerMapExtent = *( mComposerMap->currentMapExtent() );
     mXMinLineEdit->setText( QString::number( composerMapExtent.xMinimum(), 'f', 3 ) );
     mXMaxLineEdit->setText( QString::number( composerMapExtent.xMaximum(), 'f', 3 ) );
     mYMinLineEdit->setText( QString::number( composerMapExtent.yMinimum(), 'f', 3 ) );
     mYMaxLineEdit->setText( QString::number( composerMapExtent.yMaximum(), 'f', 3 ) );
 
-    mRotationSpinBox->setValue( mComposerMap->rotation() );
+    mMapRotationSpinBox->setValue( mComposerMap->mapRotation() );
 
     //keep layer list check box
     if ( mComposerMap->keepLayerSet() )
@@ -303,6 +501,8 @@ void QgsComposerMapWidget::updateGuiElements()
     mOverviewBlendModeComboBox->setBlendMode( mComposerMap->overviewBlendMode() );
     //overview inverted
     mOverviewInvertCheckbox->setChecked( mComposerMap->overviewInverted() );
+    //center overview
+    mOverviewCenterCheckbox->setChecked( mComposerMap->overviewCentered() );
 
     //grid
     if ( mComposerMap->gridEnabled() )
@@ -333,14 +533,20 @@ void QgsComposerMapWidget::updateGuiElements()
 
     //grid frame
     mFrameWidthSpinBox->setValue( mComposerMap->gridFrameWidth() );
+    mGridFramePenSizeSpinBox->setValue( mComposerMap->gridFramePenSize() );
+    mGridFramePenColorButton->setColor( mComposerMap->gridFramePenColor() );
+    mGridFrameFill1ColorButton->setColor( mComposerMap->gridFrameFillColor1() );
+    mGridFrameFill2ColorButton->setColor( mComposerMap->gridFrameFillColor2() );
     QgsComposerMap::GridFrameStyle gridFrameStyle = mComposerMap->gridFrameStyle();
     if ( gridFrameStyle == QgsComposerMap::Zebra )
     {
       mFrameStyleComboBox->setCurrentIndex( mFrameStyleComboBox->findText( tr( "Zebra" ) ) );
+      toggleFrameControls( true );
     }
     else //NoGridFrame
     {
       mFrameStyleComboBox->setCurrentIndex( mFrameStyleComboBox->findText( tr( "No frame" ) ) );
+      toggleFrameControls( false );
     }
 
     //grid blend mode
@@ -363,8 +569,6 @@ void QgsComposerMapWidget::updateGuiElements()
     initAnnotationDirectionBox( mAnnotationDirectionComboBoxBottom, mComposerMap->gridAnnotationDirection( QgsComposerMap::Bottom ) );
 
     mAnnotationFontColorButton->setColor( mComposerMap->annotationFontColor() );
-    mAnnotationFontColorButton->setColorDialogTitle( tr( "Select font color" ) );
-    mAnnotationFontColorButton->setColorDialogOptions( QColorDialog::ShowAlphaChannel );
 
     mDistanceToMapFrameSpinBox->setValue( mComposerMap->annotationFrameDistance() );
 
@@ -379,7 +583,69 @@ void QgsComposerMapWidget::updateGuiElements()
 
     mCoordinatePrecisionSpinBox->setValue( mComposerMap->gridAnnotationPrecision() );
 
+    //atlas controls
+    mAtlasCheckBox->setChecked( mComposerMap->atlasDriven() );
+    mAtlasMarginSpinBox->setValue( static_cast<int>( mComposerMap->atlasMargin() * 100 ) );
+
+    mAtlasFixedScaleRadio->setEnabled( mComposerMap->atlasDriven() );
+    mAtlasFixedScaleRadio->setChecked( mComposerMap->atlasScalingMode() == QgsComposerMap::Fixed );
+    mAtlasMarginSpinBox->setEnabled( mComposerMap->atlasScalingMode() == QgsComposerMap::Auto );
+    mAtlasMarginRadio->setEnabled( mComposerMap->atlasDriven() );
+    mAtlasMarginRadio->setChecked( mComposerMap->atlasScalingMode() == QgsComposerMap::Auto );
+    mAtlasPredefinedScaleRadio->setEnabled( mComposerMap->atlasDriven() );
+    mAtlasPredefinedScaleRadio->setChecked( mComposerMap->atlasScalingMode() == QgsComposerMap::Predefined );
+
+    if ( mComposerMap->atlasDriven() )
+    {
+      toggleAtlasScalingOptionsByLayerType();
+    }
+    // disable predefined scales if none are defined
+    if ( !hasPredefinedScales() )
+    {
+      mAtlasPredefinedScaleRadio->setEnabled( false );
+    }
+
     blockAllSignals( false );
+  }
+}
+
+void QgsComposerMapWidget::toggleAtlasScalingOptionsByLayerType()
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  //get composition
+  QgsComposition* composition = mComposerMap->composition();
+  if ( !composition )
+  {
+    return;
+  }
+
+  QgsAtlasComposition* atlas = &composition->atlasComposition();
+
+  QgsVectorLayer* coverageLayer = atlas->coverageLayer();
+  if ( !coverageLayer )
+  {
+    return;
+  }
+
+  switch ( atlas->coverageLayer()->wkbType() )
+  {
+    case QGis::WKBPoint:
+    case QGis::WKBPoint25D:
+    case QGis::WKBMultiPoint:
+    case QGis::WKBMultiPoint25D:
+      //For point layers buffer setting makes no sense, so set "fixed scale" on and disable margin control
+      mAtlasFixedScaleRadio->setChecked( true );
+      mAtlasMarginRadio->setEnabled( false );
+      mAtlasPredefinedScaleRadio->setEnabled( false );
+      break;
+    default:
+      //Not a point layer, so enable changes to fixed scale control
+      mAtlasMarginRadio->setEnabled( true );
+      mAtlasPredefinedScaleRadio->setEnabled( true );
   }
 }
 
@@ -448,10 +714,19 @@ void QgsComposerMapWidget::blockAllSignals( bool b )
   mDrawCanvasItemsCheckBox->blockSignals( b );
   mFrameStyleComboBox->blockSignals( b );
   mFrameWidthSpinBox->blockSignals( b );
+  mGridFramePenSizeSpinBox->blockSignals( b );
+  mGridFramePenColorButton->blockSignals( b );
+  mGridFrameFill1ColorButton->blockSignals( b );
+  mGridFrameFill2ColorButton->blockSignals( b );
   mOverviewFrameMapComboBox->blockSignals( b );
   mOverviewFrameStyleButton->blockSignals( b );
   mOverviewBlendModeComboBox->blockSignals( b );
   mOverviewInvertCheckbox->blockSignals( b );
+  mOverviewCenterCheckbox->blockSignals( b );
+  mAtlasCheckBox->blockSignals( b );
+  mAtlasMarginSpinBox->blockSignals( b );
+  mAtlasFixedScaleRadio->blockSignals( b );
+  mAtlasMarginRadio->blockSignals( b );
 }
 
 void QgsComposerMapWidget::on_mUpdatePreviewButton_clicked()
@@ -565,12 +840,20 @@ void QgsComposerMapWidget::on_mOverviewFrameStyleButton_clicked()
     return;
   }
 
-  QgsSymbolV2SelectorDialog d( mComposerMap->overviewFrameMapSymbol(), QgsStyleV2::defaultStyle(), 0 );
+  QgsFillSymbolV2* newSymbol = dynamic_cast<QgsFillSymbolV2*>( mComposerMap->overviewFrameMapSymbol()->clone() );
+  QgsSymbolV2SelectorDialog d( newSymbol, QgsStyleV2::defaultStyle(), 0 );
 
   //QgsSymbolV2PropertiesDialog d( mComposerMap->overviewFrameMapSymbol(), 0, this );
   if ( d.exec() == QDialog::Accepted )
   {
+    mComposerMap->beginCommand( tr( "Overview frame style changed" ) );
+    mComposerMap->setOverviewFrameMapSymbol( newSymbol );
     updateOverviewSymbolMarker();
+    mComposerMap->endCommand();
+  }
+  else
+  {
+    delete newSymbol;
   }
 }
 
@@ -589,6 +872,18 @@ void QgsComposerMapWidget::on_mOverviewInvertCheckbox_toggled( bool state )
   {
     mComposerMap->setOverviewInverted( state );
   }
+}
+
+void QgsComposerMapWidget::on_mOverviewCenterCheckbox_toggled( bool state )
+{
+  if ( mComposerMap )
+  {
+    mComposerMap->setOverviewCentered( state );
+  }
+  mComposerMap->beginCommand( tr( "Overview centering mode changed" ) );
+  mComposerMap->cache();
+  mComposerMap->update();
+  mComposerMap->endCommand();
 }
 
 void QgsComposerMapWidget::on_mGridCheckBox_toggled( bool state )
@@ -672,13 +967,21 @@ void QgsComposerMapWidget::on_mGridLineStyleButton_clicked()
     return;
   }
 
-  QgsSymbolV2SelectorDialog d( mComposerMap->gridLineSymbol(), QgsStyleV2::defaultStyle(), 0 );
+  QgsLineSymbolV2* newSymbol = dynamic_cast<QgsLineSymbolV2*>( mComposerMap->gridLineSymbol()->clone() );
+  QgsSymbolV2SelectorDialog d( newSymbol, QgsStyleV2::defaultStyle(), 0 );
+
   if ( d.exec() == QDialog::Accepted )
   {
+    mComposerMap->beginCommand( tr( "Grid line style changed" ) );
+    mComposerMap->setGridLineSymbol( newSymbol );
     updateLineSymbolMarker();
+    mComposerMap->endCommand();
+    mComposerMap->update();
   }
-
-  mComposerMap->update();
+  else
+  {
+    delete newSymbol;
+  }
 }
 
 void QgsComposerMapWidget::on_mGridTypeComboBox_currentIndexChanged( const QString& text )
@@ -732,7 +1035,7 @@ void QgsComposerMapWidget::on_mAnnotationFontButton_clicked()
   }
 
   bool ok;
-#if defined(Q_WS_MAC) && QT_VERSION >= 0x040500 && defined(QT_MAC_USE_COCOA)
+#if defined(Q_WS_MAC) && defined(QT_MAC_USE_COCOA)
   // Native Mac dialog works only for Qt Carbon
   QFont newFont = QFontDialog::getFont( &ok, mComposerMap->gridAnnotationFont(), 0, QString(), QFontDialog::DontUseNativeDialog );
 #else
@@ -861,8 +1164,23 @@ void QgsComposerMapWidget::on_mCoordinatePrecisionSpinBox_valueChanged( int valu
   mComposerMap->endCommand();
 }
 
+void QgsComposerMapWidget::toggleFrameControls( bool frameEnabled )
+{
+  //set status of frame controls
+  mFrameWidthSpinBox->setEnabled( frameEnabled );
+  mGridFramePenSizeSpinBox->setEnabled( frameEnabled );
+  mGridFramePenColorButton->setEnabled( frameEnabled );
+  mGridFrameFill1ColorButton->setEnabled( frameEnabled );
+  mGridFrameFill2ColorButton->setEnabled( frameEnabled );
+  mFrameWidthLabel->setEnabled( frameEnabled );
+  mFramePenLabel->setEnabled( frameEnabled );
+  mFrameFillLabel->setEnabled( frameEnabled );
+}
+
 void QgsComposerMapWidget::on_mFrameStyleComboBox_currentIndexChanged( const QString& text )
 {
+  toggleFrameControls( text !=  tr( "No frame" ) );
+
   if ( !mComposerMap )
   {
     return;
@@ -892,6 +1210,54 @@ void QgsComposerMapWidget::on_mFrameWidthSpinBox_valueChanged( double d )
     mComposerMap->update();
     mComposerMap->endCommand();
   }
+}
+
+void QgsComposerMapWidget::on_mGridFramePenSizeSpinBox_valueChanged( double d )
+{
+  if ( mComposerMap )
+  {
+    mComposerMap->beginCommand( tr( "Changed grid frame line thickness" ) );
+    mComposerMap->setGridFramePenSize( d );
+    mComposerMap->updateBoundingRect();
+    mComposerMap->update();
+    mComposerMap->endCommand();
+  }
+}
+
+void QgsComposerMapWidget::on_mGridFramePenColorButton_colorChanged( const QColor& newColor )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+  mComposerMap->beginCommand( tr( "Grid frame color changed" ) );
+  mComposerMap->setGridFramePenColor( newColor );
+  mComposerMap->update();
+  mComposerMap->endCommand();
+}
+
+void QgsComposerMapWidget::on_mGridFrameFill1ColorButton_colorChanged( const QColor& newColor )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+  mComposerMap->beginCommand( tr( "Grid frame first fill color changed" ) );
+  mComposerMap->setGridFrameFillColor1( newColor );
+  mComposerMap->update();
+  mComposerMap->endCommand();
+}
+
+void QgsComposerMapWidget::on_mGridFrameFill2ColorButton_colorChanged( const QColor& newColor )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+  mComposerMap->beginCommand( tr( "Grid frame second fill color changed" ) );
+  mComposerMap->setGridFrameFillColor2( newColor );
+  mComposerMap->update();
+  mComposerMap->endCommand();
 }
 
 void QgsComposerMapWidget::showEvent( QShowEvent * event )
@@ -1069,4 +1435,31 @@ void QgsComposerMapWidget::refreshMapComboBox()
   }
 
   mOverviewFrameMapComboBox->blockSignals( false );
+}
+
+void QgsComposerMapWidget::atlasLayerChanged( QgsVectorLayer* layer )
+{
+  // enable or disable fixed scale control based on layer type
+  if ( !layer || !mAtlasCheckBox->isChecked() )
+  {
+    return;
+  }
+
+  toggleAtlasScalingOptionsByLayerType();
+}
+
+bool QgsComposerMapWidget::hasPredefinedScales() const
+{
+  // first look at project's scales
+  QStringList scales( QgsProject::instance()->readListEntry( "Scales", "/ScalesList" ) );
+  bool hasProjectScales( QgsProject::instance()->readBoolEntry( "Scales", "/useProjectScales" ) );
+  if ( !hasProjectScales || scales.isEmpty() )
+  {
+    // default to global map tool scales
+    QSettings settings;
+    QString scalesStr( settings.value( "Map/scales", PROJECT_SCALES ).toString() );
+    QStringList myScalesList = scalesStr.split( "," );
+    return myScalesList.size() > 0 && myScalesList[0] != "";
+  }
+  return true;
 }

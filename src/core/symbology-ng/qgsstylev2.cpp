@@ -38,7 +38,7 @@
 QgsStyleV2 *QgsStyleV2::mDefaultStyle = 0;
 
 
-QgsStyleV2::QgsStyleV2()
+QgsStyleV2::QgsStyleV2() : QObject()
 {
   mCurrentDB = 0;
 }
@@ -119,6 +119,7 @@ bool QgsStyleV2::saveSymbol( QString name, QgsSymbolV2* symbol, int groupid, QSt
 
   QByteArray xmlArray;
   QTextStream stream( &xmlArray );
+  stream.setCodec( "UTF-8" );
   symEl.save( stream, 4 );
   char *query = sqlite3_mprintf( "INSERT INTO symbol VALUES (NULL, '%q', '%q', %d);",
                                  name.toUtf8().constData(), xmlArray.constData(), groupid );
@@ -128,6 +129,8 @@ bool QgsStyleV2::saveSymbol( QString name, QgsSymbolV2* symbol, int groupid, QSt
     QgsDebugMsg( "Couldn't insert symbol into the database!" );
     return false;
   }
+
+  emit symbolSaved( name, symbol );
 
   return true;
 }
@@ -222,6 +225,7 @@ bool QgsStyleV2::saveColorRamp( QString name, QgsVectorColorRampV2* ramp, int gr
 
   QByteArray xmlArray;
   QTextStream stream( &xmlArray );
+  stream.setCodec( "UTF-8" );
   rampEl.save( stream, 4 );
   char *query = sqlite3_mprintf( "INSERT INTO colorramp VALUES (NULL, '%q', '%q', %d);",
                                  name.toUtf8().constData(), xmlArray.constData(), groupid );
@@ -390,6 +394,7 @@ bool QgsStyleV2::save( QString filename )
     return false;
   }
   QTextStream ts( &f );
+  ts.setCodec( "UTF-8" );
   doc.save( ts, 2 );
   f.close();
 #endif
@@ -1029,6 +1034,7 @@ int QgsStyleV2::addSmartgroup( QString name, QString op, QgsSmartConditionMap co
 
   QByteArray xmlArray;
   QTextStream stream( &xmlArray );
+  stream.setCodec( "UTF-8" );
   smartEl.save( stream, 4 );
   char *query = sqlite3_mprintf( "INSERT INTO smartgroup VALUES (NULL, '%q', '%q')",
                                  name.toUtf8().constData(), xmlArray.constData() );
@@ -1318,6 +1324,7 @@ bool QgsStyleV2::exportXML( QString filename )
   }
 
   QTextStream ts( &f );
+  ts.setCodec( "UTF-8" );
   doc.save( ts, 2 );
   f.close();
 
@@ -1392,7 +1399,7 @@ bool QgsStyleV2::importXML( QString filename )
   }
 
   // save the symbols with proper name
-  for ( QMap<QString, QgsSymbolV2*>::iterator it = symbols.begin(); it != symbols.end(); it++ )
+  for ( QMap<QString, QgsSymbolV2*>::iterator it = symbols.begin(); it != symbols.end(); ++it )
   {
     addSymbol( it.key(), it.value() );
   }
@@ -1427,6 +1434,7 @@ bool QgsStyleV2::updateSymbol( StyleEntity type, QString name )
   QDomElement symEl;
   QByteArray xmlArray;
   QTextStream stream( &xmlArray );
+  stream.setCodec( "UTF-8" );
 
   char *query;
 

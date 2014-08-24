@@ -44,7 +44,7 @@ namespace QgisGui
    * Qt::WindowMaximizeButtonHint is included but will be ignored if
    * the dialog is a fixed size and does not have a size grip.
    */
-  static const Qt::WFlags ModalDialogFlags = 0;
+  static const Qt::WindowFlags ModalDialogFlags = 0;
 
   /**
     Open files, preferring to have the default file selector be the
@@ -79,11 +79,12 @@ namespace QgisGui
    * provide filters with all available writable image formats.
    * @param theParent widget that should act as the parent for the file dialog
    * @param theMessage the message to display to the user
+   * @param defaultFilename default file name (empty by default)
    * @return QPair<QString, QString> where first is the file name and second is
    * the file type
    * @note added in 1.6
    */
-  QPair<QString, QString> GUI_EXPORT getSaveAsImageName( QWidget * theParent, QString theMessage );
+  QPair<QString, QString> GUI_EXPORT getSaveAsImageName( QWidget * theParent, QString theMessage, QString defaultFilename = QString::null );
 
   /**
 

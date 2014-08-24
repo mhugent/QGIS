@@ -14,7 +14,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <QtGui>
+#include <QDockWidget>
+#include <QMessageBox>
 
 #include "qgsattributetabledialog.h"
 #include "qgsattributetablemodel.h"
@@ -40,6 +41,7 @@
 #include "qgsmessagebar.h"
 #include "qgsexpressionselectiondialog.h"
 #include "qgsfeaturelistmodel.h"
+#include "qgsexpressionbuilderdialog.h"
 
 class QgsAttributeTableDock : public QDockWidget
 {
@@ -64,6 +66,9 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *theLayer, QWid
 {
   setupUi( this );
 
+  // Fix selection color on loosing focus (Windows)
+  setStyleSheet( QgisApp::instance()->styleSheet() );
+
   setAttribute( Qt::WA_DeleteOnClose );
 
   QSettings settings;
@@ -71,15 +76,19 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *theLayer, QWid
   // Initialize the window geometry
   restoreGeometry( settings.value( "/Windows/BetterAttributeTable/geometry" ).toByteArray() );
 
+  QgsAttributeEditorContext context;
 
-  QgsDistanceArea myDa;
+  myDa = new QgsDistanceArea();
 
-  myDa.setSourceCrs( mLayer->crs().srsid() );
-  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapRenderer()->hasCrsTransformEnabled() );
-  myDa.setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
+  myDa->setSourceCrs( mLayer->crs() );
+  myDa->setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapSettings().hasCrsTransformEnabled() );
+  myDa->setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
+
+  context.setDistanceArea( *myDa );
+  context.setVectorLayerTools( QgisApp::instance()->vectorLayerTools() );
 
   // Initialize dual view
-  mMainView->init( mLayer, QgisApp::instance()->mapCanvas(), myDa );
+  mMainView->init( mLayer, QgisApp::instance()->mapCanvas(), QgsFeatureRequest(), context );
 
   // Initialize filter gui elements
   mFilterActionMapper = new QSignalMapper( this );
@@ -136,7 +145,7 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *theLayer, QWid
   mSelectedToTopButton->setIcon( QgsApplication::getThemeIcon( "/mActionSelectedToTop.png" ) );
   mCopySelectedRowsButton->setIcon( QgsApplication::getThemeIcon( "/mActionCopySelected.png" ) );
   mZoomMapToSelectedRowsButton->setIcon( QgsApplication::getThemeIcon( "/mActionZoomToSelected.svg" ) );
-  mPanMapToSelectedRowsButton->setIcon( QgsApplication::getThemeIcon( "/mActionPanToSelected.png" ) );
+  mPanMapToSelectedRowsButton->setIcon( QgsApplication::getThemeIcon( "/mActionPanToSelected.svg" ) );
   mInvertSelectionButton->setIcon( QgsApplication::getThemeIcon( "/mActionInvertSelection.png" ) );
   mToggleEditingButton->setIcon( QgsApplication::getThemeIcon( "/mActionToggleEditing.svg" ) );
   mSaveEditsButton->setIcon( QgsApplication::getThemeIcon( "/mActionSaveEdits.svg" ) );
@@ -147,6 +156,7 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *theLayer, QWid
   mTableViewButton->setIcon( QgsApplication::getThemeIcon( "/mActionOpenTable.png" ) );
   mAttributeViewButton->setIcon( QgsApplication::getThemeIcon( "/mActionPropertyItem.png" ) );
   mExpressionSelectButton->setIcon( QgsApplication::getThemeIcon( "/mIconExpressionSelect.svg" ) );
+  mAddFeature->setIcon( QgsApplication::getThemeIcon( "/mActionNewTableRow.png" ) );
 
   // toggle editing
   bool canChangeAttributes = mLayer->dataProvider()->capabilities() & QgsVectorDataProvider::ChangeAttributeValues;
@@ -158,10 +168,10 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *theLayer, QWid
   mToggleEditingButton->blockSignals( true );
   mToggleEditingButton->setCheckable( true );
   mToggleEditingButton->setChecked( mLayer->isEditable() );
-  mToggleEditingButton->setEnabled( canChangeAttributes && !mLayer->isReadOnly() );
+  mToggleEditingButton->setEnabled(( canChangeAttributes || canDeleteFeatures || canAddAttributes || canDeleteAttributes || canAddFeatures ) && !mLayer->isReadOnly() );
   mToggleEditingButton->blockSignals( false );
 
-  mSaveEditsButton->setEnabled( canChangeAttributes && mLayer->isEditable() );
+  mSaveEditsButton->setEnabled( mToggleEditingButton->isEnabled() && mLayer->isEditable() );
   mOpenFieldCalculator->setEnabled(( canChangeAttributes || canAddAttributes ) && mLayer->isEditable() );
   mDeleteSelectedButton->setEnabled( canDeleteFeatures && mLayer->isEditable() );
   mAddAttribute->setEnabled( canAddAttributes && mLayer->isEditable() );
@@ -190,10 +200,22 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *theLayer, QWid
       filterShowAll();
       break;
   }
+
+  mFieldModel = new QgsFieldModel();
+  mFieldModel->setLayer( mLayer );
+  mFieldCombo->setModel( mFieldModel );
+  connect( mRunFieldCalc, SIGNAL( clicked() ), this, SLOT( updateFieldFromExpression() ) );
+  // NW TODO Fix in 2.6 - Doesn't work with field model for some reason.
+//  connect( mUpdateExpressionText, SIGNAL( returnPressed() ), this, SLOT( updateFieldFromExpression() ) );
+  connect( mUpdateExpressionText, SIGNAL( fieldChanged( QString , bool ) ), this, SLOT( updateButtonStatus( QString, bool ) ) );
+  mUpdateExpressionText->setLayer( mLayer );
+  mUpdateExpressionText->setLeftHandButtonStyle( true );
+  editingToggled();
 }
 
 QgsAttributeTableDialog::~QgsAttributeTableDialog()
 {
+  delete myDa;
 }
 
 void QgsAttributeTableDialog::updateTitle()
@@ -205,6 +227,17 @@ void QgsAttributeTableDialog::updateTitle()
                      .arg( mMainView->filteredFeatureCount() )
                      .arg( mLayer->selectedFeatureCount() )
                    );
+
+  if ( mMainView->filterMode() == QgsAttributeTableFilterModel::ShowAll )
+    mRunFieldCalc->setText( tr( "Update All" ) );
+  else
+    mRunFieldCalc->setText( tr( "Update Filtered" ) );
+}
+
+void QgsAttributeTableDialog::updateButtonStatus( QString fieldName, bool isValid )
+{
+  Q_UNUSED( fieldName );
+  mRunFieldCalc->setEnabled( isValid );
 }
 
 void QgsAttributeTableDialog::closeEvent( QCloseEvent* event )
@@ -215,6 +248,16 @@ void QgsAttributeTableDialog::closeEvent( QCloseEvent* event )
   {
     QSettings settings;
     settings.setValue( "/Windows/BetterAttributeTable/geometry", saveGeometry() );
+  }
+}
+
+void QgsAttributeTableDialog::keyPressEvent( QKeyEvent* event )
+{
+  QDialog::keyPressEvent( event );
+
+  if (( event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete ) && mDeleteSelectedButton->isEnabled() )
+  {
+    QgisApp::instance()->deleteSelected( mLayer, this );
   }
 }
 
@@ -242,7 +285,7 @@ void QgsAttributeTableDialog::columnBoxInit()
 
   foreach ( const QgsField field, fields )
   {
-    if ( mLayer->editType( mLayer->fieldNameIndex( field.name() ) ) != QgsVectorLayer::Hidden )
+    if ( mLayer->editorWidgetV2( mLayer->fieldNameIndex( field.name() ) ) != "Hidden" )
     {
       QIcon icon = QgsApplication::getThemeIcon( "/mActionNewAttribute.png" );
       QString text = field.name();
@@ -254,6 +297,81 @@ void QgsAttributeTableDialog::columnBoxInit()
       mFilterColumnsMenu->addAction( filterAction );
     }
   }
+}
+
+void QgsAttributeTableDialog::updateFieldFromExpression()
+{
+  QApplication::setOverrideCursor( Qt::WaitCursor );
+
+  mLayer->beginEditCommand( "Field calculator" );
+
+  QModelIndex modelindex = mFieldModel->indexFromName( mFieldCombo->currentText() );
+  int fieldindex = modelindex.data( QgsFieldModel::FieldIndexRole ).toInt();
+
+  bool calculationSuccess = true;
+  QString error;
+
+
+  QgsExpression exp( mUpdateExpressionText->currentField() );
+  exp.setGeomCalculator( *myDa );
+  bool useGeometry = exp.needsGeometry();
+
+  QgsFeatureRequest request;
+  request.setFlags( useGeometry ? QgsFeatureRequest::NoFlags : QgsFeatureRequest::NoGeometry );
+  QgsFeatureIds filteredIds = mMainView->filteredFeatures();
+  QgsDebugMsg( QString( filteredIds.size() ) );
+
+  // This would be nice but doesn't work on all providers
+//  if ( mMainView->filterMode() != QgsAttributeTableFilterModel::ShowAll )
+//  {
+//    QgsDebugMsg( " Updating only selected features " );
+//    request.setFilterFids( mMainView->filteredFeatures() );
+//  }
+
+  bool filtered = mMainView->filterMode() != QgsAttributeTableFilterModel::ShowAll;
+  int rownum = 1;
+
+  //go through all the features and change the new attributes
+  QgsFeatureIterator fit = mLayer->getFeatures( request );
+  QgsFeature feature;
+  while ( fit.nextFeature( feature ) )
+  {
+    if ( filtered )
+    {
+      if ( !filteredIds.contains( feature.id() ) )
+      {
+        continue;
+      }
+    }
+
+    exp.setCurrentRowNumber( rownum );
+    QVariant value = exp.evaluate( &feature );
+    // Bail if we have a update error
+    if ( exp.hasEvalError() )
+    {
+      calculationSuccess = false;
+      error = exp.evalErrorString();
+      break;
+    }
+    else
+    {
+      QVariant oldvalue = feature.attributes().value( fieldindex );
+      mLayer->changeAttributeValue( feature.id(), fieldindex, value, oldvalue );
+    }
+
+    rownum++;
+  }
+
+  QApplication::restoreOverrideCursor();
+
+  if ( !calculationSuccess )
+  {
+    QMessageBox::critical( 0, tr( "Error" ), tr( "An error occured while evaluating the calculation string:\n%1" ).arg( error ) );
+    mLayer->destroyEditCommand();
+    return;
+  }
+
+  mLayer->endEditCommand();
 }
 
 void QgsAttributeTableDialog::filterColumnChanged( QObject* filterAction )
@@ -273,7 +391,7 @@ void QgsAttributeTableDialog::filterExpressionBuilder()
 
   QgsDistanceArea myDa;
   myDa.setSourceCrs( mLayer->crs().srsid() );
-  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapRenderer()->hasCrsTransformEnabled() );
+  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapSettings().hasCrsTransformEnabled() );
   myDa.setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
   dlg.setGeomCalculator( myDa );
 
@@ -298,6 +416,7 @@ void QgsAttributeTableDialog::filterShowAll()
   mFilterQuery->setVisible( false );
   mApplyFilterButton->setVisible( false );
   mMainView->setFilterMode( QgsAttributeTableFilterModel::ShowAll );
+  updateTitle();
 }
 
 void QgsAttributeTableDialog::filterSelected()
@@ -455,6 +574,7 @@ void QgsAttributeTableDialog::editingToggled()
   mRemoveAttribute->setEnabled( canDeleteAttributes && mLayer->isEditable() );
   mAddFeature->setEnabled( canAddFeatures && mLayer->isEditable() && mLayer->geometryType() == QGis::NoGeometry );
 
+  mUpdateExpressionBox->setVisible( mLayer->isEditable() );
   // not necessary to set table read only if layer is not editable
   // because model always reflects actual state when returning item flags
 }
@@ -582,7 +702,7 @@ void QgsAttributeTableDialog::setFilterExpression( QString filterString )
   QgsDistanceArea myDa;
 
   myDa.setSourceCrs( mLayer->crs().srsid() );
-  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapRenderer()->hasCrsTransformEnabled() );
+  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapSettings().hasCrsTransformEnabled() );
   myDa.setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
 
   // parse search string and build parsed tree
@@ -598,14 +718,13 @@ void QgsAttributeTableDialog::setFilterExpression( QString filterString )
     QgisApp::instance()->messageBar()->pushMessage( tr( "Evaluation error" ), filterExpression.evalErrorString(), QgsMessageBar::WARNING, QgisApp::instance()->messageTimeout() );
   }
 
-  // TODO: fetch only necessary columns
-  // QStringList columns = search.referencedColumns();
   bool fetchGeom = filterExpression.needsGeometry();
 
   QApplication::setOverrideCursor( Qt::WaitCursor );
 
   filterExpression.setGeomCalculator( myDa );
   QgsFeatureRequest request;
+  request.setSubsetOfAttributes( filterExpression.referencedColumns(), mLayer->pendingFields() );
   if ( !fetchGeom )
   {
     request.setFlags( QgsFeatureRequest::NoGeometry );

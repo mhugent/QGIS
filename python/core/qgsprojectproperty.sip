@@ -13,7 +13,7 @@ class QgsProperty
     @param tabs is number of tabs to print; used for pretty-printing
     hierarchy
     */
-    virtual void dump( size_t tabs = 0 ) const = 0;
+    virtual void dump( int tabs = 0 ) const = 0;
 
     /** returns true if is a QgsPropertyKey */
     virtual bool isKey() const = 0;
@@ -90,7 +90,7 @@ class QgsPropertyValue : QgsProperty
     */
     bool isLeaf() const;
 
-    void dump( size_t tabs = 0 ) const;
+    void dump( int tabs = 0 ) const;
 
     bool readXML( QDomNode & keyNode );
 
@@ -98,7 +98,7 @@ class QgsPropertyValue : QgsProperty
                    QDomElement   & element,
                    QDomDocument  & document );
 
-    size_t count() const;
+    int count() const;
 
     /** return keys that do not contain other keys
 
@@ -119,7 +119,10 @@ class QgsPropertyKey : QgsProperty
     virtual ~ QgsPropertyKey();
 
     /// every key has a name
-    QString & name();
+    // @{
+    QString &name();
+    // @}
+
 
     /** if this key has a value, it will be stored by its name in its
      * properties
@@ -148,14 +151,14 @@ class QgsPropertyKey : QgsProperty
     QgsPropertyValue * setValue( const QVariant & value );
 
 
-    void dump( size_t tabs = 0 ) const;
+    void dump( int tabs = 0 ) const;
 
     bool readXML( QDomNode & keyNode );
 
     bool writeXML( const QString &nodeName, QDomElement & element, QDomDocument & document );
 
     /// how many elements are contained within this one?
-    size_t count() const;
+    int count() const;
 
     /// Does this property not have any subkeys or values?
     /* virtual */ bool isEmpty() const;

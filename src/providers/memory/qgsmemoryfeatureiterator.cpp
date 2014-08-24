@@ -21,12 +21,11 @@
 #include "qgsmessagelog.h"
 
 
-QgsMemoryFeatureIterator::QgsMemoryFeatureIterator( QgsMemoryProvider* p, const QgsFeatureRequest& request )
-    : QgsAbstractFeatureIterator( request )
-    , P( p )
+
+QgsMemoryFeatureIterator::QgsMemoryFeatureIterator( QgsMemoryFeatureSource* source, bool ownSource, const QgsFeatureRequest& request )
+    : QgsAbstractFeatureIteratorFromSource( source, ownSource, request )
     , mSelectRectGeom( 0 )
 {
-  P->mActiveIterators << this;
 
   if ( mRequest.filterType() == QgsFeatureRequest::FilterRect && mRequest.flags() & QgsFeatureRequest::ExactIntersect )
   {
@@ -35,17 +34,17 @@ QgsMemoryFeatureIterator::QgsMemoryFeatureIterator( QgsMemoryProvider* p, const 
 
   // if there's spatial index, use it!
   // (but don't use it when selection rect is not specified)
-  if ( mRequest.filterType() == QgsFeatureRequest::FilterRect && P->mSpatialIndex )
+  if ( mRequest.filterType() == QgsFeatureRequest::FilterRect && mSource->mSpatialIndex )
   {
     mUsingFeatureIdList = true;
-    mFeatureIdList = P->mSpatialIndex->intersects( mRequest.filterRect() );
+    mFeatureIdList = mSource->mSpatialIndex->intersects( mRequest.filterRect() );
     QgsDebugMsg( "Features returned by spatial index: " + QString::number( mFeatureIdList.count() ) );
   }
   else if ( mRequest.filterType() == QgsFeatureRequest::FilterFid )
   {
     mUsingFeatureIdList = true;
-    QgsFeatureMap::iterator it = P->mFeatures.find( mRequest.filterFid() );
-    if ( it != P->mFeatures.end() )
+    QgsFeatureMap::const_iterator it = mSource->mFeatures.find( mRequest.filterFid() );
+    if ( it != mSource->mFeatures.end() )
       mFeatureIdList.append( mRequest.filterFid() );
   }
   else
@@ -62,7 +61,7 @@ QgsMemoryFeatureIterator::~QgsMemoryFeatureIterator()
 }
 
 
-bool QgsMemoryFeatureIterator::nextFeature( QgsFeature& feature )
+bool QgsMemoryFeatureIterator::fetchFeature( QgsFeature& feature )
 {
   feature.setValid( false );
 
@@ -81,12 +80,12 @@ bool QgsMemoryFeatureIterator::nextFeatureUsingList( QgsFeature& feature )
   bool hasFeature = false;
 
   // option 1: we have a list of features to traverse
-  while ( mFeatureIdListIterator != mFeatureIdList.end() )
+  while ( mFeatureIdListIterator != mFeatureIdList.constEnd() )
   {
     if ( mRequest.filterType() == QgsFeatureRequest::FilterRect && mRequest.flags() & QgsFeatureRequest::ExactIntersect )
     {
       // do exact check in case we're doing intersection
-      if ( P->mFeatures[*mFeatureIdListIterator].geometry()->intersects( mSelectRectGeom ) )
+      if ( mSource->mFeatures[*mFeatureIdListIterator].geometry() && mSource->mFeatures[*mFeatureIdListIterator].geometry()->intersects( mSelectRectGeom ) )
         hasFeature = true;
     }
     else
@@ -95,17 +94,20 @@ bool QgsMemoryFeatureIterator::nextFeatureUsingList( QgsFeature& feature )
     if ( hasFeature )
       break;
 
-    mFeatureIdListIterator++;
+    ++mFeatureIdListIterator;
   }
 
   // copy feature
   if ( hasFeature )
   {
-    feature = P->mFeatures[*mFeatureIdListIterator];
-    mFeatureIdListIterator++;
+    feature = mSource->mFeatures[*mFeatureIdListIterator];
+    ++mFeatureIdListIterator;
   }
   else
     close();
+
+  if ( hasFeature )
+    feature.setFields( &mSource->mFields ); // allow name-based attribute lookups
 
   return hasFeature;
 }
@@ -116,7 +118,7 @@ bool QgsMemoryFeatureIterator::nextFeatureTraverseAll( QgsFeature& feature )
   bool hasFeature = false;
 
   // option 2: traversing the whole layer
-  while ( mSelectIterator != P->mFeatures.end() )
+  while ( mSelectIterator != mSource->mFeatures.constEnd() )
   {
     if ( mRequest.filterType() != QgsFeatureRequest::FilterRect )
     {
@@ -128,13 +130,13 @@ bool QgsMemoryFeatureIterator::nextFeatureTraverseAll( QgsFeature& feature )
       if ( mRequest.flags() & QgsFeatureRequest::ExactIntersect )
       {
         // using exact test when checking for intersection
-        if ( mSelectIterator->geometry()->intersects( mSelectRectGeom ) )
+        if ( mSelectIterator->geometry() && mSelectIterator->geometry()->intersects( mSelectRectGeom ) )
           hasFeature = true;
       }
       else
       {
         // check just bounding box against rect when not using intersection
-        if ( mSelectIterator->geometry()->boundingBox().intersects( mRequest.filterRect() ) )
+        if ( mSelectIterator->geometry() && mSelectIterator->geometry()->boundingBox().intersects( mRequest.filterRect() ) )
           hasFeature = true;
       }
     }
@@ -142,16 +144,16 @@ bool QgsMemoryFeatureIterator::nextFeatureTraverseAll( QgsFeature& feature )
     if ( hasFeature )
       break;
 
-    mSelectIterator++;
+    ++mSelectIterator;
   }
 
   // copy feature
   if ( hasFeature )
   {
     feature = mSelectIterator.value();
-    mSelectIterator++;
+    ++mSelectIterator;
     feature.setValid( true );
-    feature.setFields( &P->mFields ); // allow name-based attribute lookups
+    feature.setFields( &mSource->mFields ); // allow name-based attribute lookups
   }
   else
     close();
@@ -165,9 +167,9 @@ bool QgsMemoryFeatureIterator::rewind()
     return false;
 
   if ( mUsingFeatureIdList )
-    mFeatureIdListIterator = mFeatureIdList.begin();
+    mFeatureIdListIterator = mFeatureIdList.constBegin();
   else
-    mSelectIterator = P->mFeatures.begin();
+    mSelectIterator = mSource->mFeatures.constBegin();
 
   return true;
 }
@@ -177,11 +179,30 @@ bool QgsMemoryFeatureIterator::close()
   if ( mClosed )
     return false;
 
-  P->mActiveIterators.remove( this );
+  iteratorClosed();
 
   delete mSelectRectGeom;
   mSelectRectGeom = NULL;
 
   mClosed = true;
   return true;
+}
+
+// -------------------------
+
+QgsMemoryFeatureSource::QgsMemoryFeatureSource( const QgsMemoryProvider* p )
+    : mFields( p->mFields )
+    , mFeatures( p->mFeatures )
+    , mSpatialIndex( p->mSpatialIndex ? new QgsSpatialIndex( *p->mSpatialIndex ) : 0 )  // just shallow copy
+{
+}
+
+QgsMemoryFeatureSource::~QgsMemoryFeatureSource()
+{
+  delete mSpatialIndex;
+}
+
+QgsFeatureIterator QgsMemoryFeatureSource::getFeatures( const QgsFeatureRequest& request )
+{
+  return QgsFeatureIterator( new QgsMemoryFeatureIterator( this, false, request ) );
 }

@@ -15,11 +15,13 @@
 #include "qgsfeaturerequest.h"
 
 #include "qgsfield.h"
+#include "qgsgeometry.h"
 
 #include <QStringList>
 
 QgsFeatureRequest::QgsFeatureRequest()
     : mFilter( FilterNone )
+    , mFilterExpression( 0 )
     , mFlags( 0 )
 {
 }
@@ -27,6 +29,7 @@ QgsFeatureRequest::QgsFeatureRequest()
 QgsFeatureRequest::QgsFeatureRequest( QgsFeatureId fid )
     : mFilter( FilterFid )
     , mFilterFid( fid )
+    , mFilterExpression( 0 )
     , mFlags( 0 )
 {
 }
@@ -34,19 +37,47 @@ QgsFeatureRequest::QgsFeatureRequest( QgsFeatureId fid )
 QgsFeatureRequest::QgsFeatureRequest( const QgsRectangle& rect )
     : mFilter( FilterRect )
     , mFilterRect( rect )
+    , mFilterExpression( 0 )
+    , mFlags( 0 )
+{
+}
+
+QgsFeatureRequest::QgsFeatureRequest( const QgsExpression& expr )
+    : mFilter( FilterExpression )
+    , mFilterExpression( new QgsExpression( expr.expression() ) )
     , mFlags( 0 )
 {
 }
 
 QgsFeatureRequest::QgsFeatureRequest( const QgsFeatureRequest &rh )
 {
+  operator=( rh );
+}
+
+QgsFeatureRequest& QgsFeatureRequest::operator=( const QgsFeatureRequest & rh )
+{
   mFlags = rh.mFlags;
   mFilter = rh.mFilter;
   mFilterRect = rh.mFilterRect;
   mFilterFid = rh.mFilterFid;
+  mFilterFids = rh.mFilterFids;
+  if ( rh.mFilterExpression )
+  {
+    mFilterExpression = new QgsExpression( rh.mFilterExpression->expression() );
+  }
+  else
+  {
+    mFilterExpression = 0;
+  }
   mAttrs = rh.mAttrs;
+  mSimplifyMethod = rh.mSimplifyMethod;
+  return *this;
 }
 
+QgsFeatureRequest::~QgsFeatureRequest()
+{
+  delete mFilterExpression;
+}
 
 QgsFeatureRequest& QgsFeatureRequest::setFilterRect( const QgsRectangle& rect )
 {
@@ -59,6 +90,21 @@ QgsFeatureRequest& QgsFeatureRequest::setFilterFid( QgsFeatureId fid )
 {
   mFilter = FilterFid;
   mFilterFid = fid;
+  return *this;
+}
+
+QgsFeatureRequest&QgsFeatureRequest::setFilterFids( QgsFeatureIds fids )
+{
+  mFilter = FilterFids;
+  mFilterFids = fids;
+  return *this;
+}
+
+QgsFeatureRequest& QgsFeatureRequest::setFilterExpression( const QString& expression )
+{
+  mFilter = FilterExpression;
+  delete mFilterExpression;
+  mFilterExpression = new QgsExpression( expression );
   return *this;
 }
 
@@ -75,17 +121,88 @@ QgsFeatureRequest& QgsFeatureRequest::setSubsetOfAttributes( const QgsAttributeL
   return *this;
 }
 
-
 QgsFeatureRequest& QgsFeatureRequest::setSubsetOfAttributes( const QStringList& attrNames, const QgsFields& fields )
 {
   mFlags |= SubsetOfAttributes;
   mAttrs.clear();
 
-  for ( int idx = 0; idx < fields.count(); ++idx )
+  foreach ( const QString& attrName, attrNames )
   {
-    if ( attrNames.contains( fields[idx].name() ) )
-      mAttrs.append( idx );
+    int attrNum = fields.fieldNameIndex( attrName );
+    if ( attrNum != -1 && !mAttrs.contains( attrNum ) )
+      mAttrs.append( attrNum );
   }
 
   return *this;
 }
+
+QgsFeatureRequest& QgsFeatureRequest::setSimplifyMethod( const QgsSimplifyMethod& simplifyMethod )
+{
+  mSimplifyMethod = simplifyMethod;
+  return *this;
+}
+
+bool QgsFeatureRequest::acceptFeature( const QgsFeature& feature )
+{
+  switch ( mFilter )
+  {
+    case QgsFeatureRequest::FilterNone:
+      return true;
+      break;
+
+    case QgsFeatureRequest::FilterRect:
+      if ( feature.geometry() && feature.geometry()->intersects( mFilterRect ) )
+        return true;
+      else
+        return false;
+      break;
+
+    case QgsFeatureRequest::FilterFid:
+      if ( feature.id() == mFilterFid )
+        return true;
+      else
+        return false;
+      break;
+
+    case QgsFeatureRequest::FilterExpression:
+      if ( mFilterExpression->evaluate( feature ).toBool() )
+        return true;
+      else
+        return false;
+      break;
+
+    case QgsFeatureRequest::FilterFids:
+      if ( mFilterFids.contains( feature.id() ) )
+        return true;
+      else
+        return false;
+      break;
+  }
+
+  return true;
+}
+
+#include "qgsfeatureiterator.h"
+#include "qgslogger.h"
+
+QgsAbstractFeatureSource::~QgsAbstractFeatureSource()
+{
+  while ( !mActiveIterators.empty() )
+  {
+    QgsAbstractFeatureIterator *it = *mActiveIterators.begin();
+    QgsDebugMsg( "closing active iterator" );
+    it->close();
+  }
+}
+
+void QgsAbstractFeatureSource::iteratorOpened( QgsAbstractFeatureIterator* it )
+{
+  mActiveIterators.insert( it );
+}
+
+void QgsAbstractFeatureSource::iteratorClosed( QgsAbstractFeatureIterator* it )
+{
+  mActiveIterators.remove( it );
+}
+
+

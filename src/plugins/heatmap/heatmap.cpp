@@ -65,9 +65,10 @@ static const QString sPluginIcon = ":/heatmap/heatmap.png";
  * an interface object that provides access to exposed functions in QGIS.
  * @param theQGisInterface - Pointer to the QGIS interface object
  */
-Heatmap::Heatmap( QgisInterface * theQgisInterface ):
-    QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType ),
-    mQGisIface( theQgisInterface )
+Heatmap::Heatmap( QgisInterface * theQgisInterface )
+    : QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType )
+    , mQGisIface( theQgisInterface )
+    , mQActionPointer( 0 )
 {
 }
 
@@ -82,9 +83,11 @@ Heatmap::~Heatmap()
  */
 void Heatmap::initGui()
 {
+  delete mQActionPointer;
 
   // Create the action for tool
   mQActionPointer = new QAction( QIcon( ":/heatmap/heatmap.png" ), tr( "Heatmap" ), this );
+  mQActionPointer->setObjectName( "mQActionPointer" );
   // Set the what's this text
   mQActionPointer->setWhatsThis( tr( "Creates a heatmap raster for the input point vector." ) );
   // Connect the action to the run
@@ -309,8 +312,11 @@ void Heatmap::run()
     // Finally close the dataset
     GDALClose(( GDALDatasetH ) heatmapDS );
 
-    // Open the file in QGIS window
-    mQGisIface->addRasterLayer( d.outputFilename(), QFileInfo( d.outputFilename() ).baseName() );
+    // Open the file in QGIS window if requested
+    if ( d.addToCanvas() )
+    {
+      mQGisIface->addRasterLayer( d.outputFilename(), QFileInfo( d.outputFilename() ).baseName() );
+    }
   }
 }
 

@@ -45,11 +45,18 @@ using namespace osgEarth::Util::Controls;
 #include <osgEarthUtil/ElevationManager>
 #include <osgEarthUtil/ObjectPlacer>
 #endif
+#include <osgEarth/Version>
+
+#if 0
+#include <iostream>
+#endif
 
 class QAction;
 class QToolBar;
 class QgisInterface;
 
+namespace osgEarth { namespace QtGui { class ViewerWidget; } }
+namespace osgEarth { namespace Util { class SkyNode; class VerticalScale; } }
 
 class GlobePlugin : public QObject, public QgisPlugin
 {
@@ -73,14 +80,22 @@ class GlobePlugin : public QObject, public QgisPlugin
     //! show the help document
     void help();
 
-    //! Emitted when a new set of image layers has been received
+    //! Called when a new set of image layers has been received
     void imageLayersChanged();
-    //! Emitted when a new set of elevation layers has been received
+    //! Called when a new set of elevation layers has been received
     void elevationLayersChanged();
+    //! Set a different base map (QString::NULL will disable the base map)
+    void setBaseMap( QString url );
+    //! Called when the extents of the map change
+    void setSkyParameters( bool enabled, const QDateTime& dateTime, bool autoAmbience );
     //! Called when the extents of the map change
     void extentsChanged();
     //! Sync globe extent to mapCanavas
     void syncExtent();
+#if OSGEARTH_VERSION_GREATER_OR_EQUAL( 2, 5, 0 )
+    //! Set vertical scale
+    void setVerticalScale( double scale );
+#endif
 
     //! called when a project has been read successfully
     void projectReady();
@@ -106,6 +121,8 @@ class GlobePlugin : public QObject, public QgisPlugin
     //! Place an OSG model on the globe
     void placeNode( osg::Node* node, double lat, double lon, double alt = 0.0 );
 
+    osgViewer::Viewer* osgViewer() { return mOsgViewer; }
+
     //! Recursive copy folder
     static void copyFolder( QString sourceFolder, QString destFolder );
 
@@ -125,16 +142,24 @@ class GlobePlugin : public QObject, public QgisPlugin
     QAction * mQActionPointer;
     //!pointer to the qaction for this plugin
     QAction * mQActionSettingsPointer;
+    QAction * mQActionUnload;
     //! OSG Viewer
     osgViewer::Viewer* mOsgViewer;
     //! QT viewer widget
-    QWidget* mViewerWidget;
+    osgEarth::QtGui::ViewerWidget* mViewerWidget;
     //! Settings Dialog
     QgsGlobePluginDialog *mSettingsDialog;
     //! OSG root node
     osg::Group* mRootNode;
     //! Map node
     osgEarth::MapNode* mMapNode;
+    //! Base layer
+    osg::ref_ptr<osgEarth::ImageLayer> mBaseLayer;
+    //! Sky node
+    osg::ref_ptr<osgEarth::Util::SkyNode> mSkyNode;
+#if OSGEARTH_VERSION_GREATER_OR_EQUAL( 2, 5, 0 )
+    osg::ref_ptr<osgEarth::Util::VerticalScale> mVerticalScale;
+#endif
     //! QGIS maplayer
     osgEarth::ImageLayer* mQgisMapLayer;
     //! Tile source
@@ -156,6 +181,10 @@ class GlobePlugin : public QObject, public QgisPlugin
     bool mIsGlobeRunning;
     //! coordinates of the right-clicked point on the globe
     double mSelectedLat, mSelectedLon, mSelectedElevation;
+
+#if 0
+    std::streambuf *mCoutRdBuf, *mCerrRdBuf;
+#endif
 
   signals:
     //! emits current mouse position

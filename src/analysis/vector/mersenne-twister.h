@@ -22,7 +22,15 @@
 #ifndef MERSENNE_TWISTER_H
 #define MERSENNE_TWISTER_H
 
+#ifndef _MSC_VER
 #include <stdint.h>
+#else
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#endif
+#include <limits>
 
 #ifdef __cplusplus
 extern "C"
@@ -32,8 +40,7 @@ extern "C"
   /*
    * Maximum number you can get from rand().
    */
-
-#define RAND_MAX INT32_MAX
+#define MD_RAND_MAX std::numeric_limits<int32_t>::max()
 
   /*
    * Initialize the number generator with given seed.
@@ -42,13 +49,13 @@ extern "C"
   void mt_srand( unsigned seed_value );
 
   /*
-   * Extract a pseudo-random integer in the range 0 ... RAND_MAX.
+   * Extract a pseudo-random integer in the range 0 ... MD_RAND_MAX.
    * (LIBC REPLACEMENT FUNCTION)
    */
   int mt_rand();
 
   /*
-   * Extract a pseudo-random unsigned 32-bit integer in the range 0 ... UINT32_MAX
+   * Extract a pseudo-random unsigned 32-bit integer in the range 0 ... MD_UINT32_MAX
    */
   uint32_t rand_u32();
 
@@ -79,6 +86,24 @@ extern "C"
    * Mnemonic: randf_oo = random float 0=open 1=open
    */
   float randf_oo();
+
+  /*
+   * Return a random double in the CLOSED range [0, 1]
+   * Mnemonic: randd_co = random double 0=closed 1=closed
+   */
+  double randd_cc();
+
+  /*
+   * Return a random double in the OPEN range [0, 1>
+   * Mnemonic: randd_co = random double 0=closed 1=open
+   */
+  double randd_co();
+
+  /*
+   * Return a random double in the OPEN range <0, 1>
+   * Mnemonic: randd_oo = random double 0=open 1=open
+   */
+  double randd_oo();
 
 #ifdef __cplusplus
 } // extern "C"

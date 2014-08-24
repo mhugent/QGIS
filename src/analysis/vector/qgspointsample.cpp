@@ -4,6 +4,7 @@
 #include "qgsvectorfilewriter.h"
 #include "qgsvectorlayer.h"
 #include <QFile>
+#include "mersenne-twister.h"
 
 
 QgsPointSample::QgsPointSample( QgsVectorLayer* inputLayer, const QString& outputLayer, QString nPointsAttribute, QString minDistAttribute ): mInputLayer( inputLayer ),
@@ -57,7 +58,7 @@ int QgsPointSample::createRandomPoints( QProgressDialog* pd )
   }
 
   //init random number generator
-  srand( QTime::currentTime().msec() );
+  mt_srand( QTime::currentTime().msec() );
   QgsFeature fet;
   int nPoints = 0;
   double minDistance = 0;
@@ -104,8 +105,8 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
 
   while ( nIterations < maxIterations && points < nPoints )
   {
-    randX = (( double )rand() / RAND_MAX ) * geomRect.width() + geomRect.xMinimum();
-    randY = (( double )rand() / RAND_MAX ) * geomRect.height() + geomRect.yMinimum();
+    randX = (( double )mt_rand() / MD_RAND_MAX ) * geomRect.width() + geomRect.xMinimum();
+    randY = (( double )mt_rand() / MD_RAND_MAX ) * geomRect.height() + geomRect.yMinimum();
     QgsPoint randPoint( randX, randY );
     QgsGeometry* ptGeom = QgsGeometry::fromPoint( randPoint );
     if ( ptGeom->within( geom ) && checkMinDistance( randPoint, sIndex, minDistance, pointMapForFeature ) )

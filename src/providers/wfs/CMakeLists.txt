@@ -14,6 +14,7 @@ SET (WFS_MOC_HDRS
   qgswfscapabilities.h
   qgswfsdataitems.h
   qgswfsprovider.h
+  qgswfsfeatureiterator.h
   qgswfssourceselect.h
 )
 
@@ -42,7 +43,7 @@ TARGET_LINK_LIBRARIES (wfsprovider
 
 ########################################################
 # Install
-                
+
 INSTALL(TARGETS wfsprovider
   RUNTIME DESTINATION ${QGIS_PLUGIN_DIR}
   LIBRARY DESTINATION ${QGIS_PLUGIN_DIR})

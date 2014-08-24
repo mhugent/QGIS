@@ -19,6 +19,8 @@
 
 #include "qgsfeature.h"
 #include "qgsrectangle.h"
+#include "qgsexpression.h"
+#include "qgssimplifymethod.h"
 
 #include <QList>
 typedef QList<int> QgsAttributeList;
@@ -35,6 +37,7 @@ typedef QList<int> QgsAttributeList;
  * For efficiency, it is also possible to tell provider that some data is not required:
  * - NoGeometry flag
  * - SubsetOfAttributes flag
+ * - SimplifyMethod for geometries to fetch
  *
  * The options may be chained, e.g.:
  *   QgsFeatureRequest().setFilterRect(QgsRectangle(0,0,1,1)).setFlags(QgsFeatureRequest::ExactIntersect)
@@ -58,7 +61,7 @@ class CORE_EXPORT QgsFeatureRequest
     enum Flag
     {
       NoFlags            = 0,
-      NoGeometry         = 1,  //!< Do not fetch geometry
+      NoGeometry         = 1,  //!< Geometry is not required. It may still be returned if e.g. required for a filter condition.
       SubsetOfAttributes = 2,  //!< Fetch only a subset of attributes (setSubsetOfAttributes sets this flag)
       ExactIntersect     = 4   //!< Use exact geometry intersection (slower) instead of bounding boxes
     };
@@ -66,9 +69,11 @@ class CORE_EXPORT QgsFeatureRequest
 
     enum FilterType
     {
-      FilterNone,   //!< No filter is applied
-      FilterRect,   //!< Filter using a rectangle
-      FilterFid     //!< Filter using feature ID
+      FilterNone,       //!< No filter is applied
+      FilterRect,       //!< Filter using a rectangle, no need to set NoGeometry
+      FilterFid,        //!< Filter using feature ID
+      FilterExpression, //!< Filter using expression
+      FilterFids        //!< Filter using feature IDs
     };
 
     //! construct a default request: for all features get attributes and geometries
@@ -77,8 +82,14 @@ class CORE_EXPORT QgsFeatureRequest
     explicit QgsFeatureRequest( QgsFeatureId fid );
     //! construct a request with rectangle filter
     explicit QgsFeatureRequest( const QgsRectangle& rect );
+    //! construct a request with a filter expression
+    explicit QgsFeatureRequest( const QgsExpression& expr );
     //! copy constructor
     QgsFeatureRequest( const QgsFeatureRequest& rh );
+
+    QgsFeatureRequest& operator=( const QgsFeatureRequest& rh );
+
+    ~QgsFeatureRequest();
 
     FilterType filterType() const { return mFilter; }
 
@@ -90,6 +101,14 @@ class CORE_EXPORT QgsFeatureRequest
     //! Set feature ID that should be fetched.
     QgsFeatureRequest& setFilterFid( QgsFeatureId fid );
     const QgsFeatureId& filterFid() const { return mFilterFid; }
+
+    //! Set feature ID that should be fetched.
+    QgsFeatureRequest& setFilterFids( QgsFeatureIds fids );
+    const QgsFeatureIds& filterFids() const { return mFilterFids; }
+
+    //! Set filter expression. {@see QgsExpression}
+    QgsFeatureRequest& setFilterExpression( const QString& expression );
+    QgsExpression* filterExpression() const { return mFilterExpression; }
 
     //! Set flags that affect how features will be fetched
     QgsFeatureRequest& setFlags( Flags flags );
@@ -103,8 +122,25 @@ class CORE_EXPORT QgsFeatureRequest
     //! Set a subset of attributes by names that will be fetched
     QgsFeatureRequest& setSubsetOfAttributes( const QStringList& attrNames, const QgsFields& fields );
 
+    //! Set a simplification method for geometries that will be fetched
+    //! @note added in 2.2
+    QgsFeatureRequest& setSimplifyMethod( const QgsSimplifyMethod& simplifyMethod );
+    //! Get simplification method for geometries that will be fetched
+    //! @note added in 2.2
+    const QgsSimplifyMethod& simplifyMethod() const { return mSimplifyMethod; }
+
+    /**
+     * Check if a feature is accepted by this requests filter
+     *
+     * @param feature  The feature which will be tested
+     *
+     * @return true, if the filter accepts the feature
+     *
+     * @note added in 2.1
+     */
+    bool acceptFeature( const QgsFeature& feature );
+
     // TODO: in future
-    // void setFilterExpression(const QString& expression); // using QgsExpression
     // void setFilterNativeExpression(con QString& expr);   // using provider's SQL (if supported)
     // void setLimit(int limit);
 
@@ -112,11 +148,36 @@ class CORE_EXPORT QgsFeatureRequest
     FilterType mFilter;
     QgsRectangle mFilterRect;
     QgsFeatureId mFilterFid;
+    QgsFeatureIds mFilterFids;
+    QgsExpression* mFilterExpression;
     Flags mFlags;
     QgsAttributeList mAttrs;
+    QgsSimplifyMethod mSimplifyMethod;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsFeatureRequest::Flags )
 
+
+class QgsFeatureIterator;
+class QgsAbstractFeatureIterator;
+
+/** base class that can be used for any class that is capable of returning features
+ * @note added in 2.4
+ */
+class CORE_EXPORT QgsAbstractFeatureSource
+{
+  public:
+    virtual ~QgsAbstractFeatureSource();
+
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest& request ) = 0;
+
+  protected:
+    void iteratorOpened( QgsAbstractFeatureIterator* it );
+    void iteratorClosed( QgsAbstractFeatureIterator* it );
+
+    QSet< QgsAbstractFeatureIterator* > mActiveIterators;
+
+    template<typename> friend class QgsAbstractFeatureIteratorFromSource;
+};
 
 #endif // QGSFEATUREREQUEST_H

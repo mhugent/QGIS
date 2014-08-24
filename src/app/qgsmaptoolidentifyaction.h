@@ -30,7 +30,6 @@
 class QgsIdentifyResultsDialog;
 class QgsMapLayer;
 class QgsRasterLayer;
-class QgsRubberBand;
 class QgsVectorLayer;
 
 /**
@@ -39,9 +38,9 @@ class QgsVectorLayer;
   after selecting a point shows dialog with identification results
   - for raster layers shows value of underlying pixel
   - for vector layers shows feature attributes within search radius
-    (allows to edit values when vector layer is in editing mode)
+    (allows editing values when vector layer is in editing mode)
 */
-class QgsMapToolIdentifyAction : public QgsMapToolIdentify
+class APP_EXPORT QgsMapToolIdentifyAction : public QgsMapToolIdentify
 {
     Q_OBJECT
 

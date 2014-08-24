@@ -117,7 +117,7 @@ void QgsMssqlSourceSelectDelegate::setModelData( QWidget *editor, QAbstractItemM
     model->setData( index, le->text() );
 }
 
-QgsMssqlSourceSelect::QgsMssqlSourceSelect( QWidget *parent, Qt::WFlags fl, bool managerMode, bool embeddedMode )
+QgsMssqlSourceSelect::QgsMssqlSourceSelect( QWidget *parent, Qt::WindowFlags fl, bool managerMode, bool embeddedMode )
     : QDialog( parent, fl )
     , mManagerMode( managerMode )
     , mEmbeddedMode( embeddedMode )
@@ -183,6 +183,7 @@ QgsMssqlSourceSelect::QgsMssqlSourceSelect( QWidget *parent, Qt::WFlags fl, bool
   mSearchColumnComboBox->setCurrentIndex( 2 );
 
   restoreGeometry( settings.value( "/Windows/MSSQLSourceSelect/geometry" ).toByteArray() );
+  mHoldDialogOpen->setChecked( settings.value( "/Windows/MSSQLSourceSelect/HoldDialogOpen", false ).toBool() );
 
   for ( int i = 0; i < mTableModel.columnCount(); i++ )
   {
@@ -318,6 +319,14 @@ void QgsMssqlSourceSelect::on_mTablesTreeView_doubleClicked( const QModelIndex &
   }
 }
 
+void QgsMssqlSourceSelect::on_mSearchGroupBox_toggled( bool checked )
+{
+  if ( mSearchTableEdit->text().isEmpty() )
+    return;
+
+  on_mSearchTableEdit_textChanged( checked ? mSearchTableEdit->text() : "" );
+}
+
 void QgsMssqlSourceSelect::on_mSearchTableEdit_textChanged( const QString & text )
 {
   if ( mSearchModeComboBox->currentText() == tr( "Wildcard" ) )
@@ -388,6 +397,7 @@ QgsMssqlSourceSelect::~QgsMssqlSourceSelect()
 
   QSettings settings;
   settings.setValue( "/Windows/MSSQLSourceSelect/geometry", saveGeometry() );
+  settings.setValue( "/Windows/MSSQLSourceSelect/HoldDialogOpen", mHoldDialogOpen->isChecked() );
 
   for ( int i = 0; i < mTableModel.columnCount(); i++ )
   {
@@ -419,6 +429,7 @@ void QgsMssqlSourceSelect::populateConnectionList()
 // Slot for performing action when the Add button is clicked
 void QgsMssqlSourceSelect::addTables()
 {
+  QgsDebugMsg( QString( "mConnInfo:%1" ).arg( mConnInfo ) );
   mSelectedTables.clear();
 
   foreach ( QModelIndex idx, mTablesTreeView->selectionModel()->selection().indexes() )
@@ -440,7 +451,10 @@ void QgsMssqlSourceSelect::addTables()
   else
   {
     emit addDatabaseLayers( mSelectedTables, "mssql" );
-    accept();
+    if ( !mHoldDialogOpen->isChecked() )
+    {
+      accept();
+    }
   }
 }
 
@@ -479,12 +493,20 @@ void QgsMssqlSourceSelect::on_btnConnect_clicked()
 
   bool allowGeometrylessTables = cbxAllowGeometrylessTables->isChecked();
 
-  mConnInfo =  "dbname='" + database + "' host=" + host + " user='" + username + "' password='" + password + "'";
+  bool estimateMetadata = settings.value( key + "/estimatedMetadata", true ).toBool();
+
+  mConnInfo =  "dbname='" + database + "'";
+  if ( !host.isEmpty() )
+    mConnInfo += " host='" + host + "'";
+  if ( !username.isEmpty() )
+    mConnInfo += " user='" + username + "'";
+  if ( !password.isEmpty() )
+    mConnInfo += " password='" + password + "'";
   if ( !service.isEmpty() )
     mConnInfo += " service='" + service + "'";
 
-  QSqlDatabase db = QgsMssqlProvider::GetDatabase( service,
-                    host, database, username, password );
+  QgsDebugMsg( "GetDatabase" );
+  QSqlDatabase db = QgsMssqlProvider::GetDatabase( service, host, database, username, password );
 
   if ( !QgsMssqlProvider::OpenDatabase( db ) )
   {
@@ -494,27 +516,7 @@ void QgsMssqlSourceSelect::on_btnConnect_clicked()
     return;
   }
 
-  QString connectionName;
-  if ( service.isEmpty() )
-  {
-    if ( host.isEmpty() )
-    {
-      QMessageBox::warning( this,
-                            tr( "MSSQL Provider" ), "QgsMssqlProvider host name not specified" );
-      return;
-    }
-
-    if ( database.isEmpty() )
-    {
-      QMessageBox::warning( this,
-                            tr( "MSSQL Provider" ), "QgsMssqlProvider database name not specified" );
-      return;
-    }
-    connectionName = host + "." + database;
-  }
-  else
-    connectionName = service;
-
+  QString connectionName = db.connectionName();
 
   // Read supported layers from database
   QApplication::setOverrideCursor( Qt::WaitCursor );
@@ -559,7 +561,7 @@ void QgsMssqlSourceSelect::on_btnConnect_clicked()
       {
         if ( type == "GEOMETRY" || type.isNull() || srid.isEmpty() )
         {
-          addSearchGeometryColumn( connectionName, layer );
+          addSearchGeometryColumn( connectionName, layer, estimateMetadata );
           type = "";
           srid = "";
         }
@@ -663,12 +665,12 @@ void QgsMssqlSourceSelect::setSql( const QModelIndex &index )
   delete vlayer;
 }
 
-void QgsMssqlSourceSelect::addSearchGeometryColumn( QString connectionName, QgsMssqlLayerProperty layerProperty )
+void QgsMssqlSourceSelect::addSearchGeometryColumn( QString connectionName, QgsMssqlLayerProperty layerProperty, bool estimateMetadata )
 {
   // store the column details and do the query in a thread
   if ( !mColumnTypeThread )
   {
-    mColumnTypeThread = new QgsMssqlGeomColumnTypeThread( connectionName, mUseEstimatedMetadata );
+    mColumnTypeThread = new QgsMssqlGeomColumnTypeThread( connectionName, estimateMetadata );
 
     connect( mColumnTypeThread, SIGNAL( setLayerType( QgsMssqlLayerProperty ) ),
              this, SLOT( setLayerType( QgsMssqlLayerProperty ) ) );
@@ -717,6 +719,7 @@ QgsMssqlGeomColumnTypeThread::QgsMssqlGeomColumnTypeThread( QString connectionNa
     : QThread()
     , mConnectionName( connectionName )
     , mUseEstimatedMetadata( useEstimatedMetadata )
+    , mStopped( false )
 {
   qRegisterMetaType<QgsMssqlLayerProperty>( "QgsMssqlLayerProperty" );
 }
@@ -744,36 +747,30 @@ void QgsMssqlGeomColumnTypeThread::run()
     if ( !mStopped )
     {
       QString table;
-      if ( mUseEstimatedMetadata )
-      {
-        table = QString( "(SELECT TOP %1 [%2] FROM [%3].[%4] WHERE [%2] IS NOT NULL%5) AS t" )
-                .arg( 100 )
-                .arg( layerProperty.geometryColName )
-                .arg( layerProperty.schemaName )
-                .arg( layerProperty.tableName )
-                .arg( layerProperty.sql.isEmpty() ? "" : QString( " AND (%1)" ).arg( layerProperty.sql ) );
-      }
-      else if ( !layerProperty.schemaName.isEmpty() )
-      {
-        table = QString( "[%1].[%2]%3" )
-                .arg( layerProperty.schemaName )
-                .arg( layerProperty.tableName )
-                .arg( layerProperty.sql.isEmpty() ? "" : QString( " WHERE %1" ).arg( layerProperty.sql ) );
-      }
-      else
-      {
-        table = QString( "[%1]%2" )
-                .arg( layerProperty.tableName )
-                .arg( layerProperty.sql.isEmpty() ? "" : QString( " WHERE %1" ).arg( layerProperty.sql ) );
-      }
+      table = QString( "%1[%2]" )
+              .arg( layerProperty.schemaName.isEmpty() ? "" : QString( "[%1]." ).arg( layerProperty.schemaName ) )
+              .arg( layerProperty.tableName );
 
-      QString query = QString( "SELECT DISTINCT CASE WHEN [%1].STGeometryType() IN ('Point', 'MultiPoint') THEN 'POINT' WHEN [%1].STGeometryType() IN ('Linestring', 'MultiLinestring') THEN 'LINESTRING' WHEN [%1].STGeometryType() IN ('Polygon', 'MultiPolygon') THEN 'POLYGON' ELSE UPPER([%1].STGeometryType()) END, [%1].STSrid FROM %2" )
+      QString query = QString( "SELECT %3"
+                               " UPPER([%1].STGeometryType()),"
+                               " [%1].STSrid"
+                               " FROM %2"
+                               " WHERE [%1] IS NOT NULL %4"
+                               " GROUP BY [%1].STGeometryType(), [%1].STSrid" )
                       .arg( layerProperty.geometryColName )
-                      .arg( table );
-
+                      .arg( table )
+                      .arg( mUseEstimatedMetadata ? "TOP 1" : "" )
+                      .arg( layerProperty.sql.isEmpty() ? "" : QString( " AND %1" ).arg( layerProperty.sql ) );
 
       // issue the sql query
       QSqlDatabase db = QSqlDatabase::database( mConnectionName );
+      if ( !QgsMssqlProvider::OpenDatabase( db ) )
+      {
+        QString msg = db.lastError().text();
+        QgsDebugMsg( msg );
+        continue;
+      }
+
       QSqlQuery q = QSqlQuery( db );
       q.setForwardOnly( true );
       if ( !q.exec( query ) )

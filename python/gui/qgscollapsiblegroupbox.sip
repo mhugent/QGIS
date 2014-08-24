@@ -1,3 +1,19 @@
+class QgsGroupBoxCollapseButton : QToolButton
+{
+  public:
+    QgsGroupBoxCollapseButton( QWidget *parent = 0 );
+
+    ~QgsGroupBoxCollapseButton();
+
+    bool altDown() const;
+    void setAltDown( bool updown );
+
+    bool shiftDown() const;
+    void setShiftDown( bool shiftdown );
+
+  protected:
+    void mouseReleaseEvent( QMouseEvent *event );
+};
 
 /** \ingroup gui
  * \class QgsCollapsibleGroupBoxBasic
@@ -29,6 +45,8 @@ class QgsCollapsibleGroupBoxBasic : QGroupBox
     //! set this to false to not automatically scroll parent QScrollArea to this widget's contents when expanded
     void setScrollOnExpand( bool scroll );
 
+    bool scrollOnExpand();
+
   signals:
     /** Signal emitted when groupbox collapsed/expanded state is changed, and when first shown */
     void collapsedStateChanged( bool collapsed );
@@ -40,12 +58,18 @@ class QgsCollapsibleGroupBoxBasic : QGroupBox
 
   protected:
     void init();
+
+    /** Visual fixes for when group box is collapsed/expanded */
+    void collapseExpandFixes();
+
     void showEvent( QShowEvent *event );
+    void mousePressEvent( QMouseEvent *event );
     void mouseReleaseEvent( QMouseEvent *event );
     void changeEvent( QEvent *event );
 
     void updateStyle();
     QRect titleRect() const;
+    void clearModifiers();
 };
 
 /** \ingroup gui

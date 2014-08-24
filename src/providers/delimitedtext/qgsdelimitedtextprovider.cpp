@@ -77,6 +77,7 @@ QgsDelimitedTextProvider::QgsDelimitedTextProvider( QString uri )
     , mUseSubsetIndex( false )
     , mMaxInvalidLines( 50 )
     , mShowInvalidLines( true )
+    , mRescanRequired( false )
     , mCrs()
     , mWkbType( QGis::WKBNoGeometry )
     , mGeometryType( QGis::UnknownGeometry )
@@ -167,13 +168,6 @@ QgsDelimitedTextProvider::QgsDelimitedTextProvider( QString uri )
 
 QgsDelimitedTextProvider::~QgsDelimitedTextProvider()
 {
-  while ( !mActiveIterators.empty() )
-  {
-    QgsDelimitedTextFeatureIterator *it = *mActiveIterators.begin();
-    QgsDebugMsg( "closing active iterator" );
-    it->close();
-  }
-
   if ( mFile )
   {
     delete mFile;
@@ -190,6 +184,16 @@ QgsDelimitedTextProvider::~QgsDelimitedTextProvider()
     delete mSpatialIndex;
     mSpatialIndex = 0;
   }
+}
+
+QgsAbstractFeatureSource *QgsDelimitedTextProvider::featureSource() const
+{
+  // If the file has become invalid, rescan to check that it is still invalid.
+  //
+  if (( mLayerValid && ! mValid ) || mRescanRequired )
+    const_cast<QgsDelimitedTextProvider*>( this )->rescanFile();
+
+  return new QgsDelimitedTextFeatureSource( this );
 }
 
 QStringList QgsDelimitedTextProvider::readCsvtFieldTypes( QString filename, QString *message )
@@ -319,6 +323,7 @@ void QgsDelimitedTextProvider::scanFile( bool buildIndexes )
 
   mLayerValid = false;
   mValid = false;
+  mRescanRequired = false;
 
   clearInvalidLines();
 
@@ -434,7 +439,7 @@ void QgsDelimitedTextProvider::scanFile( bool buildIndexes )
           mWktHasPrefix = true;
         if ( !mWktHasZM && sWkt.indexOf( WktZMRegexp ) >= 0 )
           mWktHasZM = true;
-        geom = geomFromWkt( sWkt );
+        geom = geomFromWkt( sWkt, mWktHasPrefix, mWktHasZM );
 
         if ( geom )
         {
@@ -499,7 +504,7 @@ void QgsDelimitedTextProvider::scanFile( bool buildIndexes )
       else
       {
         QgsPoint pt;
-        bool ok = pointFromXY( sX, sY, pt );
+        bool ok = pointFromXY( sX, sY, pt, mDecimalPoint, mXyDms );
 
         if ( ok )
         {
@@ -675,6 +680,7 @@ void QgsDelimitedTextProvider::scanFile( bool buildIndexes )
 
 void QgsDelimitedTextProvider::rescanFile()
 {
+  mRescanRequired = false;
   resetIndexes();
 
   bool buildSpatialIndex = mSpatialIndex != 0;
@@ -717,6 +723,7 @@ void QgsDelimitedTextProvider::rescanFile()
     reportErrors( messages, false );
     QgsDebugMsg( "Delimited text source invalid on rescan - missing geometry fields" );
     mValid = false;
+    return;
   }
 
   // Reset the field columns
@@ -763,17 +770,17 @@ void QgsDelimitedTextProvider::rescanFile()
   mUseSpatialIndex = buildSpatialIndex;
 }
 
-QgsGeometry *QgsDelimitedTextProvider::geomFromWkt( QString &sWkt )
+QgsGeometry *QgsDelimitedTextProvider::geomFromWkt( QString &sWkt, bool wktHasPrefixRegexp, bool wktHasZM )
 {
   QgsGeometry *geom = 0;
   try
   {
-    if ( mWktHasPrefix )
+    if ( wktHasPrefixRegexp )
     {
       sWkt.remove( WktPrefixRegexp );
     }
 
-    if ( mWktHasZM )
+    if ( wktHasZM )
     {
       sWkt.remove( WktZMRegexp ).replace( WktCrdRegexp, "\\1" );
     }
@@ -822,17 +829,17 @@ double QgsDelimitedTextProvider::dmsStringToDouble( const QString &sX, bool *xOk
   return x;
 }
 
-bool QgsDelimitedTextProvider::pointFromXY( QString &sX, QString &sY, QgsPoint &pt )
+bool QgsDelimitedTextProvider::pointFromXY( QString &sX, QString &sY, QgsPoint &pt, const QString& decimalPoint, bool xyDms )
 {
-  if ( ! mDecimalPoint.isEmpty() )
+  if ( ! decimalPoint.isEmpty() )
   {
-    sX.replace( mDecimalPoint, "." );
-    sY.replace( mDecimalPoint, "." );
+    sX.replace( decimalPoint, "." );
+    sY.replace( decimalPoint, "." );
   }
 
   bool xOk, yOk;
   double x, y;
-  if ( mXyDms )
+  if ( xyDms )
   {
     x = dmsStringToDouble( sX, &xOk );
     y = dmsStringToDouble( sY, &yOk );
@@ -857,17 +864,13 @@ QString QgsDelimitedTextProvider::storageType() const
   return "Delimited text file";
 }
 
-void QgsDelimitedTextProvider::resetStream()
-{
-  mFile->reset();
-}
-
 QgsFeatureIterator QgsDelimitedTextProvider::getFeatures( const QgsFeatureRequest& request )
 {
-  // If the file has become invalid, check that it is still invalid.
-  if ( mLayerValid && ! mValid ) rescanFile();
+  // If the file has become invalid, rescan to check that it is still invalid.
+  //
+  if (( mLayerValid && ! mValid ) || mRescanRequired ) rescanFile();
 
-  return QgsFeatureIterator( new QgsDelimitedTextFeatureIterator( this, request ) );
+  return QgsFeatureIterator( new QgsDelimitedTextFeatureIterator( new QgsDelimitedTextFeatureSource( this ), true, request ) );
 }
 
 void QgsDelimitedTextProvider::clearInvalidLines()
@@ -1050,206 +1053,20 @@ void QgsDelimitedTextProvider::setUriParameter( QString parameter, QString value
 
 void QgsDelimitedTextProvider::onFileUpdated()
 {
-  QStringList messages;
-  messages.append( tr( "The file has been updated by another application - reloading" ) );
-  reportErrors( messages, false );
-
-  while ( !mActiveIterators.empty() )
+  if ( ! mRescanRequired )
   {
-    QgsDelimitedTextFeatureIterator *it = *mActiveIterators.begin();
-    QgsDebugMsg( "closing active iterator" );
-    it->close();
+    QStringList messages;
+    messages.append( tr( "The file has been updated by another application - reloading" ) );
+    reportErrors( messages, false );
+    mRescanRequired = true;
   }
-
-  rescanFile();
 }
 
-bool QgsDelimitedTextProvider::nextFeature( QgsFeature& feature, QgsDelimitedTextFile *file, QgsDelimitedTextFeatureIterator *iterator )
-{
-  QStringList tokens;
-
-  // If the iterator is not scanning the file, then it will have requested a specific
-  // record, so only need to load that one.
-
-  bool first = true;
-  bool scanning = iterator->scanningFile();
-
-  while ( scanning || first )
-  {
-    first = false;
-
-    // before we do anything else, assume that there's something wrong with
-    // the feature
-
-    feature.setValid( false );
-    QgsDelimitedTextFile::Status status = file->nextRecord( tokens );
-    if ( status == QgsDelimitedTextFile::RecordEOF ) break;
-    if ( status != QgsDelimitedTextFile::RecordOk ) continue;
-
-    // We ignore empty records, such as added randomly by spreadsheets
-
-    if ( recordIsEmpty( tokens ) ) continue;
-
-    QgsFeatureId fid = file->recordId();
-
-    while ( tokens.size() < mFieldCount )
-      tokens.append( QString::null );
-
-    QgsGeometry *geom = 0;
-
-    // Load the geometry if required
-
-    if ( iterator->loadGeometry() )
-    {
-      if ( mGeomRep == GeomAsWkt )
-      {
-        geom = loadGeometryWkt( tokens, iterator );
-      }
-      else if ( mGeomRep == GeomAsXy )
-      {
-        geom = loadGeometryXY( tokens, iterator );
-      }
-
-      if ( ! geom )
-      {
-        continue;
-      }
-    }
-
-    // At this point the current feature values are valid
-
-    feature.setValid( true );
-    feature.setFields( &attributeFields ); // allow name-based attribute lookups
-    feature.setFeatureId( fid );
-    feature.initAttributes( attributeFields.count() );
-
-    if ( geom )
-      feature.setGeometry( geom );
-
-    // If we are testing subset expression, then need all attributes just in case.
-    // Could be more sophisticated, but probably not worth it!
-
-    if ( iterator->loadSubsetOfAttributes() )
-    {
-      const QgsAttributeList& attrs = iterator->subsetOfAttributes();
-      for ( QgsAttributeList::const_iterator i = attrs.begin(); i != attrs.end(); ++i )
-      {
-        int fieldIdx = *i;
-        fetchAttribute( feature, fieldIdx, tokens );
-      }
-    }
-    else
-    {
-      for ( int idx = 0; idx < attributeFields.count(); ++idx )
-        fetchAttribute( feature, idx, tokens );
-    }
-
-    // If the iterator hasn't already filtered out the subset, then do it now
-
-    if ( iterator->testSubset() )
-    {
-      QVariant isOk = mSubsetExpression->evaluate( &feature );
-      if ( mSubsetExpression->hasEvalError() ) continue;
-      if ( ! isOk.toBool() ) continue;
-    }
-
-    // We have a good record, so return
-    return true;
-
-  }
-
-  return false;
-}
-
-QgsGeometry* QgsDelimitedTextProvider::loadGeometryWkt( const QStringList& tokens, QgsDelimitedTextFeatureIterator *iterator )
-{
-  QgsGeometry* geom = 0;
-  QString sWkt = tokens[mWktFieldIndex];
-
-  geom = geomFromWkt( sWkt );
-
-  if ( geom && geom->type() != mGeometryType )
-  {
-    delete geom;
-    geom = 0;
-  }
-  if ( geom && ! iterator->wantGeometry( geom ) )
-  {
-    delete geom;
-    geom = 0;
-  }
-  return geom;
-}
-
-QgsGeometry* QgsDelimitedTextProvider::loadGeometryXY( const QStringList& tokens, QgsDelimitedTextFeatureIterator *iterator )
-{
-  QString sX = tokens[mXFieldIndex];
-  QString sY = tokens[mYFieldIndex];
-  QgsPoint pt;
-  bool ok = pointFromXY( sX, sY, pt );
-
-  if ( ok && iterator->wantGeometry( pt ) )
-  {
-    return QgsGeometry::fromPoint( pt );
-  }
-  return 0;
-}
-
-void QgsDelimitedTextProvider::fetchAttribute( QgsFeature& feature, int fieldIdx, const QStringList& tokens )
-{
-  if ( fieldIdx < 0 || fieldIdx >= attributeColumns.count() ) return;
-  int column = attributeColumns[fieldIdx];
-  if ( column < 0 || column >= tokens.count() ) return;
-  const QString &value = tokens[column];
-  QVariant val;
-  switch ( attributeFields[fieldIdx].type() )
-  {
-    case QVariant::Int:
-    {
-      int ivalue = 0;
-      bool ok = false;
-      if ( ! value.isEmpty() ) ivalue = value.toInt( &ok );
-      if ( ok )
-        val = QVariant( ivalue );
-      else
-        val = QVariant( attributeFields[fieldIdx].type() );
-      break;
-    }
-    case QVariant::Double:
-    {
-      double dvalue = 0.0;
-      bool ok = false;
-      if ( ! value.isEmpty() )
-      {
-        if ( mDecimalPoint.isEmpty() )
-        {
-          dvalue = value.toDouble( &ok );
-        }
-        else
-        {
-          dvalue = QString( value ).replace( mDecimalPoint, "." ).toDouble( &ok );
-        }
-      }
-      if ( ok )
-      {
-        val = QVariant( dvalue );
-      }
-      else
-      {
-        val = QVariant( attributeFields[fieldIdx].type() );
-      }
-      break;
-    }
-    default:
-      val = QVariant( value );
-      break;
-  }
-  feature.setAttribute( fieldIdx, val );
-}
 
 // Return the extent of the layer
 QgsRectangle QgsDelimitedTextProvider::extent()
 {
+  if ( mRescanRequired ) rescanFile();
   return mExtent;
 }
 
@@ -1266,6 +1083,7 @@ QGis::WkbType QgsDelimitedTextProvider::geometryType() const
  */
 long QgsDelimitedTextProvider::featureCount() const
 {
+  if ( mRescanRequired ) const_cast<QgsDelimitedTextProvider *>( this )->rescanFile();
   return mNumberFeatures;
 }
 
@@ -1338,7 +1156,7 @@ QGISEXTERN bool isProvider()
   return true;
 }
 
-QGISEXTERN QgsDelimitedTextSourceSelect *selectWidget( QWidget *parent, Qt::WFlags fl )
+QGISEXTERN QgsDelimitedTextSourceSelect *selectWidget( QWidget *parent, Qt::WindowFlags fl )
 {
   return new QgsDelimitedTextSourceSelect( parent, fl );
 }

@@ -130,7 +130,7 @@ void QgsRasterCalcDialog::insertAvailableRasterBands()
         QgsRasterCalculatorEntry entry;
         entry.raster = rlayer;
         entry.bandNumber = i + 1;
-        entry.ref = rlayer->name() + "@" + QString::number( i + 1 );
+        entry.ref = quoteBandEntry( rlayer->name() + "@" + QString::number( i + 1 ) );
         mAvailableRasterBands.push_back( entry );
         mRasterBandsListWidget->addItem( entry.ref );
       }
@@ -151,12 +151,22 @@ void QgsRasterCalcDialog::insertAvailableOutputFormats()
       char** driverMetadata = GDALGetMetadata( driver, NULL );
       if ( CSLFetchBoolean( driverMetadata, GDAL_DCAP_CREATE, false ) )
       {
-        mOutputFormatComboBox->addItem( GDALGetDriverLongName( driver ), QVariant( GDALGetDriverShortName( driver ) ) );
+        QString driverShortName = GDALGetDriverShortName( driver );
+        QString driverLongName = GDALGetDriverLongName( driver );
+        if ( driverShortName == "MEM" )
+        {
+          // in memory rasters are not (yet) supported because the GDAL dataset handle
+          // would need to be passed directly to QgsRasterLayer (it is not possible to
+          // close it in raster calculator and reopen the dataset again in raster layer)
+          continue;
+        }
+
+        mOutputFormatComboBox->addItem( driverLongName, driverShortName );
 
         //store the driver shortnames and the corresponding extensions
         //(just in case the user does not give an extension for the output file name)
         QString driverExtension = GDALGetMetadataItem( driver, GDAL_DMD_EXTENSION, NULL );
-        mDriverExtensionMap.insert( QString( GDALGetDriverShortName( driver ) ), driverExtension );
+        mDriverExtensionMap.insert( driverShortName, driverExtension );
       }
     }
   }
@@ -405,4 +415,14 @@ void QgsRasterCalcDialog::on_mAndButton_clicked()
 void QgsRasterCalcDialog::on_mOrButton_clicked()
 {
   mExpressionTextEdit->insertPlainText( " OR " );
+}
+
+QString QgsRasterCalcDialog::quoteBandEntry( const QString& layerName )
+{
+  // '"' -> '\\"'
+  QString quotedName = layerName;
+  quotedName.replace( "\"", "\\\"" );
+  quotedName.append( "\"" );
+  quotedName.prepend( "\"" );
+  return quotedName;
 }

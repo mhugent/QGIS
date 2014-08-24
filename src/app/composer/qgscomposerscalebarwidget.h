@@ -41,15 +41,17 @@ class QgsComposerScaleBarWidget: public QWidget, private Ui::QgsComposerScaleBar
     void on_mNumberOfSegmentsSpinBox_valueChanged( int i );
     void on_mUnitLabelLineEdit_textChanged( const QString& text );
     void on_mMapUnitsPerBarUnitSpinBox_valueChanged( double d );
-    void on_mColorPushButton_clicked();
-    void on_mStrokeColorPushButton_clicked();
     void on_mFontButton_clicked();
-    void on_mFontColorPushButton_clicked();
+    void on_mFontColorButton_colorChanged( const QColor& newColor );
+    void on_mFillColorButton_colorChanged( const QColor& newColor );
+    void on_mStrokeColorButton_colorChanged( const QColor& newColor );
     void on_mStyleComboBox_currentIndexChanged( const QString& text );
     void on_mLabelBarSpaceSpinBox_valueChanged( double d );
     void on_mBoxSizeSpinBox_valueChanged( double d );
     void on_mAlignmentComboBox_currentIndexChanged( int index );
     void on_mUnitsComboBox_currentIndexChanged( int index );
+    void on_mLineJoinStyleCombo_currentIndexChanged( int index );
+    void on_mLineCapStyleCombo_currentIndexChanged( int index );
 
   private slots:
     void setGuiElements();

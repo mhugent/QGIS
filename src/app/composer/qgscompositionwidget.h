@@ -17,6 +17,8 @@
 #include "ui_qgscompositionwidgetbase.h"
 
 class QgsComposition;
+class QgsComposerMap;
+class QgsComposerItem;
 
 /** \ingroup MapComposer
  * Struct to hold map composer paper properties.
@@ -46,24 +48,34 @@ class QgsCompositionWidget: public QWidget, private Ui::QgsCompositionWidgetBase
     void on_mPaperWidthDoubleSpinBox_editingFinished();
     void on_mPaperHeightDoubleSpinBox_editingFinished();
     void on_mNumPagesSpinBox_valueChanged( int value );
+    void on_mPageStyleButton_clicked();
     void on_mResolutionSpinBox_valueChanged( const int value );
     void on_mPrintAsRasterCheckBox_toggled( bool state );
+    void on_mGenerateWorldFileCheckBox_toggled( bool state );
+    void on_mWorldFileMapComboBox_currentIndexChanged( int index );
 
-    void on_mSnapToGridGroupCheckBox_toggled( bool state );
     void on_mGridResolutionSpinBox_valueChanged( double d );
     void on_mOffsetXSpinBox_valueChanged( double d );
     void on_mOffsetYSpinBox_valueChanged( double d );
-    void on_mGridColorButton_colorChanged( const QColor &newColor );
-    void on_mGridStyleComboBox_currentIndexChanged( const QString& text );
-    void on_mPenWidthSpinBox_valueChanged( double d );
-    void on_mSelectionToleranceSpinBox_valueChanged( double d );
-    void on_mAlignmentSnapGroupCheckBox_toggled( bool state );
+    void on_mGridToleranceSpinBox_valueChanged( double d );
     void on_mAlignmentToleranceSpinBox_valueChanged( double d );
 
     /**Sets GUI elements to width/height from composition*/
     void displayCompositionWidthHeight();
     /**Sets Print as raster checkbox value*/
     void setPrintAsRasterCheckBox( bool state );
+    /**Sets number of pages spin box value*/
+    void setNumberPages();
+
+  signals:
+    /**Is emitted when page orientation changes*/
+    void pageOrientationChanged( QString orientation );
+
+  private slots:
+    /* when a new map is added */
+    void onComposerMapAdded( QgsComposerMap* );
+    /* when a map is deleted */
+    void onItemRemoved( QgsComposerItem* );
 
   private:
     QgsComposition* mComposition;
@@ -78,6 +90,8 @@ class QgsCompositionWidget: public QWidget, private Ui::QgsCompositionWidgetBase
     void adjustOrientation();
     /**Sets GUI elements to snaping distances of composition*/
     void displaySnapingSettings();
+
+    void updatePageStyle();
 
     void createPaperEntries();
     void insertPaperEntries();

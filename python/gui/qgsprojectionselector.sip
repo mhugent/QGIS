@@ -11,7 +11,7 @@ class QgsProjectionSelector : QWidget
 %End
 
   public:
-    QgsProjectionSelector( QWidget* parent, const char *name = "", Qt::WFlags fl = 0 );
+    QgsProjectionSelector( QWidget* parent, const char *name = "", Qt::WindowFlags fl = 0 );
 
     ~QgsProjectionSelector();
 
@@ -86,6 +86,9 @@ class QgsProjectionSelector : QWidget
     void on_cbxHideDeprecated_stateChanged();
     void on_leSearch_textChanged( const QString & );
 
+    //! mark selected projection for push to front
+    void pushProjectionToFront();
+
   protected:
     /** Used to ensure the projection list view is actually populated */
     void showEvent( QShowEvent * theEvent );
@@ -99,4 +102,7 @@ class QgsProjectionSelector : QWidget
     void refresh();
     //! Let listeners know if find has focus so they can adjust the default button
     void searchBoxHasFocus( bool );
+    //! Notify others that the widget is now fully initialized, including deferred selection of projection
+    //! @note added in 2.4
+    void initialized();
 };

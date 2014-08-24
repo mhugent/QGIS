@@ -32,7 +32,7 @@ import codecs
 import ConfigParser
 import qgis.utils
 from qgis.core import *
-from qgis.utils import iface
+from qgis.utils import iface, plugin_paths
 from version_compare import compareVersions, normalizeVersion, isCompatible
 
 """
@@ -71,6 +71,7 @@ mPlugins = dict of dicts {id : {
     "error" unicode,                            # NULL | broken | incompatible | dependent
     "error_details" unicode,                    # error description
     "experimental" boolean,                     # true if experimental, false if stable
+    "deprecated" boolean,                       # true if deprected, false if actual
     "version_available" unicode,                # available version
     "zip_repository" unicode,                   # the remote repository id
     "download_url" unicode,                     # url for downloading the plugin
@@ -112,17 +113,6 @@ depreciatedRepos = [
 
 
 
-################################################################################
-################################################################################
-### TEMPORARY WORKAROUND UNTIL VERSION NUMBER IS GLOBALY SWITCHED TO 2.0 #######
-################################################################################
-class QGis:                                   ##################################
-    QGIS_VERSION_INT = 20000                  ##################################
-    QGIS_VERSION = '2.0.0-Master'             ##################################
-################################################################################
-################################################################################
-
-
 # --- common functions ------------------------------------------------------------------- #
 def removeDir(path):
     result = ""
@@ -146,7 +136,7 @@ def removeDir(path):
     if QFile(path).exists():
       result = QCoreApplication.translate("QgsPluginInstaller","Failed to remove the directory:")+"\n"+path+"\n"+QCoreApplication.translate("QgsPluginInstaller","Check permissions or remove it manually")
     # restore plugin directory if removed by QDir().rmpath()
-    pluginDir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins"
+    pluginDir = qgis.utils.home_plugin_path
     if not QDir(pluginDir).exists():
       QDir().mkpath(pluginDir)
     return result
@@ -403,7 +393,9 @@ class Repositories(QObject):
         self.mRepositories[reposName]["error"] += "\n\n" + QCoreApplication.translate("QgsPluginInstaller", "If you haven't cancelled the download manually, it was most likely caused by a timeout. In this case consider increasing the connection timeout value in QGIS options window.")
     else:
       reposXML = QDomDocument()
-      reposXML.setContent(reply.readAll())
+      content = reply.readAll()
+      # Fix lonely ampersands in metadata
+      reposXML.setContent(content.replace("& ", "&amp; "))
       pluginNodes = reposXML.elementsByTagName("pyqgis_plugin")
       if pluginNodes.size():
         for i in range(pluginNodes.size()):
@@ -414,12 +406,21 @@ class Repositories(QObject):
           experimental = False
           if pluginNodes.item(i).firstChildElement("experimental").text().strip().upper() in ["TRUE","YES"]:
             experimental = True
+          deprecated = False
+          if pluginNodes.item(i).firstChildElement("deprecated").text().strip().upper() in ["TRUE","YES"]:
+            deprecated = True
           icon = pluginNodes.item(i).firstChildElement("icon").text().strip()
           if icon and not icon.startswith("http"):
             icon = "http://%s/%s" % ( QUrl(self.mRepositories[reposName]["url"]).host() , icon )
 
+          if pluginNodes.item(i).toElement().hasAttribute("plugin_id"):
+            plugin_id = pluginNodes.item(i).toElement().attribute("plugin_id")
+          else:
+            plugin_id = None
+
           plugin = {
             "id"            : name,
+            "plugin_id"     : plugin_id,
             "name"          : pluginNodes.item(i).toElement().attribute("name"),
             "version_available" : pluginNodes.item(i).toElement().attribute("version"),
             "description"   : pluginNodes.item(i).firstChildElement("description").text().strip(),
@@ -438,6 +439,7 @@ class Repositories(QObject):
             "rating_votes"  : pluginNodes.item(i).firstChildElement("rating_votes").text().strip(),
             "icon"          : icon,
             "experimental"  : experimental,
+            "deprecated"    : deprecated,
             "filename"      : fileName,
             "installed"     : False,
             "available"     : True,
@@ -563,20 +565,20 @@ class Plugins(QObject):
 
 
   # ----------------------------------------- #
-  def getInstalledPlugin(self, key, readOnly, testLoad=True):
+  def getInstalledPlugin(self, key, path, readOnly, testLoad=True):
     """ get the metadata of an installed plugin """
     def metadataParser(fct):
         """ plugin metadata parser reimplemented from qgis.utils
             for better control on wchich module is examined
             in case there is an installed plugin masking a core one """
-        metadataFile = os.path.join(path, 'metadata.txt')
-        if not os.path.exists(metadataFile):
-          return "" # plugin has no metadata.txt file
+        global errorDetails
         cp = ConfigParser.ConfigParser()
         try:
           cp.readfp(codecs.open(metadataFile, "r", "utf8"))
           return cp.get('general', fct)
-        except:
+        except Exception, e:
+          if not errorDetails:
+            errorDetails = e.args[0] # set to the first problem
           return ""
 
     def pluginMetadata(fct):
@@ -590,19 +592,19 @@ class Plugins(QObject):
           if value: return value
         return metadataParser( fct )
 
-    if readOnly:
-      path = QDir.cleanPath( QgsApplication.pkgDataPath() ) + "/python/plugins/" + key
-    else:
-      path = QDir.cleanPath( QgsApplication.qgisSettingsDirPath() ) + "/python/plugins/" + key
-
     if not QDir(path).exists():
       return
 
+    global errorDetails # to communicate with the metadataParser fn
     plugin = dict()
     error = ""
     errorDetails = ""
+    version = None
 
-    version = normalizeVersion( pluginMetadata("version") )
+    metadataFile = os.path.join(path, 'metadata.txt')
+    if os.path.exists(metadataFile):
+      version = normalizeVersion( pluginMetadata("version") )
+
     if version:
       qgisMinimumVersion = pluginMetadata("qgisMinimumVersion").strip()
       if not qgisMinimumVersion: qgisMinimumVersion = "0"
@@ -618,26 +620,32 @@ class Plugins(QObject):
           exec "import %s" % key in globals(), locals()
           exec "reload (%s)" % key in globals(), locals()
           exec "%s.classFactory(iface)" % key in globals(), locals()
-        except Exception, error:
-          error = unicode(error.args[0])
-        except SystemExit, error:
-          error = QCoreApplication.translate("QgsPluginInstaller", "The plugin exited with error status: {0}").format(error.args[0])
+        except Exception, e:
+          error = "broken"
+          errorDetails = unicode(e.args[0])
+        except SystemExit, e:
+          error = "broken"
+          errorDetails = QCoreApplication.translate("QgsPluginInstaller", "The plugin exited with error status: {0}").format(e.args[0])
         except:
-          error = QCoreApplication.translate("QgsPluginInstaller", "Unknown error")
+          error = "broken"
+          errorDetails = QCoreApplication.translate("QgsPluginInstaller", "Unknown error")
+    elif not os.path.exists(metadataFile):
+      error = "broken"
+      errorDetails = QCoreApplication.translate("QgsPluginInstaller", "Missing metadata file")
     else:
-        # seems there is no metadata.txt file. Maybe it's an old plugin for QGIS 1.x.
-        version = "-1"
-        error = "incompatible"
-        errorDetails = "1.x"
+      error = "broken"
+      e = errorDetails
+      errorDetails = QCoreApplication.translate("QgsPluginInstaller", u"Error reading metadata")
+      if e: errorDetails += ": " + e
+
+    if not version:
+      version = "?"
 
     if error[:16] == "No module named ":
       mona = error.replace("No module named ","")
       if mona != key:
         error = "dependent"
         errorDetails = mona
-    if not error in ["", "dependent", "incompatible"]:
-      errorDetails = error
-      error = "broken"
 
     icon = pluginMetadata("icon")
     if QFileInfo( icon ).isRelative():
@@ -645,6 +653,7 @@ class Plugins(QObject):
 
     plugin = {
         "id"                : key,
+        "plugin_id"         : None,
         "name"              : pluginMetadata("name") or key,
         "description"       : pluginMetadata("description"),
         "about"             : pluginMetadata("about"),
@@ -661,6 +670,7 @@ class Plugins(QObject):
         "library"           : path,
         "pythonic"          : True,
         "experimental"      : pluginMetadata("experimental").strip().upper() in ["TRUE","YES"],
+        "deprecated"        : pluginMetadata("deprecated").strip().upper() in ["TRUE","YES"],
         "version_available" : "",
         "zip_repository"    : "",
         "download_url"      : path,      # warning: local path as url!
@@ -681,39 +691,38 @@ class Plugins(QObject):
   def getAllInstalled(self, testLoad=True):
     """ Build the localCache """
     self.localCache = {}
-    # first, try to add the readonly plugins...
-    pluginsPath = unicode(QDir.convertSeparators(QDir.cleanPath(QgsApplication.pkgDataPath() + "/python/plugins")))
-    #  temporarily add the system path as the first element to force loading the readonly plugins, even if masked by user ones.
-    sys.path = [pluginsPath] + sys.path
-    try:
-      pluginDir = QDir(pluginsPath)
-      pluginDir.setFilter(QDir.AllDirs)
-      for key in pluginDir.entryList():
-        key = unicode(key)
-        if not key in [".",".."]:
-          # only test those not yet loaded. Others proved they're o.k.
-          self.localCache[key] = self.getInstalledPlugin(key, readOnly=True, testLoad=testLoad and not qgis.utils.plugins.has_key(key))
-    except:
-      # return QCoreApplication.translate("QgsPluginInstaller","Couldn't open the system plugin directory")
-      pass # it's not necessary to stop due to this error
-    # remove the temporarily added path
-    sys.path.remove(pluginsPath)
-    # ...then try to add locally installed ones
-    try:
-      pluginDir = QDir.convertSeparators(QDir.cleanPath(QgsApplication.qgisSettingsDirPath() + "/python/plugins"))
-      pluginDir = QDir(pluginDir)
-      pluginDir.setFilter(QDir.AllDirs)
-    except:
-      return QCoreApplication.translate("QgsPluginInstaller","Couldn't open the local plugin directory")
-    for key in pluginDir.entryList():
-      key = unicode(key)
-      if not key in [".",".."]:
-        # only test those not yet loaded. Others proved they're o.k.
-        plugin = self.getInstalledPlugin(key, readOnly=False, testLoad=testLoad and not qgis.utils.plugins.has_key(key))
-        if key in self.localCache.keys() and compareVersions(self.localCache[key]["version_installed"],plugin["version_installed"]) == 1:
-          # An obsolete plugin in the "user" location is masking a newer one in the "system" location!
-          self.obsoletePlugins += [key]
-        self.localCache[key] = plugin
+
+    # reversed list of the plugin paths: first system plugins -> then user plugins -> finally custom path(s)
+    pluginPaths = list(plugin_paths)
+    pluginPaths.reverse()
+
+    for pluginsPath in pluginPaths:
+      isTheSystemDir = (pluginPaths.index(pluginsPath)==0)  # The curent dir is the system plugins dir
+      if isTheSystemDir:
+        # temporarily add the system path as the first element to force loading the readonly plugins, even if masked by user ones.
+        sys.path = [pluginsPath] + sys.path
+      try:
+        pluginDir = QDir(pluginsPath)
+        pluginDir.setFilter(QDir.AllDirs)
+        for key in pluginDir.entryList():
+          if not key in [".",".."]:
+            path = QDir.convertSeparators( pluginsPath + "/" + key )
+            # readOnly = not QFileInfo(pluginsPath).isWritable() # On windows testing the writable status isn't reliable.
+            readOnly = isTheSystemDir                            # Assume only the system plugins are not writable.
+            # only test those not yet loaded. Loaded plugins already proved they're o.k.
+            testLoadThis = testLoad and not qgis.utils.plugins.has_key(key)
+            plugin = self.getInstalledPlugin(key, path=path, readOnly=readOnly, testLoad=testLoadThis)
+            self.localCache[key] = plugin
+            if key in self.localCache.keys() and compareVersions(self.localCache[key]["version_installed"],plugin["version_installed"]) == 1:
+              # An obsolete plugin in the "user" location is masking a newer one in the "system" location!
+              self.obsoletePlugins += [key]
+      except:
+        # it's not necessary to stop if one of the dirs is inaccessible
+        pass
+
+      if isTheSystemDir:
+        # remove the temporarily added path
+        sys.path.remove(pluginsPath)
 
 
   # ----------------------------------------- #
@@ -724,12 +733,14 @@ class Plugins(QObject):
       self.mPlugins[i] = self.localCache[i].copy()
     settings = QSettings()
     allowExperimental = settings.value(settingsGroup+"/allowExperimental", False, type=bool)
+    allowDeprecated = settings.value(settingsGroup+"/allowDeprecated", False, type=bool)
     for i in self.repoCache.values():
       for j in i:
         plugin=j.copy() # do not update repoCache elements!
         key = plugin["id"]
         # check if the plugin is allowed and if there isn't any better one added already.
         if (allowExperimental or not plugin["experimental"]) \
+        and (allowDeprecated or not plugin["deprecated"]) \
         and not (self.mPlugins.has_key(key) and self.mPlugins[key]["version_available"] and compareVersions(self.mPlugins[key]["version_available"], plugin["version_available"]) < 2):
           # The mPlugins dict contains now locally installed plugins.
           # Now, add the available one if not present yet or update it if present already.
@@ -745,8 +756,8 @@ class Plugins(QObject):
                 if not self.mPlugins[key][attrib] and plugin[attrib]:
                     self.mPlugins[key][attrib] = plugin[attrib]
             # other remote metadata is preffered:
-            for attrib in ["name", "description", "about", "category", "tags", "changelog", "author_name", "author_email", "homepage",
-                           "tracker", "code_repository", "experimental", "version_available", "zip_repository",
+            for attrib in ["name", "plugin_id", "description", "about", "category", "tags", "changelog", "author_name", "author_email", "homepage",
+                           "tracker", "code_repository", "experimental", "deprecated", "version_available", "zip_repository",
                            "download_url", "filename", "downloads", "average_vote", "rating_votes"]:
               if ( not attrib in translatableAttributes ) or ( attrib == "name" ): # include name!
                 if plugin[attrib]:

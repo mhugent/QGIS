@@ -11,15 +11,15 @@ class QgsRasterBandStats
   public:
     enum Stats
     {
-      None         = 0,
-      Min          = 1,
-      Max          = 2,
-      Range        = 4,
-      Sum          = 8,
-      Mean         = 16,
-      StdDev       = 32,
-      SumOfSquares = 64,
-      All          = 127
+      None,
+      Min,
+      Max,
+      Range,
+      Sum,
+      Mean,
+      StdDev,
+      SumOfSquares,
+      All
     };
 
     QgsRasterBandStats();
@@ -30,12 +30,9 @@ class QgsRasterBandStats
     /** \brief The gdal band number (starts at 1)*/
     int bandNumber;
 
-    /** Color table */
-    // QList<QgsColorRampShader::ColorRampItem> colorTable;
-
-    /** \brief The number of cells in the band. Equivalent to height x width.
-     * TODO: check if NO_DATA are excluded!*/
-    int elementCount;
+    /** \brief The number of not no data cells in the band. */
+    // TODO: check if no data are excluded in stats calculation
+    qgssize elementCount;
 
     /** \brief The maximum cell value in the raster band. NO_DATA values
      * are ignored. This does not use the gdal GetMaximmum function. */
@@ -72,4 +69,3 @@ class QgsRasterBandStats
     /** \brief Extent used to calc statistics */
     QgsRectangle extent;
 };
-

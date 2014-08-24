@@ -22,27 +22,27 @@ class QgsComposerMap : QgsComposerItem
     /** \brief Preview style  */
     enum PreviewMode
     {
-      Cache = 0,   // Use raster cache
+      Cache,       // Use raster cache
       Render,      // Render the map
       Rectangle    // Display only rectangle
     };
 
     enum GridStyle
     {
-      Solid = 0, //solid lines
+      Solid, //solid lines
       Cross //only draw line crossings
     };
 
     enum GridAnnotationPosition
     {
-      InsideMapFrame = 0,
+      InsideMapFrame,
       OutsideMapFrame,
       Disabled
     };
 
     enum GridAnnotationDirection
     {
-      Horizontal = 0,
+      Horizontal,
       Vertical,
       HorizontalAndVertical,
       BoundaryDirection
@@ -50,15 +50,15 @@ class QgsComposerMap : QgsComposerItem
 
     enum GridAnnotationFormat
     {
-      Decimal = 0,
+      Decimal,
       DegreeMinute,
       DegreeMinuteSecond
     };
 
     enum GridFrameStyle
     {
-      NoGridFrame = 0,
-      Zebra //black / white pattern
+      NoGridFrame,
+      Zebra // black/white pattern
     };
 
     /**Enum for different frame borders*/
@@ -68,6 +68,21 @@ class QgsComposerMap : QgsComposerItem
       Right,
       Bottom,
       Top
+    };
+
+    /** Scaling modes used for the serial rendering (atlas)
+     */
+    enum AtlasScalingMode
+    {
+      Fixed,      /*< The current scale of the map is used for each feature of the atlas */
+      Predefined, /*< A scale is chosen from the predefined scales. The smallest scale from
+                    the list of scales where the atlas feature is fully visible is chosen.
+                    @see QgsAtlasComposition::setPredefinedScales.
+                    @note This mode is only valid for polygon or line atlas coverage layers
+                */
+      Auto        /*< The extent is adjusted so that each feature is fully visible.
+                    A margin is applied around the center @see setAtlasMargin
+                    @note This mode is only valid for polygon or line atlas coverage layers*/
     };
 
     /** \brief Draw to paint device
@@ -117,6 +132,22 @@ class QgsComposerMap : QgsComposerItem
     /**Sets new Extent and changes width, height (and implicitely also scale)*/
     void setNewExtent( const QgsRectangle& extent );
 
+    /**Sets new Extent for the current atlas preview and changes width, height (and implicitely also scale).
+      Atlas preview extents are only temporary, and are regenerated whenever the atlas feature changes
+    */
+    void setNewAtlasFeatureExtent( const QgsRectangle& extent );
+
+    /**Called when atlas preview is toggled, to force map item to update its extent and redraw*/
+    void toggleAtlasPreview();
+
+    /**Returns a pointer to the current map extent, which is either the original user specified
+     * extent or the temporary atlas-driven feature extent depending on the current atlas state
+     * of the composition. Both a const and non-const version are included.
+     * @returns pointer to current map extent
+     * @see visibleExtentPolygon
+    */
+    const QgsRectangle* currentMapExtent() const;
+
     PreviewMode previewMode() const;
     void setPreviewMode( PreviewMode m );
 
@@ -141,13 +172,17 @@ class QgsComposerMap : QgsComposerItem
 
     QgsRectangle extent() const;
 
-    const QgsMapRenderer* mapRenderer() const;
+    //! @deprecated since 2.4 - use mapSettings() - may return 0 if not initialized with QgsMapRenderer
+    const QgsMapRenderer* mapRenderer() const /Deprecated/;
 
     /**Sets offset values to shift image (useful for live updates when moving item content)*/
     void setOffset( double xOffset, double yOffset );
 
     /**True if composer map renders a WMS layer*/
     bool containsWMSLayer() const;
+
+    /**True if composer map contains layers with blend modes or flattened layers for vectors */
+    bool containsAdvancedEffects() const;
 
     /** stores state in Dom node
      * @param elem is Dom element corresponding to 'Composer' tag
@@ -208,11 +243,13 @@ class QgsComposerMap : QgsComposerItem
     @note this function was added in version 1.4*/
     void setGridAnnotationFont( const QFont& f );
     QFont gridAnnotationFont() const;
-    
+
     /**Sets font color for grid annotations
-    @note this function was added in version 2.0*/
+        @note this function was added in version 2.0*/
     void setAnnotationFontColor( const QColor& c );
-    QColor annotationFontColor() const;     
+    /**Get font color for grid annotations
+        @note: this function was added in version 2.0*/
+    QColor annotationFontColor() const;
 
     /**Sets coordinate precision for grid annotations
     @note this function was added in version 1.4*/
@@ -247,13 +284,32 @@ class QgsComposerMap : QgsComposerItem
         @note: this function was added in version 1.9*/
     void setGridFrameWidth( double w );
     double gridFrameWidth() const;
-    
-    /** Returns the grid's blending mode
-     @note added in version 2.0*/
-    const QPainter::CompositionMode gridBlendMode() const;
-    /** Sets the grid's blending mode
-     @note added in version 2.0*/    
-    void setGridBlendMode( const QPainter::CompositionMode blendMode );     
+
+    /**Set grid frame pen thickness
+        @note: this function was added in version 2.1*/
+    void setGridFramePenSize( double w );
+    double gridFramePenSize() const;
+
+    /**Sets pen color for grid frame
+        @note: this function was added in version 2.1*/
+    void setGridFramePenColor( const QColor& c );
+    /**Get pen color for grid frame
+        @note: this function was added in version 2.1*/
+    QColor gridFramePenColor() const;
+
+    /**Sets first fill color for grid zebra frame
+        @note: this function was added in version 2.1*/
+    void setGridFrameFillColor1( const QColor& c );
+    /**Get first fill color for grid zebra frame
+        @note: this function was added in version 2.1*/
+    QColor gridFrameFillColor1() const;
+
+    /**Sets second fill color for grid zebra frame
+        @note: this function was added in version 2.1*/
+    void setGridFrameFillColor2( const QColor& c );
+    /**Get second fill color for grid zebra frame
+        @note: this function was added in version 2.1*/
+    QColor gridFrameFillColor2() const;
 
     /**In case of annotations, the bounding rectangle can be larger than the map item rectangle
     @note this function was added in version 1.4*/
@@ -262,12 +318,31 @@ class QgsComposerMap : QgsComposerItem
     @note this function was added in version 1.4*/
     void updateBoundingRect();
 
+    /* reimplement setFrameOutlineWidth, so that updateBoundingRect() is called after setting the frame width */
+    virtual void setFrameOutlineWidth( double outlineWidth );
+
     /**Sets length of the cros segments (if grid style is cross)
     @note this function was added in version 1.4*/
     void setCrossLength( double l );
     double crossLength();
 
+    /**Sets rotation for the map - this does not affect the composer item shape, only the
+      way the map is drawn within the item
+     * @deprecated Use setMapRotation( double rotation ) instead
+     */
+    void setRotation( double r ) /Deprecated/;
+
+    /**Returns the rotation used for drawing the map within the composer item
+     * @deprecated Use mapRotation() instead
+     */
+    double rotation() const /Deprecated/;
+
+    /**Sets rotation for the map - this does not affect the composer item shape, only the
+      way the map is drawn within the item
+      @note this function was added in version 2.1*/
     void setMapRotation( double r );
+    /**Returns the rotation used for drawing the map within the composer item*/
+    double mapRotation() const;
 
     void updateItem();
 
@@ -290,24 +365,138 @@ class QgsComposerMap : QgsComposerItem
     void setOverviewFrameMapSymbol( QgsFillSymbolV2* symbol /Transfer/ );
     QgsFillSymbolV2* overviewFrameMapSymbol();
 
-     /* Returns the blending mode for the overview frame
-    @note added in version 1.9*/
-    const QPainter::CompositionMode overviewBlendMode() const;
-    /* Sets the blending mode for the overview frame 
-    @note added in version 1.9*/    
-    void setOverviewBlendMode( const QPainter::CompositionMode blendMode );
-    
-    /**Sets flag if overview frame should be inverted
-    @note this function was added in version 1.9*/
+    /** Returns the overview's blending mode */
+    QPainter::CompositionMode overviewBlendMode() const;
+    /** Sets the overview's blending mode*/
+    void setOverviewBlendMode( QPainter::CompositionMode blendMode );
+
+    /** Returns true if the overview frame is inverted */
+    bool overviewInverted() const;
+    /** Sets the overview's inversion mode*/
     void setOverviewInverted( bool inverted );
-    bool overviewInverted() const;        
+
+    /** Returns true if the extent is forced to center on the overview */
+    bool overviewCentered() const;
+    /** Set the overview's centering mode */
+    void setOverviewCentered( bool centered );
+
+    void setGridLineSymbol( QgsLineSymbolV2* symbol /Transfer/ );
+    QgsLineSymbolV2* gridLineSymbol();
+
+    /** Returns the grid's blending mode */
+    QPainter::CompositionMode gridBlendMode() const;
+    /** Sets the grid's blending mode*/
+    void setGridBlendMode( QPainter::CompositionMode blendMode );
 
     /**Sets mId to a number not yet used in the composition. mId is kept if it is not in use.
         Usually, this function is called before adding the composer map to the composition*/
     void assignFreeId();
 
+    /**Calculates width and hight of the picture (in mm) such that it fits into the item frame with the given rotation
+     * @deprecated Use bool QgsComposerItem::imageSizeConsideringRotation( double& width, double& height, double rotation )
+     * instead
+     */
+    bool imageSizeConsideringRotation( double& width, double& height ) const /Deprecated/;
+    /**Calculates corner point after rotation and scaling
+     * @deprecated Use QgsComposerItem::cornerPointOnRotatedAndScaledRect( double& x, double& y, double width, double height, double rotation )
+     * instead
+     */
+    bool cornerPointOnRotatedAndScaledRect( double& x, double& y, double width, double height ) const /Deprecated/;
+    /**Calculates width / height of the bounding box of a rotated rectangle
+    * @deprecated Use QgsComposerItem::sizeChangedByRotation( double& width, double& height, double rotation )
+    * instead
+    */
+    void sizeChangedByRotation( double& width, double& height ) /Deprecated/;
+
+    /**Returns whether the map extent is set to follow the current atlas feature.
+     * @returns true if map will follow the current atlas feature.
+     * @see setAtlasDriven
+     * @see atlasScalingMode
+    */
+    bool atlasDriven() const;
+
+    /**Sets whether the map extent will follow the current atlas feature.
+     * @param enabled set to true if the map extents should be set by the current atlas feature.
+     * @see atlasDriven
+     * @see setAtlasScalingMode
+    */
+    void setAtlasDriven( bool enabled );
+
+    /**Returns true if the map uses a fixed scale when in atlas mode
+     * @deprecated since 2.4 Use atlasScalingMode() instead
+    */
+    bool atlasFixedScale() const /Deprecated/;
+
+    /**Set to true if the map should use a fixed scale when in atlas mode
+     * @deprecated since 2.4 Use setAtlasScalingMode() instead
+    */
+    void setAtlasFixedScale( bool fixed ) /Deprecated/;
+
+    /**Returns the current atlas scaling mode. This controls how the map's extents
+     * are calculated for the current atlas feature when an atlas composition
+     * is enabled.
+     * @returns the current scaling mode
+     * @note this parameter is only used if atlasDriven() is true
+     * @see setAtlasScalingMode
+     * @see atlasDriven
+    */
+    AtlasScalingMode atlasScalingMode();
+
+    /**Sets the current atlas scaling mode. This controls how the map's extents
+     * are calculated for the current atlas feature when an atlas composition
+     * is enabled.
+     * @param mode atlas scaling mode to set
+     * @note this parameter is only used if atlasDriven() is true
+     * @see atlasScalingMode
+     * @see atlasDriven
+    */
+    void setAtlasScalingMode( AtlasScalingMode mode );
+
+    /**Returns the margin size (percentage) used when the map is in atlas mode.
+     * @returns margin size in percentage to leave around the atlas feature's extent
+     * @note this is only used if atlasScalingMode() is Auto.
+     * @see atlasScalingMode
+     * @see setAtlasMargin
+    */
+    double atlasMargin() const;
+
+    /**Sets the margin size (percentage) used when the map is in atlas mode.
+     * @param margin size in percentage to leave around the atlas feature's extent
+     * @note this is only used if atlasScalingMode() is Auto.
+     * @see atlasScalingMode
+     * @see atlasMargin
+    */
+    void setAtlasMargin( double margin );
+
+    /** Sets whether updates to the composer map are enabled. */
+    void setUpdatesEnabled( bool enabled );
+
+    /** Returns whether updates to the composer map are enabled. */
+    bool updatesEnabled() const;
+
+    /**Get the number of layers that this item requires for exporting as layers
+     * @returns 0 if this item is to be placed on the same layer as the previous item,
+     * 1 if it should be placed on its own layer, and >1 if it requires multiple export layers
+     * @note this method was added in version 2.4
+    */
+    int numberExportLayers() const;
+
+    /**Returns a polygon representing the current visible map extent, considering map extents and rotation.
+     * If the map rotation is 0, the result is the same as currentMapExtent
+     * @returns polygon with the four corner points representing the visible map extent. The points are
+     * clockwise, starting at the top-left point
+     * @see currentMapExtent
+    */
+    QPolygonF visibleExtentPolygon() const;
+
   signals:
     void extentChanged();
+
+    /**Is emitted on rotation change to notify north arrow pictures*/
+    void mapRotationChanged( double newRotation );
+
+    /**Is emitted when the map has been prepared for atlas rendering, just before actual rendering*/
+    void preparedForAtlas();
 
   public slots:
 
@@ -315,4 +504,6 @@ class QgsComposerMap : QgsComposerItem
     void updateCachedImage( );
     /**Call updateCachedImage if item is in render mode*/
     void renderModeUpdateCachedImage();
+
+    void overviewExtentChanged();
 };

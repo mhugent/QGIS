@@ -7,22 +7,25 @@ class QgsTextDiagram: QgsDiagram
   public:
     enum Shape
     {
-      Circle = 0,
+      Circle,
       Rectangle,
       Triangle
     };
 
     enum Orientation
     {
-      Horizontal = 0,
+      Horizontal,
       Vertical
     };
 
     QgsTextDiagram();
     ~QgsTextDiagram();
-    void renderDiagram( const QgsAttributes& att, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position );
+    virtual QgsDiagram* clone() const;
+
+    void renderDiagram( const QgsFeature& feature, QgsRenderContext& c, const QgsDiagramSettings& s, const QPointF& position );
+
     QSizeF diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s );
-    QSizeF diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is );
+    QSizeF diagramSize( const QgsFeature& feature, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is );
 
     QString diagramName() const;
 };

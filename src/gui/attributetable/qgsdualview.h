@@ -18,14 +18,17 @@
 
 #include <QStackedWidget>
 
-#include "qgsdistancearea.h"
-#include "qgsattributetablefiltermodel.h"
-#include "qgscachedfeatureiterator.h"
 #include "ui_qgsdualviewbase.h"
 
+#include "qgsattributeeditorcontext.h"
+#include "qgsattributetablefiltermodel.h"
+#include "qgscachedfeatureiterator.h"
+#include "qgsdistancearea.h"
+
+class QgsAttributeForm;
 class QgsFeatureRequest;
-class QgsAttributeDialog;
 class QSignalMapper;
+class QgsMapLayerAction;
 
 /**
  * This widget is used to show the attributes of a set of features of a {@link QgsVectorLayer}.
@@ -66,7 +69,6 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      * @param parent  The parent widget
      */
     explicit QgsDualView( QWidget* parent = 0 );
-    virtual ~QgsDualView();
 
     /**
      * Has to be called to initialize the dual view.
@@ -74,9 +76,10 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      * @param layer      The layer which should be used to fetch features
      * @param mapCanvas  The mapCanvas (used for the FilterMode
      *                   {@link QgsAttributeTableFilterModel::ShowVisible}
-     * @param myDa       Used for attribute dialog creation
+     * @param request    Use a modified request to limit the shown features
+     * @param context    The context in which this view is shown
      */
-    void init( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, QgsDistanceArea myDa );
+    void init( QgsVectorLayer* layer, QgsMapCanvas* mapCanvas, const QgsFeatureRequest& request = QgsFeatureRequest(), QgsAttributeEditorContext context = QgsAttributeEditorContext() );
 
     /**
      * Change the current view mode.
@@ -91,6 +94,8 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      * @param filterMode
      */
     void setFilterMode( QgsAttributeTableFilterModel::FilterMode filterMode );
+
+    QgsAttributeTableFilterModel::FilterMode filterMode() { return mFilterModel->filterMode(); }
 
     /**
      * Toggle the selectedOnTop flag. If enabled, selected features will be moved to top.
@@ -123,6 +128,8 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      */
     void setFilteredFeatures( QgsFeatureIds filteredFeatures );
 
+    QgsFeatureIds filteredFeatures() { return mFilterModel->filteredFeatures(); }
+
     /**
      * Returns the model which has the information about all features (not only filtered)
      *
@@ -130,14 +137,15 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      */
     QgsAttributeTableModel* masterModel() const { return mMasterModel; }
 
+    void setRequest( const QgsFeatureRequest& request );
+
+    void setFeatureSelectionManager( QgsIFeatureSelectionManager* featureSelectionManager );
+
   protected:
     /**
      * Initializes widgets which depend on the attributes of this layer
      */
     void columnBoxInit();
-
-    virtual void hideEvent( QHideEvent * );
-    virtual void focusOutEvent( QFocusEvent * );
 
   public slots:
     /**
@@ -149,9 +157,11 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
 
     /**
      * @brief saveEditChanges
+     *
+     * @return true if the saving was ok. false is possible due to connected
+     *         validation logic.
      */
-
-    void saveEditChanges();
+    bool saveEditChanges();
 
   signals:
     /**
@@ -166,22 +176,30 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     void filterChanged();
 
   private slots:
+
+    void on_mFeatureList_aboutToChangeEditSelection( bool& ok );
+
     /**
      * Changes the currently visible feature within the attribute editor
      *
      * @param feat  The newly visible feature
      */
-    void on_mFeatureList_currentEditSelectionChanged( const QgsFeature &feat );
+    void on_mFeatureList_currentEditSelectionChanged( const QgsFeature& feat );
 
     void previewExpressionBuilder();
 
     void previewColumnChanged( QObject* previewAction );
 
-    void editingToggled();
-
     void viewWillShowContextMenu( QMenu* menu, QModelIndex atIndex );
 
     void previewExpressionChanged( const QString expression );
+
+    /**
+     * Will be called whenever the currently shown feature form changes.
+     * Will forward this signal to the feature list to visually represent
+     * that there has been an edit event.
+     */
+    void featureFormAttributeChanged();
 
     /**
      * Will be called periodically, when loading layers from slow data providers.
@@ -199,18 +217,19 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
 
   private:
     void initLayerCache( QgsVectorLayer *layer );
-    void initModels( QgsMapCanvas* mapCanvas );
+    void initModels( QgsMapCanvas* mapCanvas, const QgsFeatureRequest& request );
 
+    QgsAttributeEditorContext mEditorContext;
     QgsAttributeTableModel* mMasterModel;
     QgsAttributeTableFilterModel* mFilterModel;
     QgsFeatureListModel* mFeatureListModel;
-    QgsAttributeDialog* mAttributeDialog;
+    QgsAttributeForm* mAttributeForm;
     QgsCachedFeatureIterator* mFeatureCache;
     QSignalMapper* mPreviewActionMapper;
     QMenu* mPreviewColumnsMenu;
     QgsVectorLayerCache* mLayerCache;
     QProgressDialog* mProgressDlg;
-
+    QgsIFeatureSelectionManager* mFeatureSelectionManager;
     QgsDistanceArea mDistanceArea;
 
     friend class TestQgsDualView;
@@ -232,6 +251,24 @@ class GUI_EXPORT QgsAttributeTableAction : public QAction
   private:
     QgsDualView* mDualView;
     int mAction;
+    QModelIndex mFieldIdx;
+};
+
+class GUI_EXPORT QgsAttributeTableMapLayerAction : public QAction
+{
+    Q_OBJECT
+
+  public:
+    QgsAttributeTableMapLayerAction( const QString &name, QgsDualView *dualView, QgsMapLayerAction* action, const QModelIndex &fieldIdx ) :
+        QAction( name, dualView ), mDualView( dualView ), mAction( action ), mFieldIdx( fieldIdx )
+    {}
+
+  public slots:
+    void execute();
+
+  private:
+    QgsDualView* mDualView;
+    QgsMapLayerAction* mAction;
     QModelIndex mFieldIdx;
 };
 

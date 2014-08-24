@@ -26,6 +26,7 @@
 #include <QMultiMap>
 
 class QgsMapRenderer;
+class QgsMapSettings;
 class QgsVectorLayer;
 class QPoint;
 
@@ -93,13 +94,18 @@ class CORE_EXPORT QgsSnapper
       QgsTolerance::UnitType mUnitType;
     };
 
-    QgsSnapper( QgsMapRenderer* mapRender );
+    //!@ deprecated since 2.4 - use constructor with QgsMapSettings
+    Q_DECL_DEPRECATED QgsSnapper( QgsMapRenderer* mapRender );
+
+    explicit QgsSnapper( const QgsMapSettings& mapSettings );
+
     ~QgsSnapper();
     /**Does the snapping operation
      @param startPoint the start point for snapping (in pixel coordinates)
-    @param snappingResult the list where the results are inserted (everything in map coordinate system)
-    @param excludePoints a list with (map coordinate) points that should be excluded in the snapping result. Useful e.g. for vertex moves where a vertex should not be snapped to its original position
-    @return 0 in case of success*/
+     @param snappingResult the list where the results are inserted (everything in map coordinate system)
+     @param excludePoints a list with (map coordinate) points that should be excluded in the snapping result. Useful e.g. for vertex moves where a vertex should not be snapped to its original position
+     @return 0 in case of success
+     */
     int snapPoint( const QPoint& startPoint, QList<QgsSnappingResult>& snappingResult, const QList<QgsPoint>& excludePoints = QList<QgsPoint>() );
 
     //setters
@@ -107,15 +113,13 @@ class CORE_EXPORT QgsSnapper
     void setSnapMode( QgsSnapper::SnappingMode snapMode );
 
   private:
-    /**Don't use the default constructor*/
-    QgsSnapper();
 
     /**Removes the snapping results that contains points in exclude list*/
     void cleanResultList( QMultiMap<double, QgsSnappingResult>& list, const QList<QgsPoint>& excludeList ) const;
 
-    /**The maprender object contains information about the output coordinate system
+    /**The map settings object contains information about the output coordinate system
      of the map and about the relationship between pixel space and map space*/
-    QgsMapRenderer* mMapRenderer;
+    const QgsMapSettings& mMapSettings;
     /**Snap mode to apply*/
     QgsSnapper::SnappingMode mSnapMode;
     /**List of layers to which snapping is applied*/

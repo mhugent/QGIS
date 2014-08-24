@@ -34,7 +34,7 @@ class QgsVectorColorRampV2
 
 struct QgsGradientStop
 {
-  double offset;
+  double offset; // relative (0,1)
   QColor color;
   QgsGradientStop( double o, const QColor& c );
 };
@@ -53,6 +53,10 @@ class QgsVectorGradientColorRampV2 : QgsVectorColorRampV2
                                   QgsGradientStopsList stops = QgsGradientStopsList() );
 
     static QgsVectorColorRampV2* create( const QgsStringMap& properties = QgsStringMap() ) /Factory/;
+
+    virtual int count() const;
+
+    virtual double value( int index ) const;
 
     virtual QColor color( double value ) const;
 
@@ -76,6 +80,10 @@ class QgsVectorGradientColorRampV2 : QgsVectorColorRampV2
 
     QgsStringMap info() const;
     void setInfo( const QgsStringMap& info );
+
+    /**copy color ramp stops to a QGradient
+    * @note added in 2.1 */
+    void addStopsToGradient( QGradient* gradient, double alpha = 1 );
 };
 
 class QgsVectorRandomColorRampV2 : QgsVectorColorRampV2
@@ -90,6 +98,8 @@ class QgsVectorRandomColorRampV2 : QgsVectorColorRampV2
                                 int valMin = DEFAULT_RANDOM_VAL_MIN, int valMax = DEFAULT_RANDOM_VAL_MAX );
 
     static QgsVectorColorRampV2* create( const QgsStringMap& properties = QgsStringMap() ) /Factory/;
+
+    virtual double value( int index ) const;
 
     virtual QColor color( double value ) const;
 
@@ -118,6 +128,24 @@ class QgsVectorRandomColorRampV2 : QgsVectorColorRampV2
     void setValMax( int val );
 };
 
+class QgsRandomColorsV2 : QgsVectorColorRampV2
+{
+  public:
+    QgsRandomColorsV2();
+    ~QgsRandomColorsV2();
+
+    int count() const;
+
+    double value( int index ) const;
+
+    QColor color( double value ) const;
+
+    QString type() const;
+
+    QgsVectorColorRampV2* clone() const;
+
+    QgsStringMap properties() const;
+};
 
 class QgsVectorColorBrewerColorRampV2 : QgsVectorColorRampV2
 {
@@ -130,6 +158,8 @@ class QgsVectorColorBrewerColorRampV2 : QgsVectorColorRampV2
 
     static QgsVectorColorRampV2* create( const QgsStringMap& properties = QgsStringMap() ) /Factory/;
 
+    virtual double value( int index ) const;
+
     virtual QColor color( double value ) const;
 
     virtual QString type() const;
@@ -139,6 +169,7 @@ class QgsVectorColorBrewerColorRampV2 : QgsVectorColorRampV2
     virtual QgsStringMap properties() const;
 
     QString schemeName() const;
+    virtual int count() const;
     int colors() const;
 
     void setSchemeName( QString schemeName );
@@ -153,7 +184,7 @@ class QgsVectorColorBrewerColorRampV2 : QgsVectorColorRampV2
 };
 
 
-class QgsCptCityColorRampV2
+class QgsCptCityColorRampV2 : QgsVectorGradientColorRampV2
 {
 %TypeHeaderCode
 #include <qgsvectorcolorrampv2.h>
@@ -187,7 +218,6 @@ class QgsCptCityColorRampV2
 
     void loadPalette();
     bool hasMultiStops() const;
-    int count() const;
 
     QString fileName() const;
     bool loadFile();

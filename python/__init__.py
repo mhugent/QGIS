@@ -33,6 +33,8 @@ except ValueError:
     # API has already been set so we can't set it again.
     pass
 
+from qgis.core import QgsFeature, QgsGeometry
+
 try:
     # Add a __nonzero__ method onto QPyNullVariant so we can check for null values easier.
     #   >>> value = QPyNullVariant("int")
@@ -43,6 +45,44 @@ try:
     def __nonzero__(self):
         return False
 
+    def __repr__(self):
+        return 'NULL'
+
+    def __eq__(self, other):
+        return isinstance(other, QPyNullVariant) or other is None
+
+    def __ne__(self, other):
+        return not isinstance(other, QPyNullVariant) and other is not None
+
     QPyNullVariant.__nonzero__ = MethodType(__nonzero__, None, QPyNullVariant)
+    QPyNullVariant.__repr__ = MethodType(__repr__, None, QPyNullVariant)
+    QPyNullVariant.__eq__= MethodType(__eq__, None, QPyNullVariant)
+    QPyNullVariant.__ne__= MethodType(__ne__, None, QPyNullVariant)
+
+    # define a dummy QPyNullVariant instance NULL in qgis.core
+    # this is mainly used to compare against
+    # so one can write if feat['attr'] == NULL:
+    from qgis import core
+    core.NULL = QPyNullVariant( int )
 except ImportError:
     pass
+
+
+def mapping_feature(feature):
+    geom = feature.geometry()
+    properties = {}
+    fields = [field.name() for field in feature.fields()]
+    properties = dict(zip(fields, feature.attributes()))
+    return {
+             'type' : 'Feature',
+             'properties' : properties,
+             'geometry' : geom.__geo_interface__}
+
+def mapping_geometry(geometry):
+    geo = geometry.exportToGeoJSON()
+    # We have to use eval because exportToGeoJSON() gives us
+    # back a string that looks like a dictionary.
+    return eval(geo)
+
+QgsFeature.__geo_interface__ = property(mapping_feature)
+QgsGeometry.__geo_interface__ = property(mapping_geometry)

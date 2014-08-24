@@ -76,7 +76,7 @@ class QgsBrowserTreeView : public QTreeView
 
       QTreeView::dragMoveEvent( e );
 
-      if ( !e->provides( "application/x-vnd.qgis.qgis.uri" ) )
+      if ( !e->mimeData()->hasFormat( "application/x-vnd.qgis.qgis.uri" ) )
       {
         e->ignore();
         return;
@@ -93,7 +93,7 @@ class QgsBrowserTreeFilterProxyModel : public QSortFilterProxyModel
 
     QgsBrowserTreeFilterProxyModel( QObject *parent )
         : QSortFilterProxyModel( parent ), mModel( 0 )
-        , mFilter( "" ), mPatternSyntax( QRegExp::Wildcard )
+        , mFilter( "" ), mPatternSyntax( "normal" ), mCaseSensitivity( Qt::CaseInsensitive )
     {
       setDynamicSortFilter( true );
     }
@@ -104,9 +104,9 @@ class QgsBrowserTreeFilterProxyModel : public QSortFilterProxyModel
       setSourceModel( model );
     }
 
-    void setFilterSyntax( const QRegExp::PatternSyntax & syntax )
+    void setFilterSyntax( const QString & syntax )
     {
-      QgsDebugMsg( QString( "syntax = %1" ).arg(( int ) mPatternSyntax ) );
+      QgsDebugMsg( QString( "syntax = %1" ).arg( syntax ) );
       if ( mPatternSyntax == syntax )
         return;
       mPatternSyntax = syntax;
@@ -122,24 +122,41 @@ class QgsBrowserTreeFilterProxyModel : public QSortFilterProxyModel
       updateFilter();
     }
 
+    void setCaseSensitive( bool caseSensitive )
+    {
+      mCaseSensitivity = caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
+      updateFilter();
+    }
+
     void updateFilter( )
     {
-      QgsDebugMsg( QString( "filter = %1 syntax = %2" ).arg( mFilter ).arg(( int ) mPatternSyntax ) );
+      QgsDebugMsg( QString( "filter = %1 syntax = %2" ).arg( mFilter ).arg( mPatternSyntax ) );
       mREList.clear();
-      if ( mPatternSyntax == QRegExp::Wildcard ||
-           mPatternSyntax == QRegExp::WildcardUnix )
+      if ( mPatternSyntax == "normal" )
+      {
+        foreach ( QString f, mFilter.split( "|" ) )
+        {
+          QRegExp rx( QString( "*%1*" ).arg( f.trimmed() ) );
+          rx.setPatternSyntax( QRegExp::Wildcard );
+          rx.setCaseSensitivity( mCaseSensitivity );
+          mREList.append( rx );
+        }
+      }
+      else if ( mPatternSyntax == "wildcard" )
       {
         foreach ( QString f, mFilter.split( "|" ) )
         {
           QRegExp rx( f.trimmed() );
-          rx.setPatternSyntax( mPatternSyntax );
+          rx.setPatternSyntax( QRegExp::Wildcard );
+          rx.setCaseSensitivity( mCaseSensitivity );
           mREList.append( rx );
         }
       }
       else
       {
         QRegExp rx( mFilter.trimmed() );
-        rx.setPatternSyntax( mPatternSyntax );
+        rx.setPatternSyntax( QRegExp::RegExp );
+        rx.setCaseSensitivity( mCaseSensitivity );
         mREList.append( rx );
       }
       invalidateFilter();
@@ -150,12 +167,12 @@ class QgsBrowserTreeFilterProxyModel : public QSortFilterProxyModel
     QgsBrowserModel* mModel;
     QString mFilter; //filter string provided
     QVector<QRegExp> mREList; //list of filters, separated by "|"
-    QRegExp::PatternSyntax mPatternSyntax;
+    QString mPatternSyntax;
+    Qt::CaseSensitivity mCaseSensitivity;
 
     bool filterAcceptsString( const QString & value ) const
     {
-      if ( mPatternSyntax == QRegExp::Wildcard ||
-           mPatternSyntax == QRegExp::WildcardUnix )
+      if ( mPatternSyntax == "normal" || mPatternSyntax == "wildcard" )
       {
         foreach ( QRegExp rx, mREList )
         {
@@ -211,7 +228,6 @@ class QgsBrowserTreeFilterProxyModel : public QSortFilterProxyModel
       // accept anything else
       return true;
     }
-
 };
 QgsBrowserDockWidget::QgsBrowserDockWidget( QString name, QWidget * parent ) :
     QDockWidget( parent ), mModel( NULL ), mProxyModel( NULL )
@@ -223,8 +239,8 @@ QgsBrowserDockWidget::QgsBrowserDockWidget( QString name, QWidget * parent ) :
   mBrowserView = new QgsBrowserTreeView( this );
   mLayoutBrowser->addWidget( mBrowserView );
 
-  mBtnRefresh->setIcon( QgsApplication::getThemeIcon( "mActionRefresh.png" ) );
-  mBtnAddLayers->setIcon( QgsApplication::getThemeIcon( "mActionAdd.png" ) );
+  mBtnRefresh->setIcon( QgsApplication::getThemeIcon( "mActionDraw.svg" ) );
+  mBtnAddLayers->setIcon( QgsApplication::getThemeIcon( "mActionAdd.svg" ) );
   mBtnCollapse->setIcon( QgsApplication::getThemeIcon( "mActionCollapseTree.png" ) );
 
   mWidgetFilter->hide();
@@ -235,17 +251,27 @@ QgsBrowserDockWidget::QgsBrowserDockWidget( QString name, QWidget * parent ) :
   QMenu* menu = new QMenu( this );
   menu->setSeparatorsCollapsible( false );
   mBtnFilterOptions->setMenu( menu );
+  QAction* action = new QAction( tr( "Case Sensitive" ), menu );
+  action->setData( "case" );
+  action->setCheckable( true );
+  action->setChecked( false );
+  connect( action, SIGNAL( toggled( bool ) ), this, SLOT( setCaseSensitive( bool ) ) );
+  menu->addAction( action );
   QActionGroup* group = new QActionGroup( menu );
-  QAction* action = new QAction( tr( "Filter Pattern Syntax" ), group );
+  action = new QAction( tr( "Filter Pattern Syntax" ), group );
   action->setSeparator( true );
   menu->addAction( action );
-  action = new QAction( tr( "Wildcard(s)" ), group );
-  action->setData( QVariant(( int ) QRegExp::Wildcard ) );
+  action = new QAction( tr( "Normal" ), group );
+  action->setData( "normal" );
   action->setCheckable( true );
   action->setChecked( true );
   menu->addAction( action );
+  action = new QAction( tr( "Wildcard(s)" ), group );
+  action->setData( "wildcard" );
+  action->setCheckable( true );
+  menu->addAction( action );
   action = new QAction( tr( "Regular Expression" ), group );
-  action->setData( QVariant(( int ) QRegExp::RegExp ) );
+  action->setData( "regexp" );
   action->setCheckable( true );
   menu->addAction( action );
 
@@ -280,7 +306,7 @@ void QgsBrowserDockWidget::showEvent( QShowEvent * e )
     mBrowserView->header()->setResizeMode( 0, QHeaderView::ResizeToContents );
     mBrowserView->header()->setStretchLastSection( false );
 
-    // find root favourites item
+    // expand root favourites item
     for ( int i = 0; i < mModel->rowCount(); i++ )
     {
       QModelIndex index = mModel->index( i, 0 );
@@ -525,8 +551,11 @@ void QgsBrowserDockWidget::showProperties( )
         QgsRasterLayer* layer = new QgsRasterLayer( layerItem->uri(), layerItem->uri(), layerItem->providerKey() );
         if ( layer != NULL )
         {
-          layerCrs = layer->crs();
-          layerMetadata = layer->metadata();
+          if ( layer->isValid() )
+          {
+            layerCrs = layer->crs();
+            layerMetadata = layer->metadata();
+          }
           delete layer;
         }
       }
@@ -536,8 +565,11 @@ void QgsBrowserDockWidget::showProperties( )
         QgsVectorLayer* layer = new QgsVectorLayer( layerItem->uri(), layerItem->name(), layerItem->providerKey() );
         if ( layer != NULL )
         {
-          layerCrs = layer->crs();
-          layerMetadata = layer->metadata();
+          if ( layer->isValid() )
+          {
+            layerCrs = layer->crs();
+            layerMetadata = layer->metadata();
+          }
           delete layer;
         }
       }
@@ -565,7 +597,7 @@ void QgsBrowserDockWidget::showProperties( )
       if ( defaultProjectionOption == "prompt" )
       {
         QgsCoordinateReferenceSystem defaultCrs =
-          QgisApp::instance()->mapCanvas()->mapRenderer()->destinationCrs();
+          QgisApp::instance()->mapCanvas()->mapSettings().destinationCrs();
         if ( layerCrs == defaultCrs )
           ui.lblNotice->setText( "NOTICE: Layer srs set from project (" + defaultCrs.authid() + ")" );
       }
@@ -637,5 +669,12 @@ void QgsBrowserDockWidget::setFilterSyntax( QAction * action )
 {
   if ( !action || ! mProxyModel )
     return;
-  mProxyModel->setFilterSyntax(( QRegExp::PatternSyntax ) action->data().toInt() );
+  mProxyModel->setFilterSyntax( action->data().toString() );
+}
+
+void QgsBrowserDockWidget::setCaseSensitive( bool caseSensitive )
+{
+  if ( ! mProxyModel )
+    return;
+  mProxyModel->setCaseSensitive( caseSensitive );
 }

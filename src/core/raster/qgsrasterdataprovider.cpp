@@ -182,8 +182,8 @@ QgsRasterBlock * QgsRasterDataProvider::block( int theBandNo, QgsRectangle  cons
           return block;
         }
 
-        size_t tmpIndex = tmpRow * tmpWidth + tmpCol;
-        size_t index = row * theWidth + col;
+        qgssize tmpIndex = tmpRow * tmpWidth + tmpCol;
+        qgssize index = row * theWidth + col;
 
         char *tmpBits = tmpBlock->bits( tmpIndex );
         char *bits = block->bits( index );
@@ -208,6 +208,8 @@ QgsRasterBlock * QgsRasterDataProvider::block( int theBandNo, QgsRectangle  cons
     readBlock( theBandNo, theExtent, theWidth, theHeight, block->bits() );
   }
 
+  // apply scale and offset
+  block->applyScaleOffset( bandScale( theBandNo ), bandOffset( theBandNo ) );
   // apply user no data values
   block->applyNoDataValues( userNoDataValues( theBandNo ) );
   return block;
@@ -237,7 +239,7 @@ QStringList QgsRasterDataProvider::cStringList2Q_( char ** stringList )
   QStringList strings;
 
   // presume null terminated string list
-  for ( size_t i = 0; stringList[i]; ++i )
+  for ( qgssize i = 0; stringList[i]; ++i )
   {
     strings.append( stringList[i] );
   }
@@ -469,7 +471,7 @@ QString QgsRasterDataProvider::identifyFormatLabel( QgsRaster::IdentifyFormat fo
     case QgsRaster::IdentifyFormatValue:
       return tr( "Value" );
     case QgsRaster::IdentifyFormatText:
-      return ( "Text" );
+      return tr( "Text" );
     case QgsRaster::IdentifyFormatHtml:
       return tr( "Html" );
     case QgsRaster::IdentifyFormatFeature:
@@ -509,6 +511,16 @@ bool QgsRasterDataProvider::userNoDataValuesContains( int bandNo, double value )
 {
   QgsRasterRangeList rangeList = mUserNoDataValue.value( bandNo - 1 );
   return QgsRasterRange::contains( value, rangeList );
+}
+
+void QgsRasterDataProvider::copyBaseSettings( const QgsRasterDataProvider& other )
+{
+  mDpi = other.mDpi;
+  mSrcNoDataValue = other.mSrcNoDataValue;
+  mSrcHasNoDataValue = other.mSrcHasNoDataValue;
+  mUseSrcNoDataValue = other.mUseSrcNoDataValue;
+  mUserNoDataValue = other.mUserNoDataValue;
+  mExtent = other.mExtent;
 }
 
 // ENDS

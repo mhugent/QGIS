@@ -306,11 +306,14 @@ void QgsZonalStatistics::statisticsFromMiddlePointTest( void* band, QgsGeometry*
       GEOSCoordSeq_setY( cellCenterCoords, 0, cellCenterY );
       currentCellCenter = GEOSGeom_createPoint( cellCenterCoords );
 
-      if ( GEOSPreparedContains( polyGeosPrepared, currentCellCenter ) )
+      if ( scanLine[j] != mInputNodataValue ) //don't consider nodata values
       {
-        if ( scanLine[j] != mInputNodataValue ) //don't consider nodata values
+        if ( GEOSPreparedContains( polyGeosPrepared, currentCellCenter ) )
         {
-          sum += scanLine[j];
+          if ( !qIsNaN( scanLine[j] ) )
+          {
+            sum += scanLine[j];
+          }
           ++count;
         }
       }

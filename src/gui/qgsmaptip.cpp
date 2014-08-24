@@ -14,6 +14,7 @@
  ***************************************************************************/
 // QGIS includes
 #include "qgsmapcanvas.h"
+#include "qgsmaptool.h"
 #include "qgsvectorlayer.h"
 #include "qgsexpression.h"
 #include "qgslogger.h"
@@ -78,12 +79,7 @@ QString QgsMapTip::fetchFeature( QgsMapLayer *layer, QgsPoint &mapPosition, QgsM
   if ( !vlayer )
     return "";
 
-  // Get the setting for the search radius from user preferences, if it exists
-  QSettings settings;
-  double identifyValue = settings.value( "/Map/identifyRadius", QGis::DEFAULT_IDENTIFY_RADIUS ).toDouble();
-
-  // create the search rectangle
-  double searchRadius = mpMapCanvas->extent().width() * ( identifyValue / 100.0 );
+  double searchRadius = QgsMapTool::searchRadiusMU( mpMapCanvas );
 
   QgsRectangle r;
   r.setXMinimum( mapPosition.x() - searchRadius );
@@ -91,7 +87,7 @@ QString QgsMapTip::fetchFeature( QgsMapLayer *layer, QgsPoint &mapPosition, QgsM
   r.setXMaximum( mapPosition.x() + searchRadius );
   r.setYMaximum( mapPosition.y() + searchRadius );
 
-  r = mpMapCanvas->mapRenderer()->mapToLayerCoordinates( layer, r );
+  r = mpMapCanvas->mapSettings().mapToLayerCoordinates( layer, r );
 
   QgsFeature feature;
 
@@ -100,7 +96,7 @@ QString QgsMapTip::fetchFeature( QgsMapLayer *layer, QgsPoint &mapPosition, QgsM
 
   int idx = vlayer->fieldNameIndex( vlayer->displayField() );
   if ( idx < 0 )
-    return QgsExpression::replaceExpressionText( vlayer->displayField(), feature, vlayer );
+    return QgsExpression::replaceExpressionText( vlayer->displayField(), &feature, vlayer );
   else
     return feature.attribute( idx ).toString();
 }

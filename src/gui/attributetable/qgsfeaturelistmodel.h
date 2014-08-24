@@ -56,7 +56,7 @@ class GUI_EXPORT QgsFeatureListModel : public QAbstractProxyModel, public QgsFea
      */
     QString parserErrorString();
 
-    const QString& displayExpression() const;
+    QString displayExpression() const;
     bool featureByIndex( const QModelIndex& index, QgsFeature& feat );
     QgsFeatureId idxToFid( const QModelIndex& index ) const;
     QModelIndex fidToIdx( const QgsFeatureId fid ) const;
@@ -83,7 +83,6 @@ class GUI_EXPORT QgsFeatureListModel : public QAbstractProxyModel, public QgsFea
     void onEndRemoveRows( const QModelIndex& parent, int first, int last );
     void onBeginInsertRows( const QModelIndex& parent, int first, int last );
     void onEndInsertRows( const QModelIndex& parent, int first, int last );
-
 
   private:
     QgsExpression* mExpression;

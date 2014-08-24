@@ -5,6 +5,7 @@
 SET(PG_SRCS
   qgspostgresprovider.cpp
   qgspostgresconn.cpp
+  qgspostgresconnpool.cpp
   qgspostgresdataitems.cpp
   qgspostgresfeatureiterator.cpp
   qgspgsourceselect.cpp
@@ -15,6 +16,7 @@ SET(PG_SRCS
 SET(PG_MOC_HDRS
   qgspostgresprovider.h
   qgspostgresconn.h
+  qgspostgresconnpool.h
   qgspostgresdataitems.h
   qgspgsourceselect.h
   qgspgnewconnection.h
@@ -48,7 +50,7 @@ TARGET_LINK_LIBRARIES (postgresprovider
 
 ########################################################
 # Install
-                
+
 INSTALL(TARGETS postgresprovider
   RUNTIME DESTINATION ${QGIS_PLUGIN_DIR}
   LIBRARY DESTINATION ${QGIS_PLUGIN_DIR})

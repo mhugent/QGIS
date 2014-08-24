@@ -1,9 +1,9 @@
 /***************************************************************************
-    qgssymbolslist.cpp
-    ---------------------
-    begin                : June 2012
-    copyright            : (C) 2012 by Arunmozhi
-    email                : aruntheguy at gmail.com
+ qgssymbolslist.cpp
+ ---------------------
+ begin                : June 2012
+ copyright            : (C) 2012 by Arunmozhi
+ email                : aruntheguy at gmail.com
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -42,6 +42,8 @@ QgsSymbolsListWidget::QgsSymbolsListWidget( QgsSymbolV2* symbol, QgsStyleV2* sty
 
   setupUi( this );
 
+  mSymbolUnitWidget->setUnits( QStringList() << tr( "Millimeter" ) << tr( "Map unit" ), 1 );
+
   btnAdvanced->hide(); // advanced button is hidden by default
   if ( menu ) // show it if there is a menu pointer
   {
@@ -62,38 +64,15 @@ QgsSymbolsListWidget::QgsSymbolsListWidget( QgsSymbolV2* symbol, QgsStyleV2* sty
   viewSymbols->setModel( model );
   connect( viewSymbols->selectionModel(), SIGNAL( currentChanged( const QModelIndex &, const QModelIndex & ) ), this, SLOT( setSymbolFromStyle( const QModelIndex & ) ) );
 
-  if ( parent )
-  {
-    if ( dynamic_cast<QgsStyleV2ManagerDialog*>( parent->parentWidget() ) )
-    {
-      btnStyle->setVisible( false );
-    }
-  }
-  // Set the Style Menu under btnStyle
-  QMenu *styleMenu = new QMenu( btnStyle );
-  QAction *styleMgrAction = new QAction( "Style Manager", styleMenu );
-  styleMenu->addAction( styleMgrAction );
-  QAction *saveStyle = new QAction( "Save in symbol library...", styleMenu );
-  styleMenu->addAction( saveStyle );
-  connect( styleMgrAction, SIGNAL( triggered() ), this, SLOT( openStyleManager() ) );
-  connect( saveStyle, SIGNAL( triggered() ), this, SLOT( addSymbolToStyle() ) );
-  btnStyle->setMenu( styleMenu );
+  connect( mStyle, SIGNAL( symbolSaved( QString, QgsSymbolV2* ) ), this, SLOT( symbolAddedToStyle( QString, QgsSymbolV2* ) ) );
+  connect( openStyleManagerButton, SIGNAL( pressed() ), this, SLOT( openStyleManager() ) );
 
   lblSymbolName->setText( "" );
   populateSymbolView();
 
   if ( mSymbol )
   {
-    // output unit
-    mSymbolUnitComboBox->blockSignals( true );
-    mSymbolUnitComboBox->setCurrentIndex( mSymbol->outputUnit() );
-    mSymbolUnitComboBox->blockSignals( false );
-
-    mTransparencySlider->blockSignals( true );
-    double transparency = 1 - symbol->alpha();
-    mTransparencySlider->setValue( transparency * 255 );
-    displayTransparency( symbol->alpha() );
-    mTransparencySlider->blockSignals( false );
+    updateSymbolInfo();
   }
 
   // select correct page in stacked widget
@@ -107,8 +86,6 @@ QgsSymbolsListWidget::QgsSymbolsListWidget( QgsSymbolV2* symbol, QgsStyleV2* sty
   // Live color updates are not undoable to child symbol layers
   btnColor->setAcceptLiveUpdates( false );
   btnColor->setColorDialogOptions( QColorDialog::ShowAlphaChannel );
-  // Set symbol color in btnColor
-  updateSymbolColor();
 }
 
 void QgsSymbolsListWidget::populateGroups( QString parent, QString prepend )
@@ -217,6 +194,13 @@ void QgsSymbolsListWidget::setLineWidth( double width )
   emit changed();
 }
 
+void QgsSymbolsListWidget::symbolAddedToStyle( QString name, QgsSymbolV2* symbol )
+{
+  Q_UNUSED( name );
+  Q_UNUSED( symbol );
+  populateSymbolView();
+}
+
 void QgsSymbolsListWidget::addSymbolToStyle()
 {
   bool ok;
@@ -243,16 +227,16 @@ void QgsSymbolsListWidget::addSymbolToStyle()
 
   // make sure the symbol is stored
   mStyle->saveSymbol( name, mSymbol->clone(), 0, QStringList() );
-
   populateSymbolView();
 }
 
-void QgsSymbolsListWidget::on_mSymbolUnitComboBox_currentIndexChanged( const QString & text )
+void QgsSymbolsListWidget::on_mSymbolUnitWidget_changed( )
 {
-  Q_UNUSED( text );
   if ( mSymbol )
   {
-    mSymbol->setOutputUnit(( QgsSymbolV2::OutputUnit ) mSymbolUnitComboBox->currentIndex() );
+    QgsSymbolV2::OutputUnit unit = static_cast<QgsSymbolV2::OutputUnit>( mSymbolUnitWidget->getUnit() );
+    mSymbol->setOutputUnit( unit );
+    mSymbol->setMapUnitScale( mSymbolUnitWidget->getMapUnitScale() );
 
     emit changed();
   }
@@ -297,6 +281,17 @@ void QgsSymbolsListWidget::updateSymbolInfo()
     QgsLineSymbolV2* lineSymbol = static_cast<QgsLineSymbolV2*>( mSymbol );
     spinWidth->setValue( lineSymbol->width() );
   }
+
+  mSymbolUnitWidget->blockSignals( true );
+  mSymbolUnitWidget->setUnit( mSymbol->outputUnit() );
+  mSymbolUnitWidget->setMapUnitScale( mSymbol->mapUnitScale() );
+  mSymbolUnitWidget->blockSignals( false );
+
+  mTransparencySlider->blockSignals( true );
+  double transparency = 1 - mSymbol->alpha();
+  mTransparencySlider->setValue( transparency * 255 );
+  displayTransparency( mSymbol->alpha() );
+  mTransparencySlider->blockSignals( false );
 }
 
 void QgsSymbolsListWidget::setSymbolFromStyle( const QModelIndex & index )
@@ -305,6 +300,7 @@ void QgsSymbolsListWidget::setSymbolFromStyle( const QModelIndex & index )
   lblSymbolName->setText( symbolName );
   // get new instance of symbol from style
   QgsSymbolV2* s = mStyle->symbol( symbolName );
+  QgsSymbolV2::OutputUnit unit = s->outputUnit();
   // remove all symbol layers from original symbol
   while ( mSymbol->symbolLayerCount() )
     mSymbol->deleteSymbolLayer( 0 );
@@ -314,6 +310,8 @@ void QgsSymbolsListWidget::setSymbolFromStyle( const QModelIndex & index )
     QgsSymbolLayerV2* sl = s->takeSymbolLayer( 0 );
     mSymbol->appendSymbolLayer( sl );
   }
+  mSymbol->setAlpha( s->alpha() );
+  mSymbol->setOutputUnit( unit );
   // delete the temporary symbol
   delete s;
 

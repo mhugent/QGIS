@@ -17,18 +17,45 @@
 
 #include "qgsfeatureiterator.h"
 
+#include <QMutex>
 
 class QgsGrassProvider;
 
-class QgsGrassFeatureIterator : public QgsAbstractFeatureIterator
+
+class QgsGrassFeatureSource : public QgsAbstractFeatureSource
 {
   public:
-    QgsGrassFeatureIterator( QgsGrassProvider* p, const QgsFeatureRequest& request );
+    QgsGrassFeatureSource( const QgsGrassProvider* provider );
+    ~QgsGrassFeatureSource();
+
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest& request );
+
+  protected:
+    struct Map_info* mMap;
+    int     mLayerType;     // layer type POINT, LINE, ...
+    int     mGrassType;     // grass feature type: GV_POINT, GV_LINE | GV_BOUNDARY, GV_AREA,
+    int     mLayerId;       // ID used in layers
+    QGis::WkbType mQgisType;// WKBPoint, WKBLineString, ...
+
+    int    mCidxFieldIndex;    // !UPDATE! Index for layerField in category index or -1 if no such field
+    int    mCidxFieldNumCats;  // !UPDATE! Number of records in field index
+
+    QgsFields mFields;
+    QTextCodec* mEncoding;
+
+    friend class QgsGrassFeatureIterator;
+};
+
+
+class QgsGrassFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsGrassFeatureSource>
+{
+  public:
+    QgsGrassFeatureIterator( QgsGrassFeatureSource* source, bool ownSource, const QgsFeatureRequest& request );
 
     ~QgsGrassFeatureIterator();
 
     //! fetch next feature, return true on success
-    virtual bool nextFeature( QgsFeature& feature );
+    virtual bool fetchFeature( QgsFeature& feature );
 
     //! reset the iterator to the starting position
     virtual bool rewind();
@@ -37,7 +64,6 @@ class QgsGrassFeatureIterator : public QgsAbstractFeatureIterator
     virtual bool close();
 
   protected:
-    QgsGrassProvider* P;
 
     // create QgsFeatureId from GRASS geometry object id and cat
     static QgsFeatureId makeFeatureId( int grassId, int cat );
@@ -45,6 +71,20 @@ class QgsGrassFeatureIterator : public QgsAbstractFeatureIterator
     void setSelectionRect( const QgsRectangle& rect, bool useIntersect );
 
     void setFeatureGeometry( QgsFeature& feature, int id, int type );
+
+
+    /*! Set feature attributes.
+     *  @param feature
+     *  @param cat category number
+     */
+    void setFeatureAttributes( int cat, QgsFeature *feature );
+
+    /*! Set feature attributes.
+     *  @param feature
+     *  @param cat category number
+     *  @param attlist a list containing the index number of the fields to set
+     */
+    void setFeatureAttributes( int cat, QgsFeature *feature, const QgsAttributeList & attlist );
 
     struct line_pnts *mPoints; // points structure
     struct line_cats *mCats;   // cats structure
@@ -60,7 +100,9 @@ class QgsGrassFeatureIterator : public QgsAbstractFeatureIterator
     char    *mSelection;           // !UPDATE!
     int     mSelectionSize;        // !UPDATE! Size of selection array
 
+    // Either mNextCidx or mNextTopoId is used according to type
     int    mNextCidx;          // !UPDATE! Next index in cidxFieldIndex to be read, used to find nextFeature
+    int    mNextTopoId;          // !UPDATE! Next topology id to be read, used to find nextFeature, starts from 1
 
     /*! reset selection */
     void resetSelection( bool sel );
@@ -70,6 +112,12 @@ class QgsGrassFeatureIterator : public QgsAbstractFeatureIterator
      *  @param map pointer to map structure
      */
     void allocateSelection( struct Map_info *map );
+
+    //! Mutex that protects GRASS library from parallel access from multiple iterators at once.
+    //! The library uses static/global variables in various places when accessing vector data,
+    //! making it non-reentrant and thus impossible to use from multiple threads.
+    //! (e.g. static LocList in Vect_select_lines_by_box, global BranchBuf in RTreeGetBranches)
+    static QMutex sMutex;
 };
 
 #endif // QGSGRASSFEATUREITERATOR_H

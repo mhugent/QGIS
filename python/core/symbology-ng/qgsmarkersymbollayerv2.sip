@@ -33,26 +33,57 @@ class QgsSimpleMarkerSymbolLayerV2 : QgsMarkerSymbolLayerV2
 
     void writeSldMarker( QDomDocument &doc, QDomElement &element, QgsStringMap props ) const;
 
+    QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const;
+
     QString name() const;
     void setName( QString name );
 
     QColor borderColor() const;
     void setBorderColor( QColor color );
 
+    Qt::PenStyle outlineStyle() const;
+    void setOutlineStyle( Qt::PenStyle outlineStyle );
+
+    /** Get outline color.
+     * @note added in 2.1 */
+    QColor outlineColor() const;
+    /** Set outline color.
+     * @note added in 2.1 */
+    void setOutlineColor( const QColor& color );
+
+    /** Get fill color.
+     * @note added in 2.1 */
+    QColor fillColor() const;
+    /** Set fill color.
+     * @note added in 2.1 */
+    void setFillColor( const QColor& color );
+
     double outlineWidth() const;
     void setOutlineWidth( double w );
 
-    QgsSymbolV2::OutputUnit outlineWidthUnit() const;
     void setOutlineWidthUnit( QgsSymbolV2::OutputUnit u );
+    QgsSymbolV2::OutputUnit outlineWidthUnit() const;
+
+    void setOutlineWidthMapUnitScale( const QgsMapUnitScale& scale);
+    const QgsMapUnitScale& outlineWidthMapUnitScale() const;
+
+    bool writeDxf( QgsDxfExport& e, double mmMapUnitScaleFactor, const QString& layerName, const QgsSymbolV2RenderContext* context, const QgsFeature* f, const QPointF& shift = QPointF( 0.0, 0.0 ) ) const;
+
+    void setOutputUnit( QgsSymbolV2::OutputUnit unit );
+    QgsSymbolV2::OutputUnit outputUnit() const;
+
+    void setMapUnitScale( const QgsMapUnitScale& scale );
+    QgsMapUnitScale mapUnitScale() const;
 
   protected:
-
     void drawMarker( QPainter* p, QgsSymbolV2RenderContext& context );
 
-    bool prepareShape();
-    bool preparePath();
+    bool prepareShape( QString name = QString() );
+    bool preparePath( QString name = QString() );
 
-    void prepareCache( QgsSymbolV2RenderContext& context );
+    /**Prepares cache image
+    @return true in case of success, false if cache image size too large*/
+    bool prepareCache( QgsSymbolV2RenderContext& context );
 };
 
 class QgsSvgMarkerSymbolLayerV2 : QgsMarkerSymbolLayerV2
@@ -64,7 +95,8 @@ class QgsSvgMarkerSymbolLayerV2 : QgsMarkerSymbolLayerV2
   public:
     QgsSvgMarkerSymbolLayerV2( QString name = DEFAULT_SVGMARKER_NAME,
                                double size = DEFAULT_SVGMARKER_SIZE,
-                               double angle = DEFAULT_SVGMARKER_ANGLE );
+                               double angle = DEFAULT_SVGMARKER_ANGLE,
+                               QgsSymbolV2::ScaleMethod scaleMethod = DEFAULT_SCALE_METHOD );
 
     // static stuff
 
@@ -102,8 +134,16 @@ class QgsSvgMarkerSymbolLayerV2 : QgsMarkerSymbolLayerV2
     void setOutlineWidthUnit( QgsSymbolV2::OutputUnit unit );
     QgsSymbolV2::OutputUnit outlineWidthUnit() const;
 
+    void setOutlineWidthMapUnitScale( const QgsMapUnitScale& scale);
+    const QgsMapUnitScale& outlineWidthMapUnitScale() const;
+
     void setOutputUnit( QgsSymbolV2::OutputUnit unit );
     QgsSymbolV2::OutputUnit outputUnit() const;
+
+    void setMapUnitScale( const QgsMapUnitScale& scale );
+    QgsMapUnitScale mapUnitScale() const;
+
+    bool writeDxf( QgsDxfExport& e, double mmMapUnitScaleFactor, const QString& layerName, const QgsSymbolV2RenderContext* context, const QgsFeature* f, const QPointF& shift = QPointF( 0.0, 0.0 ) ) const;
 };
 
 class QgsFontMarkerSymbolLayerV2 : QgsMarkerSymbolLayerV2

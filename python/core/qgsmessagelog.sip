@@ -9,13 +9,13 @@ class QgsMessageLog : QObject
 
     enum MessageLevel
     {
-      INFO = 0,
-      WARNING = 1,
-      CRITICAL = 2
+      INFO,
+      WARNING,
+      CRITICAL,
     };
 
     //! add a message to the instance (and create it if necessary)
-    static void logMessage( QString message, QString tag = QString::null, MessageLevel level = WARNING);
+    static void logMessage( QString message, QString tag = QString::null, MessageLevel level = WARNING );
 
   signals:
     void messageReceived( QString message, QString tag, MessageLevel level );

@@ -25,7 +25,7 @@
 class QgsRubberBand;
 
 /**Base class for map tools that modify label properties*/
-class QgsMapToolLabel: public QgsMapTool
+class APP_EXPORT QgsMapToolLabel: public QgsMapTool
 {
   public:
     QgsMapToolLabel( QgsMapCanvas* canvas );
@@ -35,23 +35,23 @@ class QgsMapToolLabel: public QgsMapTool
         @param xCol out: index of the attribute for data defined x coordinate
         @param yCol out: index of the attribute for data defined y coordinate
         @return true if labels of layer can be moved*/
-    bool labelMoveable( const QgsMapLayer* ml, int& xCol, int& yCol ) const;
+    bool labelMoveable( QgsMapLayer* ml, int& xCol, int& yCol ) const;
     /**Returns true if diagram move can be applied to a layer
         @param xCol out: index of the attribute for data defined x coordinate
         @param yCol out: index of the attribute for data defined y coordinate
         @return true if labels of layer can be moved*/
-    bool diagramMoveable( const QgsMapLayer* ml, int& xCol, int& yCol ) const;
+    bool diagramMoveable( QgsMapLayer* ml, int& xCol, int& yCol ) const;
     /**Returns true if layer has attribute fields set up
         @param xCol out: index of the attribute for data defined x coordinate
         @param yCol out: index of the attribute for data defined y coordinate
         @return true if layer fields set up and exist*/
-    bool layerCanPin( const QgsMapLayer* ml, int& xCol, int& yCol ) const;
+    bool layerCanPin( QgsMapLayer* ml, int& xCol, int& yCol ) const;
     /**Returns true if layer has attribute field set up
       @param showCol out: attribute column for data defined label showing*/
-    bool layerCanShowHide( const QgsMapLayer* layer, int& showCol ) const;
+    bool layerCanShowHide( QgsMapLayer* layer, int& showCol ) const;
     /**Checks if labels in a layer can be rotated
       @param rotationCol out: attribute column for data defined label rotation*/
-    bool layerIsRotatable( const QgsMapLayer* layer, int& rotationCol ) const;
+    bool layerIsRotatable( QgsMapLayer *layer, int& rotationCol ) const;
 
   protected:
     QgsRubberBand* mLabelRubberBand;
@@ -111,7 +111,7 @@ class QgsMapToolLabel: public QgsMapTool
       @return -1 if column does not exist or an expression is used instead */
 //    int dataDefinedColumnIndex( QgsPalLayerSettings::DataDefinedProperties p, const QgsPalLayerSettings& labelSettings, const QgsVectorLayer* vlayer ) const;
 
-    int dataDefinedColumnIndex( QgsPalLayerSettings::DataDefinedProperties p, const QgsVectorLayer* vlayer ) const;
+    int dataDefinedColumnIndex( QgsPalLayerSettings::DataDefinedProperties p, QgsVectorLayer* vlayer ) const;
 
     /**Returns whether to preserve predefined rotation data during label pin/unpin operations*/
     bool preserveRotation();
@@ -126,7 +126,7 @@ class QgsMapToolLabel: public QgsMapTool
       @param xCol out: index of the x position column
       @param yCol out: index of the y position column
       @return false if layer does not have data defined label position enabled*/
-    bool dataDefinedPosition( QgsVectorLayer* vlayer, int featureId, double& x, bool& xSuccess, double& y, bool& ySuccess, int& xCol, int& yCol ) const;
+    bool dataDefinedPosition( QgsVectorLayer* vlayer, const QgsFeatureId &featureId, double& x, bool& xSuccess, double& y, bool& ySuccess, int& xCol, int& yCol ) const;
 
     /**Returns data defined rotation of a feature.
       @param vlayer vector layer
@@ -136,7 +136,7 @@ class QgsMapToolLabel: public QgsMapTool
       @param ignoreXY ignore that x and y are required to be data-defined
       @return true if data defined rotation is enabled on the layer
       */
-    bool dataDefinedRotation( QgsVectorLayer* vlayer, int featureId, double& rotation, bool& rotationSuccess, bool ignoreXY = false ) const;
+    bool dataDefinedRotation( QgsVectorLayer* vlayer, const QgsFeatureId &featureId, double& rotation, bool& rotationSuccess, bool ignoreXY = false ) const;
 
     /**Returns data defined show/hide of a feature.
       @param vlayer vector layer
@@ -146,10 +146,13 @@ class QgsMapToolLabel: public QgsMapTool
       @param showCol out: index of the show label column
       @return true if data defined show/hide is enabled on the layer
       */
-    bool dataDefinedShowHide( QgsVectorLayer* vlayer, int featureId, int& show, bool& showSuccess, int& showCol ) const;
+    bool dataDefinedShowHide( QgsVectorLayer* vlayer, const QgsFeatureId &featureId, int& show, bool& showSuccess, int& showCol ) const;
 
   private:
     QgsPalLayerSettings mInvalidLabelSettings;
+
+    QgsVectorLayer* mCurrentLayer;
+    QgsPalLayerSettings mCurrentSettings;
 };
 
 #endif // QGSMAPTOOLLABEL_H

@@ -17,7 +17,6 @@
 #include "qgsgeometry.h"
 #include "qgsmapcanvas.h"
 #include "qgsproject.h"
-#include "qgsrubberband.h"
 #include "qgsvectorlayer.h"
 #include "qgslogger.h"
 
@@ -63,7 +62,7 @@ void QgsMapToolAddPart::canvasReleaseEvent( QMouseEvent * e )
 
   if ( !selectionErrorMsg.isEmpty() )
   {
-    QMessageBox::critical( 0, tr( "Error. Could not add part." ), selectionErrorMsg );
+    emit messageEmitted( tr( "Could not add part. %1" ).arg( selectionErrorMsg ) , QgsMessageBar::WARNING );
     stopCapturing();
     return;
   }
@@ -91,28 +90,28 @@ void QgsMapToolAddPart::canvasReleaseEvent( QMouseEvent * e )
     case CapturePolygon:
     {
       //add point to list and to rubber band
-      int error = addVertex( e->pos() );
-      if ( error == 1 )
-      {
-        QgsDebugMsg( "current layer is not a vector layer" );
-        return;
-      }
-      else if ( error == 2 )
-      {
-        //problem with coordinate transformation
-        QMessageBox::information( 0,
-                                  tr( "Coordinate transform error" ),
-                                  tr( "Cannot transform the point to the layers coordinate system" ) );
-        return;
-      }
-
       if ( e->button() == Qt::LeftButton )
       {
+        int error = addVertex( e->pos() );
+        if ( error == 1 )
+        {
+          QgsDebugMsg( "current layer is not a vector layer" );
+          return;
+        }
+        else if ( error == 2 )
+        {
+          //problem with coordinate transformation
+          emit messageEmitted( tr( "Coordinate transform error. Cannot transform the point to the layers coordinate system" ) , QgsMessageBar::WARNING );
+          return;
+        }
+
         startCapturing();
         return;
       }
       else if ( e->button() != Qt::RightButton )
       {
+        deleteTempRubberBand();
+
         return;
       }
 
@@ -155,6 +154,9 @@ void QgsMapToolAddPart::canvasReleaseEvent( QMouseEvent * e )
   {
     case 0:
     {
+      // remove previous message
+      emit messageDiscarded();
+
       //add points to other features to keep topology up-to-date
       int topologicalEditing = QgsProject::instance()->readNumEntry( "Digitizing", "/TopologicalEditing", 0 );
       if ( topologicalEditing )
@@ -193,6 +195,6 @@ void QgsMapToolAddPart::canvasReleaseEvent( QMouseEvent * e )
       break;
   }
 
-  QMessageBox::critical( 0, tr( "Error, could not add part" ), errorMessage );
+  emit messageEmitted( errorMessage , QgsMessageBar::WARNING );
   vlayer->destroyEditCommand();
 }

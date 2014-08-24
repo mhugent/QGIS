@@ -35,6 +35,16 @@ class QgsSOSFeatureIterator: public QgsAbstractFeatureIterator
     //! end of iterating: free the resources / lock
     bool close();
 
+  protected:
+    /**
+     * If you write a feature iterator for your provider, this is the method you
+     * need to implement!!
+     *
+     * @param f The feature to write to
+     * @return  true if a feature was written to f
+     */
+    virtual bool fetchFeature( QgsFeature& f ) {}
+
   private:
     QgsSOSProvider* mProvider;
     QList<QgsFeatureId> mSelectedFeatures;

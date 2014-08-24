@@ -1,10 +1,10 @@
 QGIS
 Building QGIS from source - step by step
-Sunday July 21, 2013
+Wednesday June 18, 2014
 
 
-Last Updated: Sunday July 21, 2013
-Last Change : Wednesday May 22, 2013
+Last Updated: Wednesday June 18, 2014
+Last Change : Wednesday June 18, 2014
 
 
   1. Introduction
@@ -52,7 +52,7 @@ QGIS. The software and hardware descriptions named in this
 document are in most cases registered trademarks and are therefore subject 
 to the legal requirements. QGIS is subject to the GNU General Public 
 License. Find more information on the QGIS Homepage:
-http://www.qgis.org
+http://qgis.org
 
 The details, that are given in this document have been written and verified 
 to the best of knowledge and responsibility of the editors. Nevertheless, 
@@ -62,13 +62,13 @@ any responsibility or liability for failures and their consequences. You are
 always welcome for indicating possible mistakes.
 
 You can download this document as part of the QGIS 'User and 
-Installation Guide' in HTML and PDF format via http://www.qgis.org. A current 
+Installation Guide' in HTML and PDF format via http://qgis.org. A current 
 version is also available at:
-http://www.qgis.org/api/INSTALL.html
+http://htmlpreview.github.io/?https://raw.github.com/qgis/QGIS/master/doc/INSTALL.html
 
 Translations of this document can also be downloaded at the documentation area 
-of the QGIS project at http://www.qgis.org. More information is 
-available via http://wiki.qgis.org/qgiswiki/DocumentationWritersCorner. 
+of the QGIS project at http://qgis.org. More information is 
+available via http://qgis.org/en/site/getinvolved/governance/organisation/governance.html#community-resources. 
 
 Please visit http://qgis.org for information on joining our mailing lists 
 and getting involved in the project further.
@@ -98,7 +98,7 @@ Required build tools:
 
 Required build deps:
 
-- Qt >= 4.4.0
+- Qt >= 4.7.0
 - Proj >= 4.4.x
 - GEOS >= 3.0
 - Sqlite3 >= 3.0.0
@@ -113,7 +113,7 @@ Optional dependencies:
 - for postgis support and SPIT plugin - PostgreSQL >= 8.0.x
 - for gps plugin - gpsbabel
 - for mapserver export and PyQGIS - Python >= 2.3 (2.5+ preferred)
-- for python support - SIP >= 4.8, PyQt >= must match Qt version, Qscintilla2
+- for python support - SIP >= 4.12, PyQt >= 4.8.3 must match Qt version, Qscintilla2
 - for qgis mapserver - FastCGI
 
 
@@ -167,14 +167,13 @@ Now update your local sources database:
   ===============================
 
   || Distribution | install command for packages |
-  | lucid | ``apt-get install bison cmake doxygen flex git-core graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | maverick | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | natty | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | oneiric | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | precise | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | sid | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | squeeze | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
-  | wheezy | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-base xvfb`` |
+  | precise | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+  | quantal | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+  | raring | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libpython2.7-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+  | saucy | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libpython2.7-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt5-qt4-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+  | wheezy | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
+  | jessie | ``apt-get install bison cmake flex grass-dev libexpat1-dev libfcgi-dev libgdal1-dev libgeos-dev libgsl0-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python python-dev python-qt4 python-qt4-dev python-sip python-sip-dev`` |
+  | sid | ``apt-get install bison cmake doxygen flex git graphviz grass-dev libexpat1-dev libfcgi-dev libgdal-dev libgeos-dev libgsl0-dev libopenscenegraph-dev libosgearth-dev libpq-dev libproj-dev libqt4-dev libqt4-opengl-dev libqtwebkit-dev libqwt-dev libspatialindex-dev libspatialite-dev libsqlite3-dev pkg-config pyqt4-dev-tools python-all python-all-dev python-qt4 python-qt4-dev python-sip python-sip-dev txt2tags xauth xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable xvfb`` |
 
 (extracted from the respective control files in debian/)
 
@@ -210,9 +209,10 @@ applications is used in all cases:
 Use the simple command line dialog that appears after running each of the
 above commands to select the Qt4 version of the relevant applications.
 
-/!\ Note: For python language bindings SIP >= 4.5 and PyQt4 >= 4.1 is required! Some stable GNU/Linux
-distributions (e.g. Debian or SuSE) only provide SIP < 4.5 and PyQt4 < 4.1. To include support for python 
-language bindings you may need to build and install those packages from source.
+/!\ Note: For python language bindings. If your distributions ships with older
+versions of SIP or PyQt4 than specified in Section 2: Overview, you will need
+to build and install those packages from source if you want to include support 
+for python language bindings.
 
 
   3.4. Setup ccache (Optional)
@@ -249,12 +249,12 @@ if you do not have edit privileges for the QGIS source repository, or use
 1. Anonymous Checkout
 
   cd ${HOME}/dev/cpp 
-  git clone git://github.com/qgis/Quantum-GIS.git
+  git clone git://github.com/qgis/QGIS.git
 
 2. Developer Checkout
 
   cd ${HOME}/dev/cpp 
-  git clone git@github.com:qgis/Quantum-GIS.git
+  git clone git@github.com:qgis/QGIS.git
 
 
   3.7. Starting the compile
@@ -269,7 +269,7 @@ development version. I suggest you do something similar:
 
 Now we create a build directory and run ccmake:
 
-  cd Quantum-GIS
+  cd QGIS
   mkdir build-master
   cd build-master
   ccmake ..
@@ -319,12 +319,19 @@ The QGIS packages will be created with:
 
   dpkg-buildpackage -us -uc -b
 
+/!\ Note: Install devscripts to get dch.
+
 /!\ Note: If dpkg-buildpackage complains about unmet build dependencies
 you can install them using apt-get and re-run the command.
 
 /!\ Note: If you have libqgis1-dev installed, you need to remove it first
 using dpkg -r libqgis1-dev.  Otherwise dpkg-buildpackage will complain about a
 build conflict.
+
+/!\ Note: By default tests are run in the process of building and their
+results are uploaded to http://dash.orfeo-toolbox.org/index.php?project=QGIS.
+You can turn the tests off using DEB_BUILD_OPTIONS=nocheck in front of the
+build command. The upload of results can be avoided with DEB_TEST_TARGET=test.
 
 The packages are created in the parent directory (ie. one level up).
 Install them using dpkg.  E.g.:
@@ -504,7 +511,7 @@ may want to give it a try
 As for GRASS you can obtain the QGIS source code from different sources as described 
 in section 2 above. Once you have the sources, create a build directory in them:
 
-  cd Quantum-GIS
+  cd QGIS
   mkdir build
   cd build
 
@@ -552,16 +559,17 @@ build QGIS.
 
 The free (as in free beer) Express Edition installer is available under:
 
+Currently we use Visual C++ 2008 Express for 32bit builds:
+
   http://download.microsoft.com/download/d/c/3/dc3439e7-5533-4f4c-9ba0-8577685b6e7e/vcsetup.exe
 
-The optional products are not necessary.  In the process the Windows SDKs for
-Visual Studio 2008 will also be downloaded and installed.
+And Visual C++ 2010 Express for 64bit builds:
 
-You also need the Microsoft Windows Server(R) 2003 R2 Platform SDK (for setupapi):
+  http://download.microsoft.com/download/c/d/7/cd7d4dfb-5290-4cc7-9f85-ab9e3c9af796/vc_web.exe
 
-  http://download.microsoft.com/download/f/a/d/fad9efde-8627-4e7a-8812-c351ba099151/PSDK-x86.exe
+You also need the Windows SDK for Windows 7 and .NET Framework 4:
 
-You only need Microsoft Windows Core SDK / Build Environment (x86 32-Bit).
+  http://download.microsoft.com/download/A/6/A/A6AC035D-DA3F-4F0C-ADA4-37C8E5D34E3D/winsdk_web.exe
 
 
     4.1.2. Other tools and dependencies
@@ -570,15 +578,18 @@ You only need Microsoft Windows Core SDK / Build Environment (x86 32-Bit).
 Download and install following packages:
 
   || Tool | Website |
-  | CMake | http://www.cmake.org/files/v2.8/cmake-2.8.4-win32-x86.exe |
+  | CMake | http://www.cmake.org/files/v2.8/cmake-2.8.12.2-win32-x86.exe |
   | Flex | http://gnuwin32.sourceforge.net/downlinks/flex.php |
   | Bison | http://gnuwin32.sourceforge.net/downlinks/bison.php |
-  | SVN | http://sourceforge.net/projects/win32svn/files/1.6.13/Setup-Subversion-1.6.13.msi/download |
-  | or GIT | http://msysgit.googlecode.com/files/Git-1.7.4-preview20110204.exe | 
-  | OSGeo4W | http://download.osgeo.org/osgeo4w/osgeo4w-setup.exe |
+  | GIT | https://github.com/msysgit/msysgit/releases/download/Git-1.9.4-preview20140611/Git-1.9.4-preview20140611.exe | 
+  | OSGeo4W | http://download.osgeo.org/osgeo4w/osgeo4w-setup-x86.exe (32bit) or http://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe (64bit) |
+
+You can also use flex, bison & git from
+
+  http://cygwin.com
 
 OSGeo4W does not only provide ready packages for the current QGIS release and
-nightly builds of the trunk, but also offers most of the dependencies needs to
+nightly builds of master, but also offers most of the dependencies needs to
 build it.
 
 For the QGIS build you need to install following packages from OSGeo4W (select
@@ -599,11 +610,6 @@ Advanced Installation):
 - python-qscintilla
 
 This will also select packages the above packages depend on.
-
-Additionally QGIS also needs the include file unistd.h, which normally
-doesn't exist on Windows.  It's shipped with Flex/Bison in GnuWin32\include
-and needs to be copied into the VC\include directory of your Visual C++
-installation.
 
 Earlier versions of this document also covered how to build all above
 dependencies.  If you're interested in that, check the history of this page in the Wiki
@@ -637,9 +643,9 @@ installed in the default locations):
   @cmd
 
 Start the batch file and on the command prompt checkout the QGIS source from
-git to the source directory Quantum-GIS:
+git to the source directory QGIS:
 
-  git clone git://github.com/qgis/Quantum-GIS.git
+  git clone git://github.com/qgis/QGIS.git
 
 Create a 'build' directory somewhere. This will be where all the build output
 will be generated.
@@ -688,7 +694,7 @@ To create a standalone installer there is a perl script named 'creatensis.pl'
 in 'qgis/ms-windows/osgeo4w'.  It downloads all required packages from OSGeo4W
 and repackages them into an installer using NSIS.
 
-The script can either be run on Windows, but also can be run on Linux.
+The script can be run on both Windows and Linux.
 
 On Debian/Ubuntu you can just install the 'nsis' package.
 
@@ -881,7 +887,7 @@ directory and move into it
 
 Check out sources from GIT:
 
-  git clone git://github.com/qgis/Quantum-GIS.git
+  git clone git://github.com/qgis/QGIS.git
 
 
     4.2.8. Compiling
@@ -1474,10 +1480,10 @@ More configuration is needed to install outside the system path:
 Snow Leopard system Python
 
 Similar to Leopard, you should install outside the system Python path.
-Also, you need to specify the architecture you want (requires at least SIP
-4.9), and make sure to run the versioned python binary (this one responds to
-the 'arch' command, 'python' does not).
-Substitute '2.7' for python version and 10.7 for SDK version below for Lion.
+Also, you need to specify the architecture you want and make sure to run the
+versioned python binary (this one responds to the 'arch' command, 'python' does
+not).  Substitute '2.7' for python version and 10.7 for SDK version below for
+Lion.
 
 If you are using 32-bit Qt (Qt Carbon):
 
@@ -1868,18 +1874,18 @@ this.
 If you want to experiment with the latest development sources, go to the github
 QGIS project page:
 
-http://github.com/qgis/Quantum-GIS
+http://github.com/qgis/QGIS
 
 It should default to the master branch.  Click the Downloads button and
 select Download .tar.gz. Double-click the tarball to unzip it.
 
 Alternatively, install git from http://git-scm.com and do the following.
 
-Make a specific repository directory somewhere, e.g. ~/QGIS/Quantum-GIS, and cd
+Make a specific repository directory somewhere, e.g. ~/QGIS/QGIS, and cd
 into it. The following will read-only clone the master branch to the directory:
 
   git init
-  git remote add -f -t master -m master qgisupstream git://github.com/qgis/Quantum-GIS.git
+  git remote add -f -t master -m master qgisupstream git://github.com/qgis/QGIS.git
   git merge qgisupstream
   
 
@@ -2071,7 +2077,7 @@ Then do:
     chmod +x cgi-bin/wcstest-1.9.0
     mkdir -p /var/www/wcs/testdata/qgis-1.9.0/raster/
     cd /var/www/wcs/testdata/qgis-1.9.0/raster/
-    cp -r /home/timlinux/Quantum-GIS/tests/testdata/raster/* .
+    cp -r /home/timlinux/QGIS/tests/testdata/raster/* .
 
 Edit wcs.map and set the shapepath to this:
 
@@ -2179,9 +2185,9 @@ procedure is:
  - Tick enable project based security (you need to elsewhere configure your
    Jenkins security to per project settings)
  - Allow Anonymous user Read and Discover access
- - Set the github project to https://github.com/qgis/Quantum-GIS/
+ - Set the github project to https://github.com/qgis/QGIS/
  - Set source code management to Git
- - Set repository url to git://github.com/qgis/Quantum-GIS.git
+ - Set repository url to git://github.com/qgis/QGIS.git
  - In advanced repository url settings set refspec to : 
 
   +refs/heads/master:refs/remotes/origin/master

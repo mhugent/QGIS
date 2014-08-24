@@ -62,7 +62,7 @@ class QgsPgSourceSelect : public QDialog, private Ui::QgsDbSourceSelectBase
 
   public:
     //! Constructor
-    QgsPgSourceSelect( QWidget *parent = 0, Qt::WFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
+    QgsPgSourceSelect( QWidget *parent = 0, Qt::WindowFlags fl = QgisGui::ModalDialogFlags, bool managerMode = false, bool embeddedMode = false );
     //! Destructor
     ~QgsPgSourceSelect();
     //! Populate the connection list combo box
@@ -99,6 +99,7 @@ class QgsPgSourceSelect : public QDialog, private Ui::QgsDbSourceSelectBase
     void on_btnSave_clicked();
     //! Loads the selected connections from file
     void on_btnLoad_clicked();
+    void on_mSearchGroupBox_toggled( bool );
     void on_mSearchTableEdit_textChanged( const QString & text );
     void on_mSearchColumnComboBox_currentIndexChanged( const QString & text );
     void on_mSearchModeComboBox_currentIndexChanged( const QString & text );

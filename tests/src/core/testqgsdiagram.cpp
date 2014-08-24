@@ -42,6 +42,7 @@
 //qgis test includes
 #include "qgsrenderchecker.h"
 #include "qgspallabeling.h"
+#include "qgsproject.h"
 
 /** \ingroup UnitTests
  * This is a unit test for the vector layer class.
@@ -51,7 +52,7 @@ class TestQgsDiagram: public QObject
     Q_OBJECT;
   private:
     bool mTestHasError;
-    QgsMapRenderer * mMapRenderer;
+    QgsMapSettings mMapSettings;
     QgsVectorLayer * mPointsLayer;
     QgsComposition * mComposition;
     QString mTestDataDir;
@@ -94,10 +95,9 @@ class TestQgsDiagram: public QObject
       mPieDiagram = new QgsPieDiagram();
 
       // Create map composition to draw on
-      mMapRenderer = new QgsMapRenderer();
-      mMapRenderer->setLayerSet( QStringList() << mPointsLayer->id() );
-      mMapRenderer->setLabelingEngine( new QgsPalLabeling() );
-      mComposition = new QgsComposition( mMapRenderer );
+      mMapSettings.setLayers( QStringList() << mPointsLayer->id() );
+      // TODO mMapSettings.setLabelingEngine( new QgsPalLabeling() );
+      mComposition = new QgsComposition( mMapSettings );
       mComposition->setPaperSize( 297, 210 ); // A4 landscape
       mComposerMap = new QgsComposerMap( mComposition, 20, 20, 200, 100 );
       mComposerMap->setFrameEnabled( true );
@@ -121,7 +121,6 @@ class TestQgsDiagram: public QObject
 
       delete mComposerMap;
       delete mComposition;
-      delete mMapRenderer;
       delete mPointsLayer;
     }
     void init() {};// will be called before each testfunction is executed.
@@ -135,7 +134,7 @@ class TestQgsDiagram: public QObject
       col1.setAlphaF( 0.5 );
       col2.setAlphaF( 0.5 );
       ds.categoryColors = QList<QColor>() << col1 << col2;
-      ds.categoryIndices = QList<int>() << 3 << 4; // Pilots / Cabin Crew
+      ds.categoryAttributes = QList<QString>() << "\"Pilots\"" << "\"Cabin Crew\"";
       ds.maxScaleDenominator = -1;
       ds.minScaleDenominator = -1;
       ds.minimumSize = 0;
@@ -159,18 +158,15 @@ class TestQgsDiagram: public QObject
 
       QgsDiagramLayerSettings dls = QgsDiagramLayerSettings();
       dls.placement = QgsDiagramLayerSettings::OverPoint;
-      dls.renderer = dr;
 
-      dynamic_cast<QgsPalLabeling*>( mMapRenderer->labelingEngine() )->setShowingAllLabels( true );
+      QgsProject::instance()->writeEntry( "PAL", "/ShowingAllLabels", true );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
       mComposerMap->setNewExtent( QgsRectangle( -122, -79, -70, 47 ) );
-      QgsCompositionChecker checker( "Composer map render", mComposition, QString( QString( TEST_DATA_DIR )
-                                     + QDir::separator() + "control_images" + QDir::separator() + "expected_diagram" + QDir::separator()
-                                     + "expected_piediagram.png" ) );
+      QgsCompositionChecker checker( "piediagram", mComposition );
 
-      QVERIFY( checker.testComposition() );
+      QVERIFY( checker.testComposition( mReport ) );
 
       mPointsLayer->setDiagramRenderer( 0 );
     }

@@ -49,6 +49,7 @@ class TestQgsCoordinateReferenceSystem: public QObject
     void validate();
     void equality();
     void noEquality();
+    void equalityInvalid();
     void readXML();
     void writeXML();
     void setCustomSrsValidation();
@@ -60,6 +61,7 @@ class TestQgsCoordinateReferenceSystem: public QObject
     void geographicFlag();
     void mapUnits();
     void setValidationHint();
+    void axisInverted();
   private:
     void debugPrint( QgsCoordinateReferenceSystem &theCrs );
     // these used by createFromESRIWkt()
@@ -311,6 +313,12 @@ void TestQgsCoordinateReferenceSystem::noEquality()
   debugPrint( myCrs );
   QVERIFY( myCrs != myCrs2 );
 }
+void TestQgsCoordinateReferenceSystem::equalityInvalid()
+{
+  QgsCoordinateReferenceSystem invalidCrs1;
+  QgsCoordinateReferenceSystem invalidCrs2;
+  QVERIFY( invalidCrs1 == invalidCrs2 );
+}
 void TestQgsCoordinateReferenceSystem::readXML()
 {
   //QgsCoordinateReferenceSystem myCrs;
@@ -409,6 +417,22 @@ void TestQgsCoordinateReferenceSystem::setValidationHint()
   QVERIFY( myCrs.validationHint() == QString( "<head>" ) );
   debugPrint( myCrs );
 }
+
+void TestQgsCoordinateReferenceSystem::axisInverted()
+{
+  // this is used by WMS 1.3 to determine whether to switch axes or not
+
+  QgsCoordinateReferenceSystem crs;
+  crs.createFromOgcWmsCrs( "EPSG:4326" ); // WGS 84 with inverted axes
+  QVERIFY( crs.axisInverted() );
+
+  crs.createFromOgcWmsCrs( "CRS:84" ); // WGS 84 without inverted axes
+  QVERIFY( !crs.axisInverted() );
+
+  crs.createFromOgcWmsCrs( "EPSG:32633" ); // "WGS 84 / UTM zone 33N" - projected CRS without invertex axes
+  QVERIFY( !crs.axisInverted() );
+}
+
 
 void TestQgsCoordinateReferenceSystem::debugPrint(
   QgsCoordinateReferenceSystem &theCrs )

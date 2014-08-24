@@ -15,6 +15,7 @@
 #include "qgsgmlschema.h"
 #include "qgsrectangle.h"
 #include "qgscoordinatereferencesystem.h"
+#include "qgserror.h"
 #include "qgsgeometry.h"
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
@@ -78,7 +79,7 @@ QString QgsGmlSchema::readAttribute( const QString& attributeName, const XML_Cha
     {
       return QString( attr[i+1] );
     }
-    ++i;
+    i += 2;
   }
   return QString();
 }
@@ -234,7 +235,7 @@ bool QgsGmlSchema::xsdFeatureClass( const QDomElement &element, const QString & 
       }
     }
 
-    QgsField field( fieldName, fieldType );
+    QgsField field( fieldName, fieldType, fieldTypeName );
     featureClass.fields().append( field );
   }
 
@@ -337,8 +338,17 @@ bool QgsGmlSchema::guessSchema( const QByteArray &data )
   XML_SetElementHandler( p, QgsGmlSchema::start, QgsGmlSchema::end );
   XML_SetCharacterDataHandler( p, QgsGmlSchema::chars );
   int atEnd = 1;
-  XML_Parse( p, data.constData(), data.size(), atEnd );
-  return 0;
+  int res = XML_Parse( p, data.constData(), data.size(), atEnd );
+
+  if ( res == 0 )
+  {
+    QString err = QString( XML_ErrorString( XML_GetErrorCode( p ) ) );
+    QgsDebugMsg( QString( "XML_Parse returned %1 error %2" ).arg( res ).arg( err ) );
+    mError = QgsError( err, "GML schema" );
+    mError.append( tr( "Cannot guess schema" ) );
+  }
+
+  return res != 0;
 }
 
 void QgsGmlSchema::startElement( const XML_Char* el, const XML_Char** attr )
@@ -364,16 +374,22 @@ void QgsGmlSchema::startElement( const XML_Char* el, const XML_Char** attr )
   //QgsDebugMsg( "ns = " + ns + " localName = " + localName );
 
   ParseMode parseMode = modeStackTop();
+  //QgsDebugMsg ( QString("localName = %1 parseMode = %2").arg(localName).arg(parseMode) );
 
   if ( ns == GML_NAMESPACE && localName == "boundedBy" )
   {
     // gml:boundedBy in feature or feature collection -> skip
     mSkipLevel = mLevel + 1;
   }
+  else if ( localName.compare( "featureMembers", Qt::CaseInsensitive ) == 0 )
+  {
+    mParseModeStack.push( QgsGmlSchema::featureMembers );
+  }
   // GML does not specify that gml:FeatureAssociationType elements should end
   // with 'Member' apart standard gml:featureMember, but it is quite usual to
   // that the names ends with 'Member', e.g.: osgb:topographicMember, cityMember,...
   // so this is really fail if the name does not contain 'Member'
+
   else if ( localName.endsWith( "member", Qt::CaseInsensitive ) )
   {
     mParseModeStack.push( QgsGmlSchema::featureMember );
@@ -384,11 +400,15 @@ void QgsGmlSchema::startElement( const XML_Char* el, const XML_Char** attr )
     // do nothing, we catch _feature children
   }
   // UMN Mapserver simple GetFeatureInfo response feature element (ends with _feature)
-  // or featureMember children
+  // or featureMember children.
+  // QGIS mapserver 2.2 GetFeatureInfo is using <Feature id="###"> for feature member,
+  // without any feature class distinction.
   else if ( elementName.endsWith( "_feature" )
-            || parseMode == QgsGmlSchema::featureMember )
+            || parseMode == QgsGmlSchema::featureMember
+            || parseMode == QgsGmlSchema::featureMembers
+            || localName.compare( "feature", Qt::CaseInsensitive ) == 0 )
   {
-    //QgsDebugMsg ( "is feature path = " + path );
+    QgsDebugMsg( "is feature path = " + path );
     if ( mFeatureClassMap.count( localName ) == 0 )
     {
       mFeatureClassMap.insert( localName, QgsGmlFeatureClass( localName, path ) );
@@ -410,9 +430,26 @@ void QgsGmlSchema::startElement( const XML_Char* el, const XML_Char** attr )
   {
     // An element in feature should be ordinary or geometry attribute
     //QgsDebugMsg( "is attribute");
-    mParseModeStack.push( QgsGmlSchema::attribute );
-    mAttributeName = localName;
-    mStringCash.clear();
+
+    // Usually localName is attribute name, e.g.
+    // <gml:desc>My description</gml:desc>
+    // but QGIS server (2.2) is using:
+    // <Attribute value="My description" name="desc"/>
+    QString name = readAttribute( "name", attr );
+    //QgsDebugMsg ( "attribute name = " + name );
+    if ( localName.compare( "attribute", Qt::CaseInsensitive ) == 0
+         && !name.isEmpty() )
+    {
+      QString value = readAttribute( "value", attr );
+      //QgsDebugMsg ( "attribute value = " + value );
+      addAttribute( name, value );
+    }
+    else
+    {
+      mAttributeName = localName;
+      mParseModeStack.push( QgsGmlSchema::attribute );
+      mStringCash.clear();
+    }
   }
 }
 
@@ -439,7 +476,11 @@ void QgsGmlSchema::endElement( const XML_Char* el )
 
   QgsGmlSchema::ParseMode parseMode = modeStackTop();
 
-  if ( parseMode == QgsGmlSchema::attribute && localName == mAttributeName )
+  if ( parseMode == QgsGmlSchema::featureMembers )
+  {
+    modeStackPop();
+  }
+  else if ( parseMode == QgsGmlSchema::attribute && localName == mAttributeName )
   {
     // End of attribute
     //QgsDebugMsg("end attribute");
@@ -447,41 +488,7 @@ void QgsGmlSchema::endElement( const XML_Char* el )
 
     if ( mFeatureClassMap[mCurrentFeatureName].geometryAttributes().count( mAttributeName ) == 0 )
     {
-      // It is not geometry attribute -> analyze value
-      bool ok;
-      mStringCash.toInt( &ok );
-      QVariant::Type type = QVariant::String;
-      if ( ok )
-      {
-        type = QVariant::Int;
-      }
-      else
-      {
-        mStringCash.toDouble( &ok );
-        if ( ok )
-        {
-          type = QVariant::Double;
-        }
-      }
-      //QgsDebugMsg( "mStringCash = " + mStringCash + " type = " + QVariant::typeToName( type )  );
-      //QMap<QString, QgsField> & fields = mFeatureClassMap[mCurrentFeatureName].fields();
-      QList<QgsField> & fields = mFeatureClassMap[mCurrentFeatureName].fields();
-      int fieldIndex = mFeatureClassMap[mCurrentFeatureName].fieldIndex( mAttributeName );
-      if ( fieldIndex == -1 )
-      {
-        QgsField field( mAttributeName, type );
-        fields.append( field );
-      }
-      else
-      {
-        QgsField &field = fields[fieldIndex];
-        // check if type is sufficient
-        if (( field.type() == QVariant::Int && ( type == QVariant::String || type == QVariant::Double ) ) ||
-            ( field.type() == QVariant::Double && type == QVariant::String ) )
-        {
-          field.setType( type );
-        }
-      }
+      addAttribute( mAttributeName, mStringCash );
     }
   }
   else if ( ns == GML_NAMESPACE && localName == "boundedBy" )
@@ -490,7 +497,6 @@ void QgsGmlSchema::endElement( const XML_Char* el )
   }
   else if ( localName.endsWith( "member", Qt::CaseInsensitive ) )
   {
-    mParseModeStack.push( QgsGmlSchema::featureMember );
     modeStackPop();
   }
   mParsePathStack.removeLast();
@@ -510,6 +516,45 @@ void QgsGmlSchema::characters( const XML_Char* chars, int len )
   if ( modeStackTop() == QgsGmlSchema::attribute )
   {
     mStringCash.append( QString::fromUtf8( chars, len ) );
+  }
+}
+
+void QgsGmlSchema::addAttribute( const QString& name, const QString& value )
+{
+  // It is not geometry attribute -> analyze value
+  bool ok;
+  value.toInt( &ok );
+  QVariant::Type type = QVariant::String;
+  if ( ok )
+  {
+    type = QVariant::Int;
+  }
+  else
+  {
+    value.toDouble( &ok );
+    if ( ok )
+    {
+      type = QVariant::Double;
+    }
+  }
+  //QgsDebugMsg( "mStringCash = " + mStringCash + " type = " + QVariant::typeToName( type )  );
+  //QMap<QString, QgsField> & fields = mFeatureClassMap[mCurrentFeatureName].fields();
+  QList<QgsField> & fields = mFeatureClassMap[mCurrentFeatureName].fields();
+  int fieldIndex = mFeatureClassMap[mCurrentFeatureName].fieldIndex( name );
+  if ( fieldIndex == -1 )
+  {
+    QgsField field( name, type );
+    fields.append( field );
+  }
+  else
+  {
+    QgsField &field = fields[fieldIndex];
+    // check if type is sufficient
+    if (( field.type() == QVariant::Int && ( type == QVariant::String || type == QVariant::Double ) ) ||
+        ( field.type() == QVariant::Double && type == QVariant::String ) )
+    {
+      field.setType( type );
+    }
   }
 }
 

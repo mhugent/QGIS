@@ -50,7 +50,7 @@ class QgsGeorefPluginGui : public QMainWindow, private Ui::QgsGeorefPluginGuiBas
     Q_OBJECT
 
   public:
-    QgsGeorefPluginGui( QgisInterface* theQgisInterface, QWidget* parent = 0, Qt::WFlags fl = 0 );
+    QgsGeorefPluginGui( QgisInterface* theQgisInterface, QWidget* parent = 0, Qt::WindowFlags fl = 0 );
     ~QgsGeorefPluginGui();
 
   protected:
@@ -105,7 +105,7 @@ class QgsGeorefPluginGui : public QMainWindow, private Ui::QgsGeorefPluginGuiBas
     void extentsChangedQGisCanvas();
 
     // canvas info
-    void showMouseCoords( const QgsPoint pt );
+    void showMouseCoords( const QgsPoint &pt );
     void updateMouseCoordinatePrecision();
 
     // Histogram stretch

@@ -45,7 +45,7 @@ QgsMapToolRotateFeature::~QgsMapToolRotateFeature()
 
 void QgsMapToolRotateFeature::canvasMoveEvent( QMouseEvent * e )
 {
-  if ( mCtrl == true )
+  if ( mCtrl )
   {
     if ( !mAnchorPoint )
     {
@@ -76,7 +76,7 @@ void QgsMapToolRotateFeature::canvasMoveEvent( QMouseEvent * e )
 void QgsMapToolRotateFeature::canvasPressEvent( QMouseEvent * e )
 {
   mRotation = 0;
-  if ( mCtrl == true )
+  if ( mCtrl )
   {
     return;
   }
@@ -100,7 +100,7 @@ void QgsMapToolRotateFeature::canvasPressEvent( QMouseEvent * e )
   }
 
   QgsPoint layerCoords = toLayerCoordinates( vlayer, e->pos() );
-  double searchRadius = QgsTolerance::vertexSearchRadius( mCanvas->currentLayer(), mCanvas->mapRenderer() );
+  double searchRadius = QgsTolerance::vertexSearchRadius( mCanvas->currentLayer(), mCanvas->mapSettings() );
   QgsRectangle selectRect( layerCoords.x() - searchRadius, layerCoords.y() - searchRadius,
                            layerCoords.x() + searchRadius, layerCoords.y() + searchRadius );
 
@@ -169,7 +169,7 @@ void QgsMapToolRotateFeature::canvasPressEvent( QMouseEvent * e )
     }
   }
 
-  mRubberBand->setColor( Qt::red );
+  mRubberBand->setColor( QColor( 255, 0, 0, 65 ) );
   mRubberBand->setWidth( 2 );
   mRubberBand->show();
 

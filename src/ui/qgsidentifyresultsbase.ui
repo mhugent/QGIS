@@ -6,33 +6,127 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>304</width>
-    <height>306</height>
+    <width>355</width>
+    <height>390</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Identify Results</string>
   </property>
-  <layout class="QVBoxLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_4">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="margin">
-    <number>2</number>
+    <number>0</number>
    </property>
    <item>
-    <widget class="QTreeWidget" name="lstResults">
-     <property name="lineWidth">
-      <number>2</number>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLabel" name="lblViewMode">
+       <property name="toolTip">
+        <string>Select view mode for raster layers</string>
+       </property>
+       <property name="text">
+        <string>View</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cmbViewMode"/>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>58</width>
+         <height>38</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QStackedWidget" name="stackedWidget">
+     <widget class="QWidget" name="stackedWidgetPage1">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="margin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QTreeWidget" name="lstResults">
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <column>
+          <property name="text">
+           <string notr="true">1</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="stackedWidgetPage2">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="margin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QTableWidget" name="tblResults">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="sortingEnabled">
+          <bool>false</bool>
+         </property>
+         <column>
+          <property name="text">
+           <string>Layer</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>FID</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Attribute</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Value</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="stackedWidgetPage3">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QwtPlot" name="mPlot"/>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -79,6 +173,34 @@
        </property>
        <property name="checkable">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="mOpenFormButton">
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../images/images.qrc">
+         <normaloff>:/images/themes/default/mActionPropertyItem.png</normaloff>:/images/themes/default/mActionPropertyItem.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="mClearToolButton">
+       <property name="toolTip">
+        <string>Clear Results</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../images/images.qrc">
+         <normaloff>:/images/themes/default/mActionDeselectAll.svg</normaloff>:/images/themes/default/mActionDeselectAll.svg</iconset>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -133,18 +255,59 @@
       </spacer>
      </item>
      <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
+      <widget class="QToolButton" name="mHelpToolButton">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Help</string>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="lblIdentifyMode">
+       <property name="toolTip">
+        <string>Select identify mode</string>
+       </property>
+       <property name="text">
+        <string>Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cmbIdentifyMode">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Close|QDialogButtonBox::Help</set>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_43">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="centerButtons">
-        <bool>false</bool>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cbxAutoFeatureForm">
+       <property name="text">
+        <string>Auto open form</string>
        </property>
       </widget>
      </item>
@@ -153,25 +316,16 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QwtPlot</class>
+   <extends>QFrame</extends>
+   <header>qwt_plot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../images/images.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>QgsIdentifyResultsBase</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>261</x>
-     <y>298</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>204</x>
-     <y>313</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

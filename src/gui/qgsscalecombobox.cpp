@@ -1,6 +1,6 @@
 /***************************************************************************
-                              qgsscalecombobox.h
-                              ------------------------
+         qgsscalecombobox.h
+         ------------------------
   begin                : January 7, 2012
   copyright            : (C) 2012 by Alexander Bruy
   email                : alexander dot bruy at gmail dot com
@@ -60,6 +60,19 @@ void QgsScaleComboBox::updateScales( const QStringList &scales )
     for ( ; scaleIt != scales.constEnd(); ++scaleIt )
     {
       myScalesList.append( *scaleIt );
+    }
+  }
+
+  QStringList parts;
+  double denominator;
+  bool ok;
+  for ( int i = 0; i < myScalesList.size(); ++i )
+  {
+    parts = myScalesList[ i ] .split( ':' );
+    denominator = QLocale::system().toDouble( parts[1], &ok );
+    if ( ok )
+    {
+      myScalesList[ i ] = toString( 1.0 / denominator );
     }
   }
 
@@ -178,13 +191,17 @@ void QgsScaleComboBox::fixupScale()
 
 QString QgsScaleComboBox::toString( double scale )
 {
-  if ( scale > 1 )
+  if ( scale == 0 )
   {
-    return QString( "%1:1" ).arg( qRound( scale ) );
+    return "0";
+  }
+  else if ( scale > 1 )
+  {
+    return QString( "%1:1" ).arg( QLocale::system().toString( qRound( scale ) ) );
   }
   else
   {
-    return QString( "1:%1" ).arg( qRound( 1.0 / scale ) );
+    return QString( "1:%1" ).arg( QLocale::system().toString( qRound( 1.0 / scale ) ) );
   }
 }
 
@@ -224,3 +241,5 @@ double QgsScaleComboBox::toDouble( QString scaleString, bool * returnOk )
   }
   return scale;
 }
+
+

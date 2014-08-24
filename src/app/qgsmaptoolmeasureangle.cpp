@@ -29,7 +29,7 @@ QgsMapToolMeasureAngle::QgsMapToolMeasureAngle( QgsMapCanvas* canvas ): QgsMapTo
 {
   mSnapper.setMapCanvas( canvas );
 
-  connect( canvas->mapRenderer(), SIGNAL( destinationSrsChanged() ),
+  connect( canvas, SIGNAL( destinationCrsChanged() ),
            this, SLOT( updateSettings() ) );
 }
 
@@ -133,7 +133,8 @@ void QgsMapToolMeasureAngle::createRubberBand()
   int myRed = settings.value( "/qgis/default_measure_color_red", 180 ).toInt();
   int myGreen = settings.value( "/qgis/default_measure_color_green", 180 ).toInt();
   int myBlue = settings.value( "/qgis/default_measure_color_blue", 180 ).toInt();
-  mRubberBand->setColor( QColor( myRed, myGreen, myBlue ) );
+  mRubberBand->setColor( QColor( myRed, myGreen, myBlue, 100 ) );
+  mRubberBand->setWidth( 3 );
 }
 
 QgsPoint QgsMapToolMeasureAngle::snapPoint( const QPoint& p )
@@ -182,17 +183,9 @@ void QgsMapToolMeasureAngle::updateSettings()
 
 void QgsMapToolMeasureAngle::configureDistanceArea()
 {
-  QSettings settings;
   QString ellipsoidId = QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE );
-  mDa.setSourceCrs( mCanvas->mapRenderer()->destinationCrs().srsid() );
+  mDa.setSourceCrs( mCanvas->mapSettings().destinationCrs().srsid() );
   mDa.setEllipsoid( ellipsoidId );
   // Only use ellipsoidal calculation when project wide transformation is enabled.
-  if ( mCanvas->mapRenderer()->hasCrsTransformEnabled() )
-  {
-    mDa.setEllipsoidalMode( true );
-  }
-  else
-  {
-    mDa.setEllipsoidalMode( false );
-  }
+  mDa.setEllipsoidalMode( mCanvas->mapSettings().hasCrsTransformEnabled() );
 }

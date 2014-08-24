@@ -21,6 +21,7 @@
 #include <QColor>
 #include <QMap>
 #include <QMultiHash>
+#include <QMutex>
 #include <QString>
 #include <QUrl>
 
@@ -32,7 +33,16 @@ class CORE_EXPORT QgsSvgCacheEntry
 {
   public:
     QgsSvgCacheEntry();
-    QgsSvgCacheEntry( const QString& file, double size, double outlineWidth, double widthScaleFactor, double rasterScaleFctor, const QColor& fill, const QColor& outline );
+    /** Constructor.
+     * @param file Absolute path to SVG file (relative paths are not resolved).
+     * @param size
+     * @param outlineWidth width of outline
+     * @param widthScaleFactor width scale factor
+     * @param rasterScaleFactor raster scale factor
+     * @param fill color of fill
+     * @param outline color of outline
+     */
+    QgsSvgCacheEntry( const QString& file, double size, double outlineWidth, double widthScaleFactor, double rasterScaleFactor, const QColor& fill, const QColor& outline );
     ~QgsSvgCacheEntry();
 
     QString file;
@@ -69,8 +79,28 @@ class CORE_EXPORT QgsSvgCache : public QObject
     static QgsSvgCache* instance();
     ~QgsSvgCache();
 
+    /** Get SVG as QImage.
+     * @param file Absolute or relative path to SVG file.
+     * @param size size of cached image
+     * @param fill color of fill
+     * @param outline color of outline
+     * @param outlineWidth width of outline
+     * @param widthScaleFactor width scale factor
+     * @param rasterScaleFactor raster scale factor
+     * @param fitsInCache
+     */
     const QImage& svgAsImage( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                               double widthScaleFactor, double rasterScaleFactor, bool& fitsInCache );
+    /** Get SVG  as QPicture&.
+     * @param file Absolute or relative path to SVG file.
+     * @param size size of cached image
+     * @param fill color of fill
+     * @param outline color of outline
+     * @param outlineWidth width of outline
+     * @param widthScaleFactor width scale factor
+     * @param rasterScaleFactor raster scale factor
+     * @param forceVectorOutput
+     */
     const QPicture& svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                                   double widthScaleFactor, double rasterScaleFactor, bool forceVectorOutput = false );
 
@@ -90,7 +120,16 @@ class CORE_EXPORT QgsSvgCache : public QObject
     //! protected constructor
     QgsSvgCache( QObject * parent = 0 );
 
-    /**Creates new cache entry and returns pointer to it*/
+    /**Creates new cache entry and returns pointer to it
+     * @param file Absolute or relative path to SVG file. If the path is relative the file is searched by QgsSymbolLayerV2Utils::symbolNameToPath() in SVG paths.
+    in settings svg/searchPathsForSVG
+     * @param size size of cached image
+     * @param fill color of fill
+     * @param outline color of outline
+     * @param outlineWidth width of outline
+     * @param widthScaleFactor width scale factor
+     * @param rasterScaleFactor raster scale factor
+     */
     QgsSvgCacheEntry* insertSVG( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                                  double widthScaleFactor, double rasterScaleFactor );
 
@@ -111,8 +150,6 @@ class CORE_EXPORT QgsSvgCache : public QObject
     void downloadProgress( qint64, qint64 );
 
   private:
-    static QgsSvgCache* mInstance;
-
     /**Entry pointers accessible by file name*/
     QMultiHash< QString, QgsSvgCacheEntry* > mEntryLookup;
     /**Estimated total size of all images, pictures and svgContent*/
@@ -137,6 +174,12 @@ class CORE_EXPORT QgsSvgCache : public QObject
 
     /**For debugging*/
     void printEntryList();
+
+    /** SVG content to be rendered if SVG file was not found. */
+    QByteArray mMissingSvg;
+
+    //! Mutex to prevent concurrent access to the class from multiple threads at once (may corrupt the entries otherwise).
+    QMutex mMutex;
 };
 
 #endif // QGSSVGCACHE_H

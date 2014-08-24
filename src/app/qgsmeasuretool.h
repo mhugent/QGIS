@@ -27,7 +27,7 @@ class QgsRubberBand;
 
 
 
-class QgsMeasureTool : public QgsMapTool
+class APP_EXPORT QgsMeasureTool : public QgsMapTool
 {
     Q_OBJECT
 
@@ -82,6 +82,9 @@ class QgsMeasureTool : public QgsMapTool
 
     //! Rubberband widget tracking the lines being drawn
     QgsRubberBand *mRubberBand;
+
+    //! Rubberband widget tracking the added nodes to line
+    QgsRubberBand *mRubberBandPoints;
 
     //! indicates whether we're measuring distances or areas
     bool mMeasureArea;

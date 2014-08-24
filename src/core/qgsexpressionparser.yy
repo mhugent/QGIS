@@ -12,7 +12,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
- 
+
 %{
 #include <qglobal.h>
 #include <QList>
@@ -193,8 +193,7 @@ expression:
           int fnIndex = QgsExpression::functionIndex(*$1);
           if (fnIndex == -1)
           {
-	    QVariant userVar = QgsExpression::specialColumn( *$1 );
-	    if ( userVar.isNull() )
+      if ( !QgsExpression::hasSpecialColumn( *$1 ) )
 	    {
 	      exp_error("Special column is not known");
 	      YYERROR;
@@ -241,7 +240,7 @@ QgsExpression::Node* parseExpression(const QString& str, QString& parserErrorMsg
   gExpParserRootNode = NULL;
   exp_set_input_buffer(str.toUtf8().constData());
   int res = exp_parse();
- 
+
   // list should be empty when parsing was OK
   if (res == 0) // success?
   {

@@ -14,12 +14,11 @@
  ***************************************************************************/
 
 #include "qgsmaptooledit.h"
-#include "qgisapp.h"
-#include "qgsmessagebar.h"
 #include "qgsproject.h"
 #include "qgsmapcanvas.h"
 #include "qgsrubberband.h"
 #include "qgsvectorlayer.h"
+
 #include <QKeyEvent>
 #include <QSettings>
 
@@ -68,15 +67,26 @@ QgsPoint QgsMapToolEdit::snapPointFromResults( const QList<QgsSnappingResult>& s
   }
 }
 
-QgsRubberBand* QgsMapToolEdit::createRubberBand( QGis::GeometryType geometryType )
+QgsRubberBand* QgsMapToolEdit::createRubberBand( QGis::GeometryType geometryType, bool alternativeBand )
 {
   QSettings settings;
   QgsRubberBand* rb = new QgsRubberBand( mCanvas, geometryType );
+  rb->setWidth( settings.value( "/qgis/digitizing/line_width", 1 ).toInt() );
   QColor color( settings.value( "/qgis/digitizing/line_color_red", 255 ).toInt(),
                 settings.value( "/qgis/digitizing/line_color_green", 0 ).toInt(),
                 settings.value( "/qgis/digitizing/line_color_blue", 0 ).toInt() );
+  double myAlpha = settings.value( "/qgis/digitizing/line_color_alpha", 200 ).toInt() / 255.0 ;
+  if ( alternativeBand )
+  {
+    myAlpha = myAlpha * settings.value( "/qgis/digitizing/line_color_alpha_scale" , 0.75 ).toDouble();
+    rb->setLineStyle( Qt::DotLine );
+  }
+  if ( geometryType == QGis::Polygon )
+  {
+    color.setAlphaF( myAlpha );
+  }
+  color.setAlphaF( myAlpha );
   rb->setColor( color );
-  rb->setWidth( settings.value( "/qgis/digitizing/line_width", 1 ).toInt() );
   rb->show();
   return rb;
 }
@@ -123,18 +133,10 @@ int QgsMapToolEdit::addTopologicalPoints( const QList<QgsPoint>& geom )
 
 void QgsMapToolEdit::notifyNotVectorLayer()
 {
-  QgisApp::instance()->messageBar()->pushMessage(
-    tr( "No active vector layer" ),
-    tr( "Choose a vector layer in the legend" ),
-    QgsMessageBar::INFO,
-    QgisApp::instance()->messageTimeout() );
+  emit messageEmitted( tr( "No active vector layer" ) );
 }
 
 void QgsMapToolEdit::notifyNotEditableLayer()
 {
-  QgisApp::instance()->messageBar()->pushMessage(
-    tr( "Layer not editable" ),
-    tr( "Use 'Toggle Editing' to make it editable" ),
-    QgsMessageBar::INFO,
-    QgisApp::instance()->messageTimeout() );
+  emit messageEmitted( tr( "Layer not editable" ) );
 }

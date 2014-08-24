@@ -17,10 +17,34 @@
 #include "qgscolordialog.h"
 #include "qgsapplication.h"
 #include "qgslogger.h"
+#include "qgssymbollayerv2utils.h"
 
 #include <QPainter>
 #include <QSettings>
 #include <QTemporaryFile>
+#include <QMouseEvent>
+#include <QMenu>
+#include <QClipboard>
+#include <QDrag>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+QString QgsColorButton::fullPath( const QString &path )
+{
+  TCHAR buf[MAX_PATH];
+  int len = GetLongPathName( path.toUtf8().constData(), buf, MAX_PATH );
+
+  if ( len == 0 || len > MAX_PATH )
+  {
+    QgsDebugMsg( QString( "GetLongPathName('%1') failed with %2: %3" )
+                 .arg( path ).arg( len ).arg( GetLastError() ) );
+    return path;
+  }
+
+  QString res = QString::fromUtf8( buf );
+  return res;
+}
+#endif
 
 /*!
   \class QgsColorButton
@@ -45,7 +69,9 @@ QgsColorButton::QgsColorButton( QWidget *parent, QString cdt, QColorDialog::Colo
     , mColorDialogOptions( cdo )
     , mAcceptLiveUpdates( true )
     , mTempPNG( NULL )
+    , mColorSet( false )
 {
+  setAcceptDrops( true );
   connect( this, SIGNAL( clicked() ), this, SLOT( onButtonClicked() ) );
 }
 
@@ -69,7 +95,6 @@ void QgsColorButton::onButtonClicked()
 {
   //QgsDebugMsg( "entered" );
   QColor newColor;
-#if QT_VERSION >= 0x040500
   QSettings settings;
   if ( mAcceptLiveUpdates && settings.value( "/qgis/live_color_dialogs", false ).toBool() )
   {
@@ -81,13 +106,161 @@ void QgsColorButton::onButtonClicked()
   {
     newColor = QColorDialog::getColor( color(), this->parentWidget(), mColorDialogTitle, mColorDialogOptions );
   }
-#else
-  newColor = QColorDialog::getColor( color(), this->parentWidget() );
-#endif
   setValidColor( newColor );
 
   // reactivate button's window
   activateWindow();
+}
+
+void QgsColorButton::mousePressEvent( QMouseEvent *e )
+{
+  if ( e->button() == Qt::RightButton )
+  {
+    showContextMenu( e );
+    return;
+  }
+  else if ( e->button() == Qt::LeftButton )
+  {
+    mDragStartPosition = e->pos();
+  }
+  QPushButton::mousePressEvent( e );
+}
+
+QMimeData * QgsColorButton::createColorMimeData() const
+{
+  QMimeData *mimeData = new QMimeData;
+  mimeData->setColorData( QVariant( mColor ) );
+  mimeData->setText( mColor.name() );
+  return mimeData;
+}
+
+bool QgsColorButton::colorFromMimeData( const QMimeData * mimeData, QColor& resultColor )
+{
+  //attempt to read color data directly from mime
+  QColor mimeColor = mimeData->colorData().value<QColor>();
+  if ( mimeColor.isValid() )
+  {
+    if ( !( mColorDialogOptions & QColorDialog::ShowAlphaChannel ) )
+    {
+      //remove alpha channel
+      mimeColor.setAlpha( 255 );
+    }
+    resultColor = mimeColor;
+    return true;
+  }
+
+  //attempt to intrepret a color from mime text data
+  bool hasAlpha = false;
+  QColor textColor = QgsSymbolLayerV2Utils::parseColorWithAlpha( mimeData->text(), hasAlpha );
+  if ( textColor.isValid() )
+  {
+    if ( !( mColorDialogOptions & QColorDialog::ShowAlphaChannel ) )
+    {
+      //remove alpha channel
+      textColor.setAlpha( 255 );
+    }
+    else if ( !hasAlpha )
+    {
+      //mime color has no explicit alpha component, so keep existing alpha
+      textColor.setAlpha( mColor.alpha() );
+    }
+    resultColor = textColor;
+    return true;
+  }
+
+  //could not get color from mime data
+  return false;
+}
+
+void QgsColorButton::mouseMoveEvent( QMouseEvent *e )
+{
+  if ( !( e->buttons() & Qt::LeftButton ) )
+  {
+    QPushButton::mouseMoveEvent( e );
+    return;
+  }
+
+  if (( e->pos() - mDragStartPosition ).manhattanLength() < QApplication::startDragDistance() )
+  {
+    QPushButton::mouseMoveEvent( e );
+    return;
+  }
+
+  QDrag *drag = new QDrag( this );
+  drag->setMimeData( createColorMimeData() );
+
+  //craft a pixmap for the drag icon
+  QImage colorImage( 50, 50, QImage::Format_RGB32 );
+  QPainter imagePainter;
+  imagePainter.begin( &colorImage );
+  //start with a light gray background
+  imagePainter.fillRect( QRect( 0, 0, 50, 50 ), QBrush( QColor( 200, 200, 200 ) ) );
+  //draw rect with white border, filled with current color
+  QColor pixmapColor = mColor;
+  pixmapColor.setAlpha( 255 );
+  imagePainter.setBrush( QBrush( pixmapColor ) );
+  imagePainter.setPen( QPen( Qt::white ) );
+  imagePainter.drawRect( QRect( 1, 1, 47, 47 ) );
+  imagePainter.end();
+  //set as drag pixmap
+  drag->setPixmap( QPixmap::fromImage( colorImage ) );
+
+  drag->exec( Qt::CopyAction );
+  setDown( false );
+}
+
+void QgsColorButton::dragEnterEvent( QDragEnterEvent *e )
+{
+  //is dragged data valid color data?
+  QColor mimeColor;
+  if ( colorFromMimeData( e->mimeData(), mimeColor ) )
+  {
+    e->acceptProposedAction();
+  }
+}
+
+void QgsColorButton::dropEvent( QDropEvent *e )
+{
+  //is dropped data valid color data?
+  QColor mimeColor;
+  if ( colorFromMimeData( e->mimeData(), mimeColor ) )
+  {
+    e->acceptProposedAction();
+    setColor( mimeColor );
+  }
+}
+
+void QgsColorButton::showContextMenu( QMouseEvent *event )
+{
+  QMenu colorContextMenu;
+
+  QAction* copyColorAction = new QAction( tr( "Copy color" ), 0 );
+  colorContextMenu.addAction( copyColorAction );
+  QAction* pasteColorAction = new QAction( tr( "Paste color" ), 0 );
+  pasteColorAction->setEnabled( false );
+  colorContextMenu.addSeparator();
+  colorContextMenu.addAction( pasteColorAction );
+
+  QColor clipColor;
+  if ( colorFromMimeData( QApplication::clipboard()->mimeData(), clipColor ) )
+  {
+    pasteColorAction->setEnabled( true );
+  }
+
+  QAction* selectedAction = colorContextMenu.exec( event->globalPos( ) );
+  if ( selectedAction == copyColorAction )
+  {
+    //copy color
+    QApplication::clipboard()->setMimeData( createColorMimeData() );
+  }
+  else if ( selectedAction == pasteColorAction )
+  {
+    //paste color
+    setColor( clipColor );
+  }
+
+  delete copyColorAction;
+  delete pasteColorAction;
 }
 
 void QgsColorButton::setValidColor( const QColor& newColor )
@@ -134,7 +307,8 @@ void QgsColorButton::setColor( const QColor &color )
   QColor oldColor = mColor;
   mColor = color;
 
-  if ( oldColor != mColor )
+  // handle when initially set color is same as default (Qt::black); consider it a color change
+  if ( oldColor != mColor || ( mColor == QColor( Qt::black ) && !mColorSet ) )
   {
     setButtonBackground();
     if ( isEnabled() )
@@ -144,6 +318,7 @@ void QgsColorButton::setColor( const QColor &color )
       emit colorChanged( mColor );
     }
   }
+  mColorSet = true;
 }
 
 void QgsColorButton::setButtonBackground()
@@ -231,10 +406,14 @@ void QgsColorButton::setButtonBackground()
         mTempPNG.close();
       }
 
-      bkgrd = QString( " background-image: url(%1);" ).arg( mTempPNG.fileName() );
+      QString bgFileName = mTempPNG.fileName();
+#ifdef Q_OS_WIN
+      //on windows, mTempPNG will use a shortened path for the temporary folder name
+      //this does not work with stylesheets, resulting in the whole button disappearing (#10187)
+      bgFileName = fullPath( bgFileName );
+#endif
+      bkgrd = QString( " background-image: url(%1);" ).arg( bgFileName );
     }
-
-    //QgsDebugMsg( QString( "%1" ).arg( bkgrd ) );
 
     // TODO: get OS-style focus color and switch border to that color when button in focus
     setStyleSheet( QString( "QgsColorButton{"

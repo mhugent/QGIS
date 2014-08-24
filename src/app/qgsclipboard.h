@@ -20,6 +20,7 @@
 
 #include <QList>
 #include <QMap>
+#include <QObject>
 
 #include "qgsfield.h"
 #include "qgsfeature.h"
@@ -49,8 +50,9 @@ class QgsVectorLayer;
  */
 #define QGSCLIPBOARD_STYLE_MIME "application/qgis.style"
 
-class QgsClipboard
+class APP_EXPORT QgsClipboard : public QObject
 {
+    Q_OBJECT
   public:
     /**
     * Constructor for the clipboard.
@@ -77,7 +79,7 @@ class QgsClipboard
      *  the caller assumes responsibility for destroying the contents
      *  when it's done with it.
      */
-    QgsFeatureList copyOf();
+    QgsFeatureList copyOf( const QgsFields &fields = QgsFields() );
 
     /*
      *  Clears the internal clipboard.
@@ -100,7 +102,7 @@ class QgsClipboard
      *  The caller assumes responsibility for destroying the contents
      *  when it's done with it.
      */
-    QgsFeatureList transformedCopyOf( QgsCoordinateReferenceSystem destCRS );
+    QgsFeatureList transformedCopyOf( QgsCoordinateReferenceSystem destCRS, const QgsFields &fields = QgsFields() );
 
     /*
      *  Get the clipboard CRS
@@ -139,6 +141,14 @@ class QgsClipboard
      */
     const QgsFields &fields() { return mFeatureFields; }
 
+  private slots:
+
+    void systemClipboardChanged();
+
+  signals:
+    /** Emitted when content changed */
+    void changed();
+
   private:
     /*
      * Set system clipboard from previously set features.
@@ -152,6 +162,9 @@ class QgsClipboard
     QgsFeatureList mFeatureClipboard;
     QgsFields mFeatureFields;
     QgsCoordinateReferenceSystem mCRS;
+
+    /** True when the data from the system clipboard should be read */
+    bool mUseSystemClipboard;
 };
 
 #endif

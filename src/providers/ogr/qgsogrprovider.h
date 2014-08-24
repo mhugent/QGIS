@@ -72,6 +72,8 @@ class QgsOgrProvider : public QgsVectorDataProvider
      */
     virtual ~QgsOgrProvider();
 
+    virtual QgsAbstractFeatureSource* featureSource() const;
+
     virtual QgsCoordinateReferenceSystem crs();
 
     /**
@@ -252,15 +254,15 @@ class QgsOgrProvider : public QgsVectorDataProvider
     /** Get single flatten geometry type */
     static OGRwkbGeometryType ogrWkbSingleFlatten( OGRwkbGeometryType type );
 
-    QString layerName() { return mLayerName; }
+    QString layerName() const { return mLayerName; }
 
-    QString filePath() { return mFilePath; }
+    QString filePath() const { return mFilePath; }
 
-    int layerIndex() { return mLayerIndex; }
+    int layerIndex() const { return mLayerIndex; }
 
     QTextCodec* textEncoding() { return mEncoding; }
 
-    QString quotedIdentifier( QString field );
+    QByteArray quotedIdentifier( QByteArray field );
 
   protected:
     /** loads fields from input file to member attributeFields */
@@ -270,10 +272,13 @@ class QgsOgrProvider : public QgsVectorDataProvider
     void recalculateFeatureCount();
 
     /** tell OGR, which fields to fetch in nextFeature/featureAtId (ie. which not to ignore) */
-    void setRelevantFields( bool fetchGeometry, const QgsAttributeList& fetchAttributes );
+    void setRelevantFields( OGRLayerH ogrLayer, bool fetchGeometry, const QgsAttributeList& fetchAttributes );
 
     /** convert a QgsField to work with OGR */
     static bool convertField( QgsField &field, const QTextCodec &encoding );
+
+    /** Clean shapefile from features which are marked as deleted */
+    void repack();
 
   private:
     unsigned char *getGeometryPointer( OGRFeatureH fet );
@@ -297,6 +302,9 @@ class QgsOgrProvider : public QgsVectorDataProvider
 
     //! layer index
     int mLayerIndex;
+
+    //! was a sub layer requested?
+    bool mIsSubLayer;
 
     /** Optional geometry type for layers with multiple geometries,
      *  otherwise wkbUnknown. This type is always flatten (2D) and single, it means
@@ -326,13 +334,6 @@ class QgsOgrProvider : public QgsVectorDataProvider
 
     mutable QStringList mSubLayerList;
 
-    /** Flag whether OGR will return fields required by nextFeature() calls.
-        The relevant fields are first set in select(), however the setting may be
-        interferred by some other calls. This flag ensures they are set again
-        to correct values.
-     */
-    bool mRelevantFieldsForNextFeature;
-
     /**Adds one feature*/
     bool addFeature( QgsFeature& f );
     /**Deletes one feature*/
@@ -341,6 +342,16 @@ class QgsOgrProvider : public QgsVectorDataProvider
     /**Calls OGR_L_SyncToDisk and recreates the spatial index if present*/
     bool syncToDisc();
 
-    friend class QgsOgrFeatureIterator;
-    QSet< QgsOgrFeatureIterator* > mActiveIterators;
+    OGRLayerH setSubsetString( OGRLayerH layer, OGRDataSourceH ds );
+
+    friend class QgsOgrFeatureSource;
+};
+
+
+class QgsOgrUtils
+{
+  public:
+    static void setRelevantFields( OGRLayerH ogrLayer, int fieldCount,  bool fetchGeometry, const QgsAttributeList &fetchAttributes );
+    static OGRLayerH setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTextCodec* encoding, const QString& subsetString );
+    static QByteArray quotedIdentifier( QByteArray field, const QString& ogrDriverName );
 };

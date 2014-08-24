@@ -1,3 +1,4 @@
+%Feature ANDROID
 
 class QgsApplication : QApplication
 {
@@ -91,7 +92,7 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
      * based on the supplied theme name exists. If it does not the theme name will
      * be reverted to 'default'.
      */
-    static void setThemeName( const QString theThemeName );
+    static void setThemeName( const QString &theThemeName );
 
     /** Set the active theme to the specified theme.
      * The theme name should be a single word e.g. 'default','classic'.
@@ -123,6 +124,11 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
      * @note This was added in QGIS 1.1
      */
     static const QString translatorsFilePath();
+
+    /*!
+      Returns the path to the licence file.
+    */
+    static const QString licenceFilePath();
 
     //! Returns the path to the help application.
     static const QString helpAppPath();
@@ -179,12 +185,12 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
     //! Helper to get a theme icon. It will fall back to the
     //! default theme if the active theme does not have the required icon.
     //! @note Added in 2.0
-    static QIcon getThemeIcon( const QString theName );
+    static QIcon getThemeIcon( const QString &theName );
 
     //! Helper to get a theme icon as a pixmap. It will fall back to the
     //! default theme if the active theme does not have the required icon.
     //! @note Added in 2.0
-    static QPixmap getThemePixmap( const QString theName );
+    static QPixmap getThemePixmap( const QString &theName );
 
     //! Returns the path to user's style. Added in QGIS 1.4
     static const QString userStyleV2Path();
@@ -201,13 +207,13 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
     static const QString libexecPath();
 
     //! Alters prefix path - used by 3rd party apps
-    static void setPrefixPath( const QString thePrefixPath, bool useDefaultPaths = false );
+    static void setPrefixPath( const QString &thePrefixPath, bool useDefaultPaths = false );
 
     //! Alters plugin path - used by 3rd party apps
-    static void setPluginPath( const QString thePluginPath );
+    static void setPluginPath( const QString &thePluginPath );
 
     //! Alters pkg data path - used by 3rd party apps
-    static void setPkgDataPath( const QString thePkgDataPath );
+    static void setPkgDataPath( const QString &thePkgDataPath );
 
     //! Alters default svg paths - used by 3rd party apps. Added in QGIS 1.5
     static void setDefaultSvgPaths( const QStringList& pathList );
@@ -215,14 +221,17 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
     //! loads providers
     static void initQgis();
 
+    //! initialise qgis.db
+    static bool createDB( QString* errorMessage = 0 );
+
     //! deletes provider registry and map layer registry
     static void exitQgis();
 
     /** constants for endian-ness */
     enum endian_t
     {
-      XDR = 0,  // network, or big-endian, byte order
-      NDR = 1   // little-endian byte order
+      XDR, // network, or big-endian, byte order
+      NDR, // little-endian byte order
     };
 
     //! Returns whether this machine uses big or little endian
@@ -285,7 +294,7 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
      * GDAL_SKIP environment variable)
      * @note added in 2.0
      */
-    static QStringList skippedGdalDrivers( );
+    static QStringList skippedGdalDrivers();
 
     /** Apply the skipped drivers list to gdal
      * @see skipGdalDriver
@@ -294,6 +303,20 @@ static void qtgui_UpdatePyArgv(PyObject *argvlist, int argc, char **argv)
      * @note added in 2.0 */
     static void applyGdalSkippedDrivers();
 
+    /** Get maximum concurrent thread count
+     * @note added in 2.4 */
+    static int maxThreads();
+    /** Set maximum concurrent thread count
+     * @note must be between 1 and \#cores, -1 means use all available cores
+     * @note added in 2.4 */
+    static void setMaxThreads( int maxThreads );
+
+%If(ANDROID)
+    //dummy method to workaround sip generation issue issue
+    bool x11EventFilter ( XEvent * event );
+%End
+
   signals:
+    //! @note not available in python bindings
     // void preNotify( QObject * receiver, QEvent * event, bool * done );
 };

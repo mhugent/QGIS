@@ -19,7 +19,7 @@
  ***************************************************************************/
 #include <typeinfo>
 
-#define WCS_THRESHOLD 200  // time to wait for an answer without emitting dataChanged() 
+#define WCS_THRESHOLD 200  // time to wait for an answer without emitting dataChanged()
 #include "qgslogger.h"
 #include "qgswcscapabilities.h"
 #include "qgsowsconnection.h"
@@ -38,10 +38,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QNetworkProxy>
-
-#if QT_VERSION >= 0x40500
 #include <QNetworkDiskCache>
-#endif
 
 #include <QUrl>
 #include <QIcon>
@@ -77,8 +74,8 @@ QgsWcsCapabilities::QgsWcsCapabilities( QgsDataSourceURI const &theUri ):
   retrieveServerCapabilities();
 }
 
-QgsWcsCapabilities::QgsWcsCapabilities( ):
-    mCoverageCount( 0 )
+QgsWcsCapabilities::QgsWcsCapabilities()
+    : mCoverageCount( 0 )
 {
 }
 
@@ -199,8 +196,7 @@ void QgsWcsCapabilities::clear()
   QgsDebugMsg( "Entered" );
   mCoverageCount = 0;
   mCoveragesSupported.clear();
-  QgsWcsCapabilitiesProperty c;
-  mCapabilities = c;
+  mCapabilities = QgsWcsCapabilitiesProperty();
 }
 
 QString QgsWcsCapabilities::getCapabilitiesUrl( const QString version ) const

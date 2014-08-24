@@ -43,7 +43,9 @@ class GUI_EXPORT QgsGraduatedSymbolRendererV2Model : public QAbstractItemModel
 
     void setRenderer( QgsGraduatedSymbolRendererV2* renderer );
 
+    QgsRendererRangeV2 rendererRange( const QModelIndex &index );
     void addClass( QgsSymbolV2* symbol );
+    void addClass( QgsRendererRangeV2 range );
     void deleteRows( QList<int> rows );
     void removeAllRows( );
     void sort( int column, Qt::SortOrder order = Qt::AscendingOrder );
@@ -79,7 +81,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererV2Widget : public QgsRendererV2Widget
 
   public slots:
     void changeGraduatedSymbol();
-    void graduatedColumnChanged();
+    void graduatedColumnChanged( QString field );
     void classifyGraduated();
     void reapplyColorRamp();
     void rangesDoubleClicked( const QModelIndex & idx );
@@ -108,9 +110,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererV2Widget : public QgsRendererV2Widget
 
     //! return a list of indexes for the classes under selection
     QList<int> selectedClasses();
-
-    //! populate column combos in categorized and graduated page
-    void populateColumns();
+    QgsRangeList selectedRanges();
 
     void changeRangeSymbol( int rangeIdx );
     void changeRange( int rangeIdx );
@@ -121,6 +121,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererV2Widget : public QgsRendererV2Widget
     QgsSymbolV2* findSymbolForRange( double lowerBound, double upperBound, const QgsRangeList& ranges ) const;
     void refreshSymbolView();
 
+    void keyPressEvent( QKeyEvent* event );
 
   protected:
     QgsGraduatedSymbolRendererV2* mRenderer;
@@ -133,6 +134,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererV2Widget : public QgsRendererV2Widget
 
     QgsGraduatedSymbolRendererV2Model* mModel;
 
+    QgsRangeList mCopyBuffer;
 };
 
 

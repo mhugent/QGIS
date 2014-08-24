@@ -28,6 +28,7 @@
 
 #include "qgsattributedialog.h"
 #include "qgsvectorlayer.h" //QgsFeatureIds
+#include "qgsfieldmodel.h"
 
 class QDialogButtonBox;
 class QPushButton;
@@ -41,7 +42,7 @@ class QgsAttributeTableModel;
 class QgsAttributeTableFilterModel;
 class QgsAttributeTableView;
 
-class QgsAttributeTableDialog : public QDialog, private Ui::QgsAttributeTableDialog
+class APP_EXPORT QgsAttributeTableDialog : public QDialog, private Ui::QgsAttributeTableDialog
 {
     Q_OBJECT
 
@@ -152,6 +153,7 @@ class QgsAttributeTableDialog : public QDialog, private Ui::QgsAttributeTableDia
      */
     void updateTitle();
 
+    void updateButtonStatus( QString fieldName, bool isValid );
   signals:
     /**
      * Informs that editing mode has been toggled
@@ -172,22 +174,32 @@ class QgsAttributeTableDialog : public QDialog, private Ui::QgsAttributeTableDia
      */
     void closeEvent( QCloseEvent* event );
 
+    /*
+     * Handle KeyPress event of the window
+     * @param event
+     */
+    void keyPressEvent( QKeyEvent* event );
+
   private slots:
     /**
      * Initialize column box
      */
     void columnBoxInit();
 
+    void updateFieldFromExpression();
+
   private:
     QMenu* mMenuActions;
     QAction* mActionToggleEditing;
 
     QDockWidget* mDock;
+    QgsDistanceArea* myDa;
 
     QMenu* mFilterColumnsMenu;
     QSignalMapper* mFilterActionMapper;
 
     QgsVectorLayer* mLayer;
+    QgsFieldModel* mFieldModel;
 };
 
 #endif

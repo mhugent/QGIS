@@ -69,7 +69,7 @@ class CORE_EXPORT QgsProviderRegistry
                                const QString & dataSource );
 
     QWidget *selectWidget( const QString & providerKey,
-                           QWidget * parent = 0, Qt::WFlags fl = 0 );
+                           QWidget * parent = 0, Qt::WindowFlags fl = 0 );
 
     /** Get pointer to provider function
         @param providerKey identificator of the provider
@@ -155,12 +155,8 @@ class CORE_EXPORT QgsProviderRegistry
     typedef std::map<QString, QgsProviderMetadata*> Providers;
 
   private:
-
     /** ctor private since instance() creates it */
     QgsProviderRegistry( QString pluginPath );
-
-    /** pointer to canonical Singleton object */
-    static QgsProviderRegistry* _instance;
 
     /** associative container of provider metadata handles */
     Providers mProviders;

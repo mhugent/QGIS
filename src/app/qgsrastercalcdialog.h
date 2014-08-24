@@ -22,7 +22,7 @@
 #include "qgsrastercalculator.h"
 
 /**A dialog to enter a raster calculation expression*/
-class QgsRasterCalcDialog: public QDialog, private Ui::QgsRasterCalcDialogBase
+class APP_EXPORT QgsRasterCalcDialog: public QDialog, private Ui::QgsRasterCalcDialogBase
 {
     Q_OBJECT
   public:
@@ -86,6 +86,8 @@ class QgsRasterCalcDialog: public QDialog, private Ui::QgsRasterCalcDialogBase
     bool expressionValid() const;
     /**Returns true if output file directory exists*/
     bool filePathValid() const;
+
+    static QString quoteBandEntry( const QString& layerName );
 
     /**Stores relation between driver name and extension*/
     QMap<QString, QString> mDriverExtensionMap;

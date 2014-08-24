@@ -31,13 +31,15 @@ std::map<QString, QPixmap> mugs;
 */
 #ifdef Q_OS_MACX
 QgsAbout::QgsAbout( QWidget *parent )
-    : QDialog( parent, Qt::WindowSystemMenuHint )  // Modeless dialog with close button only
+    : QgsOptionsDialogBase( "about", parent, Qt::WindowSystemMenuHint )  // Modeless dialog with close button only
 #else
 QgsAbout::QgsAbout( QWidget *parent )
-    : QDialog( parent )  // Normal dialog in non Mac-OS
+    : QgsOptionsDialogBase( "about", parent )  // Normal dialog in non Mac-OS
 #endif
 {
   setupUi( this );
+  QString title = QString( "%1 - %2 Bit" ).arg( windowTitle() ).arg( QSysInfo::WordSize );
+  initOptionsBase( true, title );
   init();
 }
 
@@ -128,8 +130,8 @@ void QgsAbout::init()
     QString donorsHTML = ""
                          + tr( "<p>For a list of individuals and institutions who have contributed "
                                "money to fund QGIS development and other project costs see "
-                               "<a href=\"http://qgis.org/en/sponsorship/donors.html\">"
-                               "http://qgis.org/en/sponsorship/donors.html</a></p>" );
+                               "<a href=\"http://qgis.org/en/site/about/sponsorship.html#list-of-donors\">"
+                               "http://qgis.org/en/site/about/sponsorship.html#list-of-donors</a></p>" );
 #if 0
     QString website;
     QTextStream donorsStream( &donorsFile );
@@ -188,6 +190,22 @@ void QgsAbout::init()
     QgsDebugMsg( QString( "translatorHTML:%1" ).arg( translatorHTML.toAscii().constData() ) );
   }
   setWhatsNew();
+  setLicence();
+}
+
+void QgsAbout::setLicence()
+{
+  // read the DONORS file and populate the text widget
+  QFile licenceFile( QgsApplication::licenceFilePath() );
+#ifdef QGISDEBUG
+  printf( "Reading licence file %s.............................................\n",
+          licenceFile.fileName().toLocal8Bit().constData() );
+#endif
+  if ( licenceFile.open( QIODevice::ReadOnly ) )
+  {
+    QString content = licenceFile.readAll();
+    txtLicense->setText( content );
+  }
 }
 
 void QgsAbout::setVersion( QString v )

@@ -13,14 +13,14 @@ class QgsRasterPipe
     // Role of known interfaces
     enum Role
     {
-      UnknownRole   = 0,
-      ProviderRole  = 1,
-      RendererRole  = 2,
-      BrightnessRole = 3,
-      ResamplerRole = 4,
-      ProjectorRole = 5,
-      NullerRole = 6,
-      HueSaturationRole = 7
+      UnknownRole,
+      ProviderRole,
+      RendererRole,
+      BrightnessRole,
+      ResamplerRole,
+      ProjectorRole,
+      NullerRole,
+      HueSaturationRole,
     };
 
     QgsRasterPipe();
@@ -75,6 +75,8 @@ class QgsRasterPipe
     QgsRasterDataProvider * provider() const;
     QgsRasterRenderer * renderer() const;
     QgsRasterResampleFilter * resampleFilter() const;
+    QgsBrightnessContrastFilter * brightnessFilter() const;
+    QgsHueSaturationFilter * hueSaturationFilter() const;
     QgsRasterProjector * projector() const;
     QgsRasterNuller * nuller() const;
 

@@ -30,9 +30,11 @@
 #include "qgserror.h"
 #include "qgsrectangle.h"
 #include "qgsmaprenderer.h"
+#include "qgsobjectcustomproperties.h"
 
 class QgsRenderContext;
 class QgsCoordinateReferenceSystem;
+class QgsMapLayerRenderer;
 
 class QDomDocument;
 class QKeyEvent;
@@ -120,13 +122,18 @@ class CORE_EXPORT QgsMapLayer : public QObject
     const QString& metadataUrlFormat() const { return mMetadataUrlFormat; }
 
     /* Set the blending mode used for rendering a layer */
-    void setBlendMode( const QPainter::CompositionMode blendMode );
+    void setBlendMode( const QPainter::CompositionMode &blendMode );
     /* Returns the current blending mode for a layer */
     QPainter::CompositionMode blendMode() const;
 
     /**Synchronises with changes in the datasource
         @note added in version 1.6*/
     virtual void reload() {}
+
+    /** Return new instance of QgsMapLayerRenderer that will be used for rendering of given context
+     * @note added in 2.4
+     */
+    virtual QgsMapLayerRenderer* createMapRenderer( QgsRenderContext& rendererContext ) { Q_UNUSED( rendererContext ); return 0; }
 
     /** This is the method that does the actual work of
      * drawing the layer onto a paint device.
@@ -211,6 +218,18 @@ class CORE_EXPORT QgsMapLayer : public QObject
     */
     bool writeLayerXML( QDomElement& layerElement, QDomDocument& document );
 
+    /** Returns the given layer as a layer definition document
+        Layer definitions store the data source as well as styling and custom properties.
+
+        Layer definitions can be used to load a layer and styling all from a single file.
+    */
+    static QDomDocument asLayerDefinition( QList<QgsMapLayer*> layers );
+
+    /** Creates a new layer from a layer defininition document
+    */
+    static QList<QgsMapLayer*> fromLayerDefinition( QDomDocument& document );
+    static QList<QgsMapLayer*> fromLayerDefinitionFile( const QString qlrfile );
+
     /** Set a custom property for layer. Properties are stored in a map and saved in project file.
      *  @note Added in v1.4 */
     void setCustomProperty( const QString& key, const QVariant& value );
@@ -222,21 +241,11 @@ class CORE_EXPORT QgsMapLayer : public QObject
     void removeCustomProperty( const QString& key );
 
 
-    /**
-     * If an operation returns 0 (e.g. draw()), this function
-     * returns the text of the error associated with the failure.
-     * Interactive users of this provider can then, for example,
-     * call a QMessageBox to display the contents.
-     */
-    virtual QString lastErrorTitle();
+    //! @deprecated since 2.4 - returns empty string
+    Q_DECL_DEPRECATED virtual QString lastErrorTitle();
 
-    /**
-     * If an operation returns 0 (e.g. draw()), this function
-     * returns the text of the error associated with the failure.
-     * Interactive users of this provider can then, for example,
-     * call a QMessageBox to display the contents.
-     */
-    virtual QString lastError();
+    //! @deprecated since 2.4 - returns empty string
+    Q_DECL_DEPRECATED virtual QString lastError();
 
     /** Get current status error. This error describes some principal problem
      *  for which layer cannot work and thus is not valid. It is not last error
@@ -288,9 +297,9 @@ class CORE_EXPORT QgsMapLayer : public QObject
      * @return a QString with any status messages
      * @see also loadDefaultStyle ();
      */
-    virtual QString loadNamedStyle( const QString theURI, bool & theResultFlag );
+    virtual QString loadNamedStyle( const QString &theURI, bool &theResultFlag );
 
-    virtual bool loadNamedStyleFromDb( const QString db, const QString theURI, QString &qml );
+    virtual bool loadNamedStyleFromDb( const QString &db, const QString &theURI, QString &qml );
 
     //TODO edit infos
     /**
@@ -333,12 +342,12 @@ class CORE_EXPORT QgsMapLayer : public QObject
      * @return a QString with any status messages
      * @sa saveDefaultStyle()
      */
-    virtual QString saveNamedStyle( const QString theURI, bool & theResultFlag );
+    virtual QString saveNamedStyle( const QString &theURI, bool &theResultFlag );
 
-    virtual QString saveSldStyle( const QString theURI, bool & theResultFlag );
-    virtual QString loadSldStyle( const QString theURI, bool &theResultFlag );
+    virtual QString saveSldStyle( const QString &theURI, bool &theResultFlag );
+    virtual QString loadSldStyle( const QString &theURI, bool &theResultFlag );
 
-    virtual bool readSld( const QDomNode& node, QString& errorMessage )
+    virtual bool readSld( const QDomNode &node, QString &errorMessage )
     { Q_UNUSED( node ); errorMessage = QString( "Layer type %1 not supported" ).arg( type() ); return false; }
 
 
@@ -358,20 +367,20 @@ class CORE_EXPORT QgsMapLayer : public QObject
     virtual bool writeSymbology( QDomNode &node, QDomDocument& doc, QString& errorMessage ) const = 0;
 
     /** Return pointer to layer's undo stack */
-    QUndoStack* undoStack();
+    QUndoStack *undoStack();
 
-    /** Get the QImage used for caching render operations
-     * @note This method was added in QGIS 1.4 **/
-    QImage *cacheImage() { return mpCacheImage; }
-    /** Set the QImage used for caching render operations
-     * @note This method was added in QGIS 1.4 **/
-    void setCacheImage( QImage * thepImage );
+    /* Layer legendUrl information */
+    void setLegendUrl( const QString& legendUrl ) { mLegendUrl = legendUrl; }
+    const QString& legendUrl() const { return mLegendUrl; }
+    void setLegendUrlFormat( const QString& legendUrlFormat ) { mLegendUrlFormat = legendUrlFormat; }
+    const QString& legendUrlFormat() const { return mLegendUrlFormat; }
 
-    /**
-     * @brief Is called when the cache image is being deleted. Overwrite and use to clean up.
-     * @note added in 2.0
-     */
-    virtual void onCacheImageDelete() {}
+    /** @deprecated since 2.4 - returns NULL */
+    Q_DECL_DEPRECATED QImage *cacheImage() { return 0; }
+    /** @deprecated since 2.4 - caches listen to repaintRequested() signal to invalidate the cached image */
+    Q_DECL_DEPRECATED void setCacheImage( QImage * );
+    /** @deprecated since 2.4 - does nothing */
+    Q_DECL_DEPRECATED virtual void onCacheImageDelete() {}
 
   public slots:
 
@@ -380,19 +389,19 @@ class CORE_EXPORT QgsMapLayer : public QObject
 
     /** Accessor and mutator for the minimum scale denominator member */
     void setMinimumScale( float theMinScale );
-    float minimumScale();
+    float minimumScale() const;
 
     /** Accessor and mutator for the maximum scale denominator member */
     void setMaximumScale( float theMaxScale );
-    float maximumScale();
+    float maximumScale() const;
 
     /** Accessor and mutator for the scale based visilibility flag */
     void toggleScaleBasedVisibility( bool theVisibilityFlag );
-    bool hasScaleBasedVisibility();
+    bool hasScaleBasedVisibility() const;
 
     /** Clear cached image
-     * added in 1.5 */
-    void clearCacheImage();
+     *  @deprecated in 2.4 - caches listen to repaintRequested() signal to invalidate the cached image */
+    Q_DECL_DEPRECATED void clearCacheImage();
 
     /** \brief Obtain Metadata for this layer */
     virtual QString metadata();
@@ -402,7 +411,7 @@ class CORE_EXPORT QgsMapLayer : public QObject
 
   signals:
 
-    /** Emit a signal to notify of a progress event */
+    //! @deprecated in 2.4 - not emitted anymore
     void drawingProgress( int theProgress, int theTotalSteps );
 
     /** Emit a signal with status (e.g. to be caught by QgisApp and display a msg on status bar) */
@@ -416,13 +425,12 @@ class CORE_EXPORT QgsMapLayer : public QObject
      */
     void layerCrsChanged();
 
-    /** This signal should be connected with the slot QgsMapCanvas::refresh()
-     * \todo to be removed - GUI dependency
+    /** By emitting this signal the layer tells that either appearance or content have been changed
+     * and any view showing the rendered layer should refresh itself.
      */
     void repaintRequested();
 
-    /**The layer emits this signal when a screen update is requested.
-     This signal should be connected with the slot QgsMapCanvas::updateMap()*/
+    //! \note Deprecated in 2.4 and not emitted anymore
     void screenUpdateRequested();
 
     /** This is used to send a request that any mapcanvas using this layer update its extents */
@@ -431,6 +439,12 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** data of layer changed
      * added in 1.5 */
     void dataChanged();
+
+    /** Signal emitted when the blend mode is changed, through QgsMapLayer::setBlendMode() */
+    void blendModeChanged( const QPainter::CompositionMode &blendMode );
+
+    /** Signal emitted when renderer is changed */
+    void rendererChanged();
 
   protected:
     /** Set the extent */
@@ -466,9 +480,6 @@ class CORE_EXPORT QgsMapLayer : public QObject
     void appendError( const QgsErrorMessage & theMessage ) { mError.append( theMessage );}
     /** Set error message */
     void setError( const QgsError & theError ) { mError = theError;}
-
-    /** Transparency level for this layer should be 0-255 (255 being opaque) */
-    unsigned int mTransparencyLevel;
 
     /** Extent of the layer */
     QgsRectangle mExtent;
@@ -506,6 +517,10 @@ class CORE_EXPORT QgsMapLayer : public QObject
     QString mMetadataUrlType;
     QString mMetadataUrlFormat;
 
+    /**WMS legend*/
+    QString mLegendUrl;
+    QString mLegendUrlFormat;
+
     /** \brief Error */
     QgsError mError;
 
@@ -542,12 +557,8 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** Collection of undoable operations for this layer. **/
     QUndoStack mUndoStack;
 
-    QMap<QString, QVariant> mCustomProperties;
-
-    /**QImage for caching of rendering operations
-     * @note This property was added in QGIS 1.4 **/
-    QImage * mpCacheImage;
-
+    //! Layer's persistent storage of additional properties (may be used by plugins)
+    QgsObjectCustomProperties mCustomProperties;
 };
 
 #endif

@@ -85,7 +85,10 @@ namespace pal
     // do not init and exit GEOS - we do it inside QGIS
     //initGEOS( geosNotice, geosError );
 
-    layers = new std::list<Layer*>();
+    fnIsCancelled = 0;
+    fnIsCancelledContext = 0;
+
+    layers = new QList<Layer*>();
 
     lyrsMutex = new SimpleMutex();
 
@@ -107,6 +110,8 @@ namespace pal
     line_p = 8;
     poly_p = 8;
 
+    showPartial = true;
+
     this->map_unit = pal::METER;
 
     std::cout.precision( 12 );
@@ -114,7 +119,7 @@ namespace pal
 
   }
 
-  std::list<Layer*> *Pal::getLayers()
+  QList<Layer*> *Pal::getLayers()
   {
     // TODO make const ! or whatever else
     return layers;
@@ -123,7 +128,7 @@ namespace pal
   Layer *Pal::getLayer( const char *lyrName )
   {
     lyrsMutex->lock();
-    for ( std::list<Layer*>::iterator it = layers->begin(); it != layers->end(); it++ )
+    for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
       if ( strcmp(( *it )->name, lyrName ) == 0 )
       {
         lyrsMutex->unlock();
@@ -140,7 +145,7 @@ namespace pal
     lyrsMutex->lock();
     if ( layer )
     {
-      layers->remove( layer );
+      layers->removeOne( layer );
       delete layer;
     }
     lyrsMutex->unlock();
@@ -176,7 +181,7 @@ namespace pal
     std::cout << "nbLayers:" << layers->size() << std::endl;
 #endif
 
-    for ( std::list<Layer*>::iterator it = layers->begin(); it != layers->end(); it++ )
+    for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
     {
       if ( strcmp(( *it )->name, lyrName ) == 0 )   // if layer already known
       {
@@ -314,6 +319,9 @@ namespace pal
     double scale = (( FilterContext* ) ctx )->scale;
     Pal* pal = (( FilterContext* )ctx )->pal;
 
+    if ( pal->isCancelled() )
+      return false; // do not continue searching
+
     double amin[2], amax[2];
     pset->getBoundingBox( amin, amax );
 
@@ -401,12 +409,12 @@ namespace pal
     int oldNbft = 0;
     Layer *layer;
 
-    std::list<char*> *labLayers = new std::list<char*>();
+    QList<char*> *labLayers = new QList<char*>();
 
     lyrsMutex->lock();
     for ( i = 0; i < nbLayers; i++ )
     {
-      for ( std::list<Layer*>::iterator it = layers->begin(); it != layers->end(); it++ ) // iterate on pal->layers
+      for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it ) // iterate on pal->layers
       {
         layer = *it;
         // Only select those who are active and labellable (with scale constraint) or those who are active and which must be treated as obstaclewhich must be treated as obstacle
@@ -420,6 +428,9 @@ namespace pal
             // check for connected features with the same label text and join them
             if ( layer->getMergeConnectedLines() )
               layer->joinConnectedFeatures();
+
+            if ( layer->getRepeatDistance() > 0 )
+              layer->chopFeatures( layer->getRepeatDistance() );
 
             context->layer = layer;
             context->priority = layersFactor[i];
@@ -507,6 +518,13 @@ namespace pal
     filterCtx.pal = this;
     obstacles->Search( amin, amax, filteringCallback, ( void* ) &filterCtx );
 
+    if ( isCancelled() )
+    {
+      delete fFeats;
+      delete prob;
+      delete obstacles;
+      return 0;
+    }
 
     int idlp = 0;
     for ( i = 0; i < prob->nbft; i++ ) /* foreach feature into prob */
@@ -578,6 +596,14 @@ namespace pal
     j = 0;
     while ( fFeats->size() > 0 ) // foreach feature
     {
+      if ( isCancelled() )
+      {
+        delete fFeats;
+        delete prob;
+        delete obstacles;
+        return 0;
+      }
+
       feat = fFeats->pop_front();
       for ( i = 0; i < feat->nblp; i++, idlp++ )  // foreach label candidate
       {
@@ -641,7 +667,7 @@ namespace pal
     double *priorities = new double[nbLayers];
     Layer *layer;
     i = 0;
-    for ( std::list<Layer*>::iterator it = layers->begin(); it != layers->end(); it++ )
+    for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
     {
       layer = *it;
       layersName[i] = layer->name;
@@ -796,6 +822,12 @@ namespace pal
     return solution;
   }
 
+  void Pal::registerCancellationCallback( Pal::FnIsCancelled fnCancelled, void *context )
+  {
+    fnIsCancelled = fnCancelled;
+    fnIsCancelledContext = context;
+  }
+
   Problem* Pal::extractProblem( double scale, double bbox[4] )
   {
     // find out: nbLayers, layersName, layersFactor
@@ -806,7 +838,7 @@ namespace pal
     double *priorities = new double[nbLayers];
     Layer *layer;
     int i = 0;
-    for ( std::list<Layer*>::iterator it = layers->begin(); it != layers->end(); it++ )
+    for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
     {
       layer = *it;
       layersName[i] = layer->name;
@@ -900,6 +932,11 @@ namespace pal
       this->dpi = dpi;
   }
 
+  void Pal::setShowPartial( bool show )
+  {
+    this->showPartial = show;
+  }
+
   int Pal::getPointP()
   {
     return point_p;
@@ -928,6 +965,11 @@ namespace pal
   int Pal::getDpi()
   {
     return dpi;
+  }
+
+  bool Pal::getShowPartial()
+  {
+    return showPartial;
   }
 
   SearchMethod Pal::getSearch()

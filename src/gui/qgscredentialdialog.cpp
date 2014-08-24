@@ -21,7 +21,7 @@
 #include <QSettings>
 #include <QThread>
 
-QgsCredentialDialog::QgsCredentialDialog( QWidget *parent, Qt::WFlags fl )
+QgsCredentialDialog::QgsCredentialDialog( QWidget *parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
   setupUi( this );
@@ -59,6 +59,9 @@ void QgsCredentialDialog::requestCredentials( QString realm, QString *username, 
   lePassword->setText( *password );
   labelMessage->setText( message );
   labelMessage->setHidden( message.isEmpty() );
+
+  if ( !leUsername->text().isEmpty() )
+    lePassword->setFocus();
 
   QApplication::setOverrideCursor( Qt::ArrowCursor );
 

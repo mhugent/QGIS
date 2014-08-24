@@ -85,26 +85,35 @@ void CoordinateCapture::initGui()
 {
   mCrs.createFromSrsId( GEOCRS_ID ); // initialize the CRS object
 
-  connect( mQGisIface->mapCanvas()->mapRenderer(), SIGNAL( destinationSrsChanged() ), this, SLOT( setSourceCrs() ) );
+  connect( mQGisIface->mapCanvas(), SIGNAL( destinationCrsChanged() ), this, SLOT( setSourceCrs() ) );
   connect( mQGisIface, SIGNAL( currentThemeChanged( QString ) ), this, SLOT( setCurrentTheme( QString ) ) );
 
   setSourceCrs(); //set up the source CRS
   mTransform.setDestCRS( mCrs ); // set the CRS in the transform
   mUserCrsDisplayPrecision = ( mCrs.mapUnits() == QGis::Degrees ) ? 5 : 3; // precision depends on CRS units
 
+  //create the dock widget
+  mpDockWidget = new QDockWidget( tr( "Coordinate Capture" ), mQGisIface->mainWindow() );
+  mpDockWidget->setObjectName( "CoordinateCapture" );
+  mpDockWidget->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
+  mQGisIface->addDockWidget( Qt::LeftDockWidgetArea, mpDockWidget );
+
   // Create the action for tool
   mQActionPointer = new QAction( QIcon(), tr( "Coordinate Capture" ), this );
+  mQActionPointer->setObjectName( "mQActionPointer" );
+  mQActionPointer->setCheckable( true );
+  mQActionPointer->setChecked( mpDockWidget->isVisible() );
   // Set the what's this text
   mQActionPointer->setWhatsThis( tr( "Click on the map to view coordinates and capture to clipboard." ) );
   // Connect the action to the run
-  connect( mQActionPointer, SIGNAL( triggered() ), this, SLOT( run() ) );
+  connect( mQActionPointer, SIGNAL( triggered() ), this, SLOT( showOrHide() ) );
   mQGisIface->addPluginToVectorMenu( tr( "&Coordinate Capture" ), mQActionPointer );
+  mQGisIface->addVectorToolBarIcon( mQActionPointer );
 
   // create our map tool
   mpMapTool = new CoordinateCaptureMapTool( mQGisIface->mapCanvas() );
   connect( mpMapTool, SIGNAL( mouseMoved( QgsPoint ) ), this, SLOT( mouseMoved( QgsPoint ) ) );
   connect( mpMapTool, SIGNAL( mouseClicked( QgsPoint ) ), this, SLOT( mouseClicked( QgsPoint ) ) );
-
 
   // create a little widget with x and y display to put into our dock widget
   QWidget * mypWidget = new QWidget();
@@ -155,16 +164,9 @@ void CoordinateCapture::initGui()
   mypLayout->addWidget( mypCopyButton, 2, 1 );
   mypLayout->addWidget( mpCaptureButton, 3, 1 );
 
-
-  //create the dock widget
-  mpDockWidget = new QDockWidget( tr( "Coordinate Capture" ), mQGisIface->mainWindow() );
-  mpDockWidget->setObjectName( "CoordinateCapture" );
-  mpDockWidget->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
-  mQGisIface->addDockWidget( Qt::LeftDockWidgetArea, mpDockWidget );
-
   // now add our custom widget to the dock - ownership of the widget is passed to the dock
   mpDockWidget->setWidget( mypWidget );
-
+  connect( mpDockWidget, SIGNAL( visibilityChanged( bool ) ), mQActionPointer, SLOT( setChecked( bool ) ) );
 }
 
 //method defined in interface
@@ -187,8 +189,8 @@ void CoordinateCapture::setCRS()
 
 void CoordinateCapture::setSourceCrs()
 {
-  mTransform.setSourceCrs( mQGisIface->mapCanvas()->mapRenderer()->destinationCrs() );
-  mCanvasDisplayPrecision = ( mQGisIface->mapCanvas()->mapRenderer()->destinationCrs().mapUnits() == QGis::Degrees ) ? 5 : 3; // for the map canvas coordinate display
+  mTransform.setSourceCrs( mQGisIface->mapCanvas()->mapSettings().destinationCrs() );
+  mCanvasDisplayPrecision = ( mQGisIface->mapCanvas()->mapSettings().destinationCrs().mapUnits() == QGis::Degrees ) ? 5 : 3; // for the map canvas coordinate display
 }
 
 void CoordinateCapture::mouseClicked( QgsPoint thePoint )
@@ -243,27 +245,45 @@ void CoordinateCapture::run()
   //myPluginGui->show();
 }
 
+void CoordinateCapture::showOrHide()
+{
+  if ( !mpDockWidget )
+    run();
+  else
+    if ( mQActionPointer->isChecked() )
+      mpDockWidget->show();
+    else
+      mpDockWidget->hide();
+}
+
 // Unload the plugin by cleaning up the GUI
 void CoordinateCapture::unload()
 {
   // remove the GUI
-  mQGisIface->removePluginMenu( "&Coordinate Capture", mQActionPointer );
-  //mQGisIface->removeToolBarIcon( mQActionPointer );
+  mQGisIface->removePluginVectorMenu( tr( "&Coordinate Capture" ), mQActionPointer );
+  mQGisIface->removeVectorToolBarIcon( mQActionPointer );
   mpMapTool->deactivate();
   delete mpMapTool;
+  mpMapTool = 0;
   delete mpDockWidget;
+  mpDockWidget = 0;
   delete mQActionPointer;
+  mQActionPointer = 0;
 }
 
 // Set icons to the current theme
 void CoordinateCapture::setCurrentTheme( QString theThemeName )
 {
   Q_UNUSED( theThemeName );
-  mQActionPointer->setIcon( QIcon( getIconPath( "coordinate_capture.png" ) ) );
-  mpTrackMouseButton->setIcon( QIcon( getIconPath( "tracking.png" ) ) );
-  mpCaptureButton->setIcon( QIcon( getIconPath( "coordinate_capture.png" ) ) );
-  mypUserCrsToolButton->setIcon( QIcon( getIconPath( "geographic.png" ) ) );
-  mypCRSLabel->setPixmap( QPixmap( getIconPath( "transformed.png" ) ) );
+  if ( mQActionPointer )
+    mQActionPointer->setIcon( QIcon( getIconPath( "coordinate_capture.png" ) ) );
+  if ( mpDockWidget )
+  {
+    mpTrackMouseButton->setIcon( QIcon( getIconPath( "tracking.png" ) ) );
+    mpCaptureButton->setIcon( QIcon( getIconPath( "coordinate_capture.png" ) ) );
+    mypUserCrsToolButton->setIcon( QIcon( getIconPath( "geographic.png" ) ) );
+    mypCRSLabel->setPixmap( QPixmap( getIconPath( "transformed.png" ) ) );
+  }
 }
 
 // Get path to the best available icon file

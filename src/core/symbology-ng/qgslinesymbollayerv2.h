@@ -1,9 +1,9 @@
 /***************************************************************************
-    qgslinesymbollayerv2.h
-    ---------------------
-    begin                : November 2009
-    copyright            : (C) 2009 by Martin Dobias
-    email                : wonder dot sk at gmail dot com
+ qgslinesymbollayerv2.h
+ ---------------------
+ begin                : November 2009
+ copyright            : (C) 2009 by Martin Dobias
+ email                : wonder dot sk at gmail dot com
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -52,6 +52,9 @@ class CORE_EXPORT QgsSimpleLineSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context );
 
+    //overriden so that clip path can be set when using draw inside polygon option
+    void renderPolygonOutline( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
+
     QgsStringMap properties() const;
 
     QgsSymbolLayerV2* clone() const;
@@ -62,6 +65,11 @@ class CORE_EXPORT QgsSimpleLineSymbolLayerV2 : public QgsLineSymbolLayerV2
 
     void setOutputUnit( QgsSymbolV2::OutputUnit unit );
     QgsSymbolV2::OutputUnit outputUnit() const;
+
+    void setMapUnitScale( const QgsMapUnitScale &scale );
+    QgsMapUnitScale mapUnitScale() const;
+
+    double estimateMaxBleed() const;
 
     // new stuff
 
@@ -77,17 +85,34 @@ class CORE_EXPORT QgsSimpleLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     double offset() const { return mOffset; }
     void setOffset( double offset ) { mOffset = offset; }
 
-    QgsSymbolV2::OutputUnit offsetUnit() const { return mOffsetUnit; }
     void setOffsetUnit( QgsSymbolV2::OutputUnit unit ) { mOffsetUnit = unit; }
+    QgsSymbolV2::OutputUnit offsetUnit() const { return mOffsetUnit; }
+
+    void setOffsetMapUnitScale( const QgsMapUnitScale& scale ) { mOffsetMapUnitScale = scale; }
+    const QgsMapUnitScale& offsetMapUnitScale() const { return mOffsetMapUnitScale; }
 
     bool useCustomDashPattern() const { return mUseCustomDashPattern; }
     void setUseCustomDashPattern( bool b ) { mUseCustomDashPattern = b; }
 
-    QgsSymbolV2::OutputUnit customDashPatternUnit() const { return mCustomDashPatternUnit; }
     void setCustomDashPatternUnit( QgsSymbolV2::OutputUnit unit ) { mCustomDashPatternUnit = unit; }
+    QgsSymbolV2::OutputUnit customDashPatternUnit() const { return mCustomDashPatternUnit; }
+
+    const QgsMapUnitScale& customDashPatternMapUnitScale() const { return mCustomDashPatternMapUnitScale; }
+    void setCustomDashPatternMapUnitScale( const QgsMapUnitScale& scale ) { mCustomDashPatternMapUnitScale = scale; }
 
     QVector<qreal> customDashVector() const { return mCustomDashVector; }
     void setCustomDashVector( const QVector<qreal>& vector ) { mCustomDashVector = vector; }
+
+    //Returns true if the line should only be drawn inside the polygon
+    bool drawInsidePolygon() const { return mDrawInsidePolygon; }
+    //Set to true if the line should only be drawn inside the polygon
+    void setDrawInsidePolygon( bool drawInsidePolygon ) { mDrawInsidePolygon = drawInsidePolygon; }
+
+    QVector<qreal> dxfCustomDashPattern( QgsSymbolV2::OutputUnit& unit ) const;
+    Qt::PenStyle dxfPenStyle() const;
+
+    double dxfWidth( const QgsDxfExport& e, const QgsSymbolV2RenderContext& context ) const;
+    QColor dxfColor( const QgsSymbolV2RenderContext& context ) const;
 
   protected:
     Qt::PenStyle mPenStyle;
@@ -97,13 +122,17 @@ class CORE_EXPORT QgsSimpleLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     QPen mSelPen;
     double mOffset;
     QgsSymbolV2::OutputUnit mOffsetUnit;
+    QgsMapUnitScale mOffsetMapUnitScale;
 
     //use a custom dash dot pattern instead of the predefined ones
     bool mUseCustomDashPattern;
     QgsSymbolV2::OutputUnit mCustomDashPatternUnit;
+    QgsMapUnitScale mCustomDashPatternMapUnitScale;
 
     /**Vector with an even number of entries for the */
     QVector<qreal> mCustomDashVector;
+
+    bool mDrawInsidePolygon;
 
   private:
     //helper functions for data defined symbology
@@ -161,6 +190,8 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     virtual void setWidth( double width );
     virtual double width() const;
 
+    double estimateMaxBleed() const;
+
     // new stuff
 
     bool rotateMarker() const { return mRotateMarker; }
@@ -175,14 +206,72 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     Placement placement() const { return mPlacement; }
     void setPlacement( Placement p ) { mPlacement = p; }
 
-    QgsSymbolV2::OutputUnit intervalUnit() const { return mIntervalUnit; }
-    void setIntervalUnit( QgsSymbolV2::OutputUnit unit ) { mIntervalUnit = unit; }
+    /**Returns the offset along the line for the marker placement. For Interval placements, this is the distance
+     * between the start of the line and the first marker. For FirstVertex and LastVertex placements, this is the
+     * distance between the marker and the start of the line or the end of the line respectively.
+     * This setting has no effect for Vertex or CentralPoint placements.
+     * @returns The offset along the line. The unit for the offset is retrievable via offsetAlongLineUnit.
+     * @note added in 2.3
+     * @see setOffsetAlongLine
+     * @see offsetAlongLineUnit
+     * @see placement
+    */
+    double offsetAlongLine() const { return mOffsetAlongLine; }
 
-    QgsSymbolV2::OutputUnit offsetUnit() const { return mOffsetUnit; }
+    /**Sets the the offset along the line for the marker placement. For Interval placements, this is the distance
+     * between the start of the line and the first marker. For FirstVertex and LastVertex placements, this is the
+     * distance between the marker and the start of the line or the end of the line respectively.
+     * This setting has no effect for Vertex or CentralPoint placements.
+     * @param offsetAlongLine Distance to offset markers along the line. The offset
+     * unit is set via setOffsetAlongLineUnit.
+     * @note added in 2.3
+     * @see offsetAlongLine
+     * @see setOffsetAlongLineUnit
+     * @see setPlacement
+    */
+    void setOffsetAlongLine( double offsetAlongLine ) { mOffsetAlongLine = offsetAlongLine; }
+
+    /**Returns the unit used for calculating the offset along line for markers.
+     * @returns Offset along line unit type.
+     * @see setOffsetAlongLineUnit
+     * @see offsetAlongLine
+    */
+    QgsSymbolV2::OutputUnit offsetAlongLineUnit() const { return mOffsetAlongLineUnit; }
+
+    /**Sets the unit used for calculating the offset along line for markers.
+     * @param unit Offset along line unit type.
+     * @see offsetAlongLineUnit
+     * @see setOffsetAlongLine
+    */
+    void setOffsetAlongLineUnit( QgsSymbolV2::OutputUnit unit ) { mOffsetAlongLineUnit = unit; }
+
+    /**Returns the map unit scale used for calculating the offset in map units along line for markers.
+     * @returns Offset along line map unit scale.
+     */
+    const QgsMapUnitScale& offsetAlongLineMapUnitScale() const { return mOffsetAlongLineMapUnitScale; }
+
+    /**Sets the map unit scale used for calculating the offset in map units along line for markers.
+     * @param scale Offset along line map unit scale.
+     */
+    void setOffsetAlongLineMapUnitScale( const QgsMapUnitScale& scale ) { mOffsetAlongLineMapUnitScale = scale; }
+
+    void setIntervalUnit( QgsSymbolV2::OutputUnit unit ) { mIntervalUnit = unit; }
+    QgsSymbolV2::OutputUnit intervalUnit() const { return mIntervalUnit; }
+
+    void setIntervalMapUnitScale( const QgsMapUnitScale& scale ) { mIntervalMapUnitScale = scale; }
+    const QgsMapUnitScale& intervalMapUnitScale() const { return mIntervalMapUnitScale; }
+
     void setOffsetUnit( QgsSymbolV2::OutputUnit unit ) { mOffsetUnit = unit; }
+    QgsSymbolV2::OutputUnit offsetUnit() const { return mOffsetUnit; }
+
+    void setOffsetMapUnitScale( const QgsMapUnitScale& scale ) { mOffsetMapUnitScale = scale; }
+    const QgsMapUnitScale& offsetMapUnitScale() const { return mOffsetMapUnitScale; }
 
     void setOutputUnit( QgsSymbolV2::OutputUnit unit );
     QgsSymbolV2::OutputUnit outputUnit() const;
+
+    void setMapUnitScale( const QgsMapUnitScale& scale );
+    QgsMapUnitScale mapUnitScale() const;
 
   protected:
 
@@ -194,52 +283,31 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     bool mRotateMarker;
     double mInterval;
     QgsSymbolV2::OutputUnit mIntervalUnit;
+    QgsMapUnitScale mIntervalMapUnitScale;
     QgsMarkerSymbolV2* mMarker;
     double mOffset;
     QgsSymbolV2::OutputUnit mOffsetUnit;
+    QgsMapUnitScale mOffsetMapUnitScale;
     Placement mPlacement;
-};
+    double mOffsetAlongLine; //distance to offset along line before marker is drawn
+    QgsSymbolV2::OutputUnit mOffsetAlongLineUnit; //unit for offset along line
+    QgsMapUnitScale mOffsetAlongLineMapUnitScale;
 
-/////////
+  private:
 
-#define DEFAULT_LINEDECORATION_COLOR  QColor(0,0,0)
-#define DEFAULT_LINEDECORATION_WIDTH  DEFAULT_LINE_WIDTH
-
-class CORE_EXPORT QgsLineDecorationSymbolLayerV2 : public QgsLineSymbolLayerV2
-{
-  public:
-    QgsLineDecorationSymbolLayerV2( QColor color = DEFAULT_LINEDECORATION_COLOR,
-                                    double width = DEFAULT_LINEDECORATION_WIDTH );
-
-    ~QgsLineDecorationSymbolLayerV2();
-
-    // static stuff
-
-    static QgsSymbolLayerV2* create( const QgsStringMap& properties = QgsStringMap() );
-
-    // implemented from base classes
-
-    QString layerType() const;
-
-    void startRender( QgsSymbolV2RenderContext& context );
-
-    void stopRender( QgsSymbolV2RenderContext& context );
-
-    void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context );
-
-    QgsStringMap properties() const;
-
-    QgsSymbolLayerV2* clone() const;
-
-    void toSld( QDomDocument &doc, QDomElement &element, QgsStringMap props ) const;
-
-    void setOutputUnit( QgsSymbolV2::OutputUnit unit );
-    QgsSymbolV2::OutputUnit outputUnit() const;
-
-  protected:
-    QPen mPen;
-    QPen mSelPen;
-
+    /**Renders a marker by offseting a vertex along the line by a specified distance.
+     * @param points vertices making up the line
+     * @param vertex vertex number to begin offset at
+     * @param distance distance to offset from vertex. If distance is positive, offset is calculated
+     * moving forward along the line. If distance is negative, offset is calculated moving backward
+     * along the line's vertices.
+     * @param context render context
+     * @see setoffsetAlongLine
+     * @see setOffsetAlongLineUnit
+    */
+    void renderOffsetVertexAlongLine( const QPolygonF& points, int vertex, double distance , QgsSymbolV2RenderContext &context );
 };
 
 #endif
+
+

@@ -16,7 +16,7 @@ import os
 import unittest
 import qgis
 
-from PyQt4.QtCore import QFileInfo
+from PyQt4.QtCore import QFileInfo, QObject, SIGNAL
 from PyQt4 import QtGui
 
 from qgis.core import (QgsRaster,
@@ -35,12 +35,12 @@ from qgis.core import (QgsRaster,
 from utilities import (unitTestDataPath,
                        getQgisTestApp,
                        TestCase,
-                       unittest
-                       #expectedFailure
-                      )
+                       unittest)
+                       #expectedFailure)
 # Convenience instances in case you may need them
 # not used in this test
 QGISAPP, CANVAS, IFACE, PARENT = getQgisTestApp()
+
 
 class TestQgsRasterLayer(TestCase):
 
@@ -178,14 +178,14 @@ class TestQgsRasterLayer(TestCase):
         myColorRampShader = QgsColorRampShader()
         myColorRampShader.setColorRampType(QgsColorRampShader.INTERPOLATED)
         myItems = []
-        myItem = QgsColorRampShader.ColorRampItem(10,
-                                                  QtGui.QColor('#ffff00'), 'foo')
+        myItem = QgsColorRampShader.ColorRampItem(
+            10, QtGui.QColor('#ffff00'), 'foo')
         myItems.append(myItem)
-        myItem = QgsColorRampShader.ColorRampItem(100,
-                                                  QtGui.QColor('#ff00ff'), 'bar')
+        myItem = QgsColorRampShader.ColorRampItem(
+            100, QtGui.QColor('#ff00ff'), 'bar')
         myItems.append(myItem)
-        myItem = QgsColorRampShader.ColorRampItem(1000,
-                                                  QtGui.QColor('#00ff00'), 'kazam')
+        myItem = QgsColorRampShader.ColorRampItem(
+            1000, QtGui.QColor('#00ff00'), 'kazam')
         myItems.append(myItem)
         myColorRampShader.setColorRampItemList(myItems)
         myRasterShader.setRasterShaderFunction(myColorRampShader)
@@ -215,6 +215,26 @@ class TestQgsRasterLayer(TestCase):
         myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
             myRasterLayer.dataProvider(), 1,  myRasterShader)
         myRasterLayer.setRenderer(myPseudoRenderer)
+
+    def onRendererChanged( self ):
+        self.rendererChanged = True
+    def test_setRenderer( self ):
+        myPath = os.path.join(unitTestDataPath('raster'),
+                              'band1_float32_noct_epsg4326.tif')
+        myFileInfo = QFileInfo(myPath)
+        myBaseName = myFileInfo.baseName()
+        layer = QgsRasterLayer(myPath, myBaseName)
+
+        self.rendererChanged = False
+        QObject.connect( layer, SIGNAL( "rendererChanged()" ),
+                         self.onRendererChanged )
+
+        rShader = QgsRasterShader()
+        r = QgsSingleBandPseudoColorRenderer( layer.dataProvider(), 1, rShader )
+
+        layer.setRenderer( r )
+        assert self.rendererChanged == True
+        assert layer.renderer() == r
 
 if __name__ == '__main__':
     unittest.main()

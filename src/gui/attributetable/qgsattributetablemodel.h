@@ -28,6 +28,8 @@
 #include "qgsvectorlayercache.h"
 
 class QgsMapCanvas;
+class QgsMapLayerAction;
+class QgsEditorWidgetFactory;
 
 /**
  * A model backed by a {@link QgsVectorLayerCache} which is able to provide
@@ -58,8 +60,6 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
      * @param parent      The parent QObject (owner)
      */
     QgsAttributeTableModel( QgsVectorLayerCache *layerCache, QObject *parent = 0 );
-
-    virtual ~QgsAttributeTableModel();
 
     /**
      * Loads the layer into the model
@@ -174,6 +174,11 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
     void executeAction( int action, const QModelIndex &idx ) const;
 
     /**
+     * Execute a QgsMapLayerAction
+     */
+    void executeMapLayerAction( QgsMapLayerAction* action, const QModelIndex &idx ) const;
+
+    /**
      * Return the feature attributes at given model index
      * @return feature attributes at given model index
      */
@@ -187,6 +192,8 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
      * @param column The column index of the field to catch
      */
     void prefetchColumnData( int column );
+
+    void setRequest( const QgsFeatureRequest& request );
 
   signals:
     /**
@@ -204,6 +211,18 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
      */
     virtual void updatedFields();
 
+    /**
+     * Gets called when an edit command ends
+     * This will synchronize all fields which have been changed since the last
+     * edit command in one single go
+     */
+    virtual void editCommandEnded();
+
+    /**
+     * Called whenever a column is removed;
+     */
+    virtual void attributeDeleted( int idx );
+
   protected slots:
     /**
      * Launched when attribute value has been changed
@@ -220,9 +239,8 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
     /**
      * Launched when a feature has been added
      * @param fid feature id
-     * @param inOperation guard insertion with beginInsertRows() / endInsertRows()
      */
-    virtual void featureAdded( QgsFeatureId fid, bool inOperation = true );
+    virtual void featureAdded( QgsFeatureId fid );
 
     /**
      * Launched when layer has been deleted
@@ -236,7 +254,9 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
     mutable QgsFeature mFeat;
 
     QgsAttributeList mAttributes;
-    QMap< int, const QMap<QString, QVariant> * > mValueMaps;
+    QVector<QgsEditorWidgetFactory*> mWidgetFactories;
+    QVector<QVariant> mAttributeWidgetCaches;
+    QVector<QgsEditorWidgetConfig> mWidgetConfigs;
 
     QHash<QgsFeatureId, int> mIdRowMap;
     QHash<int, QgsFeatureId> mRowIdMap;
@@ -260,8 +280,17 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
 
     /** The currently cached column */
     int mCachedField;
-    /** Allows to cache one specific column (used for sorting) */
+    /** Allows caching of one specific column (used for sorting) */
     QHash<QgsFeatureId, QVariant> mFieldCache;
+
+    /**
+     * Holds the bounds of changed cells while an update operation is running
+     * top    = min row
+     * left   = min column
+     * bottom = max row
+     * right  = max column
+     */
+    QRect mChangedCellBounds;
 };
 
 

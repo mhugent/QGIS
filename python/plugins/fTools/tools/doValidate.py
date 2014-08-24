@@ -113,8 +113,7 @@ class ValidateDialog( QDialog, Ui_Dialog ):
          e.key() == Qt.Key_C:
       items = ""
       for row in range( self.tblUnique.rowCount() ):
-        items.append( self.tblUnique.item( row, 0 ).text()
-        + "," + self.tblUnique.item( row, 1 ).text() + "\n" )
+        items += self.tblUnique.item( row, 0 ).text() + "," + self.tblUnique.item( row, 1 ).text() + "\n"
       if items:
         clip_board = QApplication.clipboard()
         clip_board.setText( items )
@@ -136,6 +135,7 @@ class ValidateDialog( QDialog, Ui_Dialog ):
     if self.ckBoxShpError.isChecked():
       self.lineEditShpError.setEnabled( True )
       self.browseShpError.setEnabled( True )
+      self.addToCanvasCheck.setEnabled(True)
       self.tblUnique.setEnabled( False )
       self.lstCount.setEnabled( False )
       self.label_2.setEnabled( False )
@@ -144,6 +144,7 @@ class ValidateDialog( QDialog, Ui_Dialog ):
     else:
       self.lineEditShpError.setEnabled( False )
       self.browseShpError.setEnabled( False )
+      self.addToCanvasCheck.setEnabled(False)
       self.tblUnique.setEnabled( True )
       self.lstCount.setEnabled( True )
       self.label_2.setEnabled( True )
@@ -228,13 +229,12 @@ class ValidateDialog( QDialog, Ui_Dialog ):
     self.buttonOk.setEnabled( True )
     if success == "writeShape":
       extra = ""
-      addToTOC = QMessageBox.question( self, self.tr("Geometry"),
-                 self.tr( "Created output shapefile:\n%s\n%s\n\nWould you like to add the new layer to the TOC?" ) % ( unicode( self.shapefileName ), extra ),
-                 QMessageBox.Yes, QMessageBox.No, QMessageBox.NoButton )
-      if addToTOC == QMessageBox.Yes:
-        if not ftools_utils.addShapeToCanvas( unicode( self.shapefileName ) ):
-          QMessageBox.warning( self, self.tr( "Geometry"),
-                               self.tr( "Error loading output shapefile:\n%s" ) % ( unicode( self.shapefileName ) ) )
+      if self.addToCanvasCheck.isChecked():
+        addCanvasCheck = ftools_utils.addShapeToCanvas(unicode(self.shapefileName))
+        if not addCanvasCheck:
+          QMessageBox.warning( self, self.tr("Geometry"), self.tr( "Error loading output shapefile:\n%s" ) % ( unicode( self.shapefileName ) ))
+      else:
+        QMessageBox.information(self, self.tr("Geometry"),self.tr("Created output shapefile:\n%s\n%s" ) % ( unicode( self.shapefileName ), extra))
     else:
       self.tblUnique.setColumnCount( 2 )
       count = 0

@@ -65,6 +65,8 @@ namespace pal
       : layer( l ), userGeom( userG ), label_x( lx ), label_y( ly ), distlabel( 0 ), labelInfo( NULL ), fixedPos( false ),
       quadOffset( false ), offsetPos( false ), fixedRotation( false ), alwaysShow( false )
   {
+    assert( finite( lx ) && finite( ly ) );
+
     uid = new char[strlen( geom_id ) +1];
     strcpy( uid, geom_id );
   }
@@ -483,7 +485,7 @@ namespace pal
       if ( nbp == 1 )
         cost = 0.0001;
       else
-        cost =  0.0001 + 0.0020 * double( icost ) / double( nbp - 1 );
+        cost = 0.0001 + 0.0020 * double( icost ) / double( nbp - 1 );
 
       ( *lPos )[i] = new LabelPosition( i, lx, ly, xrm, yrm, angle, cost,  this );
 
@@ -892,7 +894,6 @@ namespace pal
       {
         orientation = -orientation;
         delete slp;
-        slp = NULL;
         slp = curvedPlacementAtOffset( path_positions, path_distances, orientation, initial_index, initial_distance );
       }
       else
@@ -1103,7 +1104,10 @@ namespace pal
         j++;
       }
 
-      dx = dy = min( yrm, xrm ) / 2;
+      //dx = dy = min( yrm, xrm ) / 2;
+      dx = xrm / 2.0;
+      dy = yrm / 2.0;
+
 
       int num_try = 0;
       int max_try = 10;
@@ -1340,7 +1344,7 @@ namespace pal
             case P_POINT:
             case P_POINT_OVER:
               double cx, cy;
-              mapShape->getCentroid( cx, cy );
+              mapShape->getCentroid( cx, cy, f->layer->getCentroidInside() );
               if ( f->layer->getArrangement() == P_POINT_OVER )
                 nbp = setPositionOverPoint( cx, cy, scale, lPos, delta, angle );
               else
@@ -1361,7 +1365,12 @@ namespace pal
     // purge candidates that are outside the bbox
     for ( i = 0; i < nbp; i++ )
     {
-      if ( !( *lPos )[i]->isIn( bbox ) )
+      bool outside = false;
+      if ( f->layer->pal->getShowPartial() )
+        outside = !( *lPos )[i]->isIntersect( bbox );
+      else
+        outside = !( *lPos )[i]->isInside( bbox );
+      if ( outside )
       {
         rnbp--;
         ( *lPos )[i]->setCost( DBL_MAX ); // infinite cost => do not use

@@ -68,6 +68,8 @@ class QgsRectangle;
  *
  * @author Brendan Morley
  */
+class QgsConstWkbPtr;
+class QgsWkbPtr;
 
 class CORE_EXPORT QgsGeometry
 {
@@ -174,7 +176,6 @@ class CORE_EXPORT QgsGeometry
     */
     QgsPoint closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist );
 
-
     /**
        Returns the indexes of the vertices before and after the given vertex index.
 
@@ -188,7 +189,6 @@ class CORE_EXPORT QgsGeometry
           skip equal vertex positions).
     */
     void adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex );
-
 
     /** Insert a new vertex before the given vertex index,
      *  ring and item (first number is index 0)
@@ -265,7 +265,21 @@ class CORE_EXPORT QgsGeometry
     /**Adds a new island polygon to a multipolygon feature
      @return 0 in case of success, 1 if not a multipolygon, 2 if ring is not a valid geometry, 3 if new polygon ring
      not disjoint with existing polygons of the feature*/
-    int addPart( const QList<QgsPoint> &points );
+    int addPart( const QList<QgsPoint> &points, QGis::GeometryType geomType = QGis::UnknownGeometry );
+
+    /**Adds a new island polygon to a multipolygon feature
+     @return 0 in case of success, 1 if not a multipolygon, 2 if ring is not a valid geometry, 3 if new polygon ring
+     not disjoint with existing polygons of the feature
+     @note not available in python bindings
+     */
+    int addPart( GEOSGeometry *newPart );
+
+    /**Adds a new island polygon to a multipolygon feature
+     @return 0 in case of success, 1 if not a multipolygon, 2 if ring is not a valid geometry, 3 if new polygon ring
+     not disjoint with existing polygons of the feature
+     @note available in python bindings as addPartGeometry (added in 2.2)
+     */
+    int addPart( QgsGeometry *newPart );
 
     /**Translate this geometry by dx, dy
      @return 0 in case of success*/
@@ -309,37 +323,55 @@ class CORE_EXPORT QgsGeometry
     /** Test for containment of a point (uses GEOS) */
     bool contains( const QgsPoint* p ) const;
 
-    /** Test for if geometry is contained in an other (uses GEOS)
+    /** Test for if geometry is contained in another (uses GEOS)
      *  @note added in 1.5 */
     bool contains( const QgsGeometry* geometry ) const;
 
-    /** Test for if geometry is disjoint of an other (uses GEOS)
+    /** Test for if geometry is disjoint of another (uses GEOS)
      *  @note added in 1.5 */
     bool disjoint( const QgsGeometry* geometry ) const;
 
-    /** Test for if geometry equals an other (uses GEOS)
+    /** Test for if geometry equals another (uses GEOS)
      *  @note added in 1.5 */
     bool equals( const QgsGeometry* geometry ) const;
 
-    /** Test for if geometry touch an other (uses GEOS)
+    /** Test for if geometry touch another (uses GEOS)
      *  @note added in 1.5 */
     bool touches( const QgsGeometry* geometry ) const;
 
-    /** Test for if geometry overlaps an other (uses GEOS)
+    /** Test for if geometry overlaps another (uses GEOS)
      *  @note added in 1.5 */
     bool overlaps( const QgsGeometry* geometry ) const;
 
-    /** Test for if geometry is within an other (uses GEOS)
+    /** Test for if geometry is within another (uses GEOS)
      *  @note added in 1.5 */
     bool within( const QgsGeometry* geometry ) const;
 
-    /** Test for if geometry crosses an other (uses GEOS)
+    /** Test for if geometry crosses another (uses GEOS)
      *  @note added in 1.5 */
     bool crosses( const QgsGeometry* geometry ) const;
 
     /** Returns a buffer region around this geometry having the given width and with a specified number
         of segments used to approximate curves */
     QgsGeometry* buffer( double distance, int segments );
+
+    /** Returns a buffer region around the geometry, with additional style options.
+     * @param distance    buffer distance
+     * @param segments    For round joins, number of segments to approximate quarter-circle
+     * @param endCapStyle Round (1) / Flat (2) / Square (3) end cap style
+     * @param joinStyle   Round (1) / Mitre (2) / Bevel (3) join style
+     * @param mitreLimit  Limit on the mitre ratio used for very sharp corners
+     * @note added in 2.4
+     * @note needs GEOS >= 3.3 - otherwise always returns 0
+     */
+    QgsGeometry* buffer( double distance, int segments, int endCapStyle, int joinStyle, double mitreLimit );
+
+    /** Returns an offset line at a given distance and side from an input line.
+     * See buffer() method for details on parameters.
+     * @note added in 2.4
+     * @note needs GEOS >= 3.3 - otherwise always returns 0
+     */
+    QgsGeometry* offsetCurve( double distance, int segments, int joinStyle, double mitreLimit );
 
     /** Returns a simplified version of this geometry using a specified tolerance value */
     QgsGeometry* simplify( double tolerance );
@@ -348,6 +380,9 @@ class CORE_EXPORT QgsGeometry
     * @note for line based geometries, the center point of the line is returned,
     * and for point based geometries, the point itself is returned */
     QgsGeometry* centroid();
+
+    /** Returns a point within a geometry */
+    QgsGeometry* pointOnSurface();
 
     /** Returns the smallest convex polygon that contains all the points in the geometry. */
     QgsGeometry* convexHull();
@@ -382,6 +417,15 @@ class CORE_EXPORT QgsGeometry
      *  @note python binding added in 1.9
      */
     QString exportToGeoJSON() const;
+
+    /** try to convert the geometry to the requested type
+     * @param destType the geometry type to be converted to
+     * @param destMultipart determines if the output geometry will be multipart or not
+     * @return the converted geometry or NULL pointer if the conversion fails.
+     * @note added in 2.2
+     */
+    QgsGeometry* convertToType( QGis::GeometryType destType, bool destMultipart = false );
+
 
     /* Accessor functions for getting geometry data */
 
@@ -460,6 +504,12 @@ class CORE_EXPORT QgsGeometry
      **/
     void validateGeometry( QList<Error> &errors );
 
+    /** compute the unary union on a list of geometries. May be faster than an iterative union on a set of geometries.
+        @param geometryList a list of QgsGeometry* as input
+        @returns the new computed QgsGeometry, or null
+    */
+    static QgsGeometry *unaryUnion( const QList<QgsGeometry*>& geometryList );
+
   private:
     // Private variables
 
@@ -517,17 +567,17 @@ class CORE_EXPORT QgsGeometry
                        GEOSCoordSequence** new_sequence );
 
     /**Translates a single vertex by dx and dy.
-    @param wkbPosition position in wkb array. Is increased automatically by the function
-    @param dx translation of x-coordinate
-    @param dy translation of y-coordinate
+    @param wkbPtr pointer to current position in wkb array. Is increased automatically by the function
+    @param dx translation of x coordinate
+    @param dy translation of y coordinate
     @param hasZValue 25D type?*/
-    void translateVertex( int& wkbPosition, double dx, double dy, bool hasZValue );
+    void translateVertex( QgsWkbPtr &wkbPtr, double dx, double dy, bool hasZValue );
 
     /**Transforms a single vertex by ct.
-    @param wkbPosition position in wkb array. Is increased automatically by the function
+    @param wkbPtr pointer to current position in wkb. Is increased automatically by the function
     @param ct the QgsCoordinateTransform
     @param hasZValue 25D type?*/
-    void transformVertex( int& wkbPosition, const QgsCoordinateTransform& ct, bool hasZValue );
+    void transformVertex( QgsWkbPtr &wkbPtr, const QgsCoordinateTransform& ct, bool hasZValue );
 
     //helper functions for geometry splitting
 
@@ -539,6 +589,9 @@ class CORE_EXPORT QgsGeometry
     /**Splits polygon/multipolygon geometries
        @return 0 in case of success, 1 if geometry has not been split, error else*/
     int splitPolygonGeometry( GEOSGeometry *splitLine, QList<QgsGeometry*>& newGeometries );
+    /**Splits line/multiline geometries following a single point*/
+    GEOSGeometry* linePointDifference( GEOSGeometry* GEOSsplitPoint );
+
     /**Finds out the points that need to be tested for topological correctnes if this geometry will be split
      @return 0 in case of success*/
     int topologicalTestPointsSplit( const GEOSGeometry* splitLine, QList<QgsPoint>& testPoints ) const;
@@ -571,8 +624,8 @@ class CORE_EXPORT QgsGeometry
       @return 0 not contained, 1 if contained, <0 in case of error*/
     static int pointContainedInLine( const GEOSGeometry* point, const GEOSGeometry* line );
 
-    /**Tests if geom bounding rect is within -180 <= x <= 180, -90 <= y <= 90. Other methods may use more accurate tolerances if this is true*/
-    static bool geomInDegrees( const GEOSGeometry* geom );
+    /** Determines the maximum number of digits before the dot */
+    static int geomDigits( const GEOSGeometry* geom );
 
     /**Returns number of single geometry in a geos geometry. Is save for geos 2 and 3*/
     int numberOfGeometries( GEOSGeometry* g ) const;
@@ -580,21 +633,74 @@ class CORE_EXPORT QgsGeometry
     int mergeGeometriesMultiTypeSplit( QVector<GEOSGeometry*>& splitResult );
 
     /** return point from wkb */
-    QgsPoint asPoint( unsigned char*& ptr, bool hasZValue ) const;
+    QgsPoint asPoint( QgsConstWkbPtr &wkbPtr, bool hasZValue ) const;
 
     /** return polyline from wkb */
-    QgsPolyline asPolyline( unsigned char*& ptr, bool hasZValue ) const;
+    QgsPolyline asPolyline( QgsConstWkbPtr &wkbPtr, bool hasZValue ) const;
 
     /** return polygon from wkb */
-    QgsPolygon asPolygon( unsigned char*& ptr, bool hasZValue ) const;
+    QgsPolygon asPolygon( QgsConstWkbPtr &wkbPtr, bool hasZValue ) const;
 
     static bool geosRelOp( char( *op )( const GEOSGeometry*, const GEOSGeometry * ),
                            const QgsGeometry* a, const QgsGeometry* b );
 
     /**Returns < 0 if point(x/y) is left of the line x1,y1 -> x1,y2*/
     double leftOf( double x, double y, double& x1, double& y1, double& x2, double& y2 );
+
+    static inline bool moveVertex( QgsWkbPtr &wkbPtr, const double &x, const double &y, int atVertex, bool hasZValue, int &pointIndex, bool isRing );
+    static inline int deleteVertex( QgsConstWkbPtr &srcPtr, QgsWkbPtr &dstPtr, int atVertex, bool hasZValue, int &pointIndex, bool isRing, bool lastItem );
+    static inline bool insertVertex( QgsConstWkbPtr &srcPtr, QgsWkbPtr &dstPtr, int beforeVertex, const double &x, const double &y, bool hasZValue, int &pointIndex, bool isRing );
+
+    /** try to convert the geometry to a point */
+    QgsGeometry* convertToPoint( bool destMultipart );
+    /** try to convert the geometry to a line */
+    QgsGeometry* convertToLine( bool destMultipart );
+    /** try to convert the geometry to a polygon */
+    QgsGeometry* convertToPolygon( bool destMultipart );
 }; // class QgsGeometry
 
 Q_DECLARE_METATYPE( QgsGeometry );
+
+class CORE_EXPORT QgsWkbPtr
+{
+    mutable unsigned char *mP;
+
+  public:
+    QgsWkbPtr( unsigned char *p ) { mP = p; }
+
+    inline const QgsWkbPtr &operator>>( double &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsWkbPtr &operator>>( int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsWkbPtr &operator>>( unsigned int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsWkbPtr &operator>>( char &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsWkbPtr &operator>>( QGis::WkbType &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+
+    inline QgsWkbPtr &operator<<( const double &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline QgsWkbPtr &operator<<( const int &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline QgsWkbPtr &operator<<( const unsigned int &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline QgsWkbPtr &operator<<( const char &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline QgsWkbPtr &operator<<( const QGis::WkbType &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
+
+    inline void operator+=( int n ) { mP += n; }
+
+    inline operator unsigned char *() const { return mP; }
+};
+
+class CORE_EXPORT QgsConstWkbPtr
+{
+    mutable unsigned char *mP;
+
+  public:
+    QgsConstWkbPtr( const unsigned char *p ) { mP = ( unsigned char * ) p; }
+
+    inline const QgsConstWkbPtr &operator>>( double &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsConstWkbPtr &operator>>( int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsConstWkbPtr &operator>>( unsigned int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsConstWkbPtr &operator>>( char &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+    inline const QgsConstWkbPtr &operator>>( QGis::WkbType &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
+
+    inline void operator+=( int n ) { mP += n; }
+
+    inline operator const unsigned char *() const { return mP; }
+};
 
 #endif

@@ -101,6 +101,7 @@ namespace pal
       bool active;
       bool toLabel;
       bool displayAll;
+      bool centroidInside;
 
       Units label_unit;
 
@@ -112,6 +113,7 @@ namespace pal
       unsigned long arrangementFlags;
       LabelMode mode;
       bool mergeLines;
+      double repeatDistance;
 
       UpsideDownLabels upsidedownLabels;
 
@@ -288,8 +290,14 @@ namespace pal
       void setMergeConnectedLines( bool m ) { mergeLines = m; }
       bool getMergeConnectedLines() const { return mergeLines; }
 
+      void setRepeatDistance( double distance ) { repeatDistance = distance; }
+      double getRepeatDistance() const { return repeatDistance; }
+
       void setUpsidedownLabels( UpsideDownLabels ud ) { upsidedownLabels = ud; }
       UpsideDownLabels getUpsidedownLabels() const { return upsidedownLabels; }
+
+      void setCentroidInside( bool forceInside ) { centroidInside = forceInside; }
+      bool getCentroidInside() const { return centroidInside; }
 
       /**
        * \brief register a feature in the layer
@@ -324,6 +332,8 @@ namespace pal
 
       /** join connected features with the same label text */
       void joinConnectedFeatures();
+
+      void chopFeatures( double chopInterval );
 
   };
 

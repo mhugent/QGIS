@@ -18,25 +18,57 @@
 #define QGSATTRIBUTEDIALOG_H
 
 #include "qgsfeature.h"
+#include "qgsattributeeditorcontext.h"
+#include "qgsattributeform.h"
 
-class QDialog;
-class QgsFeature;
+#include <QDialog>
+#include <QPointer>
+
 class QLayout;
-class QgsField;
-class QgsVectorLayer;
-class QgsHighlight;
+
 class QgsDistanceArea;
+class QgsFeature;
+class QgsField;
+class QgsHighlight;
+class QgsVectorLayer;
+class QgsVectorLayerTools;
 
 class GUI_EXPORT QgsAttributeDialog : public QObject
 {
     Q_OBJECT
 
   public:
+    /**
+     * Create an attribute dialog for a given layer and feature
+     *
+     * @param vl                The layer for which the dialog will be generated
+     * @param thepFeature       A feature for which the dialog will be generated
+     * @param featureOwner      Set to true, if the dialog should take ownership of the feature
+     * @param myDa              A QgsDistanceArea which will be used for expressions
+     * @param parent            A parent widget for the dialog
+     * @param showDialogButtons True: Show the dialog buttons accept/cancel
+     *
+     * @deprecated
+     */
     QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeature, bool featureOwner, QgsDistanceArea myDa, QWidget* parent = 0, bool showDialogButtons = true );
+
+    /**
+     * Create an attribute dialog for a given layer and feature
+     *
+     * @param vl                The layer for which the dialog will be generated
+     * @param thepFeature       A feature for which the dialog will be generated
+     * @param featureOwner      Set to true, if the dialog should take ownership of the feature
+     * @param parent            A parent widget for the dialog
+     * @param showDialogButtons True: Show the dialog buttons accept/cancel
+     * @param context           The context in which this dialog is created
+     *
+     */
+    QgsAttributeDialog( QgsVectorLayer *vl, QgsFeature *thepFeature, bool featureOwner, QWidget* parent = 0, bool showDialogButtons = true, QgsAttributeEditorContext context = QgsAttributeEditorContext() );
+
     ~QgsAttributeDialog();
 
     /** Saves the size and position for the next time
-     *  this dialog box was used.
+     *  this dialog box will be used.
      */
     void saveGeometry();
 
@@ -45,34 +77,76 @@ class GUI_EXPORT QgsAttributeDialog : public QObject
      */
     void restoreGeometry();
 
+    /**
+     * @brief setHighlight
+     * @param h The highlight. Ownership is taken.
+     */
     void setHighlight( QgsHighlight *h );
 
     QDialog *dialog() { return mDialog; }
 
-    QgsFeature* feature() { return mFeature; }
+    QgsAttributeForm* attributeForm() { return mAttributeForm; }
+
+    const QgsFeature* feature() { return &mAttributeForm->feature(); }
+
+    /**
+     * Is this dialog editable?
+     *
+     * @return returns true, if this dialog was created in an editable manner.
+     */
+    bool editable() { return mAttributeForm->editable(); }
+
+    /**
+     * Toggles the form mode between edit feature and add feature.
+     * If set to true, the dialog will be editable even with an invalid feature.
+     * If set to true, the dialog will add a new feature when the form is accepted.
+     *
+     * @param isAddDialog If set to true, turn this dialog into an add feature dialog.
+     */
+    void setIsAddDialog( bool isAddDialog ) { mAttributeForm->setIsAddDialog( isAddDialog ); }
+
+    /**
+     * Sets the edit command message (Undo) that will be used when the dialog is accepted
+     *
+     * @param message The message
+     */
+    void setEditCommandMessage( const QString& message ) { mAttributeForm->setEditCommandMessage( message ); }
 
   public slots:
     void accept();
 
+    //! Show the dialog and block the application until the dialog is closed. Ownership of this object is not changed.
     int exec();
+
+    //! Show the dialog non-blocking. Reparents this dialog to be a child of the dialog form and is deleted when
+    //! closed.
     void show();
 
-    void dialogDestroyed();
+  protected:
+    bool eventFilter( QObject *obj, QEvent *e );
+
+  private slots:
+    void onDialogFinished( int result );
 
   private:
-    bool eventFilter( QObject *obj, QEvent *event );
+    void init( QgsVectorLayer* layer, QgsFeature* feature, QgsAttributeEditorContext& context, QWidget* parent );
 
-    QDialog *mDialog;
+    // Using a guarded pointer we can savely delete the dialog in the destructor even
+    // when the dialog is this object's parent
+    QPointer<QDialog> mDialog;
     QString mSettingsPath;
     // Used to sync multiple widgets for the same field
-    QMap<int, QWidget*> mProxyWidgets;
-    QgsVectorLayer *mLayer;
-    QgsFeature *mFeature;
-    bool mFeatureOwner;
     QgsHighlight *mHighlight;
     int mFormNr;
-    static int smFormCounter;
     bool mShowDialogButtons;
+    QString mReturnvarname;
+    QgsAttributeForm* mAttributeForm;
+
+    // true if this dialog is editable
+    bool mEditable;
+
+    static int sFormCounter;
+    static QString sSettingsPath;
 };
 
 #endif

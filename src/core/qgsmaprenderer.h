@@ -26,6 +26,7 @@
 #include "qgsrectangle.h"
 #include "qgsrendercontext.h"
 #include "qgsfeature.h"
+#include "qgsmapsettings.h"
 
 class QDomDocument;
 class QDomNode;
@@ -72,7 +73,10 @@ class CORE_EXPORT QgsLabelingEngineInterface
     virtual ~QgsLabelingEngineInterface() {}
 
     //! called when we're going to start with rendering
-    virtual void init( QgsMapRenderer* mp ) = 0;
+    //! @deprecated since 2.4 - use override with QgsMapSettings
+    Q_DECL_DEPRECATED virtual void init( QgsMapRenderer* mp ) = 0;
+    //! called when we're going to start with rendering
+    virtual void init( const QgsMapSettings& mapSettings ) = 0;
     //! called to find out whether the layer is used for labeling
     virtual bool willUseLayer( QgsVectorLayer* layer ) = 0;
     //! clears all PAL layer settings for registered layers
@@ -80,37 +84,47 @@ class CORE_EXPORT QgsLabelingEngineInterface
     virtual void clearActiveLayers() = 0;
     //! clears data defined objects from PAL layer settings for a registered layer
     //! @note: this method was added in version 1.9
-    virtual void clearActiveLayer( QgsVectorLayer* layer ) = 0;
+    virtual void clearActiveLayer( const QString& layerID ) = 0;
     //! called when starting rendering of a layer
     //! @note: this method was added in version 1.6
-    virtual int prepareLayer( QgsVectorLayer* layer, QSet<int>& attrIndices, QgsRenderContext& ctx ) = 0;
+    virtual int prepareLayer( QgsVectorLayer* layer, QStringList& attrNames, QgsRenderContext& ctx ) = 0;
     //! returns PAL layer settings for a registered layer
     //! @note: this method was added in version 1.9
     virtual QgsPalLayerSettings& layer( const QString& layerName ) = 0;
     //! adds a diagram layer to the labeling engine
-    virtual int addDiagramLayer( QgsVectorLayer* layer, QgsDiagramLayerSettings* s )
+    virtual int addDiagramLayer( QgsVectorLayer* layer, const QgsDiagramLayerSettings* s )
     { Q_UNUSED( layer ); Q_UNUSED( s ); return 0; }
     //! called for every feature
-    virtual void registerFeature( QgsVectorLayer* layer, QgsFeature& feat, const QgsRenderContext& context = QgsRenderContext() ) = 0;
+    virtual void registerFeature( const QString& layerID, QgsFeature& feat, const QgsRenderContext& context = QgsRenderContext() ) = 0;
     //! called for every diagram feature
-    virtual void registerDiagramFeature( QgsVectorLayer* layer, QgsFeature& feat, const QgsRenderContext& context = QgsRenderContext() )
-    { Q_UNUSED( layer ); Q_UNUSED( feat ); Q_UNUSED( context ); }
+    virtual void registerDiagramFeature( const QString& layerID, QgsFeature& feat, const QgsRenderContext& context = QgsRenderContext() )
+    { Q_UNUSED( layerID ); Q_UNUSED( feat ); Q_UNUSED( context ); }
     //! called when the map is drawn and labels should be placed
     virtual void drawLabeling( QgsRenderContext& context ) = 0;
     //! called when we're done with rendering
     virtual void exit() = 0;
     //! return infos about labels at a given (map) position
     //! @note: this method was added in version 1.7
-    virtual QList<QgsLabelPosition> labelsAtPosition( const QgsPoint& p ) = 0;
+    //! @deprecated since 2.4 - use takeResults() and methods of QgsLabelingResults
+    Q_DECL_DEPRECATED virtual QList<QgsLabelPosition> labelsAtPosition( const QgsPoint& p ) = 0;
     //! return infos about labels within a given (map) rectangle
     //! @note: this method was added in version 1.9
-    virtual QList<QgsLabelPosition> labelsWithinRect( const QgsRectangle& r ) = 0;
+    //! @deprecated since 2.4 - use takeResults() and methods of QgsLabelingResults
+    Q_DECL_DEPRECATED virtual QList<QgsLabelPosition> labelsWithinRect( const QgsRectangle& r ) = 0;
 
     //! called when passing engine among map renderers
     virtual QgsLabelingEngineInterface* clone() = 0;
 };
 
+struct CORE_EXPORT QgsLayerCoordinateTransform
+{
+  QString srcAuthId;
+  QString destAuthId;
+  int srcDatumTransform; //-1 if unknown or not specified
+  int destDatumTransform;
+};
 
+// ### QGIS 3: remove QgsMapRenderer in favor of QgsMapRendererJob
 
 /** \ingroup core
  * A non GUI class for rendering a map layer set onto a QPainter.
@@ -157,7 +171,8 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     ~QgsMapRenderer();
 
     //! starts rendering
-    //! @ param forceWidthScale Force a specific scale factor for line widths and marker sizes. Automatically calculated from output device DPI if 0
+    //! @param painter painter to render to
+    //! @param forceWidthScale Force a specific scale factor for line widths and marker sizes. Automatically calculated from output device DPI if 0
     void render( QPainter* painter, double* forceWidthScale = 0 );
 
     //! sets extent and checks whether suitable (returns false if not)
@@ -175,8 +190,8 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     void setScale( double scale ) {mScale = scale;}
     double mapUnitsPerPixel() const { return mMapUnitsPerPixel; }
 
-    int width() const { return mSize.width(); };
-    int height() const { return mSize.height(); };
+    int width() const { return ( int ) mSize.width(); }
+    int height() const { return ( int ) mSize.height(); }
 
     //! Recalculate the map scale
     void updateScale();
@@ -243,7 +258,7 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     bool hasCrsTransformEnabled() const;
 
     //! sets destination coordinate reference system
-    void setDestinationCrs( const QgsCoordinateReferenceSystem& crs );
+    void setDestinationCrs( const QgsCoordinateReferenceSystem& crs, bool refreshCoordinateTransformInfo = true, bool transformExtent = true );
 
     //! returns CRS of destination coordinate reference system
     const QgsCoordinateReferenceSystem& destinationCrs() const;
@@ -284,19 +299,42 @@ class CORE_EXPORT QgsMapRenderer : public QObject
 
     //! Returns a QPainter::CompositionMode corresponding to a BlendMode
     //! Added in 1.9
-    static QPainter::CompositionMode getCompositionMode( const QgsMapRenderer::BlendMode blendMode );
+    static QPainter::CompositionMode getCompositionMode( const QgsMapRenderer::BlendMode &blendMode );
     //! Returns a BlendMode corresponding to a QPainter::CompositionMode
     //! Added in 1.9
-    static QgsMapRenderer::BlendMode getBlendModeEnum( const QPainter::CompositionMode blendMode );
+    static QgsMapRenderer::BlendMode getBlendModeEnum( const QPainter::CompositionMode &blendMode );
+
+    void addLayerCoordinateTransform( const QString& layerId, const QString& srcAuthId, const QString& destAuthId, int srcDatumTransform = -1, int destDatumTransform = -1 );
+    void clearLayerCoordinateTransforms();
+
+    const QgsCoordinateTransform* transformation( const QgsMapLayer *layer ) const;
+
+    //! bridge to QgsMapSettings
+    //! @note added in 2.4
+    const QgsMapSettings& mapSettings();
 
   signals:
 
+    //! @deprecated in 2.4 - not emitted anymore
     void drawingProgress( int current, int total );
 
+    /** This signal is emitted when CRS transformation is enabled/disabled.
+     *  @param flag true if transformation is enabled.
+     *  @deprecated Use hasCrsTransformEnabledChanged( bool flag )
+     *              to avoid conflict with method of the same name). */
+#ifndef Q_MOC_RUN
+    Q_DECL_DEPRECATED
+#endif
     void hasCrsTransformEnabled( bool flag );
+
+    /** This signal is emitted when CRS transformation is enabled/disabled.
+     *  @param flag true if transformation is enabled.
+     *  @note Added in 2.4 */
+    void hasCrsTransformEnabledChanged( bool flag );
 
     void destinationSrsChanged();
 
+    //! @deprecated in 2.4 - not emitted anymore
     void updateMap();
 
     void mapUnitsChanged();
@@ -304,10 +342,18 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     //! emitted when layer's draw() returned false
     void drawError( QgsMapLayer* );
 
+    //! emitted when the current extent gets changed
+    //! @note added in 2.4
+    void extentsChanged();
+
+    //! Notifies higher level components to show the datum transform dialog and add a QgsLayerCoordinateTransformInfo for that layer
+    void datumTransformInfoRequested( const QgsMapLayer* ml, const QString& srcAuthId, const QString& destAuthId ) const;
+
+
   public slots:
 
-    //! called by signal from layer current being drawn
-    void onDrawingProgress( int current, int total );
+    //! @deprecated in 2.4 - does nothing
+    Q_DECL_DEPRECATED void onDrawingProgress( int current, int total );
 
   protected:
 
@@ -376,8 +422,11 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     //! Locks rendering loop for concurrent draws
     QMutex mRenderMutex;
 
-  private:
-    const QgsCoordinateTransform* tr( QgsMapLayer *layer );
+    //! map settings - used only for export in mapSettings() for use in classes that deal with QgsMapSettings
+    QgsMapSettings mMapSettings;
+
+    QHash< QString, QgsLayerCoordinateTransform > mLayerCoordinateTransformInfo;
+
 };
 
 #endif

@@ -43,17 +43,12 @@ typedef QString protocolDrivers_t();
 //typedef int dataCapabilities_t();
 //typedef QgsDataItem * dataItem_t(QString);
 
-QgsProviderRegistry *QgsProviderRegistry::_instance = 0;
+
 
 QgsProviderRegistry *QgsProviderRegistry::instance( QString pluginPath )
 {
-  if ( _instance == 0 )
-  {
-    _instance = new QgsProviderRegistry( pluginPath );
-  }
-
-  return _instance;
-
+  static QgsProviderRegistry* sInstance( new QgsProviderRegistry( pluginPath ) );
+  return sInstance;
 } // QgsProviderRegistry::instance
 
 
@@ -204,8 +199,26 @@ QgsProviderRegistry::QgsProviderRegistry( QString pluginPath )
 } // QgsProviderRegistry ctor
 
 
+// typedef for the unload dataprovider function
+typedef void cleanupProviderFunction_t();
+
 QgsProviderRegistry::~QgsProviderRegistry()
 {
+  Providers::const_iterator it = mProviders.begin();
+
+  while ( it != mProviders.end() )
+  {
+    QgsDebugMsg( QString( "cleanup:%1" ).arg( it->first ) );
+    QString lib = it->second->library();
+    QLibrary myLib( lib );
+    if ( myLib.isLoaded() )
+    {
+      cleanupProviderFunction_t* cleanupFunc = ( cleanupProviderFunction_t* ) cast_to_fptr( myLib.resolve( "cleanupProvider" ) );
+      if ( cleanupFunc )
+        cleanupFunc();
+    }
+    ++it;
+  }
 }
 
 
@@ -270,7 +283,7 @@ QString QgsProviderRegistry::pluginList( bool asHTML ) const
     else
       list += "\n";
 
-    it++;
+    ++it;
   }
 
   if ( asHTML )
@@ -295,7 +308,6 @@ QDir const & QgsProviderRegistry::libraryDirectory() const
 
 // typedef for the QgsDataProvider class factory
 typedef QgsDataProvider * classFactoryFunction_t( const QString * );
-
 
 
 /** Copied from QgsVectorLayer::setDataProvider
@@ -360,10 +372,10 @@ QgsDataProvider *QgsProviderRegistry::provider( QString const & providerKey, QSt
 } // QgsProviderRegistry::setDataProvider
 
 // This should be QWidget, not QDialog
-typedef QWidget * selectFactoryFunction_t( QWidget * parent, Qt::WFlags fl );
+typedef QWidget * selectFactoryFunction_t( QWidget * parent, Qt::WindowFlags fl );
 
 QWidget* QgsProviderRegistry::selectWidget( const QString & providerKey,
-    QWidget * parent, Qt::WFlags fl )
+    QWidget * parent, Qt::WindowFlags fl )
 {
   selectFactoryFunction_t * selectFactory =
     ( selectFactoryFunction_t * ) cast_to_fptr( function( providerKey, "selectWidget" ) );
@@ -451,7 +463,7 @@ QString QgsProviderRegistry::protocolDrivers() const
 QStringList QgsProviderRegistry::providerList() const
 {
   QStringList lst;
-  for ( Providers::const_iterator it = mProviders.begin(); it != mProviders.end(); it++ )
+  for ( Providers::const_iterator it = mProviders.begin(); it != mProviders.end(); ++it )
   {
     lst.append( it->first );
   }

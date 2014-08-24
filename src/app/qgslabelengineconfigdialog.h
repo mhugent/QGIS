@@ -19,13 +19,12 @@
 
 #include "ui_qgsengineconfigdialog.h"
 
-class QgsPalLabeling;
 
-class QgsLabelEngineConfigDialog : public QDialog, private Ui::QgsEngineConfigDialog
+class APP_EXPORT QgsLabelEngineConfigDialog : public QDialog, private Ui::QgsEngineConfigDialog
 {
     Q_OBJECT
   public:
-    QgsLabelEngineConfigDialog( QgsPalLabeling* lbl, QWidget* parent = NULL );
+    QgsLabelEngineConfigDialog( QWidget* parent = NULL );
 
   public slots:
     void onOK();
@@ -33,7 +32,6 @@ class QgsLabelEngineConfigDialog : public QDialog, private Ui::QgsEngineConfigDi
     void setDefaults();
 
   protected:
-    QgsPalLabeling* mLBL;
 };
 
 #endif // QGSLABELENGINECONFIGDIALOG_H
