@@ -21,15 +21,31 @@
 #include"qgsfeatureiterator.h"
 
 class QgsSOSProvider;
+class QgsSpatialIndex;
 
-class QgsSOSFeatureIterator: public QgsAbstractFeatureIterator
+class QgsSOSFeatureSource: public QgsAbstractFeatureSource
 {
   public:
-    QgsSOSFeatureIterator( QgsSOSProvider* provider, const QgsFeatureRequest& request );
+    QgsSOSFeatureSource( const QgsSOSProvider* p );
+    ~QgsSOSFeatureSource();
+
+    QgsFeatureIterator getFeatures( const QgsFeatureRequest& request );
+
+  private:
+    QgsSpatialIndex* mSpatialIndex;
+    QMap<QgsFeatureId, QgsFeature* > mFeatures;
+    QgsFields mFields;
+    friend class QgsSOSFeatureIterator;
+};
+
+class QgsSOSFeatureIterator: public QgsAbstractFeatureIteratorFromSource<QgsSOSFeatureSource>
+{
+  public:
+    QgsSOSFeatureIterator( QgsSOSFeatureSource* source, const QgsFeatureRequest& request );
     ~QgsSOSFeatureIterator();
 
     //! fetch next feature, return true on success
-    bool nextFeature( QgsFeature& f );
+    // bool nextFeature( QgsFeature& f );
     //! reset the iterator to the starting position
     bool rewind();
     //! end of iterating: free the resources / lock
@@ -43,10 +59,12 @@ class QgsSOSFeatureIterator: public QgsAbstractFeatureIterator
      * @param f The feature to write to
      * @return  true if a feature was written to f
      */
-    virtual bool fetchFeature( QgsFeature& f ) {}
+    virtual bool fetchFeature( QgsFeature& f );
+
+    void copyFeature( QgsFeature* f, QgsFeature& feature, bool fetchGeometry, QgsAttributeList fetchAttributes );
 
   private:
-    QgsSOSProvider* mProvider;
+    QgsSOSFeatureSource* mSource;
     QList<QgsFeatureId> mSelectedFeatures;
     QList<QgsFeatureId>::const_iterator mFeatureIterator;
 };

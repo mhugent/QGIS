@@ -64,9 +64,15 @@ void QgsSOSProvider::reloadSpatialIndex()
   }
 }
 
+QgsAbstractFeatureSource* QgsSOSProvider::featureSource() const
+{
+  return new QgsSOSFeatureSource( this );
+}
+
 QgsFeatureIterator QgsSOSProvider::getFeatures( const QgsFeatureRequest& request )
 {
-  return QgsFeatureIterator( new QgsSOSFeatureIterator( this, request ) );
+  QgsSOSFeatureSource* source = new QgsSOSFeatureSource( this );
+  return QgsFeatureIterator( new QgsSOSFeatureIterator( source, request ) );
 }
 
 QGis::WkbType QgsSOSProvider::geometryType() const

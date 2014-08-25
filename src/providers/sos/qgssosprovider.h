@@ -33,6 +33,8 @@ class QgsSOSProvider: public QgsVectorDataProvider
 
     QgsFeatureIterator getFeatures( const QgsFeatureRequest& request = QgsFeatureRequest() );
 
+    virtual QgsAbstractFeatureSource* featureSource() const;
+
     //abstract methods QgsVectorDataProvider
     QGis::WkbType geometryType() const;
     long featureCount() const;
@@ -52,11 +54,13 @@ class QgsSOSProvider: public QgsVectorDataProvider
     QMap<QgsFeatureId, QgsFeature* > mFeatures;
     QgsSpatialIndex* mSpatialIndex;
     QgsCoordinateReferenceSystem mCrs;
-    friend class QgsSOSFeatureIterator;
+
     QgsSOSFeatureIterator* mActiveIterator;
 
     void loadData();
     void reloadSpatialIndex();
+
+    friend class QgsSOSFeatureSource;
 };
 
 #endif // QGSSOSPROVIDER_H
