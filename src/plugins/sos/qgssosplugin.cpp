@@ -43,12 +43,12 @@ void QgsSOSPlugin::initGui()
 {
   if ( mIface )
   {
-    mAction = new QAction( tr( "Sensor observation service" ), 0 );
+    mAction = new QAction( QIcon( ":/sos.png" ), tr( "Sensor observation service" ), 0 );
     QObject::connect( mAction, SIGNAL( triggered() ), this, SLOT( showSOSDialog() ) );
     mIface->addWebToolBarIcon( mAction );
     mIface->addPluginToWebMenu( tr( "Sensor observation service" ), mAction );
 
-    mSensorInfoAction = new QAction( tr( "Sensor info" ), 0 );
+    mSensorInfoAction = new QAction( QIcon( ":/sensor_info.png" ), tr( "Sensor info" ), 0 );
     QObject::connect( mSensorInfoAction, SIGNAL( toggled( bool ) ), this, SLOT( toggleSensorInfo( bool ) ) );
     mSensorInfoAction->setCheckable( true );
     mIface->addWebToolBarIcon( mSensorInfoAction );

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/" >
+        <file>sos.png</file>
+        <file>sensor_info.png</file>
+    </qresource>
+</RCC>
