@@ -352,5 +352,34 @@ bool QgsAppLegendInterface::setCurrentLayer( QgsMapLayer *layer )
 
 void QgsAppLegendInterface::moveLayer( const QgsMapLayer* ml, const QgsMapLayer* after )
 {
- /* mLegend->moveLayer( ml, after ); */ //todo
+  if ( !ml || !after )
+  {
+    return;
+  }
+
+  QgsLayerTreeLayer* mlTreeLayer = mLayerTreeView->layerTreeModel()->rootGroup()->findLayer( ml->id() );
+  QgsLayerTreeLayer* afterTreeLayer = mLayerTreeView->layerTreeModel()->rootGroup()->findLayer( after->id() );
+  if ( !mlTreeLayer || !afterTreeLayer )
+  {
+    return;
+  }
+
+  //group of layer to move into
+  QgsLayerTreeGroup* afterTreeGroup = QgsLayerTree::toGroup( afterTreeLayer->parent() );
+  if ( !afterTreeGroup )
+  {
+    return;
+  }
+
+  //find index
+  QList<QgsLayerTreeNode*> childList = afterTreeGroup->children();
+  int afterIndex = childList.indexOf( afterTreeLayer );
+  if ( afterIndex == -1 )
+  {
+    return;
+  }
+  afterTreeGroup->insertLayer( afterIndex + 1, const_cast<QgsMapLayer*>( ml ) ); //that function should really accept a const layer
+
+  QgsLayerTreeGroup* nodeLayerParentGroup = QgsLayerTree::toGroup( mlTreeLayer->parent() );
+  nodeLayerParentGroup->removeChildNode( mlTreeLayer );
 }
