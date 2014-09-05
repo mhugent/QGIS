@@ -90,6 +90,7 @@ INCLUDE_DIRECTORIES(
   ${QT_INCLUDE_DIR}
   ${QGIS_INCLUDE_DIR}
   ../core
+  ../core/geometry
   ../core/raster
   ../core/symbology-ng
   ../core/composer

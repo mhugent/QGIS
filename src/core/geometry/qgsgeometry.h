@@ -21,6 +21,7 @@ email                : morb at ozemail dot com dot au
 #include <QDomDocument>
 
 #include "qgis.h"
+#include "qgswkbptr.h"
 
 #include <geos_c.h>
 
@@ -36,6 +37,7 @@ email                : morb at ozemail dot com dot au
 #include <QSet>
 
 class QgsVectorLayer;
+class QgsAbstractGeometryV2;
 
 /** polyline is represented as a vector of points */
 typedef QVector<QgsPoint> QgsPolyline;
@@ -84,6 +86,8 @@ class CORE_EXPORT QgsGeometry
       @note not available in python bindings
       */
     QgsGeometry & operator=( QgsGeometry const & rhs );
+
+    QgsGeometry( QgsAbstractGeometryV2* geom );
 
     //! Destructor
     ~QgsGeometry();
@@ -513,196 +517,15 @@ class CORE_EXPORT QgsGeometry
     static QgsGeometry *unaryUnion( const QList<QgsGeometry*>& geometryList );
 
   private:
-    // Private variables
 
-    // All of these are mutable since there may be on-the-fly
-    // conversions between WKB, GEOS and Wkt;
-    // However the intent is the const functions do not
-    // semantically change the value that this object represents.
+    QgsAbstractGeometryV2* mGeometry;
+    mutable const unsigned char* mWkb; //store wkb pointer for backward compatibility
+    mutable int mWkbSize;
 
-    /** pointer to geometry in binary WKB format
-        This is the class' native implementation
-     */
-    mutable unsigned char * mGeometry;
+    void detach(); //make sure mGeometry only referenced from this instance
 
-    /** size of geometry */
-    mutable size_t mGeometrySize;
-
-    /** cached GEOS version of this geometry */
-    mutable GEOSGeometry* mGeos;
-
-    /** If the geometry has been set since the last conversion to WKB **/
-    mutable bool mDirtyWkb;
-
-    /** If the geometry has been set  since the last conversion to GEOS **/
-    mutable bool mDirtyGeos;
-
-
-    // Private functions
-
-    /** Converts from the WKB geometry to the GEOS geometry.
-        @return   true in case of success and false else
-     */
-    bool exportWkbToGeos() const;
-
-    /** Converts from the GEOS geometry to the WKB geometry.
-        @return   true in case of success and false else
-     */
-    bool exportGeosToWkb() const;
-
-    /** Insert a new vertex before the given vertex index (first number is index 0)
-     *  in the given GEOS Coordinate Sequence.
-     *  If the requested vertex number is greater
-     *  than the last actual vertex,
-     *  it is assumed that the vertex is to be appended instead of inserted.
-     *  @param x x coordinate
-     *  @param y y coordinate
-     *  @param beforeVertex insert before vertex with this index
-     *  @param old_sequence   The sequence to update (The caller remains the owner).
-     *  @param new_sequence   The updated sequence (The caller becomes the owner if the function returns true).
-     *  Returns false if beforeVertex does not correspond to a valid vertex number
-     *  on the Coordinate Sequence.
-     */
-    bool insertVertex( double x, double y,
-                       int beforeVertex,
-                       const GEOSCoordSequence*  old_sequence,
-                       GEOSCoordSequence** new_sequence );
-
-    /**Translates a single vertex by dx and dy.
-    @param wkbPtr pointer to current position in wkb array. Is increased automatically by the function
-    @param dx translation of x coordinate
-    @param dy translation of y coordinate
-    @param hasZValue 25D type?*/
-    void translateVertex( QgsWkbPtr &wkbPtr, double dx, double dy, bool hasZValue );
-
-    /**Transforms a single vertex by ct.
-    @param wkbPtr pointer to current position in wkb. Is increased automatically by the function
-    @param ct the QgsCoordinateTransform
-    @param hasZValue 25D type?*/
-    void transformVertex( QgsWkbPtr &wkbPtr, const QgsCoordinateTransform& ct, bool hasZValue );
-
-    //helper functions for geometry splitting
-
-    /**Splits line/multiline geometries
-     @param splitLine the line that splits the feature
-     @param newGeometries new geometries if splitting was successful
-     @return 0 in case of success, 1 if geometry has not been split, error else*/
-    int splitLinearGeometry( GEOSGeometry *splitLine, QList<QgsGeometry*>& newGeometries );
-    /**Splits polygon/multipolygon geometries
-       @return 0 in case of success, 1 if geometry has not been split, error else*/
-    int splitPolygonGeometry( GEOSGeometry *splitLine, QList<QgsGeometry*>& newGeometries );
-    /**Splits line/multiline geometries following a single point*/
-    GEOSGeometry* linePointDifference( GEOSGeometry* GEOSsplitPoint );
-
-    /**Finds out the points that need to be tested for topological correctnes if this geometry will be split
-     @return 0 in case of success*/
-    int topologicalTestPointsSplit( const GEOSGeometry* splitLine, QList<QgsPoint>& testPoints ) const;
-
-    /**Creates a new line from an original line and a reshape line. The part of the input line from the first to the last intersection with the
-        reshape line will be replaced. The calling function takes ownership of the result.
-    @param origLine the original line
-    @param reshapeLineGeos the reshape line
-    @return the reshaped line or 0 in case of error*/
-    static GEOSGeometry* reshapeLine( const GEOSGeometry* origLine, const GEOSGeometry* reshapeLineGeos );
-
-    /**Creates a new polygon replacing the part from the first to the second intersection with the reshape line. As a polygon ring is always closed,
-        the method keeps the longer part of the existing boundary
-    @param polygon geometry to reshape
-    @param reshapeLineGeos the reshape line
-    @return the reshaped polygon or 0 in case of error*/
-    static GEOSGeometry* reshapePolygon( const GEOSGeometry* polygon, const GEOSGeometry* reshapeLineGeos );
-
-    /**Nodes together a split line and a (multi-) polygon geometry in a multilinestring
-     @return the noded multiline geometry or 0 in case of error. The calling function takes ownership of the node geometry*/
-    static GEOSGeometry* nodeGeometries( const GEOSGeometry *splitLine, const GEOSGeometry *poly );
-
-    /**Tests if line1 is completely contained in line2. This method works with a very small buffer around line2 and therefore is less prone
-        to numerical errors as the corresponding geos method*/
-    static int lineContainedInLine( const GEOSGeometry* line1, const GEOSGeometry* line2 );
-
-    /**Tests if a point is on a line. This method works with a very small buffer and is thus less prone to numerical problems as the direct geos functions.
-      @param point the point to test
-      @param line line to test
-      @return 0 not contained, 1 if contained, <0 in case of error*/
-    static int pointContainedInLine( const GEOSGeometry* point, const GEOSGeometry* line );
-
-    /** Determines the maximum number of digits before the dot */
-    static int geomDigits( const GEOSGeometry* geom );
-
-    /**Returns number of single geometry in a geos geometry. Is save for geos 2 and 3*/
-    int numberOfGeometries( GEOSGeometry* g ) const;
-
-    int mergeGeometriesMultiTypeSplit( QVector<GEOSGeometry*>& splitResult );
-
-    /** return point from wkb */
-    QgsPoint asPoint( QgsConstWkbPtr &wkbPtr, bool hasZValue ) const;
-
-    /** return polyline from wkb */
-    QgsPolyline asPolyline( QgsConstWkbPtr &wkbPtr, bool hasZValue ) const;
-
-    /** return polygon from wkb */
-    QgsPolygon asPolygon( QgsConstWkbPtr &wkbPtr, bool hasZValue ) const;
-
-    static bool geosRelOp( char( *op )( const GEOSGeometry*, const GEOSGeometry * ),
-                           const QgsGeometry* a, const QgsGeometry* b );
-
-    /**Returns < 0 if point(x/y) is left of the line x1,y1 -> x1,y2*/
-    double leftOf( double x, double y, double& x1, double& y1, double& x2, double& y2 );
-
-    static inline bool moveVertex( QgsWkbPtr &wkbPtr, const double &x, const double &y, int atVertex, bool hasZValue, int &pointIndex, bool isRing );
-    static inline int deleteVertex( QgsConstWkbPtr &srcPtr, QgsWkbPtr &dstPtr, int atVertex, bool hasZValue, int &pointIndex, bool isRing, bool lastItem );
-    static inline bool insertVertex( QgsConstWkbPtr &srcPtr, QgsWkbPtr &dstPtr, int beforeVertex, const double &x, const double &y, bool hasZValue, int &pointIndex, bool isRing );
-
-    /** try to convert the geometry to a point */
-    QgsGeometry* convertToPoint( bool destMultipart );
-    /** try to convert the geometry to a line */
-    QgsGeometry* convertToLine( bool destMultipart );
-    /** try to convert the geometry to a polygon */
-    QgsGeometry* convertToPolygon( bool destMultipart );
 }; // class QgsGeometry
 
 Q_DECLARE_METATYPE( QgsGeometry );
-
-class CORE_EXPORT QgsWkbPtr
-{
-    mutable unsigned char *mP;
-
-  public:
-    QgsWkbPtr( unsigned char *p ) { mP = p; }
-
-    inline const QgsWkbPtr &operator>>( double &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsWkbPtr &operator>>( int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsWkbPtr &operator>>( unsigned int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsWkbPtr &operator>>( char &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsWkbPtr &operator>>( QGis::WkbType &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-
-    inline QgsWkbPtr &operator<<( const double &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline QgsWkbPtr &operator<<( const int &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline QgsWkbPtr &operator<<( const unsigned int &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline QgsWkbPtr &operator<<( const char &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline QgsWkbPtr &operator<<( const QGis::WkbType &v ) { memcpy( mP, &v, sizeof( v ) ); mP += sizeof( v ); return *this; }
-
-    inline void operator+=( int n ) { mP += n; }
-
-    inline operator unsigned char *() const { return mP; }
-};
-
-class CORE_EXPORT QgsConstWkbPtr
-{
-    mutable unsigned char *mP;
-
-  public:
-    QgsConstWkbPtr( const unsigned char *p ) { mP = ( unsigned char * ) p; }
-
-    inline const QgsConstWkbPtr &operator>>( double &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsConstWkbPtr &operator>>( int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsConstWkbPtr &operator>>( unsigned int &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsConstWkbPtr &operator>>( char &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-    inline const QgsConstWkbPtr &operator>>( QGis::WkbType &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
-
-    inline void operator+=( int n ) { mP += n; }
-
-    inline operator const unsigned char *() const { return mP; }
-};
 
 #endif

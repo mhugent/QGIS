@@ -8,7 +8,8 @@ SET (util_SRCS)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}/../../../src/ui
-  ${CMAKE_CURRENT_SOURCE_DIR}/../core #for render checker class
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/core #for render checker class
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/core/geometry
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/gui
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/gui/symbology-ng
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/gui/raster

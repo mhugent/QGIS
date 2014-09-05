@@ -74,6 +74,7 @@ INCLUDE_DIRECTORIES(
   ${QEXTSERIALPORT_INCLUDE_DIR}
 
   ../src/core
+  ../src/core/geometry
   ../src/core/pal
   ../src/core/composer
   ../src/core/diagram

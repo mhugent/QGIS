@@ -420,8 +420,10 @@ INCLUDE_DIRECTORIES(
   ../analysis/raster
   ../analysis/openstreetmap
   ../core
+  ../core/geometry
   ../core/gps
   ../core/composer
+  ../core/geometry
   ../core/dxf
   ../core/layertree
   ../core/raster

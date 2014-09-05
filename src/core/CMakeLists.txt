@@ -87,7 +87,6 @@ SET(QGIS_CORE_SRCS
   qgsfeaturestore.cpp
   qgsfield.cpp
   qgsfontutils.cpp
-  qgsgeometry.cpp
   qgsgeometrycache.cpp
   qgsgeometrysimplifier.cpp
   qgsgeometryvalidator.cpp
@@ -260,8 +259,12 @@ SET(QGIS_CORE_SRCS
   raster/qgssinglebandgrayrenderer.cpp
   raster/qgssinglebandpseudocolorrenderer.cpp
   raster/qgsbrightnesscontrastfilter.cpp
-  raster/qgshuesaturationfilter.cpp  
-
+  raster/qgshuesaturationfilter.cpp
+  
+  geometry/qgsabstractgeometryv2.cpp
+  geometry/qgsgeometry.cpp
+  geometry/qgsgeometryimport.cpp
+  geometry/qgspointv2.cpp
 )
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -475,7 +478,6 @@ SET(QGIS_CORE_HDRS
   qgsfeaturestore.h
   qgsfield.h
   qgsfontutils.h
-  qgsgeometry.h
   qgsgml.h
   qgsgmlschema.h
   qgsgeometrycache.h
@@ -645,6 +647,8 @@ SET(QGIS_CORE_HDRS
   layertree/qgslayertreenode.h
   layertree/qgslayertreeregistrybridge.h
   layertree/qgslayertreeutils.h
+  
+  geometry/qgsgeometry.h
 )
 
 IF (QT_MOBILITY_LOCATION_FOUND)
@@ -658,6 +662,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
   composer
   dxf
+  geometry
   layertree
   pal
   raster

@@ -604,6 +604,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/layertree
   ../core
   ../core/composer
+  ../core/geometry
   ../core/layertree
   ../core/raster
   ../core/symbology-ng
