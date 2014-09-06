@@ -35,12 +35,13 @@ class QgsPointV2: public QgsAbstractGeometryV2
     double z() const { return mZ; }
     double m() const { return mM; }
 
-    void setX( double x ){ mX = x; }
-    void setY( double y ){ mY = y; }
-    void setZ( double z ){ mZ = z; }
-    void setM( double m ){ mM = m; }
+    void setX( double x ) { mX = x; }
+    void setY( double y ) { mY = y; }
+    void setZ( double z ) { mZ = z; }
+    void setM( double m ) { mM = m; }
 
     virtual QString geometryType() const { return "Point"; }
+    virtual QGis::WkbType wkbType() const;
 
     //implementation of inherited methods
     virtual int dimension() const { return 0; }

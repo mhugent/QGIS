@@ -38,8 +38,9 @@ class QgsAbstractGeometryV2
 
     //mm-sql interface
     virtual int dimension() const = 0;
-    virtual int coordDim() const{ return mCoordDimension; }
+    virtual int coordDim() const { return mCoordDimension; }
     virtual QString geometryType() const = 0;
+    virtual QGis::WkbType wkbType() const = 0;
     /*virtual bool transform( const QgsCoordinateTransform& ct ) =  0;
     virtual bool isEmpty() const = 0;
     virtual bool isSimple() const = 0;

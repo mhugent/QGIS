@@ -18,10 +18,19 @@
 #ifndef QGSGEOMETRYIMPORT_H
 #define QGSGEOMETRYIMPORT_H
 
+#include "qgsrectangle.h"
 #include <QString>
 
 class QgsAbstractGeometryV2;
 typedef struct GEOSGeom_t GEOSGeometry;
+
+//compatibility with old classes
+#include "qgspoint.h"
+typedef QVector<QgsPoint> QgsPolyline;
+typedef QVector<QgsPolyline> QgsPolygon;
+typedef QVector<QgsPoint> QgsMultiPoint;
+typedef QVector<QgsPolyline> QgsMultiPolyline;
+typedef QVector<QgsPolygon> QgsMultiPolygon;
 
 class QgsGeometryImport
 {
@@ -29,6 +38,20 @@ class QgsGeometryImport
     static QgsAbstractGeometryV2* geomFromWkb( const unsigned char* wkb, int wkbSize );
     static QgsAbstractGeometryV2* geomFromWkt( const QString& text );
     static QgsAbstractGeometryV2* geomFromGeos( const GEOSGeometry* geos );
+    /** construct geometry from a point */
+    static QgsAbstractGeometryV2* fromPoint( const QgsPoint& point );
+    /** construct geometry from a multipoint */
+    static QgsAbstractGeometryV2* fromMultiPoint( const QgsMultiPoint& multipoint );
+    /** construct geometry from a polyline */
+    static QgsAbstractGeometryV2* fromPolyline( const QgsPolyline& polyline );
+    /** construct geometry from a multipolyline*/
+    static QgsAbstractGeometryV2* fromMultiPolyline( const QgsMultiPolyline& multiline );
+    /** construct geometry from a polygon */
+    static QgsAbstractGeometryV2* fromPolygon( const QgsPolygon& polygon );
+    /** construct geometry from a multipolygon */
+    static QgsAbstractGeometryV2* fromMultiPolygon( const QgsMultiPolygon& multipoly );
+    /** construct geometry from a rectangle */
+    static QgsAbstractGeometryV2* fromRect( const QgsRectangle& rect );
 };
 
 #endif // QGSGEOMETRYIMPORT_H
