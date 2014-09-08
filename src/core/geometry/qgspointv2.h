@@ -41,7 +41,6 @@ class QgsPointV2: public QgsAbstractGeometryV2
     void setM( double m ) { mM = m; }
 
     virtual QString geometryType() const { return "Point"; }
-    virtual QGis::WkbType wkbType() const;
 
     //implementation of inherited methods
     virtual int dimension() const { return 0; }

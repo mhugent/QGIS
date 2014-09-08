@@ -20,102 +20,63 @@
 #include "qgsapplication.h"
 #include "qgswkbptr.h"
 
-QgsPointV2::QgsPointV2( double x, double y ): QgsAbstractGeometryV2( 2, false ), mX( x ), mY( y ), mZ( 0.0 ), mM( 0.0 )
-{}
+QgsPointV2::QgsPointV2( double x, double y ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( 0.0 ), mM( 0.0 )
+{
+  mWkbType = QGis::WKBPoint;
+}
 
-QgsPointV2::QgsPointV2( double x, double y, double mz, bool hasM ): QgsAbstractGeometryV2( hasM ? 2 : 3, false ),
+QgsPointV2::QgsPointV2( double x, double y, double mz, bool hasM ): QgsAbstractGeometryV2(),
     mX( x ), mY( y ), mZ( hasM ? 0.0 : mz ), mM( hasM ? mz : 0.0 )
-{}
+{
+  mWkbType = hasM ? QGis::WKBPointM : QGis::WKBPointZ;
+}
 
-QgsPointV2::QgsPointV2( double x, double y, double z, double m ): QgsAbstractGeometryV2( 3, true ), mX( x ), mY( y ), mZ( z ), mM( m )
-{}
+QgsPointV2::QgsPointV2( double x, double y, double z, double m ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( z ), mM( m )
+{
+  mWkbType = QGis::WKBPointZM;
+}
 
 QgsPointV2::~QgsPointV2()
 {}
 
-QGis::WkbType QgsPointV2::wkbType() const
-{
-  //type
-  if ( mCoordDimension > 2 && mHasM )
-  {
-    return QGis::WKBPointZM;
-  }
-  else if ( mCoordDimension > 2 )
-  {
-    return QGis::WKBPointZ;
-  }
-  else if ( mHasM )
-  {
-    return QGis::WKBPointM;
-  }
-  else
-  {
-    return QGis::WKBPoint;
-  }
-}
-
 QgsAbstractGeometryV2* QgsPointV2::clone() const
 {
-  switch ( mCoordDimension )
+  switch ( mWkbType )
   {
-    case 3:
-      return mHasM ? new QgsPointV2( mX, mY, mZ, mM ) : new QgsPointV2( mX, mY, mZ, false );
-      break;
+    case QGis::WKBPoint:
+      return new QgsPointV2( mX, mY );
+    case QGis::WKBPointZ:
+      return new QgsPointV2( mX, mY, mZ, false );
+    case QGis::WKBPointM:
+      return new QgsPointV2( mX, mY, mM, true );
+    case QGis::WKBPointZM:
+      return new QgsPointV2( mX, mY, mM, mZ );
     default:
-      return mHasM ? new QgsPointV2( mX, mY, mM, true ) : new QgsPointV2( mX, mY );
+      return 0;
   }
+  return 0;
 }
 
 void QgsPointV2::fromWkb( const unsigned char * wkb, size_t length )
 {
   if ( length < ( 1 + sizeof( int ) ) )
   {
-    mCoordDimension = 2; mHasM = false; mX = 0; mY = 0; mZ = 0; mM = 0;
+    mWkbType = QGis::WKBUnknown;
   }
 
   QgsConstWkbPtr wkbPtr( wkb + 1 );
-  int wkbtype;
-  wkbPtr >> wkbtype;
-
-  if ( wkbtype == QGis::WKBPoint )
-  {
-    mCoordDimension = 2; mHasM = false;
-  }
-  else if ( wkbtype == QGis::WKBPointZ )
-  {
-    mCoordDimension = 3; mHasM = false;
-  }
-  else if ( wkbtype == QGis::WKBPointM )
-  {
-    mCoordDimension = 2; mHasM = true;
-  }
-  else if ( wkbtype == QGis::WKBPointZM )
-  {
-    mCoordDimension = 3; mHasM = true;
-  }
-  else
-  {
-    mCoordDimension = 2; mHasM = false; mX = 0; mY = 0; mZ = 0; mM = 0;
-    return;
-  }
+  wkbPtr >> mWkbType;
+  mX = 0; mY = 0; mZ = 0; mM = 0;
 
   wkbPtr >> mX;
   wkbPtr >> mY;
-  if ( mCoordDimension > 2 )
+  if ( is3D() )
   {
     wkbPtr >> mZ;
   }
-  else
-  {
-    mZ = 0;
-  }
-  if ( mHasM )
+  if ( isMeasure() )
   {
     wkbPtr >> mM;
-  }
-  else
-  {
-    mM = 0;
   }
 }
 
@@ -126,57 +87,61 @@ void QgsPointV2::fromGeos( GEOSGeometry* geos )
 
 void QgsPointV2::fromWkt( const QString& wkt )
 {
-  //better with regexp
+  //todo: better with regexp
   QString text = wkt;
   text.remove( "POINT(" );
   text.chop( 1 );
   QStringList coords = text.split( " ", QString::SkipEmptyParts );
   if ( coords.size() < 2 )
   {
-    return; //error
+    mWkbType = QGis::WKBUnknown;
+    return;
   }
   mX = coords.at( 0 ).toDouble();
   mY = coords.at( 1 ).toDouble();
-  mCoordDimension = 2;
-  mHasM = false;
+  mZ = 0; mM = 0;
 
   if ( coords.size() > 2 )
   {
+    mWkbType = QGis::WKBPointZ;
     mZ = coords.at( 2 ).toDouble();
-    mCoordDimension = 3;
   }
   if ( coords.size() > 3 )
   {
+    mWkbType = QGis::WKBPointZM;
     mM = coords.at( 3 ).toDouble();
-    mHasM = true;
+  }
+  else
+  {
+    mWkbType = QGis::WKBPoint;
   }
 }
 
 QString QgsPointV2::asText( int precision ) const
 {
   QString wkt = "POINT(" + qgsDoubleToString( mX, precision ) + " " + qgsDoubleToString( mY, precision );
-  if ( mCoordDimension > 2 )
+  if ( is3D() )
   {
     wkt.append( "" );
     wkt.append( qgsDoubleToString( mZ, precision ) );
   }
-  if ( mHasM )
+  if ( isMeasure() )
   {
     wkt.append( "" );
     wkt.append( qgsDoubleToString( mM, precision ) );
   }
   wkt.append( ")" );
-  return QString(); //soon...
+  return wkt;
 }
 
 unsigned char* QgsPointV2::asBinary( int& binarySize ) const
 {
   binarySize = 1 + sizeof( int ) + sizeof( double );
-  if ( mCoordDimension > 2 )
+  if ( is3D() > 2 )
   {
     binarySize += sizeof( double );
   }
-  if ( mHasM )
+  if ( isMeasure() )
   {
     binarySize += sizeof( double );
   }
@@ -187,14 +152,12 @@ unsigned char* QgsPointV2::asBinary( int& binarySize ) const
   wkb << byteOrder;
   wkb << wkbType();
 
-
-
   wkb << mX << mY;
-  if ( mCoordDimension > 2 )
+  if ( is3D() > 2 )
   {
     wkb << mZ;
   }
-  if ( mHasM )
+  if ( isMeasure() )
   {
     wkb << mM;
   }

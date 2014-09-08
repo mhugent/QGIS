@@ -30,7 +30,7 @@ class QgsMultiPointV2;
 class QgsAbstractGeometryV2
 {
   public:
-    QgsAbstractGeometryV2( int coordDimension, bool hasM );
+    QgsAbstractGeometryV2();
     virtual ~QgsAbstractGeometryV2();
     virtual QgsAbstractGeometryV2* clone() const = 0;
 
@@ -38,15 +38,16 @@ class QgsAbstractGeometryV2
 
     //mm-sql interface
     virtual int dimension() const = 0;
-    virtual int coordDim() const { return mCoordDimension; }
+    //virtual int coordDim() const { return mCoordDimension; }
     virtual QString geometryType() const = 0;
-    virtual QGis::WkbType wkbType() const = 0;
+    QGis::WkbType wkbType() const { return mWkbType; }
+    bool is3D() const;
+    bool isMeasure() const;
+
     /*virtual bool transform( const QgsCoordinateTransform& ct ) =  0;
     virtual bool isEmpty() const = 0;
     virtual bool isSimple() const = 0;
     virtual bool isValid() const = 0;
-    virtual bool is3D() const { return ( mCoordDimension > 2 ); }
-    virtual bool isMeasure(){ return mHasM; }
     virtual QgsMultiPointV2* locateAlong() const = 0;
     virtual QgsMultiCurveV2* locateBetween() const = 0;
     virtual QgsCurveV2* boundary() const = 0;
@@ -82,8 +83,7 @@ class QgsAbstractGeometryV2
     friend class QgsGeometry;
 
   protected:
-    int mCoordDimension;
-    bool mHasM;
+    QGis::WkbType mWkbType;
 };
 
 #endif //QGSABSTRACTGEOMETRYV2
