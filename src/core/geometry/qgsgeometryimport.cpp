@@ -17,6 +17,7 @@
 
 #include "qgsgeometryimport.h"
 #include "qgspointv2.h"
+#include "qgslinestringv2.h"
 
 QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb, int wkbSize )
 {
@@ -33,8 +34,19 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb,
   switch ( type )
   {
     case QGis::WKBPoint:
+    case QGis::WKBPointZ:
+    case QGis::WKBPointM:
+    case QGis::WKBPointZM:
     case QGis::WKBPoint25D:
       geom = new QgsPointV2();
+      geom->fromWkb( wkb, wkbSize );
+      return geom;
+    case QGis::WKBLineString:
+    case QGis::WKBLineStringZ:
+    case QGis::WKBLineStringM:
+    case QGis::WKBLineStringZM:
+    case QGis::WKBLineString25D:
+      geom = new QgsLineStringV2();
       geom->fromWkb( wkb, wkbSize );
       return geom;
     default:
@@ -48,6 +60,10 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkt( const QString& text )
   if ( text.startsWith( "POINT", Qt::CaseInsensitive ) )
   {
     geom = new QgsPointV2();
+  }
+  else if ( text.startsWith( "LINESTRING", Qt::CaseInsensitive ) )
+  {
+    geom = new QgsLineStringV2();
   }
 
   if ( geom )

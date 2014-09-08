@@ -80,6 +80,9 @@ class QgsPointV2: public QgsAbstractGeometryV2
     double mY;
     double mZ;
     double mM;
+
+    //sets wkbtype to unknown and coords to 0
+    void reset();
 };
 
 #endif // QGSPOINTV2_H

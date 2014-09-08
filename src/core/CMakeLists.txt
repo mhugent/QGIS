@@ -265,6 +265,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgsgeometry.cpp
   geometry/qgsgeometryimport.cpp
   geometry/qgspointv2.cpp
+  geometry/qgslinestringv2.cpp
 )
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

@@ -78,7 +78,7 @@ class CORE_EXPORT QGis
       WKBMultiPolygonZM = 2000011,
       WKBGeometryCollectionZM = 2000012,
       WKBPointZ = 3000001,
-      WKBlinestringZ = 3000002,
+      WKBLineStringZ = 3000002,
       WKBCircularStringZ = 3000003,
       WKBCompoundCurveZ = 3000004,
       WKBpolygonZ = 3000005,

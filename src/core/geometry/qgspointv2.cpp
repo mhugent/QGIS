@@ -59,14 +59,15 @@ QgsAbstractGeometryV2* QgsPointV2::clone() const
 
 void QgsPointV2::fromWkb( const unsigned char * wkb, size_t length )
 {
+  reset();
   if ( length < ( 1 + sizeof( int ) ) )
   {
-    mWkbType = QGis::WKBUnknown;
+    return;
   }
 
   QgsConstWkbPtr wkbPtr( wkb + 1 );
   wkbPtr >> mWkbType;
-  mX = 0; mY = 0; mZ = 0; mM = 0;
+
 
   wkbPtr >> mX;
   wkbPtr >> mY;
@@ -87,6 +88,8 @@ void QgsPointV2::fromGeos( GEOSGeometry* geos )
 
 void QgsPointV2::fromWkt( const QString& wkt )
 {
+  reset();
+
   //todo: better with regexp
   QString text = wkt;
   text.remove( "POINT(" );
@@ -94,12 +97,10 @@ void QgsPointV2::fromWkt( const QString& wkt )
   QStringList coords = text.split( " ", QString::SkipEmptyParts );
   if ( coords.size() < 2 )
   {
-    mWkbType = QGis::WKBUnknown;
     return;
   }
   mX = coords.at( 0 ).toDouble();
   mY = coords.at( 1 ).toDouble();
-  mZ = 0; mM = 0;
 
   if ( coords.size() > 2 )
   {
@@ -168,4 +169,10 @@ unsigned char* QgsPointV2::asBinary( int& binarySize ) const
 QString QgsPointV2::asGML() const
 {
   return QString();
+}
+
+void QgsPointV2::reset()
+{
+  mWkbType = QGis::WKBUnknown;
+  mX = 0; mY = 0; mZ = 0; mM = 0;
 }

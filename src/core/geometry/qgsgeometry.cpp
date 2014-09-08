@@ -35,6 +35,7 @@ email                : morb at ozemail dot com dot au
 
 #include "qgsabstractgeometryv2.h"
 #include "qgspointv2.h"
+#include "qgslinestringv2.h"
 
 #ifndef Q_WS_WIN
 #include <netinet/in.h>
@@ -5418,12 +5419,27 @@ QgsPoint QgsGeometry::asPoint() const
 
 QgsPolyline QgsGeometry::asPolyline() const
 {
-  return QgsPolyline();
-  /*if( !mGeometry )
+  if ( !mGeometry || mGeometry->geometryType() != "LineString" )
   {
-      return QgsPolyline();
+    return QgsPolyline();
   }
-  return mGeometry->asPolyline();*/
+
+  QgsLineStringV2* line = dynamic_cast<QgsLineStringV2*>( mGeometry );
+  if ( !line )
+  {
+    return QgsPolyline();
+  }
+
+  const QPolygonF& coords = line->coordinates();
+  int nVertices = coords.size();
+  QgsPolyline polyLine( nVertices );
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    polyLine[i].setX( coords.at( i ).x() );
+    polyLine[i].setY( coords.at( i ).y() );
+  }
+
+  return polyLine;
 }
 
 QgsPolygon QgsGeometry::asPolygon() const
