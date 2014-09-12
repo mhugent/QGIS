@@ -605,6 +605,7 @@ void QgsGeometry::fromWkb( unsigned char *wkb, size_t length )
     mGeometry->deref();
   }
   mGeometry = QgsGeometryImport::geomFromWkb( wkb, length );
+  delete[] wkb;
   if ( mGeometry )
   {
     mGeometry->ref();
