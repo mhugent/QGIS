@@ -1,6 +1,6 @@
 /***************************************************************************
-                         qgslinestringv2.cpp
-                         -------------------
+                         qgscircularstringv2.cpp
+                         -----------------------
     begin                : September 2014
     copyright            : (C) 2014 by Marco Hugentobler
     email                : marco at sourcepole dot ch
@@ -15,25 +15,28 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "qgslinestringv2.h"
+#include "qgscircularstringv2.h"
 #include "qgsapplication.h"
+#include "qgspointv2.h"
 #include "qgswkbptr.h"
 
-QgsLineStringV2::QgsLineStringV2(): QgsCurveV2()
+QgsCircularStringV2::QgsCircularStringV2(): QgsCurveV2()
 {
+
 }
 
-QgsLineStringV2::~QgsLineStringV2()
-{}
-
-QgsAbstractGeometryV2* QgsLineStringV2::clone() const
+QgsCircularStringV2::~QgsCircularStringV2()
 {
-  return 0; //todo...
+
 }
 
-void QgsLineStringV2::fromWkb( const unsigned char* wkb, size_t length )
+QgsAbstractGeometryV2* QgsCircularStringV2::clone() const
 {
-  //reset
+  return 0;
+}
+
+void QgsCircularStringV2::fromWkb( const unsigned char * wkb, size_t length )
+{
   if ( length < ( 1 + sizeof( int ) ) )
   {
     return;
@@ -48,14 +51,15 @@ void QgsLineStringV2::fromWkb( const unsigned char* wkb, size_t length )
 
   int nVertices = 0;
   wkbPtr >> nVertices;
-  mCoords.resize( nVertices );
+  mX.resize( nVertices );
+  mY.resize( nVertices );
   hasZ ? mZ.resize( nVertices ) : mZ.clear();
   hasM ? mM.resize( nVertices ) : mM.clear();
 
   for ( int i = 0; i < nVertices; ++i )
   {
-    wkbPtr >> mCoords[i].rx();
-    wkbPtr >> mCoords[i].ry();
+    wkbPtr >> mX[i];
+    wkbPtr >> mY[i];
     if ( hasZ )
     {
       wkbPtr >> mZ[i];
@@ -67,32 +71,32 @@ void QgsLineStringV2::fromWkb( const unsigned char* wkb, size_t length )
   }
 }
 
-int QgsLineStringV2::wkbSize( const unsigned char* wkb ) const
+void QgsCircularStringV2::fromGeos( GEOSGeometry* geos )
+{
+
+}
+
+void QgsCircularStringV2::fromWkt( const QString& wkt )
+{
+
+}
+
+int QgsCircularStringV2::wkbSize( const unsigned char* wkb ) const
 {
   return 0;
 }
 
-void QgsLineStringV2::fromGeos( GEOSGeometry* geos )
+QString QgsCircularStringV2::asText( int precision ) const
 {
-
+  return ""; //soon...
 }
 
-void QgsLineStringV2::fromWkt( const QString& wkt )
-{
-
-}
-
-QString QgsLineStringV2::asText( int precision ) const
-{
-  return QString(); //soon...
-}
-
-unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
+unsigned char* QgsCircularStringV2::asBinary( int& binarySize ) const
 {
   bool hasZ = is3D();
   bool hasM = isMeasure();
 
-  int nVertices = mCoords.size();
+  int nVertices = qMin( mX.size(), mY.size() );
   binarySize = 1 + 2 * sizeof( int ) + nVertices * 2 * sizeof( double );
   if ( hasZ )
   {
@@ -110,8 +114,8 @@ unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
   wkb << nVertices;
   for ( int i = 0; i < nVertices; ++i )
   {
-    wkb << mCoords.at( i ).x();
-    wkb << mCoords.at( i ).y();
+    wkb << mX.at( i );
+    wkb << mY.at( i );
     if ( hasZ )
     {
       wkb << mZ.at( i );
@@ -125,66 +129,67 @@ unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
   return geomPtr;
 }
 
-QString QgsLineStringV2::asGML() const
+QString QgsCircularStringV2::asGML() const
 {
-  return QString();
+  return "";
 }
 
-double QgsLineStringV2::length() const
+//curve interface
+double QgsCircularStringV2::length() const
 {
-  return 0; //todo...
+  return 0; //soon...
 }
 
-QgsPointV2 QgsLineStringV2::startPoint() const
+QgsPointV2 QgsCircularStringV2::startPoint() const
 {
-  return QgsPointV2();
+  return QgsPointV2(); //soon...
 }
 
-QgsPointV2 QgsLineStringV2::endPoint() const
+QgsPointV2 QgsCircularStringV2::endPoint() const
 {
-  return QgsPointV2();
+  return QgsPointV2(); //soon...
 }
 
-bool QgsLineStringV2::isClosed() const
+bool QgsCircularStringV2::isClosed() const
 {
   return false; //soon...
 }
 
-bool QgsLineStringV2::isRing() const
+bool QgsCircularStringV2::isRing() const
 {
   return false; //soon...
 }
 
-QgsLineStringV2* QgsLineStringV2::curveToLine() const
+QgsLineStringV2* QgsCircularStringV2::curveToLine() const
 {
-  return dynamic_cast<QgsLineStringV2*>( clone() );
+  return 0; //soon...
 }
 
-int QgsLineStringV2::numPoints() const
+int QgsCircularStringV2::numPoints() const
 {
-  return mCoords.size();
+  return qMin( mX.size(), mY.size() );
 }
 
-QgsPointV2 QgsLineStringV2::pointN( int i ) const
+QgsPointV2 QgsCircularStringV2::pointN( int i ) const
 {
-  if ( mCoords.size() <= i )
+  if ( qMin( mX.size(), mY.size() ) <= i )
   {
     return QgsPointV2();
   }
 
-  const QPointF& pt = mCoords.at( i );
   bool hasZ = is3D();
   bool hasM = isMeasure();
+
   if ( !hasZ && !hasM )
   {
-    return QgsPointV2( pt.x(), pt.y() );
+    return QgsPointV2( mX.at( i ), mY.at( i ) );
   }
   else if ( hasZ && hasM )
   {
-    return QgsPointV2( pt.x(), pt.x(), mZ.at( i ), mM.at( i ) );
+    return QgsPointV2( mX.at( i ), mY.at( i ), mZ.at( i ), mM.at( i ) );
   }
   else
   {
-    return QgsPointV2( pt.x(), pt.y(), hasM ? mM.at( i ) : mZ.at( i ), hasM );
+    return QgsPointV2( mX.at( i ), mY.at( i ), hasM ? mM.at( i ) : mZ.at( i ), hasM );
   }
 }

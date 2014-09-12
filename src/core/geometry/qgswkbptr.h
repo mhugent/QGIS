@@ -39,6 +39,7 @@ class CORE_EXPORT QgsConstWkbPtr
     inline const QgsConstWkbPtr &operator>>( QGis::WkbType &v ) const { memcpy( &v, mP, sizeof( v ) ); mP += sizeof( v ); return *this; }
 
     inline void operator+=( int n ) { mP += n; }
+    inline void operator-=( int n ) { mP -= n; }
 
     inline operator const unsigned char *() const { return mP; }
 };

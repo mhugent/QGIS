@@ -70,6 +70,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual void fromWkb( const unsigned char * wkb, size_t length );
     virtual void fromGeos( GEOSGeometry* geos );
     virtual void fromWkt( const QString& wkt );
+    virtual int wkbSize( const unsigned char* wkb ) const;
 
     virtual QString asText( int precision = 17 ) const;
     virtual unsigned char* asBinary( int& binarySize ) const;

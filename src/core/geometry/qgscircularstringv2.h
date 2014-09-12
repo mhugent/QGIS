@@ -1,6 +1,6 @@
 /***************************************************************************
-                         qgslinestringv2.h
-                         -----------------
+                         qgscircularstringv2.h
+                         ---------------------
     begin                : September 2014
     copyright            : (C) 2014 by Marco Hugentobler
     email                : marco at sourcepole dot ch
@@ -15,19 +15,19 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSLINESTRINGV2_H
-#define QGSLINESTRINGV2_H
+#ifndef QGSCIRCULARSTRING_H
+#define QGSCIRCULARSTRING_H
 
 #include "qgscurvev2.h"
-#include <QPolygonF>
+#include <QVector>
 
-class QgsLineStringV2: public QgsCurveV2
+class QgsCircularStringV2: public QgsCurveV2
 {
   public:
-    QgsLineStringV2();
-    ~QgsLineStringV2();
+    QgsCircularStringV2();
+    ~QgsCircularStringV2();
 
-    virtual QString geometryType() const { return "LineString"; }
+    virtual QString geometryType() const { return "CircularString"; }
     virtual int dimension() const { return 1; }
     virtual QgsAbstractGeometryV2* clone() const;
 
@@ -40,6 +40,9 @@ class QgsLineStringV2: public QgsCurveV2
     virtual unsigned char* asBinary( int& binarySize ) const;
     virtual QString asGML() const;
 
+    int numPoints() const;
+    QgsPointV2 pointN( int i ) const;
+
     //curve interface
     virtual double length() const;
     virtual QgsPointV2 startPoint() const;
@@ -48,17 +51,11 @@ class QgsLineStringV2: public QgsCurveV2
     virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
 
-    /*const QPolygonF& coordinates() const { return mCoords; }
-    const QVector<double>& zValues() const { return mZ; }
-    const QVector<double>& mValues() const { return mM; }*/
-
-    int numPoints() const;
-    QgsPointV2 pointN( int i ) const;
-
   private:
-    QPolygonF mCoords;
+    QVector<double> mX;
+    QVector<double> mY;
     QVector<double> mZ;
     QVector<double> mM;
 };
 
-#endif // QGSLINESTRINGV2_H
+#endif // QGSCIRCULARSTRING_H

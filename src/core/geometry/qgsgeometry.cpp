@@ -5420,24 +5420,44 @@ QgsPoint QgsGeometry::asPoint() const
 
 QgsPolyline QgsGeometry::asPolyline() const
 {
-  if ( !mGeometry || mGeometry->geometryType() != "LineString" )
+  QgsPolyline polyLine;
+  if ( !mGeometry )
   {
-    return QgsPolyline();
+    return polyLine;
   }
 
-  QgsLineStringV2* line = dynamic_cast<QgsLineStringV2*>( mGeometry );
-  if ( !line )
+  bool doSegmentation = ( mGeometry->geometryType() == "CompoundCurve" || mGeometry->geometryType() == "CircularString" );
+  QgsLineStringV2* line = 0;
+  if ( doSegmentation )
   {
-    return QgsPolyline();
+    QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( mGeometry );
+    if ( !curve )
+    {
+      return polyLine;
+    }
+    line = curve->curveToLine();
+  }
+  else
+  {
+    line = dynamic_cast<QgsLineStringV2*>( mGeometry );
+    if ( !line )
+    {
+      return polyLine;
+    }
   }
 
-  const QPolygonF& coords = line->coordinates();
-  int nVertices = coords.size();
-  QgsPolyline polyLine( nVertices );
+  int nVertices = line->numPoints();
+  polyLine.resize( nVertices );
   for ( int i = 0; i < nVertices; ++i )
   {
-    polyLine[i].setX( coords.at( i ).x() );
-    polyLine[i].setY( coords.at( i ).y() );
+    QgsPointV2 pt = line->pointN( i );
+    polyLine[i].setX( pt.x() );
+    polyLine[i].setY( pt.y() );
+  }
+
+  if ( doSegmentation )
+  {
+    delete line;
   }
 
   return polyLine;

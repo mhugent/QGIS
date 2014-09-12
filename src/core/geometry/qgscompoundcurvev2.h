@@ -1,6 +1,6 @@
 /***************************************************************************
-                         qgslinestringv2.h
-                         -----------------
+                         qgscompoundcurvev2.h
+                         ---------------------
     begin                : September 2014
     copyright            : (C) 2014 by Marco Hugentobler
     email                : marco at sourcepole dot ch
@@ -15,26 +15,24 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSLINESTRINGV2_H
-#define QGSLINESTRINGV2_H
+#ifndef QGSCOMPOUNDCURVEV2_H
+#define QGSCOMPOUNDCURVEV2_H
 
 #include "qgscurvev2.h"
-#include <QPolygonF>
 
-class QgsLineStringV2: public QgsCurveV2
+class QgsCompoundCurveV2: public QgsCurveV2
 {
   public:
-    QgsLineStringV2();
-    ~QgsLineStringV2();
+    QgsCompoundCurveV2();
+    ~QgsCompoundCurveV2();
 
-    virtual QString geometryType() const { return "LineString"; }
+    virtual QString geometryType() const { return "CompoundCurve"; }
     virtual int dimension() const { return 1; }
     virtual QgsAbstractGeometryV2* clone() const;
 
     virtual void fromWkb( const unsigned char * wkb, size_t length );
     virtual void fromGeos( GEOSGeometry* geos );
     virtual void fromWkt( const QString& wkt );
-    virtual int wkbSize( const unsigned char* wkb ) const;
 
     virtual QString asText( int precision = 17 ) const;
     virtual unsigned char* asBinary( int& binarySize ) const;
@@ -47,18 +45,13 @@ class QgsLineStringV2: public QgsCurveV2
     virtual bool isClosed() const;
     virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
-
-    /*const QPolygonF& coordinates() const { return mCoords; }
-    const QVector<double>& zValues() const { return mZ; }
-    const QVector<double>& mValues() const { return mM; }*/
-
-    int numPoints() const;
-    QgsPointV2 pointN( int i ) const;
+    int nCurves() const { return mCurves.size(); }
+    QgsCurveV2* curveAt( int i ) const;
 
   private:
-    QPolygonF mCoords;
-    QVector<double> mZ;
-    QVector<double> mM;
+    QList< QgsCurveV2* > mCurves;
+
+    void removeCurves();
 };
 
-#endif // QGSLINESTRINGV2_H
+#endif // QGSCOMPOUNDCURVEV2_H

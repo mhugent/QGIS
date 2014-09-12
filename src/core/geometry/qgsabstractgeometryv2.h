@@ -75,6 +75,7 @@ class QgsAbstractGeometryV2
     virtual void fromWkb( const unsigned char * wkb, size_t length ) = 0;
     virtual void fromGeos( GEOSGeometry* geos ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
+    virtual int wkbSize( const unsigned char* wkb ) const = 0;
 
   private:
     int mRefs;

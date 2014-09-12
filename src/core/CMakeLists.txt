@@ -262,6 +262,8 @@ SET(QGIS_CORE_SRCS
   raster/qgshuesaturationfilter.cpp
   
   geometry/qgsabstractgeometryv2.cpp
+  geometry/qgscircularstringv2.cpp
+  geometry/qgscompoundcurvev2.cpp
   geometry/qgsgeometry.cpp
   geometry/qgsgeometryimport.cpp
   geometry/qgspointv2.cpp

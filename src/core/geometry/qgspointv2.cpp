@@ -57,6 +57,11 @@ QgsAbstractGeometryV2* QgsPointV2::clone() const
   return 0;
 }
 
+int QgsPointV2::wkbSize( const unsigned char* wkb ) const
+{
+  return 0;
+}
+
 void QgsPointV2::fromWkb( const unsigned char * wkb, size_t length )
 {
   reset();
