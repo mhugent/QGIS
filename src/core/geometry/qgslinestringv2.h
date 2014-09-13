@@ -55,6 +55,8 @@ class QgsLineStringV2: public QgsCurveV2
     int numPoints() const;
     QgsPointV2 pointN( int i ) const;
 
+    void append( const QgsLineStringV2* line );
+
   private:
     QPolygonF mCoords;
     QVector<double> mZ;

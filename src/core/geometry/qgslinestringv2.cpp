@@ -188,3 +188,15 @@ QgsPointV2 QgsLineStringV2::pointN( int i ) const
     return QgsPointV2( pt.x(), pt.y(), hasM ? mM.at( i ) : mZ.at( i ), hasM );
   }
 }
+
+void QgsLineStringV2::append( const QgsLineStringV2* line )
+{
+  if ( !line )
+  {
+    return;
+  }
+
+  mCoords += line->mCoords;
+  mZ += line->mZ;
+  mM += line->mM;
+}

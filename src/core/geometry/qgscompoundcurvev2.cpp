@@ -157,7 +157,27 @@ bool QgsCompoundCurveV2::isRing() const
 
 QgsLineStringV2* QgsCompoundCurveV2::curveToLine() const
 {
-  return 0;
+  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
+  QgsLineStringV2* line = 0;
+  QgsLineStringV2* currentLine = 0;
+  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  {
+    if ( curveIt == mCurves.constBegin() )
+    {
+      line = ( *curveIt )->curveToLine();
+      if ( !line )
+      {
+        return 0;
+      }
+    }
+    else
+    {
+      currentLine = ( *curveIt )->curveToLine();
+      line->append( currentLine );
+      delete currentLine;
+    }
+  }
+  return line;
 }
 
 QgsCurveV2* QgsCompoundCurveV2::curveAt( int i ) const
