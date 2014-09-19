@@ -1238,40 +1238,120 @@ void QgsPostgresConn::postgisWkbType( QGis::WkbType wkbType, QString &geometryTy
 {
   switch ( wkbType )
   {
+      //point
+    case QGis::WKBPointZM:
+      dim = 4;
+      geometryType = "POINT";
+      break;
     case QGis::WKBPoint25D:
+    case QGis::WKBPointZ:
+    case QGis::WKBPointM:
       dim = 3;
     case QGis::WKBPoint:
       geometryType = "POINT";
       break;
-
+      //linestring
+    case QGis::WKBLineStringZM:
+      geometryType = "LINESTRING";
+      dim = 4;
+      break;
     case QGis::WKBLineString25D:
+    case QGis::WKBLineStringZ:
+    case QGis::WKBLineStringM:
       dim = 3;
     case QGis::WKBLineString:
       geometryType = "LINESTRING";
       break;
-
+      //circularstring
+    case QGis::WKBCircularStringZM:
+      dim = 4;
+      geometryType = "CIRCULARSTRING";
+      break;
+    case QGis::WKBCircularStringZ:
+    case QGis::WKBCircularStringM:
+      dim = 3;
+    case QGis::WKBCircularString:
+      geometryType = "CIRCULARSTRING";
+      break;
+      //compoundcurve
+    case QGis::WKBCompoundCurveZM:
+      dim = 4;
+      geometryType = "COMPOUNDCURVE";
+      break;
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+      dim = 3;
+    case QGis::WKBCompoundCurve:
+      geometryType = "COMPOUNDCURVE";
+      break;
+      //polygon
+    case QGis::WKBPolygonZM:
+      dim = 4;
+      geometryType = "POLYGON";
+      break;
     case QGis::WKBPolygon25D:
+    case QGis::WKBPolygonZ:
+    case QGis::WKBPolygonM:
       dim = 3;
     case QGis::WKBPolygon:
       geometryType = "POLYGON";
       break;
-
+      //multipoint
+    case QGis::WKBMultiPointZM:
+      dim = 4;
+      geometryType = "MULTIPOINT";
+      break;
     case QGis::WKBMultiPoint25D:
+    case QGis::WKBMultiPointZ:
+    case QGis::WKBMultiPointM:
       dim = 3;
     case QGis::WKBMultiPoint:
       geometryType = "MULTIPOINT";
       break;
-
+      //multilinestring
+    case QGis::WKBMultiLineStringZM:
+      dim = 4;
+      geometryType = "MULTILINESTRING";
+      break;
     case QGis::WKBMultiLineString25D:
+    case QGis::WKBMultiLineStringZ:
+    case QGis::WKBMultiLineStringM:
       dim = 3;
     case QGis::WKBMultiLineString:
       geometryType = "MULTILINESTRING";
       break;
-
+      //multicurve
+    case QGis::WKBMultiCurveZM:
+      dim = 4;
+      geometryType = "MULTICURVE";
+      break;
+    case QGis::WKBMultiCurveZ:
+    case QGis::WKBMultiCurveM:
+      dim = 3;
+    case QGis::WKBMultiCurve:
+      geometryType = "MULTICURVE";
+      break;
+      //multipolygon
+    case QGis::WKBMultiPolygonZM:
+      dim = 4;
+      geometryType = "MULTIPOLYGON";
+    case QGis::WKBMultiPolygonZ:
+    case QGis::WKBMultiPolygonM:
     case QGis::WKBMultiPolygon25D:
       dim = 3;
     case QGis::WKBMultiPolygon:
       geometryType = "MULTIPOLYGON";
+      break;
+      //multisurface
+    case QGis::WKBMultiSurfaceZM:
+      dim = 4;
+      geometryType = "MULTISURFACE";
+      break;
+    case QGis::WKBMultiSurfaceZ:
+    case QGis::WKBMultiSurfaceM:
+      dim = 3;
+    case QGis::WKBMultiSurface:
+      geometryType = "MULTISURFACE";
       break;
 
     case QGis::WKBUnknown:
@@ -1305,19 +1385,57 @@ QString QgsPostgresConn::postgisTypeFilter( QString geomCol, QGis::WkbType geomT
   {
     case QGis::WKBPoint:
     case QGis::WKBPoint25D:
+    case QGis::WKBPointZ:
+    case QGis::WKBPointM:
+    case QGis::WKBPointZM:
     case QGis::WKBMultiPoint:
     case QGis::WKBMultiPoint25D:
-      return QString( "upper(geometrytype(%1)) IN ('POINT','MULTIPOINT','POINTM','MULTIPOINTM')" ).arg( geomCol );
+    case QGis::WKBMultiPointZ:
+    case QGis::WKBMultiPointM:
+    case QGis::WKBMultiPointZM:
+      return QString( "upper(geometrytype(%1)) IN ('POINT','POINTZ','POINTM','POINTZM','MULTIPOINT','MULTIPOINTZ','MULTIPOINTM','MULTIPOINTZM')" ).arg( geomCol );
     case QGis::WKBLineString:
     case QGis::WKBLineString25D:
+    case QGis::WKBLineStringZ:
+    case QGis::WKBLineStringM:
+    case QGis::WKBLineStringZM:
+    case QGis::WKBCircularString:
+    case QGis::WKBCircularStringZ:
+    case QGis::WKBCircularStringM:
+    case QGis::WKBCircularStringZM:
+    case QGis::WKBCompoundCurve:
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+    case QGis::WKBCompoundCurveZM:
     case QGis::WKBMultiLineString:
     case QGis::WKBMultiLineString25D:
-      return QString( "upper(geometrytype(%1)) IN ('LINESTRING','MULTILINESTRING','LINESTRINGM','MULTILINESTRINGM')" ).arg( geomCol );
+    case QGis::WKBMultiLineStringZ:
+    case QGis::WKBMultiLineStringM:
+    case QGis::WKBMultiLineStringZM:
+    case QGis::WKBMultiCurve:
+    case QGis::WKBMultiCurveZ:
+    case QGis::WKBMultiCurveM:
+    case QGis::WKBMultiCurveZM:
+      return QString( "upper(geometrytype(%1)) IN ('LINESTRING','LINESTRINGZ','LINESTRINGM','LINESTRINGZM','CIRCULARSTRING','CIRCULARSTRINGZ','CIRCULARSTRINGM','CIRCULARSTRINGZM','COMPOUNDCURVE','COMPOUNDCURVEZ','COMPOUNDCURVEM','COMPOUNDCURVEZM','MULTILINESTRING','MULTILINESTRINGZ','MULTILINESTRINGM','MULTILINESTRINGZM','MULTICURVE','MULTICURVEZ','MULTICURVEM','MULTICURVEZM')" ).arg( geomCol );
     case QGis::WKBPolygon:
     case QGis::WKBPolygon25D:
+    case QGis::WKBPolygonZ:
+    case QGis::WKBPolygonM:
+    case QGis::WKBPolygonZM:
+    case QGis::WKBCurvePolygon:
+    case QGis::WKBCurvePolygonZ:
+    case QGis::WKBCurvePolygonM:
+    case QGis::WKBCurvePolygonZM:
     case QGis::WKBMultiPolygon:
     case QGis::WKBMultiPolygon25D:
-      return QString( "upper(geometrytype(%1)) IN ('POLYGON','MULTIPOLYGON','POLYGONM','MULTIPOLYGONM','POLYHEDRALSURFACE','TIN')" ).arg( geomCol );
+    case QGis::WKBMultiPolygonZ:
+    case QGis::WKBMultiPolygonM:
+    case QGis::WKBMultiPolygonZM:
+    case QGis::WKBMultiSurface:
+    case QGis::WKBMultiSurfaceZ:
+    case QGis::WKBMultiSurfaceM:
+    case QGis::WKBMultiSurfaceZM:
+      return QString( "upper(geometrytype(%1)) IN ('POLYGON','POLYGONZ','POLYGONM','POLYGONZM','CURVEPOLYGON','CURVEPOLYGONZ','CURVEPOLYGONM','CURVEPOLYGONZM','MULTIPOLYGON','MULTIPOLYGONZ','MULTIPOLYGONM','MULTIPOLYGONZM','MULTIPOLYGONM','MULTISURFACE','MULTISURFACEZ','MULTISURFACEM','MULTISURFACEZM','POLYHEDRALSURFACE','TIN')" ).arg( geomCol );
     case QGis::WKBNoGeometry:
       return QString( "geometrytype(%1) IS NULL" ).arg( geomCol );
     case QGis::WKBUnknown:
@@ -1357,6 +1475,7 @@ QGis::WkbType QgsPostgresConn::wkbTypeFromPostgis( QString type )
   {
     return QGis::WKBMultiPoint25D;
   }
+  //linestring
   else if ( type == "LINESTRING" )
   {
     return QGis::WKBLineString;
@@ -1364,6 +1483,27 @@ QGis::WkbType QgsPostgresConn::wkbTypeFromPostgis( QString type )
   else if ( type == "LINESTRINGM" )
   {
     return QGis::WKBLineString25D;
+  }
+  else if ( type == "LINESTRINGZM" )
+  {
+    return QGis::WKBLineStringZM;
+  }
+  //compoundcurve
+  else if ( type == "COMPOUNDCURVE" )
+  {
+    return QGis::WKBCompoundCurve;
+  }
+  else if ( type == "COMPOUNDCURVEZ" )
+  {
+    return QGis::WKBCompoundCurveZ;
+  }
+  else if ( type == "COMPOUNDCURVEZM" )
+  {
+    return QGis::WKBCompoundCurveZM;
+  }
+  else if ( type == "COMPOUNDCURVEM" )
+  {
+    return QGis::WKBCompoundCurveM;
   }
   else if ( type == "MULTILINESTRING" )
   {
@@ -1425,27 +1565,69 @@ QString QgsPostgresConn::displayStringForWkbType( QGis::WkbType type )
   {
     case QGis::WKBPoint:
     case QGis::WKBPoint25D:
+    case QGis::WKBPointZ:
+    case QGis::WKBPointM:
+    case QGis::WKBPointZM:
       return tr( "Point" );
 
     case QGis::WKBMultiPoint:
     case QGis::WKBMultiPoint25D:
+    case QGis::WKBMultiPointZ:
+    case QGis::WKBMultiPointM:
+    case QGis::WKBMultiPointZM:
       return tr( "Multipoint" );
 
     case QGis::WKBLineString:
     case QGis::WKBLineString25D:
+    case QGis::WKBLineStringZ:
+    case QGis::WKBLineStringM:
+    case QGis::WKBLineStringZM:
       return tr( "Line" );
+
+    case QGis::WKBCompoundCurve:
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+    case QGis::WKBCompoundCurveZM:
+      return tr( "Compoundcurve" );
+
+    case QGis::WKBCircularString:
+    case QGis::WKBCircularStringZ:
+    case QGis::WKBCircularStringM:
+    case QGis::WKBCircularStringZM:
+      return tr( "Circularstring" );
 
     case QGis::WKBMultiLineString:
     case QGis::WKBMultiLineString25D:
+    case QGis::WKBMultiLineStringZ:
+    case QGis::WKBMultiLineStringM:
+    case QGis::WKBMultiLineStringZM:
       return tr( "Multiline" );
+
+    case QGis::WKBMultiCurve:
+    case QGis::WKBMultiCurveZ:
+    case QGis::WKBMultiCurveM:
+    case QGis::WKBMultiCurveZM:
+      return tr( "Multicurve" );
 
     case QGis::WKBPolygon:
     case QGis::WKBPolygon25D:
+    case QGis::WKBPolygonZ:
+    case QGis::WKBPolygonM:
+    case QGis::WKBPolygonZM:
       return tr( "Polygon" );
 
     case QGis::WKBMultiPolygon:
     case QGis::WKBMultiPolygon25D:
+    case QGis::WKBMultiPolygonZ:
+    case QGis::WKBMultiPolygonM:
+    case QGis::WKBMultiPolygonZM:
       return tr( "Multipolygon" );
+
+    case QGis::WKBMultiSurface:
+    case QGis::WKBMultiSurfaceZ:
+    case QGis::WKBMultiSurfaceM:
+    case QGis::WKBMultiSurfaceZM:
+      return tr( "Multisurface" );
 
     case QGis::WKBNoGeometry:
       return tr( "No Geometry" );

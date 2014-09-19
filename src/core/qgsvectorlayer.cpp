@@ -605,10 +605,24 @@ QGis::GeometryType QgsVectorLayer::geometryType() const
     {
       case QGis::WKBPoint:
       case QGis::WKBPoint25D:
+      case QGis::WKBPointZ:
+      case QGis::WKBPointM:
+      case QGis::WKBPointZM:
         return QGis::Point;
 
       case QGis::WKBLineString:
       case QGis::WKBLineString25D:
+      case QGis::WKBLineStringZ:
+      case QGis::WKBLineStringM:
+      case QGis::WKBLineStringZM:
+      case QGis::WKBCircularString:
+      case QGis::WKBCircularStringZ:
+      case QGis::WKBCircularStringM:
+      case QGis::WKBCircularStringZM:
+      case QGis::WKBCompoundCurve:
+      case QGis::WKBCompoundCurveZ:
+      case QGis::WKBCompoundCurveM:
+      case QGis::WKBCompoundCurveZM:
         return QGis::Line;
 
       case QGis::WKBPolygon:
@@ -2824,8 +2838,8 @@ void QgsVectorLayer::uniqueValues( int index, QList<QVariant> &uniqueValues, int
     if ( mEditBuffer )
     {
       QSet<QString> vals;
-      Q_FOREACH ( const QVariant& v, uniqueValues )
-        vals << v.toString();
+      Q_FOREACH( const QVariant& v, uniqueValues )
+      vals << v.toString();
 
       QMapIterator< QgsFeatureId, QgsAttributeMap > it( mEditBuffer->changedAttributeValues() );
       while ( it.hasNext() && ( limit < 0 || uniqueValues.count() < limit ) )
@@ -3548,13 +3562,13 @@ void QgsVectorLayer::invalidateSymbolCountedFlag()
 
 void QgsVectorLayer::onRelationsLoaded()
 {
-  Q_FOREACH ( QgsAttributeEditorElement* elem, mAttributeEditorElements )
+  Q_FOREACH( QgsAttributeEditorElement* elem, mAttributeEditorElements )
   {
     if ( elem->type() == QgsAttributeEditorElement::AeTypeContainer )
     {
       QgsAttributeEditorContainer* cont = dynamic_cast< QgsAttributeEditorContainer* >( elem );
       QList<QgsAttributeEditorElement*> relations = cont->findElements( QgsAttributeEditorElement::AeTypeRelation );
-      Q_FOREACH ( QgsAttributeEditorElement* relElem, relations )
+      Q_FOREACH( QgsAttributeEditorElement* relElem, relations )
       {
         QgsAttributeEditorRelation* rel = dynamic_cast< QgsAttributeEditorRelation* >( relElem );
         rel->init( QgsProject::instance()->relationManager() );
@@ -3604,7 +3618,7 @@ QDomElement QgsAttributeEditorContainer::toDomElement( QDomDocument& doc ) const
   QDomElement elem = doc.createElement( "attributeEditorContainer" );
   elem.setAttribute( "name", mName );
 
-  Q_FOREACH ( QgsAttributeEditorElement* child, mChildren )
+  Q_FOREACH( QgsAttributeEditorElement* child, mChildren )
   {
     elem.appendChild( child->toDomElement( doc ) );
   }
@@ -3620,7 +3634,7 @@ QList<QgsAttributeEditorElement*> QgsAttributeEditorContainer::findElements( Qgs
 {
   QList<QgsAttributeEditorElement*> results;
 
-  Q_FOREACH ( QgsAttributeEditorElement* elem, mChildren )
+  Q_FOREACH( QgsAttributeEditorElement* elem, mChildren )
   {
     if ( elem->type() == type )
     {

@@ -28,13 +28,20 @@ QgsLineStringV2::~QgsLineStringV2()
 
 QgsAbstractGeometryV2* QgsLineStringV2::clone() const
 {
-  return 0; //todo...
+  QgsLineStringV2* line = new QgsLineStringV2();
+  QList<QgsPointV2> points;
+  for ( int i = 0; i < numPoints(); ++i )
+  {
+    points.push_back( pointN( i ) );
+  }
+  line->setPoints( points );
+  return line;
 }
 
-void QgsLineStringV2::fromWkb( const unsigned char* wkb, size_t length )
+void QgsLineStringV2::fromWkb( const unsigned char* wkb )
 {
   //reset
-  if ( length < ( 1 + sizeof( int ) ) )
+  if ( !wkb )
   {
     return;
   }
@@ -67,9 +74,19 @@ void QgsLineStringV2::fromWkb( const unsigned char* wkb, size_t length )
   }
 }
 
-int QgsLineStringV2::wkbSize( const unsigned char* wkb ) const
+int QgsLineStringV2::wkbSize() const
 {
-  return 0;
+  int nVertices = mCoords.size();
+  int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );
+  if ( is3D() )
+  {
+    binarySize += ( mZ.size() * 2 * sizeof( double ) );
+  }
+  if ( isMeasure() )
+  {
+    binarySize += ( mM.size() * 2 * sizeof( double ) );
+  }
+  return binarySize;
 }
 
 void QgsLineStringV2::fromGeos( GEOSGeometry* geos )
@@ -93,15 +110,7 @@ unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
   bool hasM = isMeasure();
 
   int nVertices = mCoords.size();
-  binarySize = 1 + 2 * sizeof( int ) + nVertices * 2 * sizeof( double );
-  if ( hasZ )
-  {
-    binarySize += ( mZ.size() * 2 * sizeof( double ) );
-  }
-  if ( hasM )
-  {
-    binarySize += ( mM.size() * 2 * sizeof( double ) );
-  }
+  binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
   char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
@@ -186,6 +195,72 @@ QgsPointV2 QgsLineStringV2::pointN( int i ) const
   else
   {
     return QgsPointV2( pt.x(), pt.y(), hasM ? mM.at( i ) : mZ.at( i ), hasM );
+  }
+}
+
+void QgsLineStringV2::setPoints( const QList<QgsPointV2> points )
+{
+  if ( points.size() < 1 )
+  {
+    mWkbType = QGis::WKBUnknown;
+    mCoords.clear();
+    mZ.clear();
+    mM.clear();
+    return;
+  }
+
+  //get wkb type from first point
+  const QgsPointV2& firstPt = points.at( 0 );
+  bool hasZ = firstPt.is3D();
+  bool hasM = firstPt.isMeasure();
+
+  if ( hasZ && hasM )
+  {
+    mWkbType = QGis::WKBLineStringZM;
+  }
+  else if ( hasZ )
+  {
+    mWkbType = QGis::WKBLineStringZ;
+  }
+  else if ( hasM )
+  {
+    mWkbType = QGis::WKBLineStringM;
+  }
+  else
+  {
+    mWkbType = QGis::WKBLineString;
+  }
+
+  mCoords.resize( points.size() );
+  if ( hasZ )
+  {
+    mZ.resize( points.size() );
+  }
+  else
+  {
+    mZ.clear();
+  }
+  if ( hasM )
+  {
+    mM.resize( points.size() );
+  }
+  else
+  {
+    mM.clear();
+  }
+
+  for ( int i = 0; i < points.size(); ++i )
+  {
+    mCoords[i].rx() = points[i].x();
+    mCoords[i].ry() = points[i].y();
+    if ( hasZ )
+    {
+      mZ[i] = points[i].z();
+    }
+    if ( hasM )
+    {
+      mM[i] = points[i].m();
+    }
   }
 }
 

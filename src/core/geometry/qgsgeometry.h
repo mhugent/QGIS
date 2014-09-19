@@ -516,6 +516,8 @@ class CORE_EXPORT QgsGeometry
     */
     static QgsGeometry *unaryUnion( const QList<QgsGeometry*>& geometryList );
 
+    void convertToStraightSegment();
+
   private:
 
     QgsAbstractGeometryV2* mGeometry;

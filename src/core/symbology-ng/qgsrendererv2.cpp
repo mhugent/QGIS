@@ -244,6 +244,17 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
     }
     break;
 
+    case QGis::WKBCircularString:
+    case QGis::WKBCircularStringZ:
+    case QGis::WKBCircularStringM:
+    case QGis::WKBCircularStringZM:
+    case QGis::WKBCompoundCurve:
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+    case QGis::WKBCompoundCurveZM:
+    {
+      geom->convertToStraightSegment();
+    }
     case QGis::WKBLineString:
     case QGis::WKBLineString25D:
     {
@@ -260,6 +271,7 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         renderVertexMarkerPolyline( pts, context );
     }
     break;
+
 
     case QGis::WKBPolygon:
     case QGis::WKBPolygon25D:

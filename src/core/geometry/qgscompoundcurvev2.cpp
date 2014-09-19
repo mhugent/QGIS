@@ -37,10 +37,10 @@ QgsAbstractGeometryV2* QgsCompoundCurveV2::clone() const
   return 0;
 }
 
-void QgsCompoundCurveV2::fromWkb( const unsigned char * wkb, size_t length )
+void QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
 {
   removeCurves();
-  if ( length < ( 1 + sizeof( int ) ) )
+  if ( !wkb )
   {
     return;
   }
@@ -72,8 +72,13 @@ void QgsCompoundCurveV2::fromWkb( const unsigned char * wkb, size_t length )
     {
       currentCurve = new QgsCircularStringV2();
     }
-    currentCurveSize = currentCurve->wkbSize( wkbPtr );
-    currentCurve->fromWkb( wkbPtr, currentCurveSize );
+    else
+    {
+      return;
+    }
+
+    currentCurve->fromWkb( wkbPtr );
+    currentCurveSize = currentCurve->wkbSize();
     mCurves.append( currentCurve );
     wkbPtr += currentCurveSize;
   }
@@ -87,6 +92,18 @@ void QgsCompoundCurveV2::fromGeos( GEOSGeometry* geos )
 void QgsCompoundCurveV2::fromWkt( const QString& wkt )
 {
 
+}
+
+int QgsCompoundCurveV2::wkbSize() const
+{
+  int size = 0;
+  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
+  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  {
+    size += ( *curveIt )->wkbSize();
+  }
+  size += ( 1 + 2 * sizeof( int ) );
+  return size;
 }
 
 QString QgsCompoundCurveV2::asText( int precision ) const
@@ -106,7 +123,7 @@ unsigned char* QgsCompoundCurveV2::asBinary( int& binarySize ) const
     curveWkbSize += currentCurveWkbSize;
   }
 
-  binarySize = curveWkbSize + 1 + 2 * sizeof( int );
+  binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
   char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );

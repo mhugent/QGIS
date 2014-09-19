@@ -600,11 +600,12 @@ QgsGeometry* QgsGeometry::fromRect( const QgsRectangle& rect )
 
 void QgsGeometry::fromWkb( unsigned char *wkb, size_t length )
 {
+  Q_UNUSED( length );
   if ( mGeometry )
   {
     mGeometry->deref();
   }
-  mGeometry = QgsGeometryImport::geomFromWkb( wkb, length );
+  mGeometry = QgsGeometryImport::geomFromWkb( wkb );
   delete[] wkb;
   if ( mGeometry )
   {
@@ -6515,4 +6516,33 @@ QgsGeometry *QgsGeometry::unaryUnion( const QList<QgsGeometry*> &geometryList )
   ret->fromGeos( geomUnion );
   return ret;
 #endif //0
+}
+
+void QgsGeometry::convertToStraightSegment()
+{
+  if ( !mGeometry )
+  {
+    return;
+  }
+
+  //todo...
+  QGis::WkbType geomType = mGeometry->wkbType();
+  if ( geomType == QGis::WKBCompoundCurve ) //todo: catch more types
+  {
+    QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( mGeometry );
+    if ( !curve )
+    {
+      return ;
+    }
+    mGeometry = curve->curveToLine();
+    delete curve;
+
+  }
+
+  //compoundcurve / circularstring /multicurve ?
+
+  //curve polygon / multisurface?
+  delete[] mWkb;
+  mWkb = 0;
+  mWkbSize = 0;
 }

@@ -17,6 +17,7 @@
 
 #include "qgscircularstringv2.h"
 #include "qgsapplication.h"
+#include "qgslinestringv2.h"
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
 
@@ -35,9 +36,9 @@ QgsAbstractGeometryV2* QgsCircularStringV2::clone() const
   return 0;
 }
 
-void QgsCircularStringV2::fromWkb( const unsigned char * wkb, size_t length )
+void QgsCircularStringV2::fromWkb( const unsigned char* wkb )
 {
-  if ( length < ( 1 + sizeof( int ) ) )
+  if ( !wkb )
   {
     return;
   }
@@ -81,9 +82,18 @@ void QgsCircularStringV2::fromWkt( const QString& wkt )
 
 }
 
-int QgsCircularStringV2::wkbSize( const unsigned char* wkb ) const
+int QgsCircularStringV2::wkbSize() const
 {
-  return 0;
+  int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );
+  if ( is3D() )
+  {
+    binarySize += ( mZ.size() * 2 * sizeof( double ) );
+  }
+  if ( isMeasure() )
+  {
+    binarySize += ( mM.size() * 2 * sizeof( double ) );
+  }
+  return binarySize;
 }
 
 QString QgsCircularStringV2::asText( int precision ) const
@@ -97,15 +107,7 @@ unsigned char* QgsCircularStringV2::asBinary( int& binarySize ) const
   bool hasM = isMeasure();
 
   int nVertices = qMin( mX.size(), mY.size() );
-  binarySize = 1 + 2 * sizeof( int ) + nVertices * 2 * sizeof( double );
-  if ( hasZ )
-  {
-    binarySize += ( mZ.size() * 2 * sizeof( double ) );
-  }
-  if ( hasM )
-  {
-    binarySize += ( mM.size() * 2 * sizeof( double ) );
-  }
+  binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
   char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
@@ -162,7 +164,14 @@ bool QgsCircularStringV2::isRing() const
 
 QgsLineStringV2* QgsCircularStringV2::curveToLine() const
 {
-  return 0; //soon...
+  QgsLineStringV2* line = new QgsLineStringV2();
+  QList<QgsPointV2> points;
+  for ( int i = 0; i < numPoints(); ++i )
+  {
+    points.push_back( pointN( i ) );
+  }
+  line->setPoints( points );
+  return line;
 }
 
 int QgsCircularStringV2::numPoints() const

@@ -58,6 +58,7 @@ class QgsAbstractGeometryV2
     virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;*/
     virtual QString asText( int precision = 17 ) const = 0;
     virtual unsigned char* asBinary( int& binarySize ) const = 0;
+    virtual int wkbSize() const = 0;
     virtual QString asGML() const = 0;
     /*virtual bool intersects( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool touches( const QgsAbstractGeometryV2& geom ) const = 0;
@@ -72,10 +73,10 @@ class QgsAbstractGeometryV2
     static QgsAbstractGeometryV2* geomFromGeos( const GEOSGeometry* geos );*/
 
     //virtual import methods
-    virtual void fromWkb( const unsigned char * wkb, size_t length ) = 0;
+    virtual void fromWkb( const unsigned char * wkb ) = 0;
     virtual void fromGeos( GEOSGeometry* geos ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
-    virtual int wkbSize( const unsigned char* wkb ) const = 0;
+
 
   private:
     int mRefs;

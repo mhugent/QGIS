@@ -31,13 +31,13 @@ class QgsCircularStringV2: public QgsCurveV2
     virtual int dimension() const { return 1; }
     virtual QgsAbstractGeometryV2* clone() const;
 
-    virtual void fromWkb( const unsigned char * wkb, size_t length );
+    virtual void fromWkb( const unsigned char * wkb );
     virtual void fromGeos( GEOSGeometry* geos );
     virtual void fromWkt( const QString& wkt );
-    virtual int wkbSize( const unsigned char* wkb ) const;
 
     virtual QString asText( int precision = 17 ) const;
     virtual unsigned char* asBinary( int& binarySize ) const;
+    virtual int wkbSize() const;
     virtual QString asGML() const;
 
     int numPoints() const;

@@ -57,15 +57,24 @@ QgsAbstractGeometryV2* QgsPointV2::clone() const
   return 0;
 }
 
-int QgsPointV2::wkbSize( const unsigned char* wkb ) const
+int QgsPointV2::wkbSize() const
 {
-  return 0;
+  int binarySize = 1 + sizeof( int ) + sizeof( double );
+  if ( is3D() > 2 )
+  {
+    binarySize += sizeof( double );
+  }
+  if ( isMeasure() )
+  {
+    binarySize += sizeof( double );
+  }
+  return binarySize;
 }
 
-void QgsPointV2::fromWkb( const unsigned char * wkb, size_t length )
+void QgsPointV2::fromWkb( const unsigned char* wkb )
 {
   reset();
-  if ( length < ( 1 + sizeof( int ) ) )
+  if ( !wkb )
   {
     return;
   }
@@ -142,16 +151,7 @@ QString QgsPointV2::asText( int precision ) const
 
 unsigned char* QgsPointV2::asBinary( int& binarySize ) const
 {
-  binarySize = 1 + sizeof( int ) + sizeof( double );
-  if ( is3D() > 2 )
-  {
-    binarySize += sizeof( double );
-  }
-  if ( isMeasure() )
-  {
-    binarySize += sizeof( double );
-  }
-
+  binarySize = wkbSize();
   char byteOrder = QgsApplication::endian();
   unsigned char* geomPtr = new unsigned char[binarySize];
   QgsWkbPtr wkb( geomPtr );

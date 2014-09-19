@@ -16,12 +16,13 @@
  ***************************************************************************/
 
 #include "qgsgeometryimport.h"
+#include "qgscompoundcurvev2.h"
 #include "qgspointv2.h"
 #include "qgslinestringv2.h"
 
-QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb, int wkbSize )
+QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb )
 {
-  if ( wkbSize < ( 1 + sizeof( int ) ) )
+  if ( !wkb )
   {
     return 0;
   }
@@ -39,7 +40,7 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb,
     case QGis::WKBPointZM:
     case QGis::WKBPoint25D:
       geom = new QgsPointV2();
-      geom->fromWkb( wkb, wkbSize );
+      geom->fromWkb( wkb );
       return geom;
     case QGis::WKBLineString:
     case QGis::WKBLineStringZ:
@@ -47,7 +48,14 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb,
     case QGis::WKBLineStringZM:
     case QGis::WKBLineString25D:
       geom = new QgsLineStringV2();
-      geom->fromWkb( wkb, wkbSize );
+      geom->fromWkb( wkb );
+      return geom;
+    case QGis::WKBCompoundCurve:
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+    case QGis::WKBCompoundCurveZM:
+      geom = new QgsCompoundCurveV2();
+      geom->fromWkb( wkb );
       return geom;
     default:
       return geom;

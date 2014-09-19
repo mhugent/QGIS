@@ -35,7 +35,7 @@ typedef QVector<QgsPolygon> QgsMultiPolygon;
 class QgsGeometryImport
 {
   public:
-    static QgsAbstractGeometryV2* geomFromWkb( const unsigned char* wkb, int wkbSize );
+    static QgsAbstractGeometryV2* geomFromWkb( const unsigned char* wkb );
     static QgsAbstractGeometryV2* geomFromWkt( const QString& text );
     static QgsAbstractGeometryV2* geomFromGeos( const GEOSGeometry* geos );
     /** construct geometry from a point */

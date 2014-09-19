@@ -579,6 +579,9 @@ QString QgsDataSourceURI::uri() const
       case QGis::WKBMultiPolygon25D:
         theUri += "MULTIPOLYGONM";
         break;
+      case QGis::WKBCompoundCurve:
+        theUri += "COMPOUNDCURVE";
+        break;
       case QGis::WKBUnknown:
       case QGis::WKBNoGeometry:
         break;

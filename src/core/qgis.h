@@ -49,8 +49,80 @@ class CORE_EXPORT QGis
     //
 
     //! Used for symbology operations
-    // Feature types
+    // Feature types (according to postgis definition, not iso draft)
     enum WkbType
+    {
+      WKBUnknown = 0,
+      WKBPoint = 1,
+      WKBLineString = 2,
+      WKBPolygon = 3,
+      WKBMultiPoint = 4,
+      WKBMultiLineString = 5,
+      WKBMultiPolygon = 6,
+      WKBCircularString = 8,
+      WKBCompoundCurve = 9,
+      WKBCurvePolygon = 10,
+      WKBMultiCurve = 11,
+      WKBMultiSurface = 12,
+      WKBNoGeometry = 100, //attributes only
+      WKBPointZ = 1001,
+      WKBLineStringZ = 1002,
+      WKBPolygonZ = 1003,
+      WKBMultiPointZ = 1004,
+      WKBMultiLineStringZ = 1005,
+      WKBMultiPolygonZ = 1006,
+      WKBCircularStringZ = 1008,
+      WKBCompoundCurveZ = 1009,
+      WKBCurvePolygonZ = 1010,
+      WKBMultiCurveZ = 1011,
+      WKBMultiSurfaceZ = 1012,
+      WKBPointM = 2001,
+      WKBLineStringM = 2002,
+      WKBPolygonM = 2003,
+      WKBMultiPointM = 2004,
+      WKBMultiLineStringM = 2005,
+      WKBMultiPolygonM = 2006,
+      WKBCircularStringM = 2008,
+      WKBCompoundCurveM = 2009,
+      WKBCurvePolygonM = 2010,
+      WKBMultiCurveM = 2011,
+      WKBMultiSurfaceM = 2012,
+      WKBPointZM = 3001,
+      WKBLineStringZM = 3002,
+      WKBPolygonZM = 3003,
+      WKBMultiPointZM = 3004,
+      WKBMultiLineStringZM = 3005,
+      WKBMultiPolygonZM = 3006,
+      WKBCircularStringZM = 3008,
+      WKBCompoundCurveZM = 3009,
+      WKBCurvePolygonZM = 3010,
+      WKBMultiCurveZM = 3011,
+      WKBMultiSurfaceZM = 3012,
+      WKBPoint25D = 0x80000001,
+      WKBLineString25D,
+      WKBPolygon25D,
+      WKBMultiPoint25D,
+      WKBMultiLineString25D,
+      WKBMultiPolygon25D
+    };
+
+
+
+#if 0
+#define WKB_CIRCULARSTRING_TYPE 8
+#define WKB_COMPOUNDCURVE_TYPE 9
+#define WKB_CURVEPOLYGON_TYPE 10
+#define WKB_MULTICURVE_TYPE 11
+#define WKB_MULTISURFACE_TYPE 12
+#define WKB_CURVE_TYPE 13 /* from ISO draft, not sure is real */
+#define WKB_SURFACE_TYPE 14 /* from ISO draft, not sure is real */
+#define WKB_POLYHEDRALSURFACE_TYPE 15
+#define WKB_TIN_TYPE 16
+#define WKB_TRIANGLE_TYPE 17
+#endif //0
+
+    //this is according to the iso draft
+    /*enum WkbType
     {
       WKBUnknown = 0,
       WKBPoint = 1,
@@ -81,11 +153,11 @@ class CORE_EXPORT QGis
       WKBLineStringZ = 3000002,
       WKBCircularStringZ = 3000003,
       WKBCompoundCurveZ = 3000004,
-      WKBpolygonZ = 3000005,
+      WKBPolygonZ = 3000005,
       WKBCurvePolygonZ = 3000006,
       WKBMultiPointZ = 3000007,
       WKBMultiCurveZ = 3000008,
-      WKBMultiLinestringZ = 3000009,
+      WKBMultiLineStringZ = 3000009,
       WKBMultiSurfaceZ = 3000010,
       WKBMultiPolygonZ = 3000011,
       WKBGeometryCollectionZ = 3000012,
@@ -97,7 +169,7 @@ class CORE_EXPORT QGis
       WKBCurvePolygonM = 4000006,
       WKBMultiPointM = 4000007,
       WKBMultiCurveM = 4000008,
-      WKBMultiLinestringM = 4000009,
+      WKBMultiLineStringM = 4000009,
       WKBMultiSurfaceM = 4000010,
       WKBMultiPolygonM = 4000011,
       WKBGeometryCollectionM = 4000012,
@@ -107,7 +179,7 @@ class CORE_EXPORT QGis
       WKBMultiPoint25D,
       WKBMultiLineString25D,
       WKBMultiPolygon25D
-    };
+    };*/
 
     static WkbType singleType( WkbType type )
     {
