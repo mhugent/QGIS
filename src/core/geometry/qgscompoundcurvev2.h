@@ -24,6 +24,8 @@ class QgsCompoundCurveV2: public QgsCurveV2
 {
   public:
     QgsCompoundCurveV2();
+    QgsCompoundCurveV2( const QgsCompoundCurveV2& curve );
+    QgsCompoundCurveV2& operator=( const QgsCompoundCurveV2& curve );
     ~QgsCompoundCurveV2();
 
     virtual QString geometryType() const { return "CompoundCurve"; }
@@ -47,7 +49,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
     int nCurves() const { return mCurves.size(); }
-    QgsCurveV2* curveAt( int i ) const;
+    const QgsCurveV2* curveAt( int i ) const;
 
   private:
     QList< QgsCurveV2* > mCurves;

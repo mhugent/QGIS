@@ -28,6 +28,8 @@ class QgsPointV2: public QgsAbstractGeometryV2
     QgsPointV2( double x, double y, double z, double m );
     ~QgsPointV2();
 
+    bool operator==( const QgsPointV2& pt ) const;
+
     virtual QgsAbstractGeometryV2* clone() const;
 
     double x() const { return mX; }

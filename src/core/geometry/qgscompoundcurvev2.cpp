@@ -22,7 +22,7 @@
 #include "qgswkbptr.h"
 
 
-QgsCompoundCurveV2::QgsCompoundCurveV2()
+QgsCompoundCurveV2::QgsCompoundCurveV2(): QgsCurveV2()
 {
 
 }
@@ -32,9 +32,29 @@ QgsCompoundCurveV2::~QgsCompoundCurveV2()
   removeCurves();
 }
 
+QgsCompoundCurveV2::QgsCompoundCurveV2( const QgsCompoundCurveV2& curve ): QgsCurveV2()
+{
+  *this = curve;
+}
+
+QgsCompoundCurveV2& QgsCompoundCurveV2::operator=( const QgsCompoundCurveV2 & curve )
+{
+  //copy curves
+  QgsCurveV2::operator=( curve );
+  if ( &curve != this )
+  {
+    removeCurves();
+    for ( int i = 0; i < nCurves(); ++i )
+    {
+      mCurves.append( dynamic_cast<QgsCurveV2*>( curveAt( i )->clone() ) );
+    }
+  }
+  return *this;
+}
+
 QgsAbstractGeometryV2* QgsCompoundCurveV2::clone() const
 {
-  return 0;
+  return new QgsCompoundCurveV2( *this );
 }
 
 void QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
@@ -114,13 +134,11 @@ QString QgsCompoundCurveV2::asText( int precision ) const
 unsigned char* QgsCompoundCurveV2::asBinary( int& binarySize ) const
 {
   QList< QPair< unsigned char*, int > > curveWkb;
-  int curveWkbSize = 0;
   int currentCurveWkbSize = 0;
   QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
   for ( ; curveIt != mCurves.constEnd(); ++curveIt )
   {
     curveWkb.push_back( qMakePair(( *curveIt )->asBinary( currentCurveWkbSize ), currentCurveWkbSize ) );
-    curveWkbSize += currentCurveWkbSize;
   }
 
   binarySize = wkbSize();
@@ -154,17 +172,25 @@ double QgsCompoundCurveV2::length() const
 
 QgsPointV2 QgsCompoundCurveV2::startPoint() const
 {
-  return QgsPointV2(); //todo...
+  if ( mCurves.size() < 1 )
+  {
+    return QgsPointV2();
+  }
+  return mCurves.at( 0 )->startPoint();
 }
 
 QgsPointV2 QgsCompoundCurveV2::endPoint() const
 {
-  return QgsPointV2(); //todo...
+  if ( mCurves.size() < 1 )
+  {
+    return QgsPointV2();
+  }
+  return mCurves.at( mCurves.size() - 1 )->endPoint();
 }
 
 bool QgsCompoundCurveV2::isClosed() const
 {
-  return false;
+  return ( startPoint() == endPoint() ) ;
 }
 
 bool QgsCompoundCurveV2::isRing() const
@@ -197,9 +223,13 @@ QgsLineStringV2* QgsCompoundCurveV2::curveToLine() const
   return line;
 }
 
-QgsCurveV2* QgsCompoundCurveV2::curveAt( int i ) const
+const QgsCurveV2* QgsCompoundCurveV2::curveAt( int i ) const
 {
-  return 0;
+  if ( i >= mCurves.size() )
+  {
+    return 0;
+  }
+  return mCurves.at( i );
 }
 
 void QgsCompoundCurveV2::removeCurves()

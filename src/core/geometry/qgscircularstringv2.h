@@ -42,6 +42,9 @@ class QgsCircularStringV2: public QgsCurveV2
 
     int numPoints() const;
     QgsPointV2 pointN( int i ) const;
+    QList<QgsPointV2> points() const;
+    void setPoints( const QList<QgsPointV2> points );
+
 
     //curve interface
     virtual double length() const;
@@ -56,6 +59,8 @@ class QgsCircularStringV2: public QgsCurveV2
     QVector<double> mY;
     QVector<double> mZ;
     QVector<double> mM;
+
+    void segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const;
 };
 
 #endif // QGSCIRCULARSTRING_H

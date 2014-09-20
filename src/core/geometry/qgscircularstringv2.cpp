@@ -33,7 +33,7 @@ QgsCircularStringV2::~QgsCircularStringV2()
 
 QgsAbstractGeometryV2* QgsCircularStringV2::clone() const
 {
-  return 0;
+  return new QgsCircularStringV2( *this );
 }
 
 void QgsCircularStringV2::fromWkb( const unsigned char* wkb )
@@ -87,11 +87,11 @@ int QgsCircularStringV2::wkbSize() const
   int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );
   if ( is3D() )
   {
-    binarySize += ( mZ.size() * 2 * sizeof( double ) );
+    binarySize += ( mZ.size() * sizeof( double ) );
   }
   if ( isMeasure() )
   {
-    binarySize += ( mM.size() * 2 * sizeof( double ) );
+    binarySize += ( mM.size() * sizeof( double ) );
   }
   return binarySize;
 }
@@ -144,17 +144,25 @@ double QgsCircularStringV2::length() const
 
 QgsPointV2 QgsCircularStringV2::startPoint() const
 {
-  return QgsPointV2(); //soon...
+  if ( numPoints() < 1 )
+  {
+    return QgsPointV2();
+  }
+  return pointN( 0 );
 }
 
 QgsPointV2 QgsCircularStringV2::endPoint() const
 {
-  return QgsPointV2(); //soon...
+  if ( numPoints() < 1 )
+  {
+    return QgsPointV2();
+  }
+  return pointN( numPoints() - 1 );
 }
 
 bool QgsCircularStringV2::isClosed() const
 {
-  return false; //soon...
+  return ( numPoints() > 0 && pointN( 0 ) == pointN( numPoints() - 1 ) );
 }
 
 bool QgsCircularStringV2::isRing() const
@@ -166,12 +174,21 @@ QgsLineStringV2* QgsCircularStringV2::curveToLine() const
 {
   QgsLineStringV2* line = new QgsLineStringV2();
   QList<QgsPointV2> points;
-  for ( int i = 0; i < numPoints(); ++i )
+
+  for ( int i = 0; i < ( numPoints() - 2 ) ; i += 3 )
   {
-    points.push_back( pointN( i ) );
+    segmentize( pointN( i ), pointN( i + 1 ), pointN( i + 2 ), points );
   }
+
   line->setPoints( points );
   return line;
+}
+
+void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const
+{
+  points.append( p1 );
+  points.append( p2 );
+  points.append( p3 );
 }
 
 int QgsCircularStringV2::numPoints() const
@@ -200,5 +217,80 @@ QgsPointV2 QgsCircularStringV2::pointN( int i ) const
   else
   {
     return QgsPointV2( mX.at( i ), mY.at( i ), hasM ? mM.at( i ) : mZ.at( i ), hasM );
+  }
+}
+
+QList<QgsPointV2> QgsCircularStringV2::points() const
+{
+  QList<QgsPointV2> pts;
+  int nPts = numPoints();
+  for ( int i = 0; i < numPoints(); ++i )
+  {
+    pts.push_back( pointN( i ) );
+  }
+  return pts;
+}
+
+void QgsCircularStringV2::setPoints( const QList<QgsPointV2> points )
+{
+  if ( points.size() < 1 )
+  {
+    mWkbType = QGis::WKBUnknown; mX.clear(); mY.clear(); mZ.clear(); mM.clear();
+    return;
+  }
+
+  //get wkb type from first point
+  const QgsPointV2& firstPt = points.at( 0 );
+  bool hasZ = firstPt.is3D();
+  bool hasM = firstPt.isMeasure();
+
+  if ( hasZ && hasM )
+  {
+    mWkbType = QGis::WKBLineStringZM;
+  }
+  else if ( hasZ )
+  {
+    mWkbType = QGis::WKBLineStringZ;
+  }
+  else if ( hasM )
+  {
+    mWkbType = QGis::WKBLineStringM;
+  }
+  else
+  {
+    mWkbType = QGis::WKBLineString;
+  }
+
+  mX.resize( points.size() );
+  mY.resize( points.size() );
+  if ( hasZ )
+  {
+    mZ.resize( points.size() );
+  }
+  else
+  {
+    mZ.clear();
+  }
+  if ( hasM )
+  {
+    mM.resize( points.size() );
+  }
+  else
+  {
+    mM.clear();
+  }
+
+  for ( int i = 0; i < points.size(); ++i )
+  {
+    mX[i] = points[i].x();
+    mY[i] = points[i].y();
+    if ( hasZ )
+    {
+      mZ[i] = points[i].z();
+    }
+    if ( hasM )
+    {
+      mM[i] = points[i].m();
+    }
   }
 }

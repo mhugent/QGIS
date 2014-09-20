@@ -28,19 +28,11 @@ QgsLineStringV2::~QgsLineStringV2()
 
 QgsAbstractGeometryV2* QgsLineStringV2::clone() const
 {
-  QgsLineStringV2* line = new QgsLineStringV2();
-  QList<QgsPointV2> points;
-  for ( int i = 0; i < numPoints(); ++i )
-  {
-    points.push_back( pointN( i ) );
-  }
-  line->setPoints( points );
-  return line;
+  return new QgsLineStringV2( *this );
 }
 
 void QgsLineStringV2::fromWkb( const unsigned char* wkb )
 {
-  //reset
   if ( !wkb )
   {
     return;
@@ -76,15 +68,14 @@ void QgsLineStringV2::fromWkb( const unsigned char* wkb )
 
 int QgsLineStringV2::wkbSize() const
 {
-  int nVertices = mCoords.size();
   int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );
   if ( is3D() )
   {
-    binarySize += ( mZ.size() * 2 * sizeof( double ) );
+    binarySize += ( mZ.size() * sizeof( double ) );
   }
   if ( isMeasure() )
   {
-    binarySize += ( mM.size() * 2 * sizeof( double ) );
+    binarySize += ( mM.size() * sizeof( double ) );
   }
   return binarySize;
 }
@@ -136,7 +127,7 @@ unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
 
 QString QgsLineStringV2::asGML() const
 {
-  return QString();
+  return QString(); //todo...
 }
 
 double QgsLineStringV2::length() const
@@ -146,22 +137,30 @@ double QgsLineStringV2::length() const
 
 QgsPointV2 QgsLineStringV2::startPoint() const
 {
-  return QgsPointV2();
+  if ( numPoints() < 1 )
+  {
+    return QgsPointV2();
+  }
+  return pointN( 0 );
 }
 
 QgsPointV2 QgsLineStringV2::endPoint() const
 {
-  return QgsPointV2();
+  if ( numPoints() < 1 )
+  {
+    return QgsPointV2();
+  }
+  return pointN( numPoints() - 1 );
 }
 
 bool QgsLineStringV2::isClosed() const
 {
-  return false; //soon...
+  return ( numPoints() > 0 && pointN( 0 ) == pointN( numPoints() - 1 ) );
 }
 
 bool QgsLineStringV2::isRing() const
 {
-  return false; //soon...
+  return false;
 }
 
 QgsLineStringV2* QgsLineStringV2::curveToLine() const
@@ -196,6 +195,17 @@ QgsPointV2 QgsLineStringV2::pointN( int i ) const
   {
     return QgsPointV2( pt.x(), pt.y(), hasM ? mM.at( i ) : mZ.at( i ), hasM );
   }
+}
+
+QList<QgsPointV2> QgsLineStringV2::points() const
+{
+  QList<QgsPointV2> pts;
+  int nPoints = numPoints();
+  for ( int i = 0; i < nPoints; ++i )
+  {
+    pts.push_back( pointN( i ) );
+  }
+  return pts;
 }
 
 void QgsLineStringV2::setPoints( const QList<QgsPointV2> points )

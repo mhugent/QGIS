@@ -39,22 +39,14 @@ QgsPointV2::QgsPointV2( double x, double y, double z, double m ): QgsAbstractGeo
 QgsPointV2::~QgsPointV2()
 {}
 
+bool QgsPointV2::operator==( const QgsPointV2& pt ) const
+{
+  return ( pt.wkbType() == wkbType() && pt.x() == mX && pt.y() == mY && pt.z() == mZ && pt.m() == mM );
+}
+
 QgsAbstractGeometryV2* QgsPointV2::clone() const
 {
-  switch ( mWkbType )
-  {
-    case QGis::WKBPoint:
-      return new QgsPointV2( mX, mY );
-    case QGis::WKBPointZ:
-      return new QgsPointV2( mX, mY, mZ, false );
-    case QGis::WKBPointM:
-      return new QgsPointV2( mX, mY, mM, true );
-    case QGis::WKBPointZM:
-      return new QgsPointV2( mX, mY, mM, mZ );
-    default:
-      return 0;
-  }
-  return 0;
+  return new QgsPointV2( *this );
 }
 
 int QgsPointV2::wkbSize() const
