@@ -60,7 +60,12 @@ class QgsCircularStringV2: public QgsCurveV2
     QVector<double> mZ;
     QVector<double> mM;
 
+    //helper methods for curveToLine
     void segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const;
+    void circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
+                             double& centerX, double& centerY ) const;
+    int segmentSide( const QgsPointV2& pt1, const QgsPointV2& pt3, const QgsPointV2& pt2 ) const;
+    double interpolateArc( double angle, double a1, double a2, double a3, double zm1, double zm2, double zm3 ) const;
 };
 
 #endif // QGSCIRCULARSTRING_H

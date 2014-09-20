@@ -184,13 +184,6 @@ QgsLineStringV2* QgsCircularStringV2::curveToLine() const
   return line;
 }
 
-void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const
-{
-  points.append( p1 );
-  points.append( p2 );
-  points.append( p3 );
-}
-
 int QgsCircularStringV2::numPoints() const
 {
   return qMin( mX.size(), mY.size() );
@@ -224,7 +217,7 @@ QList<QgsPointV2> QgsCircularStringV2::points() const
 {
   QList<QgsPointV2> pts;
   int nPts = numPoints();
-  for ( int i = 0; i < numPoints(); ++i )
+  for ( int i = 0; i < nPts; ++i )
   {
     pts.push_back( pointN( i ) );
   }
@@ -292,5 +285,165 @@ void QgsCircularStringV2::setPoints( const QList<QgsPointV2> points )
     {
       mM[i] = points[i].m();
     }
+  }
+}
+
+void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const
+{
+  //adapted code from postgis
+  double radius = 0;
+  double centerX = 0;
+  double centerY = 0;
+  circleCenterRadius( p1, p2, p3, radius, centerX, centerY );
+  int segSide = segmentSide( p1, p3, p2 );
+
+  if ( radius < 0 || qgsDoubleNear( segSide, 0.0 ) ) //points are colinear
+  {
+    points.append( p1 );
+    points.append( p2 );
+    points.append( p3 );
+  }
+
+  bool clockwise = false;
+  if ( segSide == -1 )
+  {
+    clockwise = true;
+  }
+
+  double increment = fabs( M_PI_2 / 90 ); //one segment per degree
+
+  //angles of pt1, pt2, pt3
+  double a1 = atan2( p1.y() - centerY, p1.x() - centerX );
+  double a2 = atan2( p2.y() - centerY, p2.x() - centerX );
+  double a3 = atan2( p3.y() - centerY, p3.x() - centerX );
+
+  if ( clockwise )
+  {
+    increment *= -1;
+    /* Adjust a3 down so we can decrement from a1 to a3 cleanly */
+    if ( a3 > a1 )
+      a3 -= 2.0 * M_PI;
+    if ( a2 > a1 )
+      a2 -= 2.0 * M_PI;
+  }
+  else
+  {
+    /* Adjust a3 up so we can increment from a1 to a3 cleanly */
+    if ( a3 < a1 )
+      a3 += 2.0 * M_PI;
+    if ( a2 < a1 )
+      a2 += 2.0 * M_PI;
+  }
+
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+
+  double x, y, z, m;
+  points.append( p1 );
+  for ( double angle = a1 + increment; clockwise ? angle > a3 : angle < a3; angle += increment )
+  {
+    x = centerX + radius * cos( angle );
+    y = centerY + radius * sin( angle );
+
+    if ( !hasZ && !hasM )
+    {
+      points.append( QgsPointV2( x, y ) );
+      continue;
+    }
+
+    if ( hasZ )
+    {
+      z = interpolateArc( angle, a1, a2, a3, p1.z(), p2.z(), p3.z() );
+    }
+    if ( hasM )
+    {
+      m = interpolateArc( angle, a1, a2, a3, p1.m(), p2.m(), p3.m() );
+    }
+
+    if ( hasZ && hasM )
+    {
+      points.append( QgsPointV2( x, y, z, m ) );
+    }
+    else if ( hasZ )
+    {
+      points.append( QgsPointV2( x, y, z, false ) );
+    }
+    else
+    {
+      points.append( QgsPointV2( x, y, m, true ) );
+    }
+  }
+}
+
+void QgsCircularStringV2::circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
+    double& centerX, double& centerY ) const
+{
+  double temp, bc, cd, det;
+
+  //closed circle
+  if ( qgsDoubleNear( pt1.x(), pt3.x() ) && qgsDoubleNear( pt1.y(), pt3.y() ) )
+  {
+    centerX = pt2.x();
+    centerY = pt2.y();
+    radius = sqrt( pow( pt2.x() - pt1.x(), 2.0 ) + pow( pt2.y() - pt1.y(), 2.0 ) );
+    return;
+  }
+
+  temp = pt2.x() * pt2.x() + pt2.y() * pt2.y();
+  bc = ( pt1.x() * pt1.x() + pt1.y() * pt1.y() - temp ) / 2.0;
+  cd = ( temp - pt3.x() * pt3.x() - pt3.y() * pt3.y() ) / 2.0;
+  det = ( pt1.x() - pt2.x() ) * ( pt2.y() - pt3.y() ) - ( pt2.x() - pt3.x() ) * ( pt1.y() - pt2.y() );
+
+  /* Check colinearity */
+  if ( qgsDoubleNear( fabs( det ), 0.0 ) )
+  {
+    radius = -1.0;
+    return;
+  }
+
+  det = 1.0 / det;
+  centerX = ( bc * ( pt2.y() - pt3.y() ) - cd * ( pt1.y() - pt2.y() ) ) * det;
+  centerY = (( pt1.x() - pt2.x() ) * cd - ( pt2.x() - pt3.x() ) * bc ) * det;
+  radius = sqrt(( centerX - pt1.x() ) * ( centerX - pt1.x() ) + ( centerY - pt1.y() ) * ( centerY - pt1.y() ) );
+}
+
+int QgsCircularStringV2::segmentSide( const QgsPointV2& pt1, const QgsPointV2& pt3, const QgsPointV2& pt2 ) const
+{
+  double side = (( pt2.x() - pt1.x() ) * ( pt3.y() - pt1.y() ) - ( pt3.x() - pt1.x() ) * ( pt2.y() - pt1.y() ) );
+  if ( side == 0.0 )
+  {
+    return 0;
+  }
+  else
+  {
+    if ( side < 0 )
+    {
+      return -1;
+    }
+    if ( side > 0 )
+    {
+      return 1;
+    }
+    return 0;
+  }
+}
+
+double QgsCircularStringV2::interpolateArc( double angle, double a1, double a2, double a3, double zm1, double zm2, double zm3 ) const
+{
+  /* Counter-clockwise sweep */
+  if ( a1 < a2 )
+  {
+    if ( angle <= a2 )
+      return zm1 + ( zm2 - zm1 ) * ( angle - a1 ) / ( a2 - a1 );
+    else
+      return zm2 + ( zm3 - zm2 ) * ( angle - a2 ) / ( a3 - a2 );
+  }
+  /* Clockwise sweep */
+  else
+  {
+    if ( angle >= a2 )
+      return zm1 + ( zm2 - zm1 ) * ( a1 - angle ) / ( a1 - a2 );
+    else
+      return zm2 + ( zm3 - zm2 ) * ( a2 - angle ) / ( a2 - a3 );
   }
 }
