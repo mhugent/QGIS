@@ -14,15 +14,16 @@ email                : marco.hugentobler at sourcepole dot com
  ***************************************************************************/
 
 #include "qgsabstractgeometryv2.h"
+#include "qgsgeos.h"
 
 QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mWkbType( QGis::WKBUnknown )
 {
-
+  mVectorTopology = new QgsGeos( this );
 }
 
 QgsAbstractGeometryV2::~QgsAbstractGeometryV2()
 {
-
+  delete mVectorTopology;
 }
 
 void QgsAbstractGeometryV2::ref()
@@ -49,4 +50,12 @@ bool QgsAbstractGeometryV2::isMeasure() const
 {
   int val = ( mWkbType << 6 );
   return ( val == 4 || val == 2 );
+}
+
+void QgsAbstractGeometryV2::geometryChanged()
+{
+  if ( mVectorTopology )
+  {
+    mVectorTopology->geometryChanged();
+  }
 }

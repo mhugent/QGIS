@@ -81,11 +81,6 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkt( const QString& text )
   return geom;
 }
 
-QgsAbstractGeometryV2* QgsGeometryImport::geomFromGeos( const GEOSGeometry* geos )
-{
-  return 0; //soon...
-}
-
 QgsAbstractGeometryV2* QgsGeometryImport::fromPoint( const QgsPoint& point )
 {
   return new QgsPointV2( point.x(), point.y() );

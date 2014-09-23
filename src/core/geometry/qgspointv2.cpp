@@ -87,11 +87,6 @@ void QgsPointV2::fromWkb( const unsigned char* wkb )
   }
 }
 
-void QgsPointV2::fromGeos( GEOSGeometry* geos )
-{
-  //soon
-}
-
 void QgsPointV2::fromWkt( const QString& wkt )
 {
   reset();

@@ -33,7 +33,6 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual QgsAbstractGeometryV2* clone() const;
 
     virtual void fromWkb( const unsigned char* wkb );
-    virtual void fromGeos( GEOSGeometry* geos );
     virtual void fromWkt( const QString& wkt );
 
     virtual QString asText( int precision = 17 ) const;

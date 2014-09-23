@@ -266,6 +266,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgscompoundcurvev2.cpp
   geometry/qgsgeometry.cpp
   geometry/qgsgeometryimport.cpp
+  geometry/qgsgeos.cpp
   geometry/qgspointv2.cpp
   geometry/qgslinestringv2.cpp
 )

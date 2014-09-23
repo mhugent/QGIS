@@ -20,11 +20,11 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include <QString>
 
-typedef struct GEOSGeom_t GEOSGeometry;
 class QgsCoordinateTransform;
 class QgsCurveV2;
 class QgsMultiCurveV2;
 class QgsMultiPointV2;
+class QgsVectorTopology;
 
 /**Abstract base class for all geometries*/
 class QgsAbstractGeometryV2
@@ -74,7 +74,6 @@ class QgsAbstractGeometryV2
 
     //virtual import methods
     virtual void fromWkb( const unsigned char * wkb ) = 0;
-    virtual void fromGeos( GEOSGeometry* geos ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
 
 
@@ -86,6 +85,9 @@ class QgsAbstractGeometryV2
 
   protected:
     QGis::WkbType mWkbType;
+    QgsVectorTopology* mVectorTopology;
+
+    void geometryChanged();
 };
 
 #endif //QGSABSTRACTGEOMETRYV2

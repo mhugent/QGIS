@@ -70,7 +70,6 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual bool overlaps( const QgsAbstractGeometryV2& geom ) const = 0;*/
 
     virtual void fromWkb( const unsigned char* wkb );
-    virtual void fromGeos( GEOSGeometry* geos );
     virtual void fromWkt( const QString& wkt );
 
 

@@ -104,11 +104,6 @@ void QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
   }
 }
 
-void QgsCompoundCurveV2::fromGeos( GEOSGeometry* geos )
-{
-
-}
-
 void QgsCompoundCurveV2::fromWkt( const QString& wkt )
 {
 

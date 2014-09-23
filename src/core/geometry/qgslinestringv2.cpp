@@ -80,11 +80,6 @@ int QgsLineStringV2::wkbSize() const
   return binarySize;
 }
 
-void QgsLineStringV2::fromGeos( GEOSGeometry* geos )
-{
-
-}
-
 void QgsLineStringV2::fromWkt( const QString& wkt )
 {
 

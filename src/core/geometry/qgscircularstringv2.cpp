@@ -72,11 +72,6 @@ void QgsCircularStringV2::fromWkb( const unsigned char* wkb )
   }
 }
 
-void QgsCircularStringV2::fromGeos( GEOSGeometry* geos )
-{
-
-}
-
 void QgsCircularStringV2::fromWkt( const QString& wkt )
 {
 
