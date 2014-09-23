@@ -64,6 +64,8 @@ void QgsLineStringV2::fromWkb( const unsigned char* wkb )
       wkbPtr >> mM[i];
     }
   }
+
+  geometryChanged();
 }
 
 int QgsLineStringV2::wkbSize() const
@@ -82,7 +84,7 @@ int QgsLineStringV2::wkbSize() const
 
 void QgsLineStringV2::fromWkt( const QString& wkt )
 {
-
+  geometryChanged();
 }
 
 QString QgsLineStringV2::asText( int precision ) const
@@ -267,6 +269,8 @@ void QgsLineStringV2::setPoints( const QList<QgsPointV2> points )
       mM[i] = points[i].m();
     }
   }
+
+  geometryChanged();
 }
 
 void QgsLineStringV2::append( const QgsLineStringV2* line )
@@ -279,4 +283,5 @@ void QgsLineStringV2::append( const QgsLineStringV2* line )
   mCoords += line->mCoords;
   mZ += line->mZ;
   mM += line->mM;
+  geometryChanged();
 }
