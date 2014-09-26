@@ -32,6 +32,9 @@ class QgsAbstractGeometryV2
   public:
     QgsAbstractGeometryV2();
     virtual ~QgsAbstractGeometryV2();
+    QgsAbstractGeometryV2( const QgsAbstractGeometryV2& geom );
+    QgsAbstractGeometryV2& operator=( const QgsAbstractGeometryV2& geom );
+
     virtual QgsAbstractGeometryV2* clone() const = 0;
 
     int referenceCount() const { return mRefs; }

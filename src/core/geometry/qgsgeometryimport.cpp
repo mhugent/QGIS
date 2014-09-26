@@ -17,7 +17,9 @@
 
 #include "qgsgeometryimport.h"
 #include "qgscompoundcurvev2.h"
+#include "qgscurvepolygonv2.h"
 #include "qgspointv2.h"
+#include "qgspolygonv2.h"
 #include "qgslinestringv2.h"
 
 QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb )
@@ -55,6 +57,14 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb 
     case QGis::WKBCompoundCurveM:
     case QGis::WKBCompoundCurveZM:
       geom = new QgsCompoundCurveV2();
+      geom->fromWkb( wkb );
+      return geom;
+    case QGis::WKBPolygon:
+    case QGis::WKBPolygonZ:
+    case QGis::WKBPolygonM:
+    case QGis::WKBPolygonZM:
+    case QGis::WKBPolygon25D:
+      geom = new QgsPolygonV2();
       geom->fromWkb( wkb );
       return geom;
     default:

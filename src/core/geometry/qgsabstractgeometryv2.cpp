@@ -26,6 +26,17 @@ QgsAbstractGeometryV2::~QgsAbstractGeometryV2()
   delete mVectorTopology;
 }
 
+QgsAbstractGeometryV2::QgsAbstractGeometryV2( const QgsAbstractGeometryV2& geom )
+{
+  mVectorTopology = new QgsGeos( this );
+}
+
+QgsAbstractGeometryV2& QgsAbstractGeometryV2::operator=( const QgsAbstractGeometryV2 & geom )
+{
+  mVectorTopology = new QgsGeos( this );
+  return *this;
+}
+
 void QgsAbstractGeometryV2::ref()
 {
   ++mRefs;
