@@ -469,6 +469,7 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
           GEOSGeom_destroy( geosGeom );
           return false;
       }
+      GEOSGeom_destroy( geosGeom );
       return result;
     }
 
@@ -500,6 +501,7 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
     return 0;
   }
 
+  GEOSGeom_destroy( geosGeom );
   return result;
 }
 
