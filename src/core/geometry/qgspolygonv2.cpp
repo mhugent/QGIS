@@ -102,6 +102,7 @@ void QgsPolygonV2::fromWkb( const unsigned char* wkb )
 
 unsigned char* QgsPolygonV2::asBinary( int& binarySize ) const
 {
+  binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[wkbSize()];
   char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
@@ -157,7 +158,7 @@ int QgsPolygonV2::ringWkbSize( const QgsCurveV2* ring )
     return size;
   }
 
-  size = 1 + 2 * sizeof( int );
+  size = sizeof( int );
   size += 2 * sizeof( double ) * line->numPoints();
   if ( line->is3D() )
   {

@@ -32,11 +32,12 @@ class QgsVectorTopology
     virtual QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual double distance( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool instersects( const QgsAbstractGeometryV2& geom ) const = 0;
+    virtual bool intersects( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool touches( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool crosses( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool within( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool overlaps( const QgsAbstractGeometryV2& geom ) const = 0;
+    virtual bool contains( const QgsAbstractGeometryV2& geom ) const = 0;
 
   protected:
     QgsAbstractGeometryV2* mGeometry;

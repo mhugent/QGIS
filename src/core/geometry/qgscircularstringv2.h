@@ -53,6 +53,8 @@ class QgsCircularStringV2: public QgsCurveV2
     virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
 
+    virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle(); }
+
   private:
     QVector<double> mX;
     QVector<double> mY;

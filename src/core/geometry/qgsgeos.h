@@ -20,6 +20,8 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgspointv2.h"
 #include <geos_c.h>
 
+class QgsLineStringV2;
+
 /**Does vector analysis using the geos library and handles import, export, exception handling*/
 class QgsGeos: public QgsVectorTopology
 {
@@ -36,11 +38,12 @@ class QgsGeos: public QgsVectorTopology
     QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const ;
     QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
     double distance( const QgsAbstractGeometryV2& geom ) const;
-    bool instersects( const QgsAbstractGeometryV2& geom ) const;
+    bool intersects( const QgsAbstractGeometryV2& geom ) const;
     bool touches( const QgsAbstractGeometryV2& geom ) const;
     bool crosses( const QgsAbstractGeometryV2& geom ) const;
     bool within( const QgsAbstractGeometryV2& geom ) const;
     bool overlaps( const QgsAbstractGeometryV2& geom ) const;
+    bool contains( const QgsAbstractGeometryV2& geom ) const;
 
     static QgsAbstractGeometryV2* fromGeos( const GEOSGeometry* geos );
     static GEOSGeometry* asGeos( const QgsAbstractGeometryV2* geom );
@@ -64,12 +67,15 @@ class QgsGeos: public QgsVectorTopology
       TOUCHES,
       CROSSES,
       WITHIN,
-      OVERLAPS
+      OVERLAPS,
+      CONTAINS
     };
 
     void cacheGeos() const;
     QgsAbstractGeometryV2* overlay( const QgsAbstractGeometryV2& geom, Overlay op ) const;
     bool relation( const QgsAbstractGeometryV2& geom, Relation r ) const;
+    static GEOSCoordSequence* createCoordinateSequence( const QgsCurveV2* curve );
+    static QgsLineStringV2* sequenceToLinestring( const GEOSGeometry* geos, bool hasZ, bool hasM );
 };
 
 #endif // QGSGEOS_H

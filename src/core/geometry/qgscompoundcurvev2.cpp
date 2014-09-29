@@ -234,3 +234,21 @@ void QgsCompoundCurveV2::removeCurves()
   qDeleteAll( mCurves );
   mCurves.clear();
 }
+
+QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
+{
+  if ( mCurves.size() < 1 )
+  {
+    return QgsRectangle();
+  }
+
+  QgsRectangle bbox = mCurves.at( 0 )->boundingBox();
+
+  QgsRectangle curveBBox;
+  for ( int i = 1; i < mCurves.size(); ++i )
+  {
+    curveBBox = mCurves.at( i )->boundingBox();
+    bbox.combineExtentWith( &curveBBox );
+  }
+  return bbox;
+}

@@ -39,6 +39,8 @@ class QgsAbstractGeometryV2
 
     int referenceCount() const { return mRefs; }
 
+    QgsRectangle boundingBox() const;
+
     //mm-sql interface
     virtual int dimension() const = 0;
     //virtual int coordDim() const { return mCoordDimension; }
@@ -54,31 +56,30 @@ class QgsAbstractGeometryV2
     virtual QgsMultiPointV2* locateAlong() const = 0;
     virtual QgsMultiCurveV2* locateBetween() const = 0;
     virtual QgsCurveV2* boundary() const = 0;
-    virtual QgsRectangle envelope() const = 0;
-    virtual QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const = 0; //should be union, but this is a C++ keyword
-    virtual QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;*/
+    virtual QgsRectangle envelope() const = 0;*/
+
     virtual QString asText( int precision = 17 ) const = 0;
     virtual unsigned char* asBinary( int& binarySize ) const = 0;
     virtual int wkbSize() const = 0;
     virtual QString asGML() const = 0;
-    /*virtual bool intersects( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool touches( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool crosses( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool within( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool contains( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool overlaps( const QgsAbstractGeometryV2& geom ) const = 0;*/
-
-    //static import methods //moved to QgsGeometryImport
-    /*static QgsAbstractGeometryV2* geomFromWkb( unsigned char * wkb, size_t length );
-    static QgsAbstractGeometryV2* geomFromWkt( const QString& wkt );
-    static QgsAbstractGeometryV2* geomFromGeos( const GEOSGeometry* geos );*/
 
     //virtual import methods
     virtual void fromWkb( const unsigned char * wkb ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
 
+    //redirect to vector topology
+    QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const;
+    QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const; //should be union, but this is a C++ keyword
+    QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const;
+    QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
+    bool intersects( const QgsAbstractGeometryV2& geom ) const;
+    bool touches( const QgsAbstractGeometryV2& geom ) const;
+    bool crosses( const QgsAbstractGeometryV2& geom ) const;
+    bool within( const QgsAbstractGeometryV2& geom ) const;
+    bool contains( const QgsAbstractGeometryV2& geom ) const;
+    bool overlaps( const QgsAbstractGeometryV2& geom ) const;
+
+    virtual QgsRectangle calculateBoundingBox() const = 0;
 
   private:
     int mRefs;
@@ -89,6 +90,7 @@ class QgsAbstractGeometryV2
   protected:
     QGis::WkbType mWkbType;
     QgsVectorTopology* mVectorTopology;
+    mutable QgsRectangle mBoundingBox;
 
     void geometryChanged();
 };

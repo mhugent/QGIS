@@ -103,7 +103,7 @@ QgsAbstractGeometryV2* QgsGeometryImport::fromMultiPoint( const QgsMultiPoint& m
 
 QgsAbstractGeometryV2* QgsGeometryImport::fromPolyline( const QgsPolyline& polyline )
 {
-  return 0; //todo...
+  return linestringFromPolyline( polyline );
 }
 
 QgsAbstractGeometryV2* QgsGeometryImport::fromMultiPolyline( const QgsMultiPolyline& multiline )
@@ -111,9 +111,24 @@ QgsAbstractGeometryV2* QgsGeometryImport::fromMultiPolyline( const QgsMultiPolyl
   return 0; //todo...
 }
 
-QgsAbstractGeometryV2* fromPolygon( const QgsPolygon& polygon )
+QgsAbstractGeometryV2* QgsGeometryImport::fromPolygon( const QgsPolygon& polygon )
 {
-  return 0; //todo...
+  QgsPolygonV2* poly = new QgsPolygonV2();
+
+  QList<QgsCurveV2*> holes;
+  for ( int i = 0; i < polygon.size(); ++i )
+  {
+    if ( i == 0 )
+    {
+      poly->setExteriorRing( linestringFromPolyline( polygon.at( i ) ) );
+    }
+    else
+    {
+      holes.push_back( linestringFromPolyline( polygon.at( i ) ) );
+    }
+  }
+  poly->setInteriorRings( holes );
+  return poly;
 }
 
 QgsAbstractGeometryV2* QgsGeometryImport::fromMultiPolygon( const QgsMultiPolygon& multipoly )
@@ -124,4 +139,18 @@ QgsAbstractGeometryV2* QgsGeometryImport::fromMultiPolygon( const QgsMultiPolygo
 QgsAbstractGeometryV2* QgsGeometryImport::fromRect( const QgsRectangle& rect )
 {
   return 0; //todo...
+}
+
+QgsLineStringV2* QgsGeometryImport::linestringFromPolyline( const QgsPolyline& polyline )
+{
+  QgsLineStringV2* line = new QgsLineStringV2();
+
+  QList<QgsPointV2> points;
+  QgsPolyline::const_iterator it = polyline.constBegin();
+  for ( ; it != polyline.constEnd(); ++it )
+  {
+    points.append( QgsPointV2( it->x(), it->y() ) );
+  }
+  line->setPoints( points );
+  return line;
 }

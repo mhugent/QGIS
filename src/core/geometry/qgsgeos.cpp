@@ -19,6 +19,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgslinestringv2.h"
 #include "qgsmessagelog.h"
 #include "qgslogger.h"
+#include "qgspolygonv2.h"
 #include <cstdio>
 
 #define CATCH_GEOS(r) \
@@ -178,7 +179,7 @@ double QgsGeos::distance( const QgsAbstractGeometryV2& geom ) const
   return 0.0;
 }
 
-bool QgsGeos::instersects( const QgsAbstractGeometryV2& geom ) const
+bool QgsGeos::intersects( const QgsAbstractGeometryV2& geom ) const
 {
   return relation( geom, INTERSECTS );
 }
@@ -203,6 +204,11 @@ bool QgsGeos::overlaps( const QgsAbstractGeometryV2& geom ) const
   return relation( geom, OVERLAPS );
 }
 
+bool QgsGeos::contains( const QgsAbstractGeometryV2& geom ) const
+{
+  return relation( geom, CONTAINS );
+}
+
 QgsAbstractGeometryV2* QgsGeos::fromGeos( const GEOSGeometry* geos )
 {
   if ( !geos )
@@ -224,20 +230,47 @@ QgsAbstractGeometryV2* QgsGeos::fromGeos( const GEOSGeometry* geos )
     }
     case GEOS_LINESTRING:
     {
-      const GEOSCoordSequence* cs = GEOSGeom_getCoordSeq( geos );
-      unsigned int nPoints;
-      QList<QgsPointV2> points;
-      GEOSCoordSeq_getSize( cs, &nPoints );
-      for ( unsigned int i = 0; i < nPoints; ++i )
-      {
-        points.push_back( coordSeqPoint( cs, i, hasZ, hasM ) );
-      }
-      QgsLineStringV2* line = new QgsLineStringV2();
-      line->setPoints( points );
-      return line;
+      return sequenceToLinestring( geos, hasZ, hasM );
     }
+    case GEOS_POLYGON:
+
+      QgsPolygonV2* polygon = new QgsPolygonV2();
+
+      const GEOSGeometry* ring = GEOSGetExteriorRing( geos );
+      if ( ring )
+      {
+        polygon->setExteriorRing( sequenceToLinestring( geos, hasZ, hasM ) );
+      }
+
+      QList<QgsCurveV2*> interiorRings;
+      for ( int i = 0; i < GEOSGetNumInteriorRings( geos ); ++i )
+      {
+        ring = GEOSGetInteriorRingN( geos, i );
+        if ( ring )
+        {
+          interiorRings.push_back( sequenceToLinestring( geos, hasZ, hasM ) );
+        }
+      }
+      polygon->setInteriorRings( interiorRings );
+
+      return polygon;
   }
   return 0;
+}
+
+QgsLineStringV2* QgsGeos::sequenceToLinestring( const GEOSGeometry* geos, bool hasZ, bool hasM )
+{
+  QList<QgsPointV2> pts;
+  const GEOSCoordSequence* cs = GEOSGeom_getCoordSeq( geos );
+  unsigned int nPoints;
+  GEOSCoordSeq_getSize( cs, &nPoints );
+  for ( unsigned int i = 0; i < nPoints; ++i )
+  {
+    pts.push_back( coordSeqPoint( cs, i, hasZ, hasM ) );
+  }
+  QgsLineStringV2* line = new QgsLineStringV2();
+  line->setPoints( pts );
+  return line;
 }
 
 QgsPointV2 QgsGeos::coordSeqPoint( const GEOSCoordSequence* cs, int i, bool hasZ, bool hasM )
@@ -314,28 +347,36 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
   const QgsCurveV2* curve = dynamic_cast<const QgsCurveV2*>( geom );
   if ( curve )
   {
-    QgsLineStringV2* line = curve->curveToLine();
-    int numPoints = line->numPoints();
-    GEOSCoordSequence* coordSeq = GEOSCoordSeq_create( numPoints, coordDims );
-    for ( int i = 0; i < numPoints; ++i )
+    GEOSCoordSequence* coordSeq = createCoordinateSequence( curve );
+    if ( !coordSeq )
     {
-      QgsPointV2 pt = line->pointN( i ); //todo: create method to get const point reference
-      GEOSCoordSeq_setX( coordSeq, i, pt.x() );
-      GEOSCoordSeq_setY( coordSeq, i, pt.y() );
-      if ( hasZ )
-      {
-        GEOSCoordSeq_setOrdinate( coordSeq, i, 2, pt.z() );
-      }
-      if ( hasM )
-      {
-        GEOSCoordSeq_setOrdinate( coordSeq, i, 3, pt.m() );
-      }
+      return 0;
     }
-    delete line;
     return GEOSGeom_createLineString( coordSeq );
   }
 
-  //todo: surface, multitypes
+  const QgsCurvePolygonV2* polygon = dynamic_cast<const QgsCurvePolygonV2*>( geom );
+  if ( polygon )
+  {
+    const QgsCurveV2* exteriorRing = polygon->exteriorRing();
+    GEOSGeometry* exteriorRingGeos = GEOSGeom_createLinearRing( createCoordinateSequence( exteriorRing ) );
+
+    int nHoles = polygon->numInteriorRings();
+    GEOSGeometry** holes = 0;
+    if ( nHoles > 0 )
+    {
+      holes = new GEOSGeometry*[ nHoles ];
+    }
+
+    for ( int i = 0; i > nHoles; ++i )
+    {
+      const QgsCurveV2* interiorRing = polygon->interiorRing( i );
+      holes[i] = GEOSGeom_createLinearRing( createCoordinateSequence( interiorRing ) );
+    }
+    return GEOSGeom_createPolygon( exteriorRingGeos, holes, nHoles );
+  }
+
+  //todo: multitypes
 
   return 0;
 }
@@ -410,16 +451,19 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
       switch ( r )
       {
         case INTERSECTS:
-          result = ( GEOSPreparedIntersects( mGeosPrepared, geosGeom ) == 0 );
+          result = ( GEOSPreparedIntersects( mGeosPrepared, geosGeom ) == 1 );
           break;
         case TOUCHES:
-          result = ( GEOSPreparedTouches( mGeosPrepared, geosGeom ) == 0 );
+          result = ( GEOSPreparedTouches( mGeosPrepared, geosGeom ) == 1 );
           break;
         case CROSSES:
-          result = ( GEOSPreparedCrosses( mGeosPrepared, geosGeom ) == 0 );
+          result = ( GEOSPreparedCrosses( mGeosPrepared, geosGeom ) == 1 );
           break;
         case WITHIN:
-          result = ( GEOSPreparedWithin( mGeosPrepared, geosGeom ) == 0 );
+          result = ( GEOSPreparedWithin( mGeosPrepared, geosGeom ) == 1 );
+          break;
+        case CONTAINS:
+          result = ( GEOSPreparedContains( mGeosPrepared, geosGeom ) == 1 );
           break;
         default:
           GEOSGeom_destroy( geosGeom );
@@ -431,16 +475,19 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
     switch ( r )
     {
       case INTERSECTS:
-        result = ( GEOSIntersects( mGeos, geosGeom ) == 0 );
+        result = ( GEOSIntersects( mGeos, geosGeom ) == 1 );
         break;
       case TOUCHES:
-        result = ( GEOSTouches( mGeos, geosGeom ) == 0 );
+        result = ( GEOSTouches( mGeos, geosGeom ) == 1 );
         break;
       case CROSSES:
-        result = ( GEOSCrosses( mGeos, geosGeom ) == 0 );
+        result = ( GEOSCrosses( mGeos, geosGeom ) == 1 );
         break;
       case WITHIN:
-        result = ( GEOSWithin( mGeos, geosGeom ) == 0 );
+        result = ( GEOSWithin( mGeos, geosGeom ) == 1 );
+        break;
+      case CONTAINS:
+        result = ( GEOSContains( mGeos, geosGeom ) == 1 );
         break;
       default:
         GEOSGeom_destroy( geosGeom );
@@ -453,5 +500,56 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
     return 0;
   }
 
-  return false;
+  return result;
+}
+
+GEOSCoordSequence* QgsGeos::createCoordinateSequence( const QgsCurveV2* curve )
+{
+  bool segmentize = false;
+  const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( curve );
+
+  if ( !line )
+  {
+    line = curve->curveToLine();
+  }
+
+  if ( !line )
+  {
+    return 0;
+  }
+
+  if ( segmentize )
+  {
+    delete line;
+  }
+
+  bool hasZ = line->is3D();
+  bool hasM = line->isMeasure();
+  int coordDims = 2;
+  if ( hasZ )
+  {
+    ++coordDims;
+  }
+  if ( hasM )
+  {
+    ++coordDims;
+  }
+
+  int numPoints = line->numPoints();
+  GEOSCoordSequence* coordSeq = GEOSCoordSeq_create( numPoints, coordDims );
+  for ( int i = 0; i < numPoints; ++i )
+  {
+    QgsPointV2 pt = line->pointN( i ); //todo: create method to get const point reference
+    GEOSCoordSeq_setX( coordSeq, i, pt.x() );
+    GEOSCoordSeq_setY( coordSeq, i, pt.y() );
+    if ( hasZ )
+    {
+      GEOSCoordSeq_setOrdinate( coordSeq, i, 2, pt.z() );
+    }
+    if ( hasM )
+    {
+      GEOSCoordSeq_setOrdinate( coordSeq, i, 3, pt.m() );
+    }
+  }
+  return coordSeq;
 }

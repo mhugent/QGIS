@@ -31,6 +31,8 @@ class QgsPolygonV2: public QgsCurvePolygonV2
 
     virtual int wkbSize() const;
 
+    virtual QString geometryType() const { return "Polygon"; }
+
   private:
     static int ringWkbSize( const QgsCurveV2* ring );
     static void ringWkb( unsigned char** wkb, QgsCurveV2* ring );

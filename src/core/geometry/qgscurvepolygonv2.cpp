@@ -20,6 +20,7 @@
 #include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
 #include "qgslinestringv2.h"
+#include "qgspolygonv2.h"
 #include "qgswkbptr.h"
 
 QgsCurvePolygonV2::QgsCurvePolygonV2(): QgsSurfaceV2(), mExteriorRing( 0 )
@@ -188,5 +189,110 @@ void QgsCurvePolygonV2::removeRings()
   qDeleteAll( mInteriorRings );
   mInteriorRings.clear();
 }
+
+QgsPolygonV2* QgsCurvePolygonV2::toPolygon() const
+{
+  return 0; //soon.
+}
+
+int QgsCurvePolygonV2::numInteriorRings() const
+{
+  return mInteriorRings.size();
+}
+
+const QgsCurveV2* QgsCurvePolygonV2::exteriorRing() const
+{
+  return mExteriorRing;
+}
+
+const QgsCurveV2* QgsCurvePolygonV2::interiorRing( int i ) const
+{
+  if ( i >= mInteriorRings.size() )
+  {
+    return 0;
+  }
+  return mInteriorRings.at( i );
+}
+
+void QgsCurvePolygonV2::setExteriorRing( QgsCurveV2* ring )
+{
+  if ( !ring )
+  {
+    return;
+  }
+  delete mExteriorRing;
+  mExteriorRing = ring;
+
+  //set proper wkb type
+  bool hasZ = ring->is3D();
+  bool hasM = ring->isMeasure();
+  if ( geometryType() == "Polygon" )
+  {
+    if ( hasZ && hasM )
+    {
+      mWkbType = QGis::WKBPolygonZM;
+    }
+    else if ( hasZ )
+    {
+      mWkbType = QGis::WKBPolygonZ;
+    }
+    else if ( hasM )
+    {
+      mWkbType = QGis::WKBPolygonM;
+    }
+    else
+    {
+      mWkbType = QGis::WKBPolygon;
+    }
+  }
+  else if ( geometryType() == "CurvePolygon" )
+  {
+    if ( hasZ && hasM )
+    {
+      mWkbType = QGis::WKBCurvePolygonZM;
+    }
+    else if ( hasZ )
+    {
+      mWkbType = QGis::WKBCurvePolygonZ;
+    }
+    else if ( hasM )
+    {
+      mWkbType = QGis::WKBCurvePolygonM;
+    }
+    else
+    {
+      mWkbType = QGis::WKBCurvePolygon;
+    }
+  }
+
+  geometryChanged();
+}
+
+void QgsCurvePolygonV2::setInteriorRings( QList<QgsCurveV2*> rings )
+{
+  qDeleteAll( mInteriorRings );
+  mInteriorRings = rings;
+  geometryChanged();
+}
+
+QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
+{
+  if ( !mExteriorRing )
+  {
+    return QgsRectangle();
+  }
+
+  QgsRectangle bbox = mExteriorRing->calculateBoundingBox();
+  QgsRectangle ringBBox;
+  QList<QgsCurveV2*>::const_iterator it = mInteriorRings.constBegin();
+  for ( ; it != mInteriorRings.constEnd(); ++it )
+  {
+    ringBBox = ( *it )->boundingBox();
+    bbox.combineExtentWith( &ringBBox );
+  }
+  return bbox;
+}
+
+
 
 

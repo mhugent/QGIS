@@ -50,6 +50,8 @@ class QgsCompoundCurveV2: public QgsCurveV2
     int nCurves() const { return mCurves.size(); }
     const QgsCurveV2* curveAt( int i ) const;
 
+    virtual QgsRectangle calculateBoundingBox() const;
+
   private:
     QList< QgsCurveV2* > mCurves;
 

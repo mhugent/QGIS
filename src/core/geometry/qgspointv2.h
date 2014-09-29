@@ -78,6 +78,8 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual int wkbSize() const;
     virtual QString asGML() const;
 
+    virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle( mX, mY, mX, mY );}
+
   private:
     double mX;
     double mY;

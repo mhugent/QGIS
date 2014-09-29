@@ -22,6 +22,7 @@
 #include <QString>
 
 class QgsAbstractGeometryV2;
+class QgsLineStringV2;
 typedef struct GEOSGeom_t GEOSGeometry;
 
 //compatibility with old classes
@@ -51,6 +52,9 @@ class QgsGeometryImport
     static QgsAbstractGeometryV2* fromMultiPolygon( const QgsMultiPolygon& multipoly );
     /** construct geometry from a rectangle */
     static QgsAbstractGeometryV2* fromRect( const QgsRectangle& rect );
+
+  private:
+    static QgsLineStringV2* linestringFromPolyline( const QgsPolyline& polyline );
 };
 
 #endif // QGSGEOMETRYIMPORT_H

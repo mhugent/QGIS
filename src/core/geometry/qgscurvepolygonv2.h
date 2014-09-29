@@ -20,6 +20,8 @@
 
 #include "qgssurfacev2.h"
 
+class QgsPolygonV2;
+
 class QgsCurvePolygonV2: public QgsSurfaceV2
 {
   public:
@@ -48,7 +50,12 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     int numInteriorRings() const;
     const QgsCurveV2* exteriorRing() const;
     const QgsCurveV2* interiorRing( int i ) const;
-    //QgsPolygonV2* toPolygon() const;
+    virtual QgsPolygonV2* toPolygon() const;
+
+    void setExteriorRing( QgsCurveV2* ring );
+    void setInteriorRings( QList<QgsCurveV2*> rings );
+
+    virtual QgsRectangle calculateBoundingBox() const;
 
   protected:
 

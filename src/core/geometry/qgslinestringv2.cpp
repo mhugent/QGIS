@@ -285,3 +285,9 @@ void QgsLineStringV2::append( const QgsLineStringV2* line )
   mM += line->mM;
   geometryChanged();
 }
+
+QgsRectangle QgsLineStringV2::calculateBoundingBox() const
+{
+  QRectF rect = mCoords.boundingRect();
+  return QgsRectangle( rect.left(), rect.top(), rect.right(), rect.bottom() );
+}
