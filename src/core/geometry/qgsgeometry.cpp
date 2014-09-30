@@ -35,6 +35,7 @@ email                : morb at ozemail dot com dot au
 
 #include "qgsabstractgeometryv2.h"
 #include "qgspointv2.h"
+#include "qgspolygonv2.h"
 #include "qgslinestringv2.h"
 
 #ifndef Q_WS_WIN
@@ -6130,9 +6131,11 @@ void QgsGeometry::convertToStraightSegment()
     return;
   }
 
-  //todo...
   QGis::WkbType geomType = mGeometry->wkbType();
-  if ( geomType == QGis::WKBCompoundCurve ) //todo: catch more types
+  if ( geomType == QGis::WKBCompoundCurve || geomType == QGis::WKBCompoundCurveZ ||
+       geomType == QGis::WKBCompoundCurveM || geomType == QGis::WKBCompoundCurveZM ||
+       geomType == QGis::WKBCircularString || geomType == QGis::WKBCircularStringZ ||
+       geomType == QGis::WKBCircularStringM || geomType == QGis::WKBCircularStringZM )
   {
     QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( mGeometry );
     if ( !curve )
@@ -6141,7 +6144,17 @@ void QgsGeometry::convertToStraightSegment()
     }
     mGeometry = curve->curveToLine();
     delete curve;
-
+  }
+  else if ( geomType == QGis::WKBCurvePolygon || geomType == QGis::WKBCurvePolygonZ ||
+            geomType == QGis::WKBCurvePolygonM || geomType == QGis::WKBCurvePolygonZM )
+  {
+    QgsCurvePolygonV2* curvePolygon = dynamic_cast<QgsCurvePolygonV2*>( mGeometry );
+    if ( !curvePolygon )
+    {
+      return;
+    }
+    mGeometry = curvePolygon->toPolygon();
+    delete curvePolygon;
   }
 
   //compoundcurve / circularstring /multicurve ?

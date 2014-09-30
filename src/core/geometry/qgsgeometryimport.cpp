@@ -42,34 +42,42 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb 
     case QGis::WKBPointZM:
     case QGis::WKBPoint25D:
       geom = new QgsPointV2();
-      geom->fromWkb( wkb );
-      return geom;
+      break;
     case QGis::WKBLineString:
     case QGis::WKBLineStringZ:
     case QGis::WKBLineStringM:
     case QGis::WKBLineStringZM:
     case QGis::WKBLineString25D:
       geom = new QgsLineStringV2();
-      geom->fromWkb( wkb );
-      return geom;
+      break;
     case QGis::WKBCompoundCurve:
     case QGis::WKBCompoundCurveZ:
     case QGis::WKBCompoundCurveM:
     case QGis::WKBCompoundCurveZM:
       geom = new QgsCompoundCurveV2();
-      geom->fromWkb( wkb );
-      return geom;
+      break;
     case QGis::WKBPolygon:
     case QGis::WKBPolygonZ:
     case QGis::WKBPolygonM:
     case QGis::WKBPolygonZM:
     case QGis::WKBPolygon25D:
       geom = new QgsPolygonV2();
-      geom->fromWkb( wkb );
-      return geom;
+      break;
+    case QGis::WKBCurvePolygon:
+    case QGis::WKBCurvePolygonZ:
+    case QGis::WKBCurvePolygonM:
+    case QGis::WKBCurvePolygonZM:
+      geom = new QgsCurvePolygonV2();
+      break;
     default:
-      return geom;
+      geom = 0;
   }
+
+  if ( geom )
+  {
+    geom->fromWkb( wkb );
+  }
+  return geom;
 }
 
 QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkt( const QString& text )

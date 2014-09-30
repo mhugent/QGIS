@@ -225,10 +225,15 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
   QgsSymbolV2::SymbolType symbolType = symbol->type();
 
   QgsGeometry* geom = feature.geometry();
+  geom->convertToStraightSegment();
+
   switch ( geom->wkbType() )
   {
     case QGis::WKBPoint:
     case QGis::WKBPoint25D:
+    case QGis::WKBPointZ:
+    case QGis::WKBPointM:
+    case QGis::WKBPointZM:
     {
       if ( symbolType != QgsSymbolV2::Marker )
       {
@@ -244,19 +249,11 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
     }
     break;
 
-    case QGis::WKBCircularString:
-    case QGis::WKBCircularStringZ:
-    case QGis::WKBCircularStringM:
-    case QGis::WKBCircularStringZM:
-    case QGis::WKBCompoundCurve:
-    case QGis::WKBCompoundCurveZ:
-    case QGis::WKBCompoundCurveM:
-    case QGis::WKBCompoundCurveZM:
-    {
-      geom->convertToStraightSegment();
-    }
     case QGis::WKBLineString:
     case QGis::WKBLineString25D:
+    case QGis::WKBLineStringZ:
+    case QGis::WKBLineStringM:
+    case QGis::WKBLineStringZM:
     {
       if ( symbolType != QgsSymbolV2::Line )
       {
@@ -272,9 +269,11 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
     }
     break;
 
-
     case QGis::WKBPolygon:
     case QGis::WKBPolygon25D:
+    case QGis::WKBPolygonZ:
+    case QGis::WKBPolygonM:
+    case QGis::WKBPolygonZM:
     {
       if ( symbolType != QgsSymbolV2::Fill )
       {

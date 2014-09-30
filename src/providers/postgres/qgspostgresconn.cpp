@@ -1227,6 +1227,19 @@ void QgsPostgresConn::retrieveLayerTypes( QgsPostgresLayerProperty &layerPropert
         if ( j < layerProperty.size() )
           break;
 
+        //make sure we don't have duplicated entries
+        for ( j = 0; j < layerProperty.size(); ++j )
+        {
+          if ( layerProperty.types[j] == wkbType0 && layerProperty.srids[j] == srid.toInt() )
+          {
+            break;
+          }
+        }
+        if ( j < layerProperty.size() )
+        {
+          break;
+        }
+
         layerProperty.types << wkbType0;
         layerProperty.srids << srid.toInt();
       }
@@ -1476,34 +1489,21 @@ QGis::WkbType QgsPostgresConn::wkbTypeFromPostgis( QString type )
     return QGis::WKBMultiPoint25D;
   }
   //linestring
-  else if ( type == "LINESTRING" )
+  else if ( type == "LINESTRING" || type == "COMPOUNDCURVE" || type == "CIRCULARSTRING" )
   {
     return QGis::WKBLineString;
   }
-  else if ( type == "LINESTRINGM" )
+  else if ( type == "LINESTRINGM" || type == "COMPOUNDCURVEM" || type == "CIRCULARSTRINGM" )
   {
-    return QGis::WKBLineString25D;
+    return QGis::WKBLineStringM;
   }
-  else if ( type == "LINESTRINGZM" )
+  else if ( type == "LINESTRINGZ" || type == "COMPOUNDCURVEZ" || type == "CIRCULARSTRINGZ" )
+  {
+    return QGis::WKBLineStringZ;
+  }
+  else if ( type == "LINESTRINGZM" || type == "COMPOUNDCURVEZM" || type == "CIRCULARSTRINGZM" )
   {
     return QGis::WKBLineStringZM;
-  }
-  //compoundcurve
-  else if ( type == "COMPOUNDCURVE" )
-  {
-    return QGis::WKBCompoundCurve;
-  }
-  else if ( type == "COMPOUNDCURVEZ" )
-  {
-    return QGis::WKBCompoundCurveZ;
-  }
-  else if ( type == "COMPOUNDCURVEZM" )
-  {
-    return QGis::WKBCompoundCurveZM;
-  }
-  else if ( type == "COMPOUNDCURVEM" )
-  {
-    return QGis::WKBCompoundCurveM;
   }
   else if ( type == "MULTILINESTRING" )
   {
@@ -1513,21 +1513,37 @@ QGis::WkbType QgsPostgresConn::wkbTypeFromPostgis( QString type )
   {
     return QGis::WKBMultiLineString25D;
   }
-  else if ( type == "POLYGON" )
+  else if ( type == "POLYGON" || type == "CURVEPOLYGON" )
   {
     return QGis::WKBPolygon;
   }
-  else if ( type == "POLYGONM" )
+  else if ( type == "POLYGONZ" || type == "CURVEPOLYGONZ" )
   {
-    return QGis::WKBPolygon25D;
+    return QGis::WKBPolygonZ;
   }
-  else if ( type == "MULTIPOLYGON" )
+  else if ( type == "POLYGONM" || type == "CURVEPOLYGONM" )
+  {
+    return QGis::WKBPolygonM;
+  }
+  else if ( type == "POLYGONZM" || type == "CURVEPOLYGONZM" )
+  {
+    return QGis::WKBPolygonZM;
+  }
+  else if ( type == "MULTIPOLYGON" || type == "MULTISURFACE" )
   {
     return QGis::WKBMultiPolygon;
   }
-  else if ( type == "MULTIPOLYGONM" || type == "TIN" || type == "POLYHEDRALSURFACE" )
+  else if ( type == "MULTIPOLYGONM" || type == "MULTISURFACEM" || type == "TIN" || type == "POLYHEDRALSURFACE" )
   {
     return QGis::WKBMultiPolygon25D;
+  }
+  else if ( type == "MULTIPOLYGONZ" || type == "MULTISURFACEZ" )
+  {
+    return QGis::WKBMultiPolygonZ;
+  }
+  else if ( type == "MULTIPOLYGONZM" || type == "MULTISURFACEZM" )
+  {
+    return QGis::WKBMultiPolygonZM;
   }
   else
   {
@@ -1615,6 +1631,12 @@ QString QgsPostgresConn::displayStringForWkbType( QGis::WkbType type )
     case QGis::WKBPolygonM:
     case QGis::WKBPolygonZM:
       return tr( "Polygon" );
+
+    case QGis::WKBCurvePolygon:
+    case QGis::WKBCurvePolygonZ:
+    case QGis::WKBCurvePolygonM:
+    case QGis::WKBCurvePolygonZM:
+      return tr( "Curvepolygon" );
 
     case QGis::WKBMultiPolygon:
     case QGis::WKBMultiPolygon25D:

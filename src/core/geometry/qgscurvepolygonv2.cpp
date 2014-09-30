@@ -192,7 +192,22 @@ void QgsCurvePolygonV2::removeRings()
 
 QgsPolygonV2* QgsCurvePolygonV2::toPolygon() const
 {
-  return 0; //soon.
+  if ( !mExteriorRing )
+  {
+    return 0;
+  }
+
+  QgsPolygonV2* poly = new QgsPolygonV2();
+  poly->setExteriorRing( mExteriorRing->curveToLine() );
+
+  QList<QgsCurveV2*> rings;
+  QList<QgsCurveV2*>::const_iterator it = mInteriorRings.constBegin();
+  for ( ; it != mInteriorRings.constEnd(); ++it )
+  {
+    rings.push_back(( *it )->curveToLine() );
+  }
+  poly->setInteriorRings( rings );
+  return poly;
 }
 
 int QgsCurvePolygonV2::numInteriorRings() const
