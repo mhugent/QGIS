@@ -6156,6 +6156,10 @@ void QgsGeometry::convertToStraightSegment()
     mGeometry = curvePolygon->toPolygon();
     delete curvePolygon;
   }
+  else //no segmentation needed
+  {
+    return;
+  }
 
   //compoundcurve / circularstring /multicurve ?
 
