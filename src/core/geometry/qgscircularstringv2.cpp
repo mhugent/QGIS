@@ -171,7 +171,7 @@ QgsLineStringV2* QgsCircularStringV2::curveToLine() const
   QgsLineStringV2* line = new QgsLineStringV2();
   QList<QgsPointV2> points;
 
-  for ( int i = 0; i < ( numPoints() - 2 ) ; i += 3 )
+  for ( int i = 0; i < ( numPoints() - 2 ) ; i += 2 )
   {
     segmentize( pointN( i ), pointN( i + 1 ), pointN( i + 2 ), points );
   }
