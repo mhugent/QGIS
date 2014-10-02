@@ -370,6 +370,7 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
       points.append( QgsPointV2( x, y, m, true ) );
     }
   }
+  points.append( p3 );
 }
 
 void QgsCircularStringV2::circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,

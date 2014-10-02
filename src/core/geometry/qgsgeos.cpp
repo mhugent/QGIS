@@ -239,7 +239,7 @@ QgsAbstractGeometryV2* QgsGeos::fromGeos( const GEOSGeometry* geos )
       const GEOSGeometry* ring = GEOSGetExteriorRing( geos );
       if ( ring )
       {
-        polygon->setExteriorRing( sequenceToLinestring( geos, hasZ, hasM ) );
+        polygon->setExteriorRing( sequenceToLinestring( ring, hasZ, hasM ) );
       }
 
       QList<QgsCurveV2*> interiorRings;
@@ -248,7 +248,7 @@ QgsAbstractGeometryV2* QgsGeos::fromGeos( const GEOSGeometry* geos )
         ring = GEOSGetInteriorRingN( geos, i );
         if ( ring )
         {
-          interiorRings.push_back( sequenceToLinestring( geos, hasZ, hasM ) );
+          interiorRings.push_back( sequenceToLinestring( ring, hasZ, hasM ) );
         }
       }
       polygon->setInteriorRings( interiorRings );
@@ -368,7 +368,7 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
       holes = new GEOSGeometry*[ nHoles ];
     }
 
-    for ( int i = 0; i > nHoles; ++i )
+    for ( int i = 0; i < nHoles; ++i )
     {
       const QgsCurveV2* interiorRing = polygon->interiorRing( i );
       holes[i] = GEOSGeom_createLinearRing( createCoordinateSequence( interiorRing ) );
@@ -513,16 +513,12 @@ GEOSCoordSequence* QgsGeos::createCoordinateSequence( const QgsCurveV2* curve )
   if ( !line )
   {
     line = curve->curveToLine();
+    segmentize = true;
   }
 
   if ( !line )
   {
     return 0;
-  }
-
-  if ( segmentize )
-  {
-    delete line;
   }
 
   bool hasZ = line->is3D();
@@ -552,6 +548,11 @@ GEOSCoordSequence* QgsGeos::createCoordinateSequence( const QgsCurveV2* curve )
     {
       GEOSCoordSeq_setOrdinate( coordSeq, i, 3, pt.m() );
     }
+  }
+
+  if ( segmentize )
+  {
+    delete line;
   }
   return coordSeq;
 }
