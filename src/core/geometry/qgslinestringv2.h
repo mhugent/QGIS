@@ -19,6 +19,7 @@
 #define QGSLINESTRINGV2_H
 
 #include "qgscurvev2.h"
+#include "qgswkbptr.h"
 #include <QPolygonF>
 
 class QgsLineStringV2: public QgsCurveV2
@@ -56,7 +57,11 @@ class QgsLineStringV2: public QgsCurveV2
 
     virtual QgsRectangle calculateBoundingBox() const;
 
+    void fromWkbPoints( QGis::WkbType type, const QgsConstWkbPtr& wkb );
+
   private:
+    void importVerticesFromWkb( const QgsConstWkbPtr& wkb );
+
     QPolygonF mCoords;
     QVector<double> mZ;
     QVector<double> mM;

@@ -53,39 +53,7 @@ void QgsPolygonV2::fromWkb( const unsigned char* wkb )
   for ( int i = 0; i < nRings; ++i )
   {
     QgsLineStringV2* line = new QgsLineStringV2();
-    wkbPtr >> nPoints;
-    QList<QgsPointV2> points;
-    for ( int j = 0; j < nPoints; ++j )
-    {
-      wkbPtr >> x;
-      wkbPtr >> y;
-      if ( hasZ )
-      {
-        wkbPtr >> z;
-      }
-      if ( hasM )
-      {
-        wkbPtr >> m;
-      }
-
-      if ( hasZ && hasM )
-      {
-        points.append( QgsPointV2( x, y, z, m ) );
-      }
-      else if ( hasZ )
-      {
-        points.append( QgsPointV2( x, y, z, false ) );
-      }
-      else if ( hasM )
-      {
-        points.append( QgsPointV2( x, y, m, true ) );
-      }
-      else
-      {
-        points.append( QgsPointV2( x, y ) );
-      }
-    }
-    line->setPoints( points );
+    line->fromWkbPoints( mWkbType, wkbPtr );
 
     if ( i == 0 )
     {

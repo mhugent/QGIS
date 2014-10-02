@@ -44,28 +44,7 @@ void QgsLineStringV2::fromWkb( const unsigned char* wkb )
   wkbPtr >> mWkbType;
   bool hasZ = is3D();
   bool hasM = isMeasure();
-
-  int nVertices = 0;
-  wkbPtr >> nVertices;
-  mCoords.resize( nVertices );
-  hasZ ? mZ.resize( nVertices ) : mZ.clear();
-  hasM ? mM.resize( nVertices ) : mM.clear();
-
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    wkbPtr >> mCoords[i].rx();
-    wkbPtr >> mCoords[i].ry();
-    if ( hasZ )
-    {
-      wkbPtr >> mZ[i];
-    }
-    if ( hasM )
-    {
-      wkbPtr >> mM[i];
-    }
-  }
-
-  geometryChanged();
+  importVerticesFromWkb( wkbPtr );
 }
 
 int QgsLineStringV2::wkbSize() const
@@ -290,4 +269,38 @@ QgsRectangle QgsLineStringV2::calculateBoundingBox() const
 {
   QRectF rect = mCoords.boundingRect();
   return QgsRectangle( rect.left(), rect.top(), rect.right(), rect.bottom() );
+}
+
+void QgsLineStringV2::fromWkbPoints( QGis::WkbType type, const QgsConstWkbPtr& wkb )
+{
+  mWkbType = type;
+  importVerticesFromWkb( wkb );
+}
+
+void QgsLineStringV2::importVerticesFromWkb( const QgsConstWkbPtr& wkb )
+{
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+
+  int nVertices = 0;
+  wkb >> nVertices;
+  mCoords.resize( nVertices );
+  hasZ ? mZ.resize( nVertices ) : mZ.clear();
+  hasM ? mM.resize( nVertices ) : mM.clear();
+
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    wkb >> mCoords[i].rx();
+    wkb >> mCoords[i].ry();
+    if ( hasZ )
+    {
+      wkb >> mZ[i];
+    }
+    if ( hasM )
+    {
+      wkb >> mM[i];
+    }
+  }
+
+  geometryChanged();
 }
