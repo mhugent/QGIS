@@ -260,12 +260,18 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         QgsDebugMsg( "linestring can be drawn only with line symbol!" );
         break;
       }
+      geom->transform( *( context.coordinateTransform() ) );
+      geom->mapToPixel( context.mapToPixel() );
+      QPolygonF pts; //unused
+      (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
+#if 0
       QPolygonF pts;
       _getLineString( pts, context, geom->asWkb() );
       (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
 
       if ( drawVertexMarker )
         renderVertexMarkerPolyline( pts, context );
+#endif //0
     }
     break;
 
@@ -280,6 +286,14 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
         QgsDebugMsg( "polygon can be drawn only with fill symbol!" );
         break;
       }
+
+      geom->transform( *( context.coordinateTransform() ) );
+      geom->mapToPixel( context.mapToPixel() );
+      QPolygonF pts; //unused
+      QList<QPolygonF> holes; //unused
+      (( QgsFillSymbolV2* )symbol )->renderPolygon( pts, ( holes.count() ? &holes : NULL ), &feature, context, layer, selected );
+
+#if 0
       QPolygonF pts;
       QList<QPolygonF> holes;
       _getPolygon( pts, holes, context, geom->asWkb() );
@@ -287,6 +301,7 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
 
       if ( drawVertexMarker )
         renderVertexMarkerPolygon( pts, ( holes.count() ? &holes : NULL ), context );
+#endif //0
     }
     break;
 

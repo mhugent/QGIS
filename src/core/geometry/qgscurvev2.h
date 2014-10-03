@@ -22,6 +22,7 @@
 #include "qgspointv2.h"
 
 class QgsLineStringV2;
+class QPainterPath;
 
 class QgsCurveV2: public QgsAbstractGeometryV2
 {
@@ -34,6 +35,9 @@ class QgsCurveV2: public QgsAbstractGeometryV2
     virtual bool isClosed() const = 0;
     virtual bool isRing() const = 0;
     virtual QgsLineStringV2* curveToLine() const = 0;
+
+    virtual void addToPainterPath( QPainterPath& path ) const {}
+    virtual void drawAsPolygon( QPainter& p ) const {}
 };
 
 #endif // QGSCURVEV2_H

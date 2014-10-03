@@ -21,10 +21,12 @@ email                : marco.hugentobler at sourcepole dot com
 #include <QString>
 
 class QgsCoordinateTransform;
+class QgsMapToPixel;
 class QgsCurveV2;
 class QgsMultiCurveV2;
 class QgsMultiPointV2;
 class QgsVectorTopology;
+class QPainter;
 
 /**Abstract base class for all geometries*/
 class QgsAbstractGeometryV2
@@ -80,6 +82,12 @@ class QgsAbstractGeometryV2
     bool overlaps( const QgsAbstractGeometryV2& geom ) const;
 
     virtual QgsRectangle calculateBoundingBox() const = 0;
+
+    //render pipeline
+    virtual void transform( const QgsCoordinateTransform& ct ) {} //should be = 0
+    virtual void mapToPixel( const QgsMapToPixel& mtp ) {}
+    virtual void clip( const QgsRectangle& rect ) {}
+    virtual void draw( QPainter& p ) const {}
 
   private:
     int mRefs;

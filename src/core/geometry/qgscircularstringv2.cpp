@@ -20,6 +20,7 @@
 #include "qgslinestringv2.h"
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
+#include "QPainterPath"
 
 QgsCircularStringV2::QgsCircularStringV2(): QgsCurveV2()
 {

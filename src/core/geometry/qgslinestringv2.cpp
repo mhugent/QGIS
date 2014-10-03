@@ -17,7 +17,9 @@
 
 #include "qgslinestringv2.h"
 #include "qgsapplication.h"
+#include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
+#include <QPainter>
 
 QgsLineStringV2::QgsLineStringV2(): QgsCurveV2()
 {
@@ -303,4 +305,29 @@ void QgsLineStringV2::importVerticesFromWkb( const QgsConstWkbPtr& wkb )
   }
 
   geometryChanged();
+}
+
+void QgsLineStringV2::draw( QPainter& p ) const
+{
+  p.drawPolyline( mCoords );
+}
+
+void QgsLineStringV2::addToPainterPath( QPainterPath& path ) const
+{
+  path.addPolygon( mCoords );
+}
+
+void QgsLineStringV2::drawAsPolygon( QPainter& p ) const
+{
+  p.drawPolygon( mCoords );
+}
+
+
+void QgsLineStringV2::mapToPixel( const QgsMapToPixel& mtp )
+{
+  int nVertices = mCoords.size();
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    mtp.transformInPlace( mCoords[i].rx(), mCoords[i].ry() );
+  }
 }

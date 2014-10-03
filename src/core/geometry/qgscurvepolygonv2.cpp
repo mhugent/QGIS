@@ -22,6 +22,8 @@
 #include "qgslinestringv2.h"
 #include "qgspolygonv2.h"
 #include "qgswkbptr.h"
+#include "QPainter"
+#include "QPainterPath"
 
 QgsCurvePolygonV2::QgsCurvePolygonV2(): QgsSurfaceV2(), mExteriorRing( 0 )
 {
@@ -308,6 +310,38 @@ QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
   return bbox;
 }
 
+void QgsCurvePolygonV2::draw( QPainter& p ) const
+{
+  if ( mInteriorRings.size() < 1 )
+  {
+    mExteriorRing->drawAsPolygon( p );
+  }
+  else
+  {
+    QPainterPath path;
+    mExteriorRing->addToPainterPath( path );
 
+    QList<QgsCurveV2*>::const_iterator it = mInteriorRings.constBegin();
+    for ( ; it != mInteriorRings.constEnd(); ++it )
+    {
+      ( *it )->addToPainterPath( path );
+    }
+    p.drawPath( path );
+  }
+}
+
+void QgsCurvePolygonV2::mapToPixel( const QgsMapToPixel& mtp )
+{
+  if ( mExteriorRing )
+  {
+    mExteriorRing->mapToPixel( mtp );
+  }
+
+  QList<QgsCurveV2*>::iterator it = mInteriorRings.begin();
+  for ( ; it != mInteriorRings.constEnd(); ++it )
+  {
+    ( *it )->mapToPixel( mtp );
+  }
+}
 
 

@@ -38,6 +38,8 @@ email                : morb at ozemail dot com dot au
 
 class QgsVectorLayer;
 class QgsAbstractGeometryV2;
+class QgsMapToPixel;
+class QPainter;
 
 /** polyline is represented as a vector of points */
 typedef QVector<QgsPoint> QgsPolyline;
@@ -289,10 +291,6 @@ class CORE_EXPORT QgsGeometry
      @return 0 in case of success*/
     int translate( double dx, double dy );
 
-    /**Transform this geometry as described by CoordinateTranasform ct
-     @return 0 in case of success*/
-    int transform( const QgsCoordinateTransform& ct );
-
     /**Splits this geometry according to a given line. Note that the geometry is only split once. If there are several intersections
      between geometry and splitLine, only the first one is considered.
     @param splitLine the line that splits the geometry
@@ -517,6 +515,11 @@ class CORE_EXPORT QgsGeometry
     static QgsGeometry *unaryUnion( const QList<QgsGeometry*>& geometryList );
 
     void convertToStraightSegment();
+
+    int transform( const QgsCoordinateTransform& ct );
+    void mapToPixel( const QgsMapToPixel& mtp );
+    void clip( const QgsRectangle& rect );
+    void draw( QPainter& p ) const;
 
   private:
 

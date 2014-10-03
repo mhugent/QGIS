@@ -57,6 +57,9 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 
     virtual QgsRectangle calculateBoundingBox() const;
 
+    virtual void draw( QPainter& p ) const;
+    void mapToPixel( const QgsMapToPixel& mtp );
+
   protected:
 
     QgsCurveV2* mExteriorRing;

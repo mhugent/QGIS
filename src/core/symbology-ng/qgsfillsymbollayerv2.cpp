@@ -258,7 +258,12 @@ void QgsSimpleFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<Q
     p->translate( offset );
   }
 
-  _renderPolygon( p, points, rings, context );
+  const QgsFeature* f = context.feature();
+  if ( f && f->geometry() )
+  {
+    f->geometry()->draw( *p );
+  }
+  //_renderPolygon( p, points, rings, context );
 
   if ( !mOffset.isNull() )
   {

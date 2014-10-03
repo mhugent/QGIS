@@ -16,7 +16,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsabstractgeometryv2.h"
 #include "qgsgeos.h"
 
-QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mWkbType( QGis::WKBUnknown ), mRefs( 0 )
+QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mRefs( 0 ), mWkbType( QGis::WKBUnknown )
 {
   mVectorTopology = new QgsGeos( this );
 }
