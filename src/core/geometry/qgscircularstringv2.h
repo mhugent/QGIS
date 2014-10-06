@@ -55,6 +55,13 @@ class QgsCircularStringV2: public QgsCurveV2
 
     virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle(); }
 
+    void draw( QPainter& p ) const;
+    void transform( const QgsCoordinateTransform& ct );
+    void mapToPixel( const QgsMapToPixel& mtp );
+    void clip( const QgsRectangle& rect );
+    void addToPainterPath( QPainterPath& path ) const;
+    void drawAsPolygon( QPainter& p ) const;
+
   private:
     QVector<double> mX;
     QVector<double> mY;
@@ -63,10 +70,12 @@ class QgsCircularStringV2: public QgsCurveV2
 
     //helper methods for curveToLine
     void segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const;
-    void circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
-                             double& centerX, double& centerY ) const;
+    static void circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
+                                    double& centerX, double& centerY );
     int segmentSide( const QgsPointV2& pt1, const QgsPointV2& pt3, const QgsPointV2& pt2 ) const;
     double interpolateArc( double angle, double a1, double a2, double a3, double zm1, double zm2, double zm3 ) const;
+    static void arcTo( QPainterPath& path, const QPointF& pt1, const QPointF& pt2, const QPointF& pt3 );
+    static double ccwAngle( double dy, double dx );
 };
 
 #endif // QGSCIRCULARSTRING_H

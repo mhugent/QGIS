@@ -18,9 +18,11 @@
 #include "qgscircularstringv2.h"
 #include "qgsapplication.h"
 #include "qgslinestringv2.h"
+#include "qgsmaptopixel.h"
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
-#include "QPainterPath"
+#include <QPainter>
+#include <QPainterPath>
 
 QgsCircularStringV2::QgsCircularStringV2(): QgsCurveV2()
 {
@@ -171,8 +173,9 @@ QgsLineStringV2* QgsCircularStringV2::curveToLine() const
 {
   QgsLineStringV2* line = new QgsLineStringV2();
   QList<QgsPointV2> points;
+  int nPoints = numPoints();
 
-  for ( int i = 0; i < ( numPoints() - 2 ) ; i += 2 )
+  for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
   {
     segmentize( pointN( i ), pointN( i + 1 ), pointN( i + 2 ), points );
   }
@@ -375,7 +378,7 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
 }
 
 void QgsCircularStringV2::circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
-    double& centerX, double& centerY ) const
+    double& centerX, double& centerY )
 {
   double temp, bc, cd, det;
 
@@ -445,4 +448,99 @@ double QgsCircularStringV2::interpolateArc( double angle, double a1, double a2, 
     else
       return zm2 + ( zm3 - zm2 ) * ( a2 - angle ) / ( a2 - a3 );
   }
+}
+
+void QgsCircularStringV2::draw( QPainter& p ) const
+{
+  QPainterPath path;
+  addToPainterPath( path );
+  p.drawPath( path );
+}
+
+void QgsCircularStringV2::transform( const QgsCoordinateTransform& ct )
+{
+
+}
+
+void QgsCircularStringV2::mapToPixel( const QgsMapToPixel& mtp )
+{
+  int nPoints = numPoints();
+  for ( int i = 0; i < nPoints; ++i )
+  {
+    mtp.transformInPlace( mX[i], mY[i] );
+  }
+}
+
+void QgsCircularStringV2::clip( const QgsRectangle& rect )
+{
+
+}
+
+void QgsCircularStringV2::addToPainterPath( QPainterPath& path ) const
+{
+  int nPoints = numPoints();
+  if ( nPoints < 1 )
+  {
+    return;
+  }
+
+  path.moveTo( QPointF( mX[0], mY[0] ) );
+  for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
+  {
+    arcTo( path, QPointF( mX[i], mY[i] ), QPointF( mX[i + 1], mY[i + 1] ), QPointF( mX[i + 2], mY[i + 2] ) );
+  }
+}
+
+void QgsCircularStringV2::arcTo( QPainterPath& path, const QPointF& pt1, const QPointF& pt2, const QPointF& pt3 )
+{
+  double centerX, centerY, radius;
+  circleCenterRadius( QgsPointV2( pt1.x(), pt1.y() ), QgsPointV2( pt2.x(), pt2.y() ), QgsPointV2( pt3.x(), pt3.y() ),
+                      radius, centerX, centerY );
+
+  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
+  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
+  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
+
+  //clockwise or counterclockwise?
+  double sweepAngle = 0;
+  if ( p3Angle >= p1Angle )
+  {
+    if ( p2Angle > p1Angle && p2Angle < p3Angle )
+    {
+      sweepAngle = p3Angle - p1Angle;
+    }
+    else
+    {
+      sweepAngle = - ( p1Angle + ( 360 - p3Angle ) );
+    }
+  }
+  else
+  {
+    if ( p2Angle < p1Angle && p2Angle > p3Angle )
+    {
+      sweepAngle = -( p1Angle - p3Angle );
+    }
+    else
+    {
+      sweepAngle = p3Angle + ( 360 - p1Angle );
+    }
+  }
+
+  double diameter = 2 * radius;
+  path.arcTo( centerX - radius, centerY - radius, diameter, diameter, p1Angle, sweepAngle );
+}
+
+double QgsCircularStringV2::ccwAngle( double dy, double dx )
+{
+  double angle = atan2( dy, dx ) * 180 / M_PI;
+  if ( angle < 0 )
+  {
+    return -angle;
+  }
+  return 360 - angle;
+}
+
+void QgsCircularStringV2::drawAsPolygon( QPainter& p ) const
+{
+  draw( p );
 }

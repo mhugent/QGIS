@@ -225,7 +225,7 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
   QgsSymbolV2::SymbolType symbolType = symbol->type();
 
   QgsGeometry* geom = feature.geometry();
-  geom->convertToStraightSegment();
+  //geom->convertToStraightSegment();
 
   switch ( geom->wkbType() )
   {
@@ -254,6 +254,14 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
     case QGis::WKBLineStringZ:
     case QGis::WKBLineStringM:
     case QGis::WKBLineStringZM:
+    case QGis::WKBCircularString:
+    case QGis::WKBCircularStringZ:
+    case QGis::WKBCircularStringM:
+    case QGis::WKBCircularStringZM:
+    case QGis::WKBCompoundCurve:
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+    case QGis::WKBCompoundCurveZM:
     {
       if ( symbolType != QgsSymbolV2::Line )
       {

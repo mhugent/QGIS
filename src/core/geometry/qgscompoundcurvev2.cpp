@@ -252,3 +252,43 @@ QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
   }
   return bbox;
 }
+
+void QgsCompoundCurveV2::draw( QPainter& p ) const
+{
+  QList< QgsCurveV2* >::const_iterator it = mCurves.constBegin();
+  for ( ; it != mCurves.constEnd(); ++it )
+  {
+    ( *it )->draw( p );
+  }
+}
+
+void QgsCompoundCurveV2::transform( const QgsCoordinateTransform& ct )
+{
+  QList< QgsCurveV2* >::iterator it = mCurves.begin();
+  for ( ; it != mCurves.end(); ++it )
+  {
+    ( *it )->transform( ct );
+  }
+}
+
+void QgsCompoundCurveV2::mapToPixel( const QgsMapToPixel& mtp )
+{
+  QList< QgsCurveV2* >::iterator it = mCurves.begin();
+  for ( ; it != mCurves.end(); ++it )
+  {
+    ( *it )->mapToPixel( mtp );
+  }
+}
+
+
+
+void QgsCompoundCurveV2::addToPainterPath( QPainterPath& path ) const
+{
+  //todo...
+}
+
+void QgsCompoundCurveV2::drawAsPolygon( QPainter& p )
+{
+  //todo...
+}
+
