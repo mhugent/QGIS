@@ -61,7 +61,7 @@ class CORE_EXPORT QGis
       WKBMultiPolygon = 6,
       WKBCircularString = 8,
       WKBCompoundCurve = 9,
-      WKBCurvePolygon = 13, //should be 10. Seems to be correct in newer postgis versions
+      WKBCurvePolygon =  10, //13, //should be 10. Seems to be correct in newer postgis versions
       WKBMultiCurve = 11,
       WKBMultiSurface = 12,
       WKBNoGeometry = 100, //attributes only

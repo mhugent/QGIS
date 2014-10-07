@@ -80,6 +80,10 @@ class QgsPointV2: public QgsAbstractGeometryV2
 
     virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle( mX, mY, mX, mY );}
 
+    void draw( QPainter& p ) const {}
+    void transform( const QgsCoordinateTransform& ct );
+    void mapToPixel( const QgsMapToPixel& mtp );
+
   private:
     double mX;
     double mY;

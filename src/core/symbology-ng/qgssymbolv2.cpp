@@ -409,6 +409,28 @@ QSet<QString> QgsSymbolV2::usedAttributes() const
   return attributes;
 }
 
+void QgsSymbolV2::renderGeometry( QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected ) const
+{
+  if ( !geom )
+  {
+    return;
+  }
+
+  QgsSymbolV2RenderContext symbolContext( context, outputUnit(), mAlpha, selected, mRenderHints, f, 0, mapUnitScale() );
+
+  if ( layer != -1 )
+  {
+    if ( layer >= 0 && layer < mLayers.count() )
+      ( mLayers[layer] )->renderGeometry( geom, symbolContext );
+    return;
+  }
+
+  for ( QgsSymbolLayerV2List::const_iterator it = mLayers.constBegin(); it != mLayers.constEnd(); ++it )
+  {
+    ( *it )->renderGeometry( geom, symbolContext );
+  }
+}
+
 ////////////////////
 
 

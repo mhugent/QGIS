@@ -18,6 +18,7 @@
 
 #include "qgspointv2.h"
 #include "qgsapplication.h"
+#include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
 
 QgsPointV2::QgsPointV2( double x, double y ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( 0.0 ), mM( 0.0 )
@@ -169,4 +170,14 @@ void QgsPointV2::reset()
 {
   mWkbType = QGis::WKBUnknown;
   mX = 0; mY = 0; mZ = 0; mM = 0;
+}
+
+void QgsPointV2::transform( const QgsCoordinateTransform& ct )
+{
+  //todo...
+}
+
+void QgsPointV2::mapToPixel( const QgsMapToPixel& mtp )
+{
+  mtp.transformInPlace( mX, mY );
 }

@@ -30,6 +30,7 @@ class CORE_EXPORT QgsEllipseSymbolLayerV2: public QgsMarkerSymbolLayerV2
     static QgsSymbolLayerV2* create( const QgsStringMap& properties = QgsStringMap() );
     static QgsSymbolLayerV2* createFromSld( QDomElement &element );
 
+    void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context ) {} //todo...
     void renderPoint( const QPointF& point, QgsSymbolV2RenderContext& context );
     QString layerType() const;
     void startRender( QgsSymbolV2RenderContext& context );

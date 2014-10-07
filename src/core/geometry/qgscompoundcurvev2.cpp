@@ -20,6 +20,8 @@
 #include "qgscircularstringv2.h"
 #include "qgslinestringv2.h"
 #include "qgswkbptr.h"
+#include <QPainter>
+#include <QPainterPath>
 
 
 QgsCompoundCurveV2::QgsCompoundCurveV2(): QgsCurveV2()
@@ -284,11 +286,23 @@ void QgsCompoundCurveV2::mapToPixel( const QgsMapToPixel& mtp )
 
 void QgsCompoundCurveV2::addToPainterPath( QPainterPath& path ) const
 {
-  //todo...
+  QPainterPath pp;
+  QList< QgsCurveV2* >::const_iterator it = mCurves.constBegin();
+  for ( ; it != mCurves.constEnd(); ++it )
+  {
+    ( *it )->addToPainterPath( pp );
+  }
+  path.addPath( pp );
 }
 
 void QgsCompoundCurveV2::drawAsPolygon( QPainter& p )
 {
-  //todo...
+  QPainterPath pp;
+  QList< QgsCurveV2* >::const_iterator it = mCurves.constBegin();
+  for ( ; it != mCurves.constEnd(); ++it )
+  {
+    ( *it )->addToPainterPath( pp );
+  }
+  p.drawPath( pp );
 }
 

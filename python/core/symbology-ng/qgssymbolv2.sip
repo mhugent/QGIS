@@ -114,6 +114,8 @@ class QgsSymbolV2
     void setLayer( const QgsVectorLayer* layer );
     const QgsVectorLayer* layer() const;
 
+    void renderGeometry( QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected ) const;
+
   protected:
     QgsSymbolV2( SymbolType type, QgsSymbolLayerV2List layers /Transfer/ ); // can't be instantiated
 

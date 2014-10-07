@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsrendererv2.h"
+#include "qgsabstractgeometryv2.h"
 #include "qgssymbolv2.h"
 #include "qgssymbollayerv2utils.h"
 
@@ -222,179 +223,15 @@ bool QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
 
 void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymbolV2* symbol, QgsRenderContext& context, int layer, bool selected, bool drawVertexMarker )
 {
-  QgsSymbolV2::SymbolType symbolType = symbol->type();
-
   QgsGeometry* geom = feature.geometry();
-  //geom->convertToStraightSegment();
-
-  switch ( geom->wkbType() )
+  if ( !geom || !symbol )
   {
-    case QGis::WKBPoint:
-    case QGis::WKBPoint25D:
-    case QGis::WKBPointZ:
-    case QGis::WKBPointM:
-    case QGis::WKBPointZM:
-    {
-      if ( symbolType != QgsSymbolV2::Marker )
-      {
-        QgsDebugMsg( "point can be drawn only with marker symbol!" );
-        break;
-      }
-      QPointF pt;
-      _getPoint( pt, context, geom->asWkb() );
-      (( QgsMarkerSymbolV2* )symbol )->renderPoint( pt, &feature, context, layer, selected );
-
-      //if ( drawVertexMarker )
-      //  renderVertexMarker( pt, context );
-    }
-    break;
-
-    case QGis::WKBLineString:
-    case QGis::WKBLineString25D:
-    case QGis::WKBLineStringZ:
-    case QGis::WKBLineStringM:
-    case QGis::WKBLineStringZM:
-    case QGis::WKBCircularString:
-    case QGis::WKBCircularStringZ:
-    case QGis::WKBCircularStringM:
-    case QGis::WKBCircularStringZM:
-    case QGis::WKBCompoundCurve:
-    case QGis::WKBCompoundCurveZ:
-    case QGis::WKBCompoundCurveM:
-    case QGis::WKBCompoundCurveZM:
-    {
-      if ( symbolType != QgsSymbolV2::Line )
-      {
-        QgsDebugMsg( "linestring can be drawn only with line symbol!" );
-        break;
-      }
-      geom->transform( *( context.coordinateTransform() ) );
-      geom->mapToPixel( context.mapToPixel() );
-      QPolygonF pts; //unused
-      (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
-#if 0
-      QPolygonF pts;
-      _getLineString( pts, context, geom->asWkb() );
-      (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
-
-      if ( drawVertexMarker )
-        renderVertexMarkerPolyline( pts, context );
-#endif //0
-    }
-    break;
-
-    case QGis::WKBPolygon:
-    case QGis::WKBPolygon25D:
-    case QGis::WKBPolygonZ:
-    case QGis::WKBPolygonM:
-    case QGis::WKBPolygonZM:
-    {
-      if ( symbolType != QgsSymbolV2::Fill )
-      {
-        QgsDebugMsg( "polygon can be drawn only with fill symbol!" );
-        break;
-      }
-
-      geom->transform( *( context.coordinateTransform() ) );
-      geom->mapToPixel( context.mapToPixel() );
-      QPolygonF pts; //unused
-      QList<QPolygonF> holes; //unused
-      (( QgsFillSymbolV2* )symbol )->renderPolygon( pts, ( holes.count() ? &holes : NULL ), &feature, context, layer, selected );
-
-#if 0
-      QPolygonF pts;
-      QList<QPolygonF> holes;
-      _getPolygon( pts, holes, context, geom->asWkb() );
-      (( QgsFillSymbolV2* )symbol )->renderPolygon( pts, ( holes.count() ? &holes : NULL ), &feature, context, layer, selected );
-
-      if ( drawVertexMarker )
-        renderVertexMarkerPolygon( pts, ( holes.count() ? &holes : NULL ), context );
-#endif //0
-    }
-    break;
-
-    case QGis::WKBMultiPoint:
-    case QGis::WKBMultiPoint25D:
-    {
-      if ( symbolType != QgsSymbolV2::Marker )
-      {
-        QgsDebugMsg( "multi-point can be drawn only with marker symbol!" );
-        break;
-      }
-
-      QgsConstWkbPtr wkbPtr( geom->asWkb() + 5 );
-      unsigned int num;
-      wkbPtr >> num;
-      const unsigned char* ptr = wkbPtr;
-      QPointF pt;
-
-      for ( unsigned int i = 0; i < num; ++i )
-      {
-        ptr = QgsConstWkbPtr( _getPoint( pt, context, ptr ) );
-        (( QgsMarkerSymbolV2* )symbol )->renderPoint( pt, &feature, context, layer, selected );
-
-        //if ( drawVertexMarker )
-        //  renderVertexMarker( pt, context );
-      }
-    }
-    break;
-
-    case QGis::WKBMultiLineString:
-    case QGis::WKBMultiLineString25D:
-    {
-      if ( symbolType != QgsSymbolV2::Line )
-      {
-        QgsDebugMsg( "multi-linestring can be drawn only with line symbol!" );
-        break;
-      }
-
-      QgsConstWkbPtr wkbPtr( geom->asWkb() + 5 );
-      unsigned int num;
-      wkbPtr >> num;
-      const unsigned char* ptr = wkbPtr;
-      QPolygonF pts;
-
-      for ( unsigned int i = 0; i < num; ++i )
-      {
-        ptr = QgsConstWkbPtr( _getLineString( pts, context, ptr ) );
-        (( QgsLineSymbolV2* )symbol )->renderPolyline( pts, &feature, context, layer, selected );
-
-        if ( drawVertexMarker )
-          renderVertexMarkerPolyline( pts, context );
-      }
-    }
-    break;
-
-    case QGis::WKBMultiPolygon:
-    case QGis::WKBMultiPolygon25D:
-    {
-      if ( symbolType != QgsSymbolV2::Fill )
-      {
-        QgsDebugMsg( "multi-polygon can be drawn only with fill symbol!" );
-        break;
-      }
-
-      QgsConstWkbPtr wkbPtr( geom->asWkb() + 5 );
-      unsigned int num;
-      wkbPtr >> num;
-      const unsigned char* ptr = wkbPtr;
-      QPolygonF pts;
-      QList<QPolygonF> holes;
-
-      for ( unsigned int i = 0; i < num; ++i )
-      {
-        ptr = _getPolygon( pts, holes, context, ptr );
-        (( QgsFillSymbolV2* )symbol )->renderPolygon( pts, ( holes.count() ? &holes : NULL ), &feature, context, layer, selected );
-
-        if ( drawVertexMarker )
-          renderVertexMarkerPolygon( pts, ( holes.count() ? &holes : NULL ), context );
-      }
-    }
-    break;
-
-    default:
-      QgsDebugMsg( QString( "feature %1: unsupported wkb type 0x%2 for rendering" ).arg( feature.id() ).arg( geom->wkbType(), 0, 16 ) );
+    return;
   }
+
+  geom->transform( *( context.coordinateTransform() ) );
+  geom->mapToPixel( context.mapToPixel() );
+  symbol->renderGeometry( geom, &feature, context, layer, selected );
 }
 
 QString QgsFeatureRendererV2::dump() const

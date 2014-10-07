@@ -30,14 +30,14 @@
 #include <QDomDocument>
 #include <QDomElement>
 
+#include "qgsgeometry.h"
 #include "qgssymbolv2.h"
-
 #include "qgssymbollayerv2utils.h" // QgsStringMap
 
+class QgsGeometry;
 class QPainter;
 class QSize;
 class QPolygonF;
-
 class QgsDxfExport;
 class QgsExpression;
 class QgsRenderContext;
@@ -129,6 +129,8 @@ class CORE_EXPORT QgsSymbolLayerV2
     virtual QVector<qreal> dxfCustomDashPattern( QgsSymbolV2::OutputUnit& unit ) const;
     virtual Qt::PenStyle dxfPenStyle() const;
 
+    virtual void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
+
   protected:
     QgsSymbolLayerV2( QgsSymbolV2::SymbolType type, bool locked = false )
         : mType( type ), mLocked( locked ), mRenderingPass( 0 ) {}
@@ -151,6 +153,7 @@ class CORE_EXPORT QgsSymbolLayerV2
     void saveDataDefinedProperties( QgsStringMap& stringMap ) const;
     /**Copies data defined properties of this layer to another symbol layer*/
     void copyDataDefinedProperties( QgsSymbolLayerV2* destLayer ) const;
+    static QgsPolyline createQgsPolyline( const QPolygonF& poly );
 };
 
 //////////////////////
@@ -175,6 +178,7 @@ class CORE_EXPORT QgsMarkerSymbolLayerV2 : public QgsSymbolLayerV2
 
     void startRender( QgsSymbolV2RenderContext& context );
 
+    void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context );
     virtual void renderPoint( const QPointF& point, QgsSymbolV2RenderContext& context ) = 0;
 
     void drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size );
@@ -259,7 +263,6 @@ class CORE_EXPORT QgsMarkerSymbolLayerV2 : public QgsSymbolLayerV2
 class CORE_EXPORT QgsLineSymbolLayerV2 : public QgsSymbolLayerV2
 {
   public:
-    virtual void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context ) = 0;
 
     //! @note added in v1.7
     virtual void renderPolygonOutline( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
@@ -282,6 +285,7 @@ class CORE_EXPORT QgsLineSymbolLayerV2 : public QgsSymbolLayerV2
     void drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size );
 
     virtual double dxfWidth( const QgsDxfExport& e, const QgsSymbolV2RenderContext& context ) const;
+    virtual void renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context );
 
   protected:
     QgsLineSymbolLayerV2( bool locked = false );
@@ -294,12 +298,12 @@ class CORE_EXPORT QgsLineSymbolLayerV2 : public QgsSymbolLayerV2
 class CORE_EXPORT QgsFillSymbolLayerV2 : public QgsSymbolLayerV2
 {
   public:
-    virtual void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context ) = 0;
-
     void drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size );
 
     void setAngle( double angle ) { mAngle = angle; }
     double angle() const { return mAngle; }
+
+    virtual void renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context );
 
   protected:
     QgsFillSymbolLayerV2( bool locked = false );

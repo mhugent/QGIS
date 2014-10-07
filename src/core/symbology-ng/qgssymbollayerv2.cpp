@@ -191,6 +191,17 @@ void QgsSymbolLayerV2::copyDataDefinedProperties( QgsSymbolLayerV2* destLayer ) 
   }
 }
 
+QgsPolyline QgsSymbolLayerV2::createQgsPolyline( const QPolygonF& poly )
+{
+  QgsPolyline line;
+  line.resize( poly.size() );
+  for ( int i = 0; i < poly.size(); ++i )
+  {
+    line[i] = QgsPoint( poly[i].x(), poly[i].y() );
+  }
+  return line;
+}
+
 
 QgsMarkerSymbolLayerV2::QgsMarkerSymbolLayerV2( bool locked )
     : QgsSymbolLayerV2( QgsSymbolV2::Marker, locked ), mSizeUnit( QgsSymbolV2::MM ),  mOffsetUnit( QgsSymbolV2::MM ),
@@ -361,6 +372,45 @@ QgsMapUnitScale QgsMarkerSymbolLayerV2::mapUnitScale() const
   return QgsMapUnitScale();
 }
 
+void QgsMarkerSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+{
+  if ( !geom )
+  {
+    return;
+  }
+
+  QgsPoint pt;
+  switch ( geom->wkbType() )
+  {
+    case QGis::WKBPoint:
+    case QGis::WKBPoint25D:
+    case QGis::WKBPointZ:
+    case QGis::WKBPointM:
+    case QGis::WKBPointZM:
+    {
+      QgsPoint pt = geom->asPoint();
+      renderPoint( QPointF( pt.x(), pt.y() ), context );
+      break;
+    }
+    case QGis::WKBMultiPoint:
+    case QGis::WKBMultiPoint25D:
+    case QGis::WKBMultiPointZ:
+    case QGis::WKBMultiPointM:
+    case QGis::WKBMultiPointZM:
+    {
+      QgsMultiPoint mp = geom->asMultiPoint();
+      QgsMultiPoint::const_iterator it = mp.constBegin();
+      for ( ; it != mp.constEnd(); ++it )
+      {
+        renderPoint( QPointF( it->x(), it->y() ), context );
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
 void QgsLineSymbolLayerV2::setOutputUnit( QgsSymbolV2::OutputUnit unit )
 {
   mWidthUnit = unit;
@@ -410,6 +460,13 @@ double QgsLineSymbolLayerV2::dxfWidth( const QgsDxfExport& e, const QgsSymbolV2R
   return ( width() * e.mapUnitScaleFactor( e.symbologyScaleDenominator(), widthUnit(), e.mapUnits() ) );
 }
 
+void QgsLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+{
+  QgsGeometry* geom = QgsGeometry::fromPolyline( createQgsPolyline( points ) );
+  renderGeometry( geom, context );
+  delete geom;
+}
+
 
 void QgsFillSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size )
 {
@@ -417,6 +474,23 @@ void QgsFillSymbolLayerV2::drawPreviewIcon( QgsSymbolV2RenderContext& context, Q
   startRender( context );
   renderPolygon( poly, NULL, context );
   stopRender( context );
+}
+
+void QgsFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+{
+  QgsPolygon poly;
+  poly.append( createQgsPolyline( points ) );
+  if ( rings )
+  {
+    for ( int i = 0; i < rings->size(); ++i )
+    {
+      poly.append( createQgsPolyline( rings->at( i ) ) );
+    }
+  }
+
+  QgsGeometry* geom = QgsGeometry::fromPolygon( poly );
+  renderGeometry( geom, context );
+  delete geom;
 }
 
 void QgsFillSymbolLayerV2::_renderPolygon( QPainter* p, const QPolygonF& points, const QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )

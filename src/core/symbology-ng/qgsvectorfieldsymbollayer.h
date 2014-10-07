@@ -54,6 +54,7 @@ class CORE_EXPORT QgsVectorFieldSymbolLayer: public QgsMarkerSymbolLayerV2
     bool setSubSymbol( QgsSymbolV2* symbol );
     QgsSymbolV2* subSymbol() { return mLineSymbol; }
 
+    void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context ) {} //todo...
     void renderPoint( const QPointF& point, QgsSymbolV2RenderContext& context );
     void startRender( QgsSymbolV2RenderContext& context );
     void stopRender( QgsSymbolV2RenderContext& context );

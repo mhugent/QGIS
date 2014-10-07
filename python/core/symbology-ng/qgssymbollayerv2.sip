@@ -3,6 +3,9 @@ class QgsSymbolLayerV2
 %TypeHeaderCode
 #include <qgssymbollayerv2.h>
 #include <qgslinesymbollayerv2.h>
+#include <qgsellipsesymbollayerv2.h>
+#include <qgsvectorfieldsymbollayer.h>
+#include <qgsfillsymbollayerv2.h>
 %End
 
 %ConvertToSubClassCode
@@ -141,6 +144,8 @@ class QgsSymbolLayerV2
 
     virtual QVector<qreal> dxfCustomDashPattern( QgsSymbolV2::OutputUnit& unit ) const;
     virtual Qt::PenStyle dxfPenStyle() const;
+
+     virtual void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
 
   protected:
     QgsSymbolLayerV2( QgsSymbolV2::SymbolType type, bool locked = false );

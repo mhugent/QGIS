@@ -237,8 +237,13 @@ void QgsSimpleFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   Q_UNUSED( context );
 }
 
-void QgsSimpleFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsSimpleFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+  if ( !geom )
+  {
+    return;
+  }
+
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -258,13 +263,7 @@ void QgsSimpleFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<Q
     p->translate( offset );
   }
 
-  const QgsFeature* f = context.feature();
-  if ( f && f->geometry() )
-  {
-    f->geometry()->draw( *p );
-  }
-  //_renderPolygon( p, points, rings, context );
-
+  geom->draw( *p );
   if ( !mOffset.isNull() )
   {
     p->translate( -offset );
@@ -791,8 +790,9 @@ void QgsGradientFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context
   Q_UNUSED( context );
 }
 
-void QgsGradientFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsGradientFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -819,6 +819,7 @@ void QgsGradientFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList
   {
     p->translate( -offset );
   }
+#endif //0
 }
 
 QgsStringMap QgsGradientFillSymbolLayerV2::properties() const
@@ -1078,8 +1079,9 @@ void QgsShapeburstFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& conte
   Q_UNUSED( context );
 }
 
-void QgsShapeburstFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsShapeburstFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -1228,7 +1230,7 @@ void QgsShapeburstFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QLi
     p->translate( -offset );
   }
   p->restore();
-
+#endif //0
 }
 
 //fast distance transform code, adapted from http://cs.brown.edu/~pff/dt/
@@ -1487,8 +1489,9 @@ QgsImageFillSymbolLayer::~QgsImageFillSymbolLayer()
 {
 }
 
-void QgsImageFillSymbolLayer::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsImageFillSymbolLayer::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -1534,6 +1537,7 @@ void QgsImageFillSymbolLayer::renderPolygon( const QPolygonF& points, QList<QPol
       }
     }
   }
+#endif //0
 }
 
 bool QgsImageFillSymbolLayer::setSubSymbol( QgsSymbolV2* symbol )
@@ -3315,12 +3319,14 @@ void QgsCentroidFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context
   mMarker->stopRender( context.renderContext() );
 }
 
-void QgsCentroidFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList<QPolygonF>* rings, QgsSymbolV2RenderContext& context )
+void QgsCentroidFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   Q_UNUSED( rings );
 
   QPointF centroid = mPointOnSurface ? QgsSymbolLayerV2Utils::polygonPointOnSurface( points ) : QgsSymbolLayerV2Utils::polygonCentroid( points );
   mMarker->renderPoint( centroid, context.feature(), context.renderContext(), -1, context.selected() );
+#endif //0
 }
 
 QgsStringMap QgsCentroidFillSymbolLayerV2::properties() const

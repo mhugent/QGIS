@@ -32,8 +32,10 @@ class QDomDocument;
 class QDomElement;
 //class
 
+class QgsAbstractGeometryV2;
 class QgsFeature;
 class QgsFields;
+class QgsGeometry;
 class QgsSymbolLayerV2;
 class QgsRenderContext;
 class QgsVectorLayer;
@@ -138,6 +140,8 @@ class CORE_EXPORT QgsSymbolV2
 
     void setLayer( const QgsVectorLayer* layer ) { mLayer = layer; }
     const QgsVectorLayer* layer() const { return mLayer; }
+
+    void renderGeometry( QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer = -1, bool selected = false ) const;
 
   protected:
     QgsSymbolV2( SymbolType type, QgsSymbolLayerV2List layers ); // can't be instantiated

@@ -286,8 +286,13 @@ void QgsSimpleLineSymbolLayerV2::renderPolygonOutline( const QPolygonF& points, 
 
 }
 
-void QgsSimpleLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+void QgsSimpleLineSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+  if ( !geom )
+  {
+    return;
+  }
+
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -299,6 +304,7 @@ void QgsSimpleLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSym
 
   p->setPen( context.selected() ? mSelPen : mPen );
 
+#if 0
   // Disable 'Antialiasing' if the geometry was generalized in the current RenderContext (We known that it must have least #2 points).
   if ( points.size() <= 2 &&
        ( context.renderContext().vectorSimplifyMethod().simplifyHints() & QgsVectorSimplifyMethod::AntialiasingSimplification ) &&
@@ -310,19 +316,15 @@ void QgsSimpleLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSym
     p->setRenderHint( QPainter::Antialiasing, true );
     return;
   }
+#endif //0
 
   if ( offset == 0 )
   {
-    const QgsFeature* f = context.feature();
-    if ( f && f->geometry() )
-    {
-      f->geometry()->draw( *p );
-    }
-
+    geom->draw( *p );
   }
   else
   {
-#if 0 //todo...
+#if 0 //todo: calculate offset inside geometry
     double scaledOffset = offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale );
     QList<QPolygonF> mline = ::offsetLine( points, scaledOffset, context.feature() ? context.feature()->geometry()->type() : QGis::Line );
     for ( int part = 0; part < mline.count(); ++part )
@@ -790,8 +792,9 @@ void QgsMarkerLineSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   mMarker->stopRender( context.renderContext() );
 }
 
-void QgsMarkerLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSymbolV2RenderContext& context )
+void QgsMarkerLineSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
+#if 0
   double offset = mOffset;
   QgsExpression* offsetExpression = expression( "offset" );
   if ( offsetExpression )
@@ -851,6 +854,7 @@ void QgsMarkerLineSymbolLayerV2::renderPolyline( const QPolygonF& points, QgsSym
         renderPolylineVertex( points2, context, placement );
     }
   }
+#endif //0
 }
 
 void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points, QgsSymbolV2RenderContext& context )
