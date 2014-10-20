@@ -77,6 +77,10 @@ QgsMapUnitScale QgsSimpleFillSymbolLayerV2::mapUnitScale() const
 
 void QgsSimpleFillSymbolLayerV2::applyDataDefinedSymbology( QgsSymbolV2RenderContext& context, QBrush& brush, QPen& pen, QPen& selPen )
 {
+  if ( mDataDefinedProperties.isEmpty() )
+  {
+    return;
+  }
   QgsExpression* colorExpression = expression( "color" );
   if ( colorExpression )
   {
@@ -539,6 +543,10 @@ QString QgsGradientFillSymbolLayerV2::layerType() const
 
 void QgsGradientFillSymbolLayerV2::applyDataDefinedSymbology( QgsSymbolV2RenderContext& context, const QPolygonF& points )
 {
+  if ( mDataDefinedProperties.isEmpty() )
+  {
+    return;
+  }
   //first gradient color
   QgsExpression* colorExpression = expression( "color" );
   QColor color = mColor;
@@ -1026,6 +1034,10 @@ void QgsShapeburstFillSymbolLayerV2::setColorRamp( QgsVectorColorRampV2* ramp )
 void QgsShapeburstFillSymbolLayerV2::applyDataDefinedSymbology( QgsSymbolV2RenderContext& context, QColor& color, QColor& color2, int& blurRadius, bool& useWholeShape,
     double& maxDistance, bool& ignoreRings )
 {
+  if ( mDataDefinedProperties.isEmpty() )
+  {
+    return;
+  }
   //first gradient color
   QgsExpression* colorExpression = expression( "color" );
   color = mColor;
@@ -2092,6 +2104,10 @@ QgsSymbolLayerV2* QgsSVGFillSymbolLayer::createFromSld( QDomElement &element )
 
 void QgsSVGFillSymbolLayer::applyDataDefinedSettings( const QgsSymbolV2RenderContext& context )
 {
+  if ( mDataDefinedProperties.isEmpty() )
+  {
+    return;
+  }
   QgsExpression* widthExpression = expression( "width" );
   QgsExpression* svgFileExpression = expression( "svgFile" );
   QgsExpression* fillColorExpression = expression( "svgFillColor" );
@@ -2801,6 +2817,10 @@ QString QgsLinePatternFillSymbolLayer::ogrFeatureStyleWidth( double widthScaleFa
 
 void QgsLinePatternFillSymbolLayer::applyDataDefinedSettings( const QgsSymbolV2RenderContext& context )
 {
+  if ( mDataDefinedProperties.isEmpty() )
+  {
+    return;
+  }
   QgsExpression* lineAngleExpression = expression( "lineangle" );
   QgsExpression* distanceExpression = expression( "distance" );
   QgsExpression* lineWidthExpression = expression( "linewidth" );
