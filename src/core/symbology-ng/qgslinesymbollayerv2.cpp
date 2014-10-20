@@ -300,7 +300,7 @@ void QgsSimpleLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
     return;
   }
 
-  double offset = 0.0;
+  double offset = mOffset;
   applyDataDefinedSymbology( context, mPen, mSelPen, offset );
 
   p->setPen( context.selected() ? mSelPen : mPen );
@@ -326,12 +326,13 @@ void QgsSimpleLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
   }
   else
   {
-#if 0 //todo: calculate offset inside geometry
-    double scaledOffset = offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale );
+    /*double scaledOffset = offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale );
+    QPolygonF points;
     QList<QPolygonF> mline = ::offsetLine( points, scaledOffset, context.feature() ? context.feature()->geometry()->type() : QGis::Line );
     for ( int part = 0; part < mline.count(); ++part )
-      p->drawPolyline( mline[ part ] );
-#endif //0
+    {
+     // p->drawPolyline( mline[ part ] );
+    }*/
   }
 }
 

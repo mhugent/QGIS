@@ -760,6 +760,15 @@ bool QgsRuleBasedRendererV2::renderFeature( QgsFeature& feature,
   int flags = ( selected ? FeatIsSelected : 0 ) | ( drawVertexMarker ? FeatDrawMarkers : 0 );
   mCurrentFeatures.append( FeatureToRender( feature, flags ) );
 
+  QgsGeometry* geom = feature.geometry();
+  if ( !geom )
+  {
+    return false;
+  }
+
+  geom->transform( *( context.coordinateTransform() ) );
+  geom->mapToPixel( context.mapToPixel() );
+
   // check each active rule
   return mRootRule->renderFeature( mCurrentFeatures.last(), context, mRenderQueue );
 }
