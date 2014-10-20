@@ -372,7 +372,7 @@ QgsMapUnitScale QgsMarkerSymbolLayerV2::mapUnitScale() const
   return QgsMapUnitScale();
 }
 
-void QgsMarkerSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsMarkerSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
   if ( !geom )
   {

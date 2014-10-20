@@ -129,7 +129,7 @@ class CORE_EXPORT QgsSymbolLayerV2
     virtual QVector<qreal> dxfCustomDashPattern( QgsSymbolV2::OutputUnit& unit ) const;
     virtual Qt::PenStyle dxfPenStyle() const;
 
-    virtual void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
+    virtual void renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
 
   protected:
     QgsSymbolLayerV2( QgsSymbolV2::SymbolType type, bool locked = false )
@@ -178,7 +178,7 @@ class CORE_EXPORT QgsMarkerSymbolLayerV2 : public QgsSymbolLayerV2
 
     void startRender( QgsSymbolV2RenderContext& context );
 
-    void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context );
+    void renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context );
     virtual void renderPoint( const QPointF& point, QgsSymbolV2RenderContext& context ) = 0;
 
     void drawPreviewIcon( QgsSymbolV2RenderContext& context, QSize size );

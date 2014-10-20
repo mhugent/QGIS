@@ -145,7 +145,7 @@ class QgsSymbolLayerV2
     virtual QVector<qreal> dxfCustomDashPattern( QgsSymbolV2::OutputUnit& unit ) const;
     virtual Qt::PenStyle dxfPenStyle() const;
 
-     virtual void renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
+     virtual void renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context ) = 0;
 
   protected:
     QgsSymbolLayerV2( QgsSymbolV2::SymbolType type, bool locked = false );

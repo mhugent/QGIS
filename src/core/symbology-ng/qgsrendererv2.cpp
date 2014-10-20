@@ -217,6 +217,14 @@ bool QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
   if ( symbol == NULL )
     return false;
 
+  QgsGeometry* geom = feature.geometry();
+  if ( !geom || !symbol )
+  {
+    return false;
+  }
+
+  geom->transform( *( context.coordinateTransform() ) );
+  geom->mapToPixel( context.mapToPixel() );
   renderFeatureWithSymbol( feature, symbol, context, layer, selected, drawVertexMarker );
   return true;
 }
@@ -229,8 +237,6 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
     return;
   }
 
-  geom->transform( *( context.coordinateTransform() ) );
-  geom->mapToPixel( context.mapToPixel() );
   symbol->renderGeometry( geom, &feature, context, layer, selected );
 }
 

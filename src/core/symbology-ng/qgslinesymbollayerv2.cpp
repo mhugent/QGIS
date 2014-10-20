@@ -17,6 +17,7 @@
 #include "qgsdxfexport.h"
 #include "qgssymbollayerv2utils.h"
 #include "qgsexpression.h"
+#include "qgslinestringv2.h"
 #include "qgsrendercontext.h"
 #include "qgslogger.h"
 #include "qgsvectorlayer.h"
@@ -286,7 +287,7 @@ void QgsSimpleLineSymbolLayerV2::renderPolygonOutline( const QPolygonF& points, 
 
 }
 
-void QgsSimpleLineSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsSimpleLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
   if ( !geom )
   {
@@ -313,6 +314,7 @@ void QgsSimpleLineSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2R
   {
     p->setRenderHint( QPainter::Antialiasing, false );
     p->drawPolyline( points );
+    geom->draw( *p );
     p->setRenderHint( QPainter::Antialiasing, true );
     return;
   }
@@ -797,9 +799,8 @@ void QgsMarkerLineSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   mMarker->stopRender( context.renderContext() );
 }
 
-void QgsMarkerLineSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsMarkerLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
-#if 0
   double offset = mOffset;
   QgsExpression* offsetExpression = expression( "offset" );
   if ( offsetExpression )
@@ -834,31 +835,55 @@ void QgsMarkerLineSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2R
     }
   }
 
-  if ( offset == 0 )
+  //todo: offset geometry
+
+  if ( placement == Interval || placement == CentralPoint )
   {
+    //segmentize geometry
+    QgsGeometry g( *geom );
+    g.convertToStraightSegment();
+
+    //QPolygonF points = g.vertices();
     if ( placement == Interval )
-      renderPolylineInterval( points, context );
-    else if ( placement == CentralPoint )
-      renderPolylineCentral( points, context );
-    else
-      renderPolylineVertex( points, context, placement );
-  }
-  else
-  {
-    QList<QPolygonF> mline = ::offsetLine( points, offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale ), context.feature() ? context.feature()->geometry()->type() : QGis::Line );
-
-    for ( int part = 0; part < mline.count(); ++part )
     {
-      const QPolygonF &points2 = mline[ part ];
-
-      if ( placement == Interval )
-        renderPolylineInterval( points2, context );
-      else if ( placement == CentralPoint )
-        renderPolylineCentral( points2, context );
-      else
-        renderPolylineVertex( points2, context, placement );
+      //renderPolylineInterval( linestring->qPolygonF(), context );
+    }
+    else if ( placement == CentralPoint )
+    {
+      //renderPolylineVertex( linestring->qPolygonF(), context, placement );
     }
   }
+  else // Placement == Vertex / FirstVertex / LastVertex
+  {
+    //QPolygonF points = geom.vertices();
+    //renderPolylineVertex( points, context, placement );
+  }
+
+
+#if 0
+  if ( placement == Interval )
+    renderPolylineInterval( points, context );
+  else if ( placement == CentralPoint )
+    renderPolylineCentral( points, context );
+  else
+    renderPolylineVertex( points, context, placement );
+}
+else
+{
+  QList<QPolygonF> mline = ::offsetLine( points, offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale ), context.feature() ? context.feature()->geometry()->type() : QGis::Line );
+
+  for ( int part = 0; part < mline.count(); ++part )
+  {
+    const QPolygonF &points2 = mline[ part ];
+
+    if ( placement == Interval )
+      renderPolylineInterval( points2, context );
+    else if ( placement == CentralPoint )
+      renderPolylineCentral( points2, context );
+    else
+      renderPolylineVertex( points2, context, placement );
+  }
+}
 #endif //0
 }
 

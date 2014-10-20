@@ -66,6 +66,8 @@ class QgsLineStringV2: public QgsCurveV2
     void addToPainterPath( QPainterPath& path ) const;
     void drawAsPolygon( QPainter& p ) const;
 
+    const QPolygonF& qPolygonF() const { return mCoords; }
+
   private:
     void importVerticesFromWkb( const QgsConstWkbPtr& wkb );
 

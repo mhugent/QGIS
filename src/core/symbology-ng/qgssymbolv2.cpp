@@ -409,7 +409,7 @@ QSet<QString> QgsSymbolV2::usedAttributes() const
   return attributes;
 }
 
-void QgsSymbolV2::renderGeometry( QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected ) const
+void QgsSymbolV2::renderGeometry( const QgsGeometry* geom, const QgsFeature* f, QgsRenderContext& context, int layer, bool selected ) const
 {
   if ( !geom )
   {

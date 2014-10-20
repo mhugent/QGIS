@@ -241,7 +241,7 @@ void QgsSimpleFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
   Q_UNUSED( context );
 }
 
-void QgsSimpleFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsSimpleFillSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
   if ( !geom )
   {
@@ -798,9 +798,8 @@ void QgsGradientFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context
   Q_UNUSED( context );
 }
 
-void QgsGradientFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsGradientFillSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
-#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -808,7 +807,7 @@ void QgsGradientFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV
   }
 
   QPen mSelPen;
-  applyDataDefinedSymbology( context, points );
+  applyDataDefinedSymbology( context, QPolygonF() );
 
   p->setBrush( context.selected() ? mSelBrush : mBrush );
   p->setPen( QPen( Qt::NoPen ) );
@@ -821,13 +820,13 @@ void QgsGradientFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV
     p->translate( offset );
   }
 
-  _renderPolygon( p, points, rings, context );
+  //_renderPolygon( p, points, rings, context );
+  geom->draw( *p );
 
   if ( !mOffset.isNull() )
   {
     p->translate( -offset );
   }
-#endif //0
 }
 
 QgsStringMap QgsGradientFillSymbolLayerV2::properties() const
@@ -1091,7 +1090,7 @@ void QgsShapeburstFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& conte
   Q_UNUSED( context );
 }
 
-void QgsShapeburstFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsShapeburstFillSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
 #if 0
   QPainter* p = context.renderContext().painter();
@@ -1111,7 +1110,7 @@ void QgsShapeburstFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbo
       offset.setY( mOffset.y() * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale ) );
       p->translate( offset );
     }
-    _renderPolygon( p, points, rings, context );
+    geom->draw( *p );
     if ( !mOffset.isNull() )
     {
       p->translate( -offset );
@@ -1148,8 +1147,8 @@ void QgsShapeburstFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbo
   //calculate margin size in pixels so that QImage of polygon has sufficient space to draw the full blur effect
   int sideBuffer = 4 + ( blurRadius + 2 ) * 4 ;
   //create a QImage to draw shapeburst in
-  double imWidth = points.boundingRect().width() + ( sideBuffer * 2 );
-  double imHeight = points.boundingRect().height() + ( sideBuffer * 2 );
+  double imWidth = geom->boundingBox().width() + ( sideBuffer * 2 );
+  double imHeight = geom->boundingBox().height() + ( sideBuffer * 2 );
   QImage * fillImage = new QImage( imWidth * context.renderContext().rasterScaleFactor(),
                                    imHeight * context.renderContext().rasterScaleFactor(), QImage::Format_ARGB32_Premultiplied );
   //Fill this image with black. Initially the distance transform is drawn in greyscale, where black pixels have zero distance from the
@@ -1168,9 +1167,9 @@ void QgsShapeburstFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbo
   imgPainter.setRenderHint( QPainter::Antialiasing, true );
   imgPainter.setBrush( QBrush( Qt::white ) );
   imgPainter.setPen( QPen( Qt::black ) );
-  imgPainter.translate( -points.boundingRect().left() + sideBuffer, - points.boundingRect().top() + sideBuffer );
+  imgPainter.translate( -geom->boundingBox().left() + sideBuffer, - geom->boundingBox().top() + sideBuffer );
   imgPainter.scale( context.renderContext().rasterScaleFactor(), context.renderContext().rasterScaleFactor() );
-  _renderPolygon( &imgPainter, points, rings, context );
+  geom->draw( imgPainter );
   imgPainter.end();
 
   //now that we have a render of the polygon in white, draw this onto the shapeburst fill image too
@@ -1187,9 +1186,10 @@ void QgsShapeburstFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbo
     //to draw now without any rings
     imgPainter.setBrush( QBrush( Qt::white ) );
     imgPainter.setPen( QPen( Qt::black ) );
-    imgPainter.translate( -points.boundingRect().left() + sideBuffer, - points.boundingRect().top() + sideBuffer );
+    imgPainter.translate( -geom->boundingBox().left() + sideBuffer, - geom->boundingBox().top() + sideBuffer );
     imgPainter.scale( context.renderContext().rasterScaleFactor(), context.renderContext().rasterScaleFactor() );
-    _renderPolygon( &imgPainter, points, NULL, context );
+    //_renderPolygon( &imgPainter, points, NULL, context );
+    geom->draw( imgPainter );
   }
   imgPainter.end();
 
@@ -1501,9 +1501,8 @@ QgsImageFillSymbolLayer::~QgsImageFillSymbolLayer()
 {
 }
 
-void QgsImageFillSymbolLayer::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsImageFillSymbolLayer::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
-#if 0
   QPainter* p = context.renderContext().painter();
   if ( !p )
   {
@@ -1521,7 +1520,7 @@ void QgsImageFillSymbolLayer::renderGeometry( QgsGeometry* geom, QgsSymbolV2Rend
     //if ( ! selectionIsOpaque )
     //  selColor.setAlphaF( context.alpha() );
     p->setBrush( QBrush( selColor ) );
-    _renderPolygon( p, points, rings, context );
+    geom->draw( *p );
   }
 
   if ( qgsDoubleNear( mNextAngle, 0.0 ) )
@@ -1536,20 +1535,11 @@ void QgsImageFillSymbolLayer::renderGeometry( QgsGeometry* geom, QgsSymbolV2Rend
     rotatedBrush.setTransform( t );
     p->setBrush( rotatedBrush );
   }
-  _renderPolygon( p, points, rings, context );
+  geom->draw( *p );
   if ( mOutline )
   {
-    mOutline->renderPolyline( points, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
-    if ( rings )
-    {
-      QList<QPolygonF>::const_iterator ringIt = rings->constBegin();
-      for ( ; ringIt != rings->constEnd(); ++ringIt )
-      {
-        mOutline->renderPolyline( *ringIt, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
-      }
-    }
+    mOutline->renderGeometry( geom, context.feature(), context.renderContext(), -1, selectFillBorder && context.selected() );
   }
-#endif //0
 }
 
 bool QgsImageFillSymbolLayer::setSubSymbol( QgsSymbolV2* symbol )
@@ -3339,7 +3329,7 @@ void QgsCentroidFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context
   mMarker->stopRender( context.renderContext() );
 }
 
-void QgsCentroidFillSymbolLayerV2::renderGeometry( QgsGeometry* geom, QgsSymbolV2RenderContext& context )
+void QgsCentroidFillSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSymbolV2RenderContext& context )
 {
 #if 0
   Q_UNUSED( rings );
