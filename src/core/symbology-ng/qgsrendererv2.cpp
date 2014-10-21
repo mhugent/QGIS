@@ -223,7 +223,10 @@ bool QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
     return false;
   }
 
-  geom->transform( *( context.coordinateTransform() ) );
+  if ( context.coordinateTransform() )
+  {
+    geom->transform( *( context.coordinateTransform() ) );
+  }
   geom->mapToPixel( context.mapToPixel() );
   renderFeatureWithSymbol( feature, symbol, context, layer, selected, drawVertexMarker );
   return true;

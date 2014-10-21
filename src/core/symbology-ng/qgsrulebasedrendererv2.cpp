@@ -766,8 +766,11 @@ bool QgsRuleBasedRendererV2::renderFeature( QgsFeature& feature,
     return false;
   }
 
-  geom->transform( *( context.coordinateTransform() ) );
-  geom->mapToPixel( context.mapToPixel() );
+  if ( context.coordinateTransform() )
+  {
+    geom->transform( *( context.coordinateTransform() ) );
+    geom->mapToPixel( context.mapToPixel() );
+  }
 
   // check each active rule
   return mRootRule->renderFeature( mCurrentFeatures.last(), context, mRenderQueue );

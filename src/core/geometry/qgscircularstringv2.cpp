@@ -17,6 +17,7 @@
 
 #include "qgscircularstringv2.h"
 #include "qgsapplication.h"
+#include "qgscoordinatetransform.h"
 #include "qgslinestringv2.h"
 #include "qgsmaptopixel.h"
 #include "qgspointv2.h"
@@ -459,7 +460,23 @@ void QgsCircularStringV2::draw( QPainter& p ) const
 
 void QgsCircularStringV2::transform( const QgsCoordinateTransform& ct )
 {
+  double* zArray = mZ.data();
 
+  bool hasZ = is3D();
+  int nPoints = numPoints();
+  if ( !hasZ )
+  {
+    zArray = new double[nPoints];
+    for ( int i = 0; i < nPoints; ++i )
+    {
+      zArray[i] = 0;
+    }
+  }
+  ct.transformCoords( nPoints, mX.data(), mY.data(), zArray );
+  if ( !hasZ )
+  {
+    delete[] zArray;
+  }
 }
 
 void QgsCircularStringV2::mapToPixel( const QgsMapToPixel& mtp )

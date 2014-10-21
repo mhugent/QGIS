@@ -84,7 +84,7 @@ class QgsAbstractGeometryV2
     virtual QgsRectangle calculateBoundingBox() const = 0;
 
     //render pipeline
-    virtual void transform( const QgsCoordinateTransform& ct ) {} //should be = 0
+    virtual void transform( const QgsCoordinateTransform& ct ) = 0;
     virtual void mapToPixel( const QgsMapToPixel& mtp ) {}
     virtual void clip( const QgsRectangle& rect ) {}
     virtual void draw( QPainter& p ) const = 0;

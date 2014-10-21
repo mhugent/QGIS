@@ -60,7 +60,7 @@ class QgsLineStringV2: public QgsCurveV2
     void fromWkbPoints( QGis::WkbType type, const QgsConstWkbPtr& wkb );
 
     void draw( QPainter& p ) const;
-    void transform( const QgsCoordinateTransform& ct ) {}
+    void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );
 
     void addToPainterPath( QPainterPath& path ) const;

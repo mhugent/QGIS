@@ -344,4 +344,18 @@ void QgsCurvePolygonV2::mapToPixel( const QgsMapToPixel& mtp )
   }
 }
 
+void QgsCurvePolygonV2::transform( const QgsCoordinateTransform& ct )
+{
+  if ( mExteriorRing )
+  {
+    mExteriorRing->transform( ct );
+  }
+
+  QList<QgsCurveV2*>::iterator it = mInteriorRings.begin();
+  for ( ; it != mInteriorRings.constEnd(); ++it )
+  {
+    ( *it )->transform( ct );
+  }
+}
+
 

@@ -17,6 +17,7 @@
 
 #include "qgslinestringv2.h"
 #include "qgsapplication.h"
+#include "qgscoordinatetransform.h"
 #include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
 #include <QPainter>
@@ -322,6 +323,10 @@ void QgsLineStringV2::drawAsPolygon( QPainter& p ) const
   p.drawPolygon( mCoords );
 }
 
+void QgsLineStringV2::transform( const QgsCoordinateTransform& ct )
+{
+  ct.transformPolygon( mCoords );
+}
 
 void QgsLineStringV2::mapToPixel( const QgsMapToPixel& mtp )
 {

@@ -59,6 +59,7 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 
     virtual void draw( QPainter& p ) const;
     void mapToPixel( const QgsMapToPixel& mtp );
+    void transform( const QgsCoordinateTransform& ct );
 
   protected:
 
