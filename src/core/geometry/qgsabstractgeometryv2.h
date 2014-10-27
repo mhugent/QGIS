@@ -39,8 +39,6 @@ class QgsAbstractGeometryV2
 
     virtual QgsAbstractGeometryV2* clone() const = 0;
 
-    int referenceCount() const { return mRefs; }
-
     QgsRectangle boundingBox() const;
 
     //mm-sql interface
@@ -88,12 +86,6 @@ class QgsAbstractGeometryV2
     virtual void mapToPixel( const QgsMapToPixel& mtp ) {}
     virtual void clip( const QgsRectangle& rect ) {}
     virtual void draw( QPainter& p ) const = 0;
-
-  private:
-    int mRefs;
-    void ref(); // add reference
-    void deref(); // remove reference, delete if refs == 0
-    friend class QgsGeometry;
 
   protected:
     QGis::WkbType mWkbType;

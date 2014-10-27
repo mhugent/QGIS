@@ -75,6 +75,8 @@ class QgsRectangle;
 class QgsConstWkbPtr;
 class QgsWkbPtr;
 
+struct QgsGeometryData;
+
 class CORE_EXPORT QgsGeometry
 {
   public:
@@ -144,10 +146,10 @@ class CORE_EXPORT QgsGeometry
     QGis::WkbType wkbType() const;
 
     /** Returns type of the vector */
-    QGis::GeometryType type();
+    QGis::GeometryType type() const;
 
     /** Returns true if wkb of the geometry is of WKBMulti* type */
-    bool isMultipart();
+    bool isMultipart() const;
 
     /** compare geometries using GEOS
       @note added in 1.5
@@ -314,7 +316,7 @@ class CORE_EXPORT QgsGeometry
     int makeDifference( QgsGeometry* other );
 
     /**Returns the bounding box of this feature*/
-    QgsRectangle boundingBox();
+    QgsRectangle boundingBox() const;
 
     /** Test for intersection with a rectangle (uses GEOS) */
     bool intersects( const QgsRectangle& r ) const;
@@ -395,7 +397,7 @@ class CORE_EXPORT QgsGeometry
     QgsGeometry* interpolate( double distance );
 
     /** Returns a geometry representing the points shared by this geometry and other. */
-    QgsGeometry* intersection( QgsGeometry* geometry );
+    QgsGeometry* intersection( QgsGeometry* geometry ) const;
 
     /** Returns a geometry representing all the points in this geometry and other (a
      * union geometry operation).
@@ -523,7 +525,7 @@ class CORE_EXPORT QgsGeometry
 
   private:
 
-    QgsAbstractGeometryV2* mGeometry;
+    QgsGeometryData* d; //implicitely shared data pointer
     mutable const unsigned char* mWkb; //store wkb pointer for backward compatibility
     mutable int mWkbSize;
 

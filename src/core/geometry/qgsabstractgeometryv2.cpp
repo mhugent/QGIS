@@ -16,7 +16,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsabstractgeometryv2.h"
 #include "qgsgeos.h"
 
-QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mRefs( 0 ), mWkbType( QGis::WKBUnknown )
+QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mWkbType( QGis::WKBUnknown )
 {
   mVectorTopology = new QgsGeos( this );
 }
@@ -28,7 +28,6 @@ QgsAbstractGeometryV2::~QgsAbstractGeometryV2()
 
 QgsAbstractGeometryV2::QgsAbstractGeometryV2( const QgsAbstractGeometryV2& geom )
 {
-  mRefs = 0;
   mVectorTopology = new QgsGeos( this );
   mBoundingBox = geom.boundingBox();
   mWkbType = geom.mWkbType;
@@ -39,22 +38,7 @@ QgsAbstractGeometryV2& QgsAbstractGeometryV2::operator=( const QgsAbstractGeomet
   mBoundingBox = geom.boundingBox();
   mWkbType = geom.mWkbType;
   mVectorTopology = new QgsGeos( this );
-  mRefs = 0;
   return *this;
-}
-
-void QgsAbstractGeometryV2::ref()
-{
-  ++mRefs;
-}
-
-void QgsAbstractGeometryV2::deref()
-{
-  --mRefs;
-  if ( mRefs <= 0 )
-  {
-    delete this;
-  }
 }
 
 QgsRectangle QgsAbstractGeometryV2::boundingBox() const
