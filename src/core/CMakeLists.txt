@@ -266,11 +266,14 @@ SET(QGIS_CORE_SRCS
   geometry/qgscompoundcurvev2.cpp
   geometry/qgscurvepolygonv2.cpp
   geometry/qgsgeometry.cpp
+  geometry/qgsgeometrycollectionv2.cpp
   geometry/qgsgeometryimport.cpp
   geometry/qgsgeos.cpp
   geometry/qgspointv2.cpp
   geometry/qgspolygonv2.cpp
   geometry/qgslinestringv2.cpp
+  geometry/qgsmulticurvev2.cpp
+  geometry/qgsmultisurfacev2.cpp
 )
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
