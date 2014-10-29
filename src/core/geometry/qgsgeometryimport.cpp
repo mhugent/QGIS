@@ -22,6 +22,7 @@
 #include "qgspolygonv2.h"
 #include "qgslinestringv2.h"
 #include "qgsmulticurvev2.h"
+#include "qgsmultipointv2.h"
 #include "qgsmultisurfacev2.h"
 
 QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb )
@@ -84,6 +85,13 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb 
     case QGis::WKBMultiPolygonZM:
     case QGis::WKBMultiPolygon25D:
       geom = new QgsMultiSurfaceV2();
+      break;
+    case QGis::WKBMultiPoint:
+    case QGis::WKBMultiPointZ:
+    case QGis::WKBMultiPointM:
+    case QGis::WKBMultiPointZM:
+    case QGis::WKBMultiPoint25D:
+      geom = new QgsMultiPointV2();
       break;
     default:
       geom = 0;

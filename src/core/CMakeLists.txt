@@ -273,6 +273,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgspolygonv2.cpp
   geometry/qgslinestringv2.cpp
   geometry/qgsmulticurvev2.cpp
+  geometry/qgsmultipointv2.cpp
   geometry/qgsmultisurfacev2.cpp
 )
 

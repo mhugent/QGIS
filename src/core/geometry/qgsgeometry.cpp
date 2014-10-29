@@ -34,6 +34,7 @@ email                : morb at ozemail dot com dot au
 #include "qgsgeometryvalidator.h"
 
 #include "qgsabstractgeometryv2.h"
+#include "qgsmultipointv2.h"
 #include "qgspointv2.h"
 #include "qgspolygonv2.h"
 #include "qgslinestringv2.h"
@@ -4978,12 +4979,26 @@ QgsPolygon QgsGeometry::asPolygon() const
 
 QgsMultiPoint QgsGeometry::asMultiPoint() const
 {
-  return QgsMultiPoint();
-  /*if( !mGeometry )
+  if ( !d || !d->geometry || d->geometry->geometryType() != "MultiPoint" )
   {
-      return QgsMultiPoint();
+    return QgsMultiPoint();
   }
-  return mGeometry->asMultiPoint();*/
+
+  const QgsMultiPointV2* mp = dynamic_cast<QgsMultiPointV2*>( d->geometry );
+  if ( !mp )
+  {
+    return QgsMultiPoint();
+  }
+
+  int nPoints = mp->numGeometries();
+  QgsMultiPoint multiPoint( nPoints );
+  for ( int i = 0; i < nPoints; ++i )
+  {
+    const QgsPointV2* pt = dynamic_cast<const QgsPointV2*>( mp->geometryN( i ) );
+    multiPoint[i].setX( pt->x() );
+    multiPoint[i].setY( pt->y() );
+  }
+  return multiPoint;
 }
 
 QgsMultiPolyline QgsGeometry::asMultiPolyline() const
