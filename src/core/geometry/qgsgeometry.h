@@ -96,6 +96,8 @@ class CORE_EXPORT QgsGeometry
     //! Destructor
     ~QgsGeometry();
 
+    const QgsAbstractGeometryV2* geometry() const;
+
     /** static method that creates geometry from Wkt */
     static QgsGeometry* fromWkt( QString wkt );
 

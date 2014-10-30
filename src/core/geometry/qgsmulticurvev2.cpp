@@ -51,5 +51,6 @@ QgsAbstractGeometryV2* QgsMultiCurveV2::clone() const
     geom->mGeometries[i] = mGeometries[i]->clone();
   }
 
+  geom->mWkbType = mWkbType;
   return geom;
 }

@@ -213,13 +213,38 @@ class CORE_EXPORT QGis
     {
       switch ( type )
       {
-        case WKBPoint25D:           return WKBPoint;
-        case WKBLineString25D:      return WKBLineString;
-        case WKBPolygon25D:         return WKBPolygon;
-        case WKBMultiPoint25D:      return WKBMultiPoint;
-        case WKBMultiLineString25D: return WKBMultiLineString;
-        case WKBMultiPolygon25D:    return WKBMultiPolygon;
-        default:                    return type;
+        case WKBPoint25D:
+        case WKBPointZ:
+        case WKBPointM:
+        case WKBPointZM:
+          return WKBPoint;
+        case WKBLineString25D:
+        case WKBLineStringZ:
+        case WKBLineStringM:
+        case WKBLineStringZM:
+          return WKBLineString;
+        case WKBPolygon25D:
+        case WKBPolygonZ:
+        case WKBPolygonM:
+        case WKBPolygonZM:
+          return WKBPolygon;
+        case WKBMultiPoint25D:
+        case WKBMultiPointZ:
+        case WKBMultiPointM:
+        case WKBMultiPointZM:
+          return WKBMultiPoint;
+        case WKBMultiLineString25D:
+        case WKBMultiLineStringZ:
+        case WKBMultiLineStringM:
+        case WKBMultiLineStringZM:
+          return WKBMultiLineString;
+        case WKBMultiPolygon25D:
+        case WKBMultiPolygonZ:
+        case WKBMultiPolygonM:
+        case WKBMultiPolygonZM:
+          return WKBMultiPolygon;
+        default:
+          return type;
       }
     }
 

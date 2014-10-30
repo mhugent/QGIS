@@ -157,12 +157,21 @@ void QgsGeometry::detach()
     return;
   }
 
-  if ( d->ref != 1 )
+  if ( d->ref > 1 )
   {
     d->ref.deref();
     d->geometry = d->geometry->clone();
     d->ref = QAtomicInt( 1 );
   }
+}
+
+const QgsAbstractGeometryV2* QgsGeometry::geometry() const
+{
+  if ( !d )
+  {
+    return 0;
+  }
+  return d->geometry;
 }
 
 static unsigned int getNumGeosPoints( const GEOSGeometry *geom )
@@ -573,11 +582,7 @@ QGis::GeometryType QgsGeometry::type() const
 
 bool QgsGeometry::isMultipart() const
 {
-  /*if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  return QGis::isMultiType( wkbType() );*/
-  return false;
+  return QGis::isMultiType( wkbType() );
 }
 
 void QgsGeometry::fromGeos( GEOSGeometry *geos )

@@ -18,6 +18,7 @@
 #include "qgssymbollayerv2utils.h"
 #include "qgsexpression.h"
 #include "qgslinestringv2.h"
+#include "qgsmulticurvev2.h"
 #include "qgsrendercontext.h"
 #include "qgslogger.h"
 #include "qgsvectorlayer.h"
@@ -844,20 +845,54 @@ void QgsMarkerLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
     QgsGeometry g( *geom );
     g.convertToStraightSegment();
 
-    //QPolygonF points = g.vertices();
-    if ( placement == Interval )
+    QList<const QgsLineStringV2*> lineList;
+
+    //linestring
+    if ( g.isMultipart() )
     {
-      //renderPolylineInterval( linestring->qPolygonF(), context );
+      const QgsMultiCurveV2* multiLine = dynamic_cast<const QgsMultiCurveV2*>( g.geometry() );
+      if ( multiLine )
+      {
+        int numGeometries = multiLine->numGeometries();
+        for ( int i = 0; i < numGeometries; ++i )
+        {
+          const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( multiLine->geometryN( i ) );
+          if ( line )
+          {
+            lineList.push_back( line );
+          }
+        }
+      }
     }
-    else if ( placement == CentralPoint )
+    else
     {
-      //renderPolylineVertex( linestring->qPolygonF(), context, placement );
+      const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( g.geometry() );
+      if ( line )
+      {
+        lineList.push_back( line );
+      }
+
+    }
+
+    QList<const QgsLineStringV2*>::const_iterator lineIt = lineList.constBegin();
+    for ( ; lineIt != lineList.constEnd(); ++lineIt )
+    {
+      if ( placement == Interval )
+      {
+        renderPolylineInterval(( *lineIt )->qPolygonF(), context );
+      }
+      else if ( placement == CentralPoint )
+      {
+        renderPolylineCentral(( *lineIt )->qPolygonF(), context );
+      }
     }
   }
   else // Placement == Vertex / FirstVertex / LastVertex
   {
-    //QPolygonF points = geom.vertices();
-    //renderPolylineVertex( points, context, placement );
+#if 0
+    QPolygonF points = geom->geometry()->vertices();
+    renderPolylineVertex( points, context, placement );
+#endif //0
   }
 
 
