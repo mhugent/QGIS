@@ -26,6 +26,8 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 {
   public:
     QgsCurvePolygonV2();
+    QgsCurvePolygonV2( const QgsCurvePolygonV2& p );
+    QgsCurvePolygonV2& operator=( const QgsCurvePolygonV2& p );
     ~QgsCurvePolygonV2();
 
     virtual QString geometryType() const { return "CurvePolygon"; }

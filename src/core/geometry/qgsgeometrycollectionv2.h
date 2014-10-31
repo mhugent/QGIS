@@ -23,6 +23,8 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
 {
   public:
     QgsGeometryCollectionV2();
+    QgsGeometryCollectionV2( const QgsGeometryCollectionV2& c );
+    QgsGeometryCollectionV2& operator=( const QgsGeometryCollectionV2& c );
     virtual ~QgsGeometryCollectionV2();
 
     int numGeometries() const;
@@ -44,6 +46,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
 
   protected:
     QVector< QgsAbstractGeometryV2* > mGeometries;
+    void removeGeometries();
 };
 
 #endif // QGSGEOMETRYCOLLECTIONV2_H

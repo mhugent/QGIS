@@ -23,9 +23,45 @@ QgsGeometryCollectionV2::QgsGeometryCollectionV2(): QgsAbstractGeometryV2()
 
 }
 
+QgsGeometryCollectionV2::QgsGeometryCollectionV2( const QgsGeometryCollectionV2& c ): QgsAbstractGeometryV2( c )
+{
+  int nGeoms = c.mGeometries.size();
+  mGeometries.resize( nGeoms );
+  for ( int i = 0; i < nGeoms; ++i )
+  {
+    mGeometries[i] = c.mGeometries.at( i )->clone();
+  }
+}
+
+QgsGeometryCollectionV2& QgsGeometryCollectionV2::operator=( const QgsGeometryCollectionV2 & c )
+{
+  if ( &c != this )
+  {
+    QgsAbstractGeometryV2::operator=( c );
+    removeGeometries();
+    int nGeoms = c.mGeometries.size();
+    mGeometries.resize( nGeoms );
+    for ( int i = 0; i < nGeoms; ++i )
+    {
+      mGeometries[i] = c.mGeometries.at( i )->clone();
+    }
+  }
+  return *this;
+}
+
 QgsGeometryCollectionV2::~QgsGeometryCollectionV2()
 {
+  removeGeometries();
+}
 
+void QgsGeometryCollectionV2::removeGeometries()
+{
+  QVector< QgsAbstractGeometryV2* >::const_iterator it = mGeometries.constBegin();
+  for ( ; it != mGeometries.constEnd(); ++it )
+  {
+    delete *it;
+  }
+  mGeometries.clear();
 }
 
 int QgsGeometryCollectionV2::numGeometries() const

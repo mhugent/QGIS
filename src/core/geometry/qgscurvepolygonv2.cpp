@@ -35,9 +35,30 @@ QgsCurvePolygonV2::~QgsCurvePolygonV2()
   removeRings();
 }
 
+QgsCurvePolygonV2::QgsCurvePolygonV2( const QgsCurvePolygonV2& p ): mExteriorRing( 0 )
+{
+  *this = p;
+}
+
+QgsCurvePolygonV2& QgsCurvePolygonV2::operator=( const QgsCurvePolygonV2 & p )
+{
+  QgsSurfaceV2::operator=( p );
+  removeRings();
+  if ( p.mExteriorRing )
+  {
+    mExteriorRing = dynamic_cast<QgsCurveV2*>( p.mExteriorRing->clone() );
+  }
+
+  int nInteriorRings = p.mInteriorRings.size();
+  for ( int i = 0; i < nInteriorRings; ++i )
+  {
+    mInteriorRings.push_back( dynamic_cast<QgsCurveV2*>( p.mInteriorRings[i]->clone() ) );
+  }
+}
+
 QgsAbstractGeometryV2* QgsCurvePolygonV2::clone() const
 {
-  return 0;
+  return new QgsCurvePolygonV2( *this );
 }
 
 void QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
@@ -188,6 +209,7 @@ QgsPointV2 QgsCurvePolygonV2::pointOnSurface() const
 void QgsCurvePolygonV2::removeRings()
 {
   delete mExteriorRing;
+  mExteriorRing = 0;
   qDeleteAll( mInteriorRings );
   mInteriorRings.clear();
 }

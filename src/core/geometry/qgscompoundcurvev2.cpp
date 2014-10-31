@@ -34,21 +34,25 @@ QgsCompoundCurveV2::~QgsCompoundCurveV2()
   removeCurves();
 }
 
-QgsCompoundCurveV2::QgsCompoundCurveV2( const QgsCompoundCurveV2& curve ): QgsCurveV2()
+QgsCompoundCurveV2::QgsCompoundCurveV2( const QgsCompoundCurveV2& curve ): QgsCurveV2( curve )
 {
-  *this = curve;
+  int nC = curve.nCurves();
+  for ( int i = 0; i < nC; ++i )
+  {
+    mCurves.append( dynamic_cast<QgsCurveV2*>( curve.curveAt( i )->clone() ) );
+  }
 }
 
 QgsCompoundCurveV2& QgsCompoundCurveV2::operator=( const QgsCompoundCurveV2 & curve )
 {
-  //copy curves
-  QgsCurveV2::operator=( curve );
   if ( &curve != this )
   {
+    QgsCurveV2::operator=( curve );
     removeCurves();
-    for ( int i = 0; i < nCurves(); ++i )
+    int nC = curve.nCurves();
+    for ( int i = 0; i < nC; ++i )
     {
-      mCurves.append( dynamic_cast<QgsCurveV2*>( curveAt( i )->clone() ) );
+      mCurves.append( dynamic_cast<QgsCurveV2*>( curve.curveAt( i )->clone() ) );
     }
   }
   return *this;
