@@ -37,6 +37,7 @@ QgsAbstractGeometryV2& QgsAbstractGeometryV2::operator=( const QgsAbstractGeomet
 {
   mBoundingBox = geom.boundingBox();
   mWkbType = geom.mWkbType;
+  delete mVectorTopology;
   mVectorTopology = new QgsGeos( this );
   return *this;
 }

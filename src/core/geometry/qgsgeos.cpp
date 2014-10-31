@@ -373,7 +373,9 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
       const QgsCurveV2* interiorRing = polygon->interiorRing( i );
       holes[i] = GEOSGeom_createLinearRing( createCoordinateSequence( interiorRing ) );
     }
-    return GEOSGeom_createPolygon( exteriorRingGeos, holes, nHoles );
+    GEOSGeometry* geosPolygon = GEOSGeom_createPolygon( exteriorRingGeos, holes, nHoles );
+    delete[] holes;
+    return geosPolygon;
   }
 
   //todo: multitypes

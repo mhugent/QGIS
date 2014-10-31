@@ -121,6 +121,7 @@ QgsGeometry::~QgsGeometry()
     if ( !d->ref.deref() )
     {
       delete d->geometry;
+      delete d;
     }
   }
   removeWkbGeos();
@@ -143,6 +144,7 @@ QgsGeometry& QgsGeometry::operator=( QgsGeometry const & other )
   if ( !d->ref.deref() )
   {
     delete d->geometry;
+    delete d;
   }
 
   removeWkbGeos();
