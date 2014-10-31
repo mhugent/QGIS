@@ -530,8 +530,10 @@ class CORE_EXPORT QgsGeometry
     QgsGeometryData* d; //implicitely shared data pointer
     mutable const unsigned char* mWkb; //store wkb pointer for backward compatibility
     mutable int mWkbSize;
+    mutable GEOSGeometry* mGeos;
 
     void detach(); //make sure mGeometry only referenced from this instance
+    void removeWkbGeos();
 
 }; // class QgsGeometry
 

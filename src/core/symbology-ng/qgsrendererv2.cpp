@@ -223,11 +223,6 @@ bool QgsFeatureRendererV2::renderFeature( QgsFeature& feature, QgsRenderContext&
     return false;
   }
 
-  if ( context.coordinateTransform() )
-  {
-    geom->transform( *( context.coordinateTransform() ) );
-  }
-  geom->mapToPixel( context.mapToPixel() );
   renderFeatureWithSymbol( feature, symbol, context, layer, selected, drawVertexMarker );
   return true;
 }
@@ -240,7 +235,13 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
     return;
   }
 
-  symbol->renderGeometry( geom, &feature, context, layer, selected );
+  QgsGeometry renderGeom( *geom );
+  if ( context.coordinateTransform() )
+  {
+    renderGeom.transform( *( context.coordinateTransform() ) );
+  }
+  renderGeom.mapToPixel( context.mapToPixel() );
+  symbol->renderGeometry( &renderGeom, &feature, context, layer, selected );
 }
 
 QString QgsFeatureRendererV2::dump() const

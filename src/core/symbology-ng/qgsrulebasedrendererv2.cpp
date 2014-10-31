@@ -766,14 +766,17 @@ bool QgsRuleBasedRendererV2::renderFeature( QgsFeature& feature,
     return false;
   }
 
+  QgsGeometry* bkGeom = new QgsGeometry( *geom );
   if ( context.coordinateTransform() )
   {
     geom->transform( *( context.coordinateTransform() ) );
-    geom->mapToPixel( context.mapToPixel() );
   }
+  geom->mapToPixel( context.mapToPixel() );
 
   // check each active rule
-  return mRootRule->renderFeature( mCurrentFeatures.last(), context, mRenderQueue );
+  bool result = mRootRule->renderFeature( mCurrentFeatures.last(), context, mRenderQueue );
+  feature.setGeometry( bkGeom );
+  return result;
 }
 
 
