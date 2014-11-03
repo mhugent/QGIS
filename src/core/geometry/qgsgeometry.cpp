@@ -507,6 +507,12 @@ void QgsGeometry::fromWkb( unsigned char *wkb, size_t length )
   }
 
   detach();
+
+  if ( d->geometry )
+  {
+    delete d->geometry;
+    removeWkbGeos();
+  }
   d->geometry = QgsGeometryImport::geomFromWkb( wkb );
   delete[] wkb;
 }
