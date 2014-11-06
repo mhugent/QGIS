@@ -84,11 +84,11 @@ class QgsAbstractGeometryV2
 
     //render pipeline
     virtual void transform( const QgsCoordinateTransform& ct ) = 0;
-    virtual void mapToPixel( const QgsMapToPixel& mtp ) {}
+    virtual void mapToPixel( const QgsMapToPixel& mtp ) = 0;
     virtual void clip( const QgsRectangle& rect ) {}
     virtual void draw( QPainter& p ) const = 0;
 
-    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const {};
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
 
   protected:
     QGis::WkbType mWkbType;

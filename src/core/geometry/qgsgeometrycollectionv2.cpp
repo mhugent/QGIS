@@ -16,6 +16,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeometrycollectionv2.h"
 #include "qgsapplication.h"
 #include "qgsgeometryimport.h"
+#include "qgspointv2.h"
 #include "qgswkbptr.h"
 
 QgsGeometryCollectionV2::QgsGeometryCollectionV2(): QgsAbstractGeometryV2()
@@ -210,4 +211,20 @@ int QgsGeometryCollectionV2::wkbSize() const
   }
   size += ( 1 + 2 * sizeof( int ) );
   return size;
+}
+
+void QgsGeometryCollectionV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
+{
+  coord.clear();
+  QVector< QgsAbstractGeometryV2* >::const_iterator geomIt = mGeometries.constBegin();
+  for ( ; geomIt != mGeometries.constEnd(); ++geomIt )
+  {
+    QList< QList< QList< QgsPointV2 > > > geomCoords;
+    ( *geomIt )->coordinateSequence( geomCoords );
+    QList< QList< QList< QgsPointV2 > > >::const_iterator cIt = geomCoords.constBegin();
+    for ( ; cIt != geomCoords.constEnd(); ++cIt )
+    {
+      coord.push_back( *cIt );
+    }
+  }
 }

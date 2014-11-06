@@ -44,6 +44,8 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     unsigned char* asBinary( int& binarySize ) const;
     int wkbSize() const;
 
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
+
   protected:
     QVector< QgsAbstractGeometryV2* > mGeometries;
     void removeGeometries();

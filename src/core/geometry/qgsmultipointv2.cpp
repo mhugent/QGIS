@@ -42,5 +42,15 @@ QString QgsMultiPointV2::asGML() const
 
 QgsAbstractGeometryV2* QgsMultiPointV2::clone() const
 {
-  return 0;
+  int nGeometries = mGeometries.size();
+  QgsMultiPointV2* geom = new QgsMultiPointV2();
+  geom->mGeometries.resize( nGeometries );
+
+  for ( int i = 0; i < nGeometries; ++i )
+  {
+    geom->mGeometries[i] = mGeometries[i]->clone();
+  }
+
+  geom->mWkbType = mWkbType;
+  return geom;
 }

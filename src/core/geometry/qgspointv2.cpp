@@ -18,6 +18,7 @@
 
 #include "qgspointv2.h"
 #include "qgsapplication.h"
+#include "qgscoordinatetransform.h"
 #include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
 
@@ -174,10 +175,18 @@ void QgsPointV2::reset()
 
 void QgsPointV2::transform( const QgsCoordinateTransform& ct )
 {
-  //todo...
+  ct.transformInPlace( mX, mY, mZ );
 }
 
 void QgsPointV2::mapToPixel( const QgsMapToPixel& mtp )
 {
   mtp.transformInPlace( mX, mY );
+}
+
+void QgsPointV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
+{
+  coord.clear();
+  QList< QList< QgsPointV2 > > featureCoord;
+  featureCoord.append( QList< QgsPointV2 >() << QgsPointV2( *this ) );
+  coord.append( featureCoord );
 }

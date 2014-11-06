@@ -84,6 +84,8 @@ class QgsPointV2: public QgsAbstractGeometryV2
     void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );
 
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
+
   private:
     double mX;
     double mY;
