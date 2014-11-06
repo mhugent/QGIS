@@ -63,6 +63,8 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     void mapToPixel( const QgsMapToPixel& mtp );
     void transform( const QgsCoordinateTransform& ct );
 
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
+
   protected:
 
     QgsCurveV2* mExteriorRing;

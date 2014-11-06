@@ -54,6 +54,7 @@ QgsCurvePolygonV2& QgsCurvePolygonV2::operator=( const QgsCurvePolygonV2 & p )
   {
     mInteriorRings.push_back( dynamic_cast<QgsCurveV2*>( p.mInteriorRings[i]->clone() ) );
   }
+  return *this;
 }
 
 QgsAbstractGeometryV2* QgsCurvePolygonV2::clone() const
@@ -374,10 +375,31 @@ void QgsCurvePolygonV2::transform( const QgsCoordinateTransform& ct )
   }
 
   QList<QgsCurveV2*>::iterator it = mInteriorRings.begin();
-  for ( ; it != mInteriorRings.constEnd(); ++it )
+  for ( ; it != mInteriorRings.end(); ++it )
   {
     ( *it )->transform( ct );
   }
+}
+
+void QgsCurvePolygonV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
+{
+  coord.clear();
+
+  QList< QList< QgsPointV2 > > coordinates;
+  QList< QgsPointV2 > ringCoords;
+  if ( mExteriorRing )
+  {
+    mExteriorRing->points( ringCoords );
+    coordinates.append( ringCoords );
+  }
+
+  QList<QgsCurveV2*>::const_iterator it = mInteriorRings.constBegin();
+  for ( ; it != mInteriorRings.constEnd(); ++it )
+  {
+    ( *it )->points( ringCoords );
+    coordinates.append( ringCoords );
+  }
+  coord.append( coordinates );
 }
 
 
