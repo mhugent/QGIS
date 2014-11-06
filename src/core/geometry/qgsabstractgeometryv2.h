@@ -25,6 +25,7 @@ class QgsMapToPixel;
 class QgsCurveV2;
 class QgsMultiCurveV2;
 class QgsMultiPointV2;
+class QgsPointV2;
 class QgsVectorTopology;
 class QPainter;
 
@@ -86,6 +87,8 @@ class QgsAbstractGeometryV2
     virtual void mapToPixel( const QgsMapToPixel& mtp ) {}
     virtual void clip( const QgsRectangle& rect ) {}
     virtual void draw( QPainter& p ) const = 0;
+
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const {};
 
   protected:
     QGis::WkbType mWkbType;

@@ -191,6 +191,23 @@ QgsPointV2 QgsCompoundCurveV2::endPoint() const
   return mCurves.at( mCurves.size() - 1 )->endPoint();
 }
 
+void QgsCompoundCurveV2::points( QList<QgsPointV2>& pts ) const
+{
+  pts.clear();
+  if ( mCurves.size() < 1 )
+  {
+    return;
+  }
+
+  mCurves[0]->points( pts );
+  for ( int i = 1; i < mCurves.size(); ++i )
+  {
+    QList<QgsPointV2> pList;
+    mCurves[i]->points( pList );
+    pts.append( pList );
+  }
+}
+
 bool QgsCompoundCurveV2::isClosed() const
 {
   return ( startPoint() == endPoint() ) ;
@@ -299,7 +316,7 @@ void QgsCompoundCurveV2::addToPainterPath( QPainterPath& path ) const
   path.addPath( pp );
 }
 
-void QgsCompoundCurveV2::drawAsPolygon( QPainter& p )
+void QgsCompoundCurveV2::drawAsPolygon( QPainter& p ) const
 {
   QPainterPath pp;
   QList< QgsCurveV2* >::const_iterator it = mCurves.constBegin();

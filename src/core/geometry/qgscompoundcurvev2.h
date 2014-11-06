@@ -44,6 +44,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual double length() const;
     virtual QgsPointV2 startPoint() const;
     virtual QgsPointV2 endPoint() const;
+    virtual void points( QList<QgsPointV2>& pts ) const;
     virtual bool isClosed() const;
     virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
@@ -56,7 +57,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );
     void addToPainterPath( QPainterPath& path ) const;
-    void drawAsPolygon( QPainter& p );
+    void drawAsPolygon( QPainter& p ) const;
 
   private:
     QList< QgsCurveV2* > mCurves;

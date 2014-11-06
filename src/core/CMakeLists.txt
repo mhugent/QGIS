@@ -264,6 +264,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgsabstractgeometryv2.cpp
   geometry/qgscircularstringv2.cpp
   geometry/qgscompoundcurvev2.cpp
+  geometry/qgscurvev2.cpp
   geometry/qgscurvepolygonv2.cpp
   geometry/qgsgeometry.cpp
   geometry/qgsgeometrycollectionv2.cpp

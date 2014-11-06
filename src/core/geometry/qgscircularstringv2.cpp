@@ -214,15 +214,14 @@ QgsPointV2 QgsCircularStringV2::pointN( int i ) const
   }
 }
 
-QList<QgsPointV2> QgsCircularStringV2::points() const
+void QgsCircularStringV2::points( QList<QgsPointV2>& pts ) const
 {
-  QList<QgsPointV2> pts;
+  pts.clear();
   int nPts = numPoints();
   for ( int i = 0; i < nPts; ++i )
   {
     pts.push_back( pointN( i ) );
   }
-  return pts;
 }
 
 void QgsCircularStringV2::setPoints( const QList<QgsPointV2> points )

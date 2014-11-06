@@ -176,15 +176,14 @@ QgsPointV2 QgsLineStringV2::pointN( int i ) const
   }
 }
 
-QList<QgsPointV2> QgsLineStringV2::points() const
+void QgsLineStringV2::points( QList<QgsPointV2>& pts ) const
 {
-  QList<QgsPointV2> pts;
+  pts.clear();
   int nPoints = numPoints();
   for ( int i = 0; i < nPoints; ++i )
   {
     pts.push_back( pointN( i ) );
   }
-  return pts;
 }
 
 void QgsLineStringV2::setPoints( const QList<QgsPointV2> points )

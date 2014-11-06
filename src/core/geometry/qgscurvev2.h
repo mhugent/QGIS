@@ -27,8 +27,8 @@ class QPainterPath;
 class QgsCurveV2: public QgsAbstractGeometryV2
 {
   public:
-    QgsCurveV2(): QgsAbstractGeometryV2() {}
-    virtual ~QgsCurveV2() {}
+    QgsCurveV2();
+    virtual ~QgsCurveV2();
     virtual double length() const = 0;
     virtual QgsPointV2 startPoint() const = 0;
     virtual QgsPointV2 endPoint() const = 0;
@@ -36,8 +36,11 @@ class QgsCurveV2: public QgsAbstractGeometryV2
     virtual bool isRing() const = 0;
     virtual QgsLineStringV2* curveToLine() const = 0;
 
-    virtual void addToPainterPath( QPainterPath& path ) const {}
-    virtual void drawAsPolygon( QPainter& p ) const {}
+    virtual void addToPainterPath( QPainterPath& path ) const = 0;
+    virtual void drawAsPolygon( QPainter& p ) const = 0;
+    virtual void points( QList<QgsPointV2>& pt ) const = 0;
+
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 };
 
 #endif // QGSCURVEV2_H

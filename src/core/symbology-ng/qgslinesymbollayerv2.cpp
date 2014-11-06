@@ -839,88 +839,46 @@ void QgsMarkerLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
 
   //todo: offset geometry
 
+  //segmentize geometry
+  QgsGeometry g( *geom );
   if ( placement == Interval || placement == CentralPoint )
   {
-    //segmentize geometry
-    QgsGeometry g( *geom );
     g.convertToStraightSegment();
+  }
 
-    QList<const QgsLineStringV2*> lineList;
+  QList< QList< QList< QgsPointV2 > > > coords;
+  g.geometry()->coordinateSequence( coords );
 
-    //linestring
-    if ( g.isMultipart() )
-    {
-      const QgsMultiCurveV2* multiLine = dynamic_cast<const QgsMultiCurveV2*>( g.geometry() );
-      if ( multiLine )
-      {
-        int numGeometries = multiLine->numGeometries();
-        for ( int i = 0; i < numGeometries; ++i )
-        {
-          const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( multiLine->geometryN( i ) );
-          if ( line )
-          {
-            lineList.push_back( line );
-          }
-        }
-      }
-    }
-    else
-    {
-      const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( g.geometry() );
-      if ( line )
-      {
-        lineList.push_back( line );
-      }
-
-    }
-
-    QList<const QgsLineStringV2*>::const_iterator lineIt = lineList.constBegin();
-    for ( ; lineIt != lineList.constEnd(); ++lineIt )
+  QList< QList< QList< QgsPointV2 > > >::const_iterator fIt = coords.constBegin();
+  for ( ; fIt != coords.constEnd(); ++fIt )
+  {
+    QList< QList< QgsPointV2 > >::const_iterator ringIt = fIt->constBegin();
+    for ( ; ringIt != fIt->constEnd(); ++ringIt )
     {
       if ( placement == Interval )
       {
-        renderPolylineInterval(( *lineIt )->qPolygonF(), context );
+        renderPolylineInterval( *ringIt, context );
       }
       else if ( placement == CentralPoint )
       {
-        renderPolylineCentral(( *lineIt )->qPolygonF(), context );
+        renderPolylineCentral( *ringIt, context );
+      }
+      else //Placement == Vertex / FirstVertex / LastVertex
+      {
+        renderPolylineVertex( *ringIt, context, placement );
       }
     }
   }
-  else // Placement == Vertex / FirstVertex / LastVertex
-  {
-#if 0
-    QPolygonF points = geom->geometry()->vertices();
-    renderPolylineVertex( points, context, placement );
-#endif //0
-  }
-
-
-#if 0
-  if ( placement == Interval )
-    renderPolylineInterval( points, context );
-  else if ( placement == CentralPoint )
-    renderPolylineCentral( points, context );
-  else
-    renderPolylineVertex( points, context, placement );
 }
-else
+
+void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context )
 {
-  QList<QPolygonF> mline = ::offsetLine( points, offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale ), context.feature() ? context.feature()->geometry()->type() : QGis::Line );
-
-  for ( int part = 0; part < mline.count(); ++part )
+  QPolygonF poly( points.size() );
+  for ( int i = 0; i < points.size(); ++i )
   {
-    const QPolygonF &points2 = mline[ part ];
-
-    if ( placement == Interval )
-      renderPolylineInterval( points2, context );
-    else if ( placement == CentralPoint )
-      renderPolylineCentral( points2, context );
-    else
-      renderPolylineVertex( points2, context, placement );
+    poly[i] = QPointF( points[i].x(), points[i].y() );
   }
-}
-#endif //0
+  renderPolylineInterval( poly, context );
 }
 
 void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points, QgsSymbolV2RenderContext& context )
@@ -1000,7 +958,6 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points
 
   // restore original rotation
   mMarker->setAngle( origAngle );
-
 }
 
 static double _averageAngle( const QPointF& prevPt, const QPointF& pt, const QPointF& nextPt )
@@ -1011,6 +968,16 @@ static double _averageAngle( const QPointF& prevPt, const QPointF& pt, const QPo
   double unitX = cos( a1 ) + cos( a2 ), unitY = sin( a1 ) + sin( a2 );
 
   return atan2( unitY, unitX );
+}
+
+void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context, Placement placement )
+{
+  QPolygonF poly( points.size() );
+  for ( int i = 0; i < points.size(); ++i )
+  {
+    poly[i] = QPointF( points[i].x(), points[i].y() );
+  }
+  renderPolylineVertex( poly, context, placement );
 }
 
 void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, QgsSymbolV2RenderContext& context, Placement placement )
@@ -1216,6 +1183,16 @@ void QgsMarkerLineSymbolLayerV2::renderOffsetVertexAlongLine( const QPolygonF &p
 
   //didn't find point
   return;
+}
+
+void QgsMarkerLineSymbolLayerV2::renderPolylineCentral( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context )
+{
+  QPolygonF poly( points.size() );
+  for ( int i = 0; i < points.size(); ++i )
+  {
+    poly[i] = QPointF( points[i].x(), points[i].y() );
+  }
+  renderPolylineCentral( poly, context );
 }
 
 void QgsMarkerLineSymbolLayerV2::renderPolylineCentral( const QPolygonF& points, QgsSymbolV2RenderContext& context )

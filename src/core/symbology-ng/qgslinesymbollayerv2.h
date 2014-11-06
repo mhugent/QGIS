@@ -17,6 +17,7 @@
 #define QGSLINESYMBOLLAYERV2_H
 
 #include "qgssymbollayerv2.h"
+#include "qgspointv2.h"
 
 #include <QPen>
 #include <QVector>
@@ -276,8 +277,11 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
   protected:
 
     void renderPolylineInterval( const QPolygonF& points, QgsSymbolV2RenderContext& context );
+    void renderPolylineInterval( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context );
     void renderPolylineVertex( const QPolygonF& points, QgsSymbolV2RenderContext& context, Placement placement = Vertex );
+    void renderPolylineVertex( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context, Placement placement = Vertex );
     void renderPolylineCentral( const QPolygonF& points, QgsSymbolV2RenderContext& context );
+    void renderPolylineCentral( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context );
     double markerAngle( const QPolygonF& points, bool isRing, int vertex );
 
     bool mRotateMarker;
