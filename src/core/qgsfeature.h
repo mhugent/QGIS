@@ -209,6 +209,9 @@ class CORE_EXPORT QgsFeature
      */
     void setGeometryAndOwnership( unsigned char * geom, size_t length );
 
+    /**Sets geometry without taking ownership*/
+    void setGeometryFromWkb( unsigned char * geom );
+
     /** Assign a field map with the feature to allow attribute access by attribute name
      *
      *  @param fields         The attribute fields which this feature holds. When used from python, make sure

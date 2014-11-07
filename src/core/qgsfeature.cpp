@@ -16,6 +16,7 @@ email                : sherman at mrcc.com
 #include "qgsfeature.h"
 #include "qgsfield.h"
 #include "qgsgeometry.h"
+#include "qgsgeometryimport.h"
 #include "qgsrectangle.h"
 
 #include "qgsmessagelog.h"
@@ -155,6 +156,12 @@ void QgsFeature::setGeometryAndOwnership( unsigned char *geom, size_t length )
 {
   QgsGeometry *g = new QgsGeometry();
   g->fromWkb( geom, length );
+  setGeometry( g );
+}
+
+void QgsFeature::setGeometryFromWkb( unsigned char * geom )
+{
+  QgsGeometry* g = new QgsGeometry( QgsGeometryImport::geomFromWkb( geom ) );
   setGeometry( g );
 }
 
