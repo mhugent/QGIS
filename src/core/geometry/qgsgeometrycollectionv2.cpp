@@ -79,6 +79,17 @@ const QgsAbstractGeometryV2* QgsGeometryCollectionV2::geometryN( int n ) const
   return mGeometries.at( n );
 }
 
+bool QgsGeometryCollectionV2::addGeometry( QgsAbstractGeometryV2* g )
+{
+  if ( !g )
+  {
+    return false;
+  }
+
+  mGeometries.append( g );
+  return true;
+}
+
 int QgsGeometryCollectionV2::dimension() const
 {
   int maxDim = 0;

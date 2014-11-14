@@ -42,7 +42,7 @@ class QgsCircularStringV2: public QgsCurveV2
     int numPoints() const;
     QgsPointV2 pointN( int i ) const;
     void points( QList<QgsPointV2>& pts ) const;
-    void setPoints( const QList<QgsPointV2> points );
+    void setPoints( const QList<QgsPointV2>& points );
 
 
     //curve interface

@@ -52,7 +52,7 @@ class QgsLineStringV2: public QgsCurveV2
     QgsPointV2 pointN( int i ) const;
     void points( QList<QgsPointV2>& pt ) const;
 
-    void setPoints( const QList<QgsPointV2> points );
+    void setPoints( const QList<QgsPointV2>& points );
     void append( const QgsLineStringV2* line );
 
     virtual QgsRectangle calculateBoundingBox() const;

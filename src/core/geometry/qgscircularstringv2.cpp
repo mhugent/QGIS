@@ -224,7 +224,7 @@ void QgsCircularStringV2::points( QList<QgsPointV2>& pts ) const
   }
 }
 
-void QgsCircularStringV2::setPoints( const QList<QgsPointV2> points )
+void QgsCircularStringV2::setPoints( const QList<QgsPointV2>& points )
 {
   if ( points.size() < 1 )
   {

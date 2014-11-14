@@ -15,6 +15,7 @@ email                : marco.hugentobler at sourcepole dot com
  ***************************************************************************/
 
 #include "qgsmultisurfacev2.h"
+#include "qgssurfacev2.h"
 
 QgsMultiSurfaceV2::QgsMultiSurfaceV2(): QgsGeometryCollectionV2()
 {
@@ -53,4 +54,15 @@ QgsAbstractGeometryV2* QgsMultiSurfaceV2::clone() const
   }
 
   return geom;
+}
+
+bool QgsMultiSurfaceV2::addGeometry( QgsAbstractGeometryV2* g )
+{
+  bool isSurface = dynamic_cast<QgsSurfaceV2*>( g );
+  if ( !g || !isSurface )
+  {
+    delete g;
+    return false;
+  }
+  return QgsGeometryCollectionV2::addGeometry( g );
 }

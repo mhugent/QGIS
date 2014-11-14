@@ -252,6 +252,14 @@ const QgsCurveV2* QgsCompoundCurveV2::curveAt( int i ) const
   return mCurves.at( i );
 }
 
+void QgsCompoundCurveV2::addCurve( QgsCurveV2* c )
+{
+  if ( c )
+  {
+    mCurves.append( c );
+  }
+}
+
 void QgsCompoundCurveV2::removeCurves()
 {
   qDeleteAll( mCurves );

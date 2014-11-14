@@ -54,7 +54,9 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     const QgsCurveV2* interiorRing( int i ) const;
     virtual QgsPolygonV2* toPolygon() const;
 
+    /**Sets exterior ring (takes ownership)*/
     void setExteriorRing( QgsCurveV2* ring );
+    /**Sets interior rings (takes ownership)*/
     void setInteriorRings( QList<QgsCurveV2*> rings );
 
     virtual QgsRectangle calculateBoundingBox() const;

@@ -31,6 +31,9 @@ class QgsMultiSurfaceV2: public QgsGeometryCollectionV2
     QString asGML() const;
 
     QgsAbstractGeometryV2* clone() const;
+
+    /**Adds a geometry and takes ownership. Returns true in case of success*/
+    virtual bool addGeometry( QgsAbstractGeometryV2* g );
 };
 
 #endif // QGSMULTISURFACEV2_H

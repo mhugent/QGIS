@@ -51,6 +51,9 @@ class QgsCompoundCurveV2: public QgsCurveV2
     int nCurves() const { return mCurves.size(); }
     const QgsCurveV2* curveAt( int i ) const;
 
+    /**Adds curve (takes ownership)*/
+    void addCurve( QgsCurveV2* c );
+
     virtual QgsRectangle calculateBoundingBox() const;
 
     void draw( QPainter& p ) const;

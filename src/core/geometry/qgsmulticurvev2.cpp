@@ -14,6 +14,7 @@ email                : marco.hugentobler at sourcepole dot com
  ***************************************************************************/
 
 #include "qgsmulticurvev2.h"
+#include "qgscurvev2.h"
 
 QgsMultiCurveV2::QgsMultiCurveV2(): QgsGeometryCollectionV2()
 {
@@ -53,4 +54,15 @@ QgsAbstractGeometryV2* QgsMultiCurveV2::clone() const
 
   geom->mWkbType = mWkbType;
   return geom;
+}
+
+bool QgsMultiCurveV2::addGeometry( QgsAbstractGeometryV2* g )
+{
+  bool isCurve = dynamic_cast<QgsCurveV2*>( g );
+  if ( !g || !isCurve )
+  {
+    delete g;
+    return false;
+  }
+  return QgsGeometryCollectionV2::addGeometry( g );
 }

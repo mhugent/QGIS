@@ -54,3 +54,13 @@ QgsAbstractGeometryV2* QgsMultiPointV2::clone() const
   geom->mWkbType = mWkbType;
   return geom;
 }
+
+bool QgsMultiPointV2::addGeometry( QgsAbstractGeometryV2* g )
+{
+  if ( !g || g->geometryType() != "Point" )
+  {
+    delete g;
+    return false;
+  }
+  return QgsGeometryCollectionV2::addGeometry( g );
+}
