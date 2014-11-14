@@ -16,14 +16,14 @@ email                : marco.hugentobler at sourcepole dot com
 #ifndef QGSGEOS_H
 #define QGSGEOS_H
 
-#include "qgsvectortopology.h"
+#include "qgsgeometryengine.h"
 #include "qgspointv2.h"
 #include <geos_c.h>
 
 class QgsLineStringV2;
 
 /**Does vector analysis using the geos library and handles import, export, exception handling*/
-class QgsGeos: public QgsVectorTopology
+class QgsGeos: public QgsGeometryEngine
 {
   public:
     QgsGeos( QgsAbstractGeometryV2* geometry );

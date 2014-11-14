@@ -1,5 +1,5 @@
 /***************************************************************************
-                        qgsvectortopology.h
+                        qgsgeometryengine.h
   -------------------------------------------------------------------
 Date                 : 22 Sept 2014
 Copyright            : (C) 2014 by Marco Hugentobler
@@ -18,11 +18,11 @@ email                : marco.hugentobler at sourcepole dot com
 
 class QgsAbstractGeometryV2;
 
-class QgsVectorTopology
+class QgsGeometryEngine
 {
   public:
-    QgsVectorTopology( QgsAbstractGeometryV2* geometry ): mGeometry( geometry ) {}
-    virtual ~QgsVectorTopology() {}
+    QgsGeometryEngine( QgsAbstractGeometryV2* geometry ): mGeometry( geometry ) {}
+    virtual ~QgsGeometryEngine() {}
 
     virtual void geometryChanged() = 0;
     virtual void prepareGeometry() = 0;
@@ -42,7 +42,7 @@ class QgsVectorTopology
   protected:
     QgsAbstractGeometryV2* mGeometry;
 
-    QgsVectorTopology();
+    QgsGeometryEngine();
 };
 
 #endif // QGSVECTORTOPOLOGY_H

@@ -115,7 +115,7 @@ class GEOSInit
 
 static GEOSInit geosinit;
 
-QgsGeos::QgsGeos( QgsAbstractGeometryV2* geometry ): QgsVectorTopology( geometry ), mGeos( 0 ), mGeosPrepared( 0 )
+QgsGeos::QgsGeos( QgsAbstractGeometryV2* geometry ): QgsGeometryEngine( geometry ), mGeos( 0 ), mGeosPrepared( 0 )
 {
 
 }
