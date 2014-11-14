@@ -108,13 +108,10 @@ void QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
     mCurves.append( currentCurve );
     wkbPtr += currentCurveSize;
   }
-
-  geometryChanged();
 }
 
 void QgsCompoundCurveV2::fromWkt( const QString& wkt )
 {
-  geometryChanged();
 }
 
 int QgsCompoundCurveV2::wkbSize() const

@@ -64,8 +64,6 @@ void QgsPolygonV2::fromWkb( const unsigned char* wkb )
       mInteriorRings.append( line );
     }
   }
-
-  geometryChanged();
 }
 
 unsigned char* QgsPolygonV2::asBinary( int& binarySize ) const

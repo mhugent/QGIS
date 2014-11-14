@@ -74,12 +74,10 @@ void QgsCircularStringV2::fromWkb( const unsigned char* wkb )
       wkbPtr >> mM[i];
     }
   }
-  geometryChanged();
 }
 
 void QgsCircularStringV2::fromWkt( const QString& wkt )
 {
-  geometryChanged();
 }
 
 int QgsCircularStringV2::wkbSize() const
@@ -286,7 +284,6 @@ void QgsCircularStringV2::setPoints( const QList<QgsPointV2>& points )
       mM[i] = points[i].m();
     }
   }
-  geometryChanged();
 }
 
 void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const

@@ -2851,7 +2851,9 @@ bool QgsGeometry::intersects( const QgsGeometry* geometry ) const
   {
     return 0;
   }
-  return d->geometry->intersects( *( geometry->d->geometry ) );
+
+  QgsGeos geos( d->geometry );
+  return geos.intersects( *( geometry->d->geometry ) );
 }
 
 bool QgsGeometry::contains( const QgsPoint* p ) const
@@ -5295,7 +5297,10 @@ QgsGeometry* QgsGeometry::intersection( QgsGeometry* geometry ) const
   {
     return 0;
   }
-  QgsAbstractGeometryV2* resultGeom = d->geometry->intersection( *( geometry->d->geometry ) );
+
+  QgsGeos geos( d->geometry );
+
+  QgsAbstractGeometryV2* resultGeom = geos.intersection( *( geometry->d->geometry ) );
   return new QgsGeometry( resultGeom );
 }
 

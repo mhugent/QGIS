@@ -66,7 +66,7 @@ int QgsLineStringV2::wkbSize() const
 
 void QgsLineStringV2::fromWkt( const QString& wkt )
 {
-  geometryChanged();
+  //todo...
 }
 
 QString QgsLineStringV2::asText( int precision ) const
@@ -250,8 +250,6 @@ void QgsLineStringV2::setPoints( const QList<QgsPointV2>& points )
       mM[i] = points[i].m();
     }
   }
-
-  geometryChanged();
 }
 
 void QgsLineStringV2::append( const QgsLineStringV2* line )
@@ -264,7 +262,6 @@ void QgsLineStringV2::append( const QgsLineStringV2* line )
   mCoords += line->mCoords;
   mZ += line->mZ;
   mM += line->mM;
-  geometryChanged();
 }
 
 QgsRectangle QgsLineStringV2::calculateBoundingBox() const
@@ -303,8 +300,6 @@ void QgsLineStringV2::importVerticesFromWkb( const QgsConstWkbPtr& wkb )
       wkb >> mM[i];
     }
   }
-
-  geometryChanged();
 }
 
 void QgsLineStringV2::draw( QPainter& p ) const

@@ -26,7 +26,6 @@ class QgsCurveV2;
 class QgsMultiCurveV2;
 class QgsMultiPointV2;
 class QgsPointV2;
-class QgsVectorTopology;
 class QPainter;
 
 /**Abstract base class for all geometries*/
@@ -68,18 +67,6 @@ class QgsAbstractGeometryV2
     virtual void fromWkb( const unsigned char * wkb ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
 
-    //redirect to vector topology
-    QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const;
-    QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const; //should be union, but this is a C++ keyword
-    QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const;
-    QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
-    bool intersects( const QgsAbstractGeometryV2& geom ) const;
-    bool touches( const QgsAbstractGeometryV2& geom ) const;
-    bool crosses( const QgsAbstractGeometryV2& geom ) const;
-    bool within( const QgsAbstractGeometryV2& geom ) const;
-    bool contains( const QgsAbstractGeometryV2& geom ) const;
-    bool overlaps( const QgsAbstractGeometryV2& geom ) const;
-
     virtual QgsRectangle calculateBoundingBox() const = 0;
 
     //render pipeline
@@ -92,10 +79,7 @@ class QgsAbstractGeometryV2
 
   protected:
     QGis::WkbType mWkbType;
-    QgsVectorTopology* mVectorTopology;
     mutable QgsRectangle mBoundingBox;
-
-    void geometryChanged();
 };
 
 #endif //QGSABSTRACTGEOMETRYV2

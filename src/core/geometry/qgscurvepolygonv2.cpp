@@ -114,7 +114,6 @@ void QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
     }
     wkbPtr += currentCurveSize;
   }
-  geometryChanged();
 }
 
 void QgsCurvePolygonV2::fromWkt( const QString& wkt )
@@ -304,15 +303,12 @@ void QgsCurvePolygonV2::setExteriorRing( QgsCurveV2* ring )
       mWkbType = QGis::WKBCurvePolygon;
     }
   }
-
-  geometryChanged();
 }
 
 void QgsCurvePolygonV2::setInteriorRings( QList<QgsCurveV2*> rings )
 {
   qDeleteAll( mInteriorRings );
   mInteriorRings = rings;
-  geometryChanged();
 }
 
 QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const

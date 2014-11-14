@@ -37,10 +37,10 @@ class QgsPointV2: public QgsAbstractGeometryV2
     double z() const { return mZ; }
     double m() const { return mM; }
 
-    void setX( double x ) { mX = x; geometryChanged(); }
-    void setY( double y ) { mY = y; geometryChanged(); }
-    void setZ( double z ) { mZ = z; geometryChanged(); }
-    void setM( double m ) { mM = m; geometryChanged(); }
+    void setX( double x ) { mX = x; }
+    void setY( double y ) { mY = y; }
+    void setZ( double z ) { mZ = z; }
+    void setM( double m ) { mM = m; }
 
     virtual QString geometryType() const { return "Point"; }
 

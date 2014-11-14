@@ -87,7 +87,6 @@ void QgsPointV2::fromWkb( const unsigned char* wkb )
   {
     wkbPtr >> mM;
   }
-  geometryChanged();
 }
 
 void QgsPointV2::fromWkt( const QString& wkt )
@@ -120,7 +119,6 @@ void QgsPointV2::fromWkt( const QString& wkt )
   {
     mWkbType = QGis::WKBPoint;
   }
-  geometryChanged();
 }
 
 QString QgsPointV2::asText( int precision ) const
