@@ -68,6 +68,10 @@ class QgsLineStringV2: public QgsCurveV2
 
     const QPolygonF& qPolygonF() const { return mCoords; }
 
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
+    virtual bool deleteVertex( const QgsVertexId& position );
+
   private:
     void importVerticesFromWkb( const QgsConstWkbPtr& wkb );
 

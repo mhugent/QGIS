@@ -30,6 +30,7 @@ email                : morb at ozemail dot com dot au
 #define GEOSCoordSequence struct GEOSCoordSeq_t
 #endif
 
+#include "qgsabstractgeometryv2.h"
 #include "qgspoint.h"
 #include "qgscoordinatetransform.h"
 #include "qgsfeature.h"
@@ -37,7 +38,6 @@ email                : morb at ozemail dot com dot au
 #include <QSet>
 
 class QgsVectorLayer;
-class QgsAbstractGeometryV2;
 class QgsMapToPixel;
 class QPainter;
 
@@ -534,6 +534,9 @@ class CORE_EXPORT QgsGeometry
 
     void detach(); //make sure mGeometry only referenced from this instance
     void removeWkbGeos();
+
+    bool vertexIdFromVertexNr( int nr, QgsVertexId& id ) const;
+    int vertexNrFromVertexId( const QgsVertexId& i ) const;
 
 }; // class QgsGeometry
 

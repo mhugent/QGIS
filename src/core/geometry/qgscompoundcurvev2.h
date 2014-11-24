@@ -45,6 +45,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual QgsPointV2 startPoint() const;
     virtual QgsPointV2 endPoint() const;
     virtual void points( QList<QgsPointV2>& pts ) const;
+    virtual int numPoints() const;
     virtual bool isClosed() const;
     virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
@@ -62,8 +63,16 @@ class QgsCompoundCurveV2: public QgsCurveV2
     void addToPainterPath( QPainterPath& path ) const;
     void drawAsPolygon( QPainter& p ) const;
 
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
+    virtual bool deleteVertex( const QgsVertexId& position );
+
+
   private:
     QList< QgsCurveV2* > mCurves;
+    /**Turns a vertex id for the compound curve into one or more ids for the subcurves
+        @return the index of the subcurve or -1 in case of error*/
+    QList< QPair<int, QgsVertexId> > curveVertexId( const QgsVertexId& id ) const;
 
     void removeCurves();
 };

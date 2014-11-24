@@ -201,8 +201,20 @@ void QgsCompoundCurveV2::points( QList<QgsPointV2>& pts ) const
   {
     QList<QgsPointV2> pList;
     mCurves[i]->points( pList );
+    pList.removeFirst(); //first vertex already added in previous line
     pts.append( pList );
   }
+}
+
+int QgsCompoundCurveV2::numPoints() const
+{
+  int nPoints = 0;
+  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
+  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  {
+    nPoints += ( *curveIt )->numPoints();
+  }
+  return nPoints;
 }
 
 bool QgsCompoundCurveV2::isClosed() const
@@ -330,5 +342,63 @@ void QgsCompoundCurveV2::drawAsPolygon( QPainter& p ) const
     ( *it )->addToPainterPath( pp );
   }
   p.drawPath( pp );
+}
+
+bool QgsCompoundCurveV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
+{
+  QList< QPair<int, QgsVertexId> > curveIds = curveVertexId( position );
+  QList< QPair<int, QgsVertexId> >::const_iterator idIt = curveIds.constBegin();
+  for ( ; idIt != curveIds.constEnd(); ++idIt )
+  {
+    mCurves[idIt->first]->insertVertex( idIt->second, vertex );
+  }
+  return curveIds.size() > 0;
+}
+
+bool QgsCompoundCurveV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+{
+  QList< QPair<int, QgsVertexId> > curveIds = curveVertexId( position );
+  QList< QPair<int, QgsVertexId> >::const_iterator idIt = curveIds.constBegin();
+  for ( ; idIt != curveIds.constEnd(); ++idIt )
+  {
+    mCurves[idIt->first]->moveVertex( idIt->second, newPos );
+  }
+  return curveIds.size() > 0;
+}
+
+bool QgsCompoundCurveV2::deleteVertex( const QgsVertexId& position )
+{
+  QList< QPair<int, QgsVertexId> > curveIds = curveVertexId( position );
+  QList< QPair<int, QgsVertexId> >::const_iterator idIt = curveIds.constBegin();
+  for ( ; idIt != curveIds.constEnd(); ++idIt )
+  {
+    mCurves[idIt->first]->deleteVertex( idIt->second );
+  }
+  return curveIds.size() > 0;
+}
+
+QList< QPair<int, QgsVertexId> > QgsCompoundCurveV2::curveVertexId( const QgsVertexId& id ) const
+{
+  QList< QPair<int, QgsVertexId> > curveIds;
+
+  int currentVertexIndex = 0;
+  for ( int i = 0; i < mCurves.size(); ++i )
+  {
+    int increment = mCurves.at( i )->numPoints() - 1;
+    if ( id.vertex >= currentVertexIndex && id.vertex <= currentVertexIndex + increment )
+    {
+      int curveVertexId = id.vertex - currentVertexIndex;
+      QgsVertexId vid; vid.feature = 0; vid.ring = 0; vid.vertex = curveVertexId;
+      curveIds.append( qMakePair( i, vid ) );
+      if ( curveVertexId == increment && i < ( mCurves.size() - 1 ) ) //add first vertex of next curve
+      {
+        vid.vertex = 0;
+        curveIds.append( qMakePair( i + 1, vid ) );
+      }
+    }
+    currentVertexIndex += increment;
+  }
+
+  return curveIds;
 }
 

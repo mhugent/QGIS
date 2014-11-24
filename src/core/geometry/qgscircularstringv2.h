@@ -62,6 +62,10 @@ class QgsCircularStringV2: public QgsCurveV2
     void addToPainterPath( QPainterPath& path ) const;
     void drawAsPolygon( QPainter& p ) const;
 
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
+    virtual bool deleteVertex( const QgsVertexId& position );
+
   private:
     QVector<double> mX;
     QVector<double> mY;

@@ -557,3 +557,63 @@ void QgsCircularStringV2::drawAsPolygon( QPainter& p ) const
 {
   draw( p );
 }
+
+bool QgsCircularStringV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
+{
+  if ( position.vertex > mX.size() )
+  {
+    return false;
+  }
+
+  mX.insert( position.vertex, vertex.x() );
+  mY.insert( position.vertex, vertex.y() );
+  if ( is3D() )
+  {
+    mZ.insert( position.vertex, vertex.z() );
+  }
+  if ( isMeasure() )
+  {
+    mM.insert( position.vertex, vertex.m() );
+  }
+  return true;
+}
+
+bool QgsCircularStringV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+{
+  if ( position.vertex > mX.size() )
+  {
+    return false;
+  }
+
+  mX[position.vertex] = newPos.x();
+  mY[position.vertex] = newPos.y();
+  if ( is3D() )
+  {
+    mZ[position.vertex] = newPos.z();
+  }
+  if ( isMeasure() )
+  {
+    mM[position.vertex] = newPos.m();
+  }
+  return true;
+}
+
+bool QgsCircularStringV2::deleteVertex( const QgsVertexId& position )
+{
+  if ( position.vertex > mX.size() )
+  {
+    return false;
+  }
+
+  mX.remove( position.vertex );
+  mY.remove( position.vertex );
+  if ( is3D() )
+  {
+    mZ.remove( position.vertex );
+  }
+  if ( isMeasure() )
+  {
+    mM.remove( position.vertex );
+  }
+  return true;
+}

@@ -251,8 +251,9 @@ QString QgsPostgresFeatureIterator::whereClauseRect()
                         .arg( qBox );
   if ( mRequest.flags() & QgsFeatureRequest::ExactIntersect )
   {
-    whereClause += QString( " AND %1(%2%3,%4)" )
+    whereClause += QString( " AND %1(%2(%3%4),%5)" )
                    .arg( mConn->majorVersion() < 2 ? "intersects" : "st_intersects" )
+                   .arg( mConn->majorVersion() < 2 ? "curvetoline" : "st_curvetoline" )
                    .arg( QgsPostgresConn::quotedIdentifier( mSource->mGeometryColumn ) )
                    .arg( mSource->mSpatialColType == sctGeography ? "::geometry" : "" )
                    .arg( qBox );

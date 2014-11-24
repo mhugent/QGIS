@@ -39,6 +39,7 @@ class QgsCurveV2: public QgsAbstractGeometryV2
     virtual void addToPainterPath( QPainterPath& path ) const = 0;
     virtual void drawAsPolygon( QPainter& p ) const = 0;
     virtual void points( QList<QgsPointV2>& pt ) const = 0;
+    virtual int numPoints() const = 0;
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 };

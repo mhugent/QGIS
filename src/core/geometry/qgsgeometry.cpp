@@ -20,7 +20,9 @@ email                : morb at ozemail dot com dot au
 
 #include "qgis.h"
 #include "qgsgeometry.h"
+#include "qgsgeometryeditor.h"
 #include "qgsgeometryimport.h"
+#include "qgsgeometryutils.h"
 #include "qgsgeos.h"
 #include "qgsapplication.h"
 #include "qgslogger.h"
@@ -34,7 +36,6 @@ email                : morb at ozemail dot com dot au
 #include "qgsmessagelog.h"
 #include "qgsgeometryvalidator.h"
 
-#include "qgsabstractgeometryv2.h"
 #include "qgsmultipointv2.h"
 #include "qgspointv2.h"
 #include "qgspolygonv2.h"
@@ -640,931 +641,93 @@ void QgsGeometry::fromGeos( GEOSGeometry *geos )
 
 QgsPoint QgsGeometry::closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist )
 {
-  return QgsPoint( 0, 0 ); //todo...
-#if 0
-  // TODO: implement with GEOS
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return QgsPoint( 0, 0 );
   }
+  QgsPointV2 pt( point.x(), point.y() );
+  QgsVertexId id;
 
-  double actdist = std::numeric_limits<double>::max();
-
-  beforeVertex = -1;
-  afterVertex = -1;
-
-  QgsWkbPtr wkbPtr( mGeometry + 1 );
-  QGis::WkbType wkbType;
-  wkbPtr >> wkbType;
-
-  QgsPoint p;
-  bool hasZValue = false;
-  int vertexnr = -1;
-  switch ( wkbType )
+  QgsGeometryEditor geomEdit( d->geometry );
+  QgsPointV2 vp = geomEdit.closestVertex( pt, id );
+  if ( !id.isValid() )
   {
-    case QGis::WKBPoint25D:
-      hasZValue = true;
-    case QGis::WKBPoint:
-    {
-      double x, y;
-      wkbPtr >> x >> y;
-      p.set( x, y );
-      actdist = point.sqrDist( x, y );
-      vertexnr = 0;
-      break;
-    }
-
-    case QGis::WKBLineString25D:
-      hasZValue = true;
-    case QGis::WKBLineString:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-      for ( int index = 0; index < nPoints; ++index )
-      {
-        double x, y;
-        wkbPtr >> x >> y;
-        if ( hasZValue )
-          wkbPtr += sizeof( double );
-
-        double dist = point.sqrDist( x, y );
-        if ( dist < actdist )
-        {
-          p.set( x, y );
-          actdist = dist;
-          vertexnr = index;
-
-          beforeVertex = index - 1;
-          afterVertex = index == nPoints - 1 ? -1 : index + 1;
-        }
-      }
-      break;
-    }
-
-    case QGis::WKBPolygon25D:
-      hasZValue = true;
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      wkbPtr >> nRings;
-      for ( int index = 0, pointIndex = 0; index < nRings; ++index )
-      {
-        int nPoints;
-        wkbPtr >> nPoints;
-        for ( int index2 = 0; index2 < nPoints; ++index2 )
-        {
-          double x, y;
-          wkbPtr >> x >> y;
-          if ( hasZValue )
-            wkbPtr += sizeof( double );
-
-          double dist = point.sqrDist( x, y );
-          if ( dist < actdist )
-          {
-            p.set( x, y );
-            actdist = dist;
-            vertexnr = pointIndex;
-
-            // assign the rubberband indices
-            if ( index2 == 0 )
-            {
-              beforeVertex = pointIndex + ( nPoints - 2 );
-              afterVertex = pointIndex + 1;
-            }
-            else if ( index2 == nPoints - 1 )
-            {
-              beforeVertex = pointIndex - 1;
-              afterVertex = pointIndex - ( nPoints - 2 );
-            }
-            else
-            {
-              beforeVertex = pointIndex - 1;
-              afterVertex = pointIndex + 1;
-            }
-          }
-          ++pointIndex;
-        }
-      }
-      break;
-    }
-
-    case QGis::WKBMultiPoint25D:
-      hasZValue = true;
-    case QGis::WKBMultiPoint:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-      for ( int index = 0; index < nPoints; ++index )
-      {
-        wkbPtr += 1 + sizeof( int ); // skip endian and point type
-
-        double x, y;
-        wkbPtr >> x >> y;
-        if ( hasZValue )
-          wkbPtr += sizeof( double );
-
-        double dist = point.sqrDist( x, y );
-        if ( dist < actdist )
-        {
-          p.set( x, y );
-          actdist = dist;
-          vertexnr = index;
-        }
-      }
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-      hasZValue = true;
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-      for ( int index = 0, pointIndex = 0; index < nLines; ++index )
-      {
-        wkbPtr += 1 + sizeof( int );
-
-        int nPoints;
-        wkbPtr >> nPoints;
-        for ( int index2 = 0; index2 < nPoints; ++index2 )
-        {
-          double x, y;
-          wkbPtr >> x >> y;
-          if ( hasZValue )
-            wkbPtr += sizeof( double );
-
-          double dist = point.sqrDist( x, y );
-          if ( dist < actdist )
-          {
-            p.set( x, y );
-            actdist = dist;
-            vertexnr = pointIndex;
-
-            if ( index2 == 0 )//assign the rubber band indices
-              beforeVertex = -1;
-            else
-              beforeVertex = vertexnr - 1;
-
-            if ( index2 == nPoints - 1 )
-              afterVertex = -1;
-            else
-              afterVertex = vertexnr + 1;
-
-          }
-          ++pointIndex;
-        }
-      }
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-      hasZValue = true;
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolys;
-      wkbPtr >> nPolys;
-      for ( int index = 0, pointIndex = 0; index < nPolys; ++index )
-      {
-        wkbPtr += 1 + sizeof( int ); //skip endian and polygon type
-        int nRings;
-        wkbPtr >> nRings;
-        for ( int index2 = 0; index2 < nRings; ++index2 )
-        {
-          int nPoints;
-          wkbPtr >> nPoints;
-          for ( int index3 = 0; index3 < nPoints; ++index3 )
-          {
-            double x, y;
-            wkbPtr >> x >> y;
-            if ( hasZValue )
-              wkbPtr += sizeof( double );
-
-            double dist = point.sqrDist( x, y );
-            if ( dist < actdist )
-            {
-              p.set( x, y );
-              actdist = dist;
-              vertexnr = pointIndex;
-
-              //assign the rubber band indices
-              if ( index3 == 0 )
-              {
-                beforeVertex = pointIndex + ( nPoints - 2 );
-                afterVertex = pointIndex + 1;
-              }
-              else if ( index3 == nPoints - 1 )
-              {
-                beforeVertex = pointIndex - 1;
-                afterVertex = pointIndex - ( nPoints - 2 );
-              }
-              else
-              {
-                beforeVertex = pointIndex - 1;
-                afterVertex = pointIndex + 1;
-              }
-            }
-            ++pointIndex;
-          }
-        }
-      }
-      break;
-    }
-
-    default:
-      break;
+    sqrDist = -1;
+    return QgsPoint( 0, 0 );
   }
+  sqrDist = QgsGeometryUtils::sqrDistance2D( pt, vp );
 
-  sqrDist = actdist;
-  atVertex = vertexnr;
-  return p;
-#endif //0
+  atVertex = vertexNrFromVertexId( id );
+  adjacentVertices( atVertex, beforeVertex, afterVertex );
+  return QgsPoint( vp.x(), vp.y() );
 }
 
 void QgsGeometry::adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex )
 {
-#if 0
-  // TODO: implement with GEOS
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  beforeVertex = -1;
-  afterVertex = -1;
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return;
   }
 
-  if ( atVertex < 0 )
-    return;
-
-  QGis::WkbType wkbType;
-  bool hasZValue = false;
-  QgsWkbPtr wkbPtr( mGeometry + 1 );
-  wkbPtr >> wkbType;
-
-  switch ( wkbType )
+  QgsVertexId id;
+  if ( !vertexIdFromVertexNr( atVertex, id ) )
   {
-    case QGis::WKBPoint:
-    {
-      // NOOP - Points do not have adjacent verticies
-      break;
-    }
+    return;
+  }
 
-    case QGis::WKBLineString25D:
-    case QGis::WKBLineString:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-
-      if ( atVertex >= nPoints )
-        return;
-
-      const int index = atVertex;
-
-      // assign the rubber band indices
-
-      beforeVertex = index - 1;
-
-      if ( index == nPoints - 1 )
-        afterVertex = -1;
-      else
-        afterVertex = index + 1;
-
-      break;
-    }
-
-    case QGis::WKBPolygon25D:
-      hasZValue = true;
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      wkbPtr >> nRings;
-
-      for ( int index0 = 0, pointIndex = 0; index0 < nRings; ++index0 )
-      {
-        int nPoints;
-        wkbPtr >> nPoints;
-        for ( int index1 = 0; index1 < nPoints; ++index1 )
-        {
-          wkbPtr += ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-          if ( pointIndex == atVertex )
-          {
-            if ( index1 == 0 )
-            {
-              beforeVertex = pointIndex + ( nPoints - 2 );
-              afterVertex = pointIndex + 1;
-            }
-            else if ( index1 == nPoints - 1 )
-            {
-              beforeVertex = pointIndex - 1;
-              afterVertex = pointIndex - ( nPoints - 2 );
-            }
-            else
-            {
-              beforeVertex = pointIndex - 1;
-              afterVertex = pointIndex + 1;
-            }
-          }
-
-          ++pointIndex;
-        }
-      }
-      break;
-    }
-
-    case QGis::WKBMultiPoint25D:
-    case QGis::WKBMultiPoint:
-    {
-      // NOOP - Points do not have adjacent verticies
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-      hasZValue = true;
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-      for ( int index0 = 0, pointIndex = 0; index0 < nLines; ++index0 )
-      {
-        wkbPtr += 1 + sizeof( int );
-
-        int nPoints;
-        wkbPtr >> nPoints;
-
-        for ( int index1 = 0; index1 < nPoints; ++index1 )
-        {
-          wkbPtr += ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-          if ( pointIndex == atVertex )
-          {
-            // Found the vertex of the linestring we were looking for.
-            if ( index1 == 0 )
-              beforeVertex = -1;
-            else
-              beforeVertex = pointIndex - 1;
-
-            if ( index1 == nPoints - 1 )
-              afterVertex = -1;
-            else
-              afterVertex = pointIndex + 1;
-          }
-
-          ++pointIndex;
-        }
-      }
-
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-      hasZValue = true;
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolys;
-      wkbPtr >> nPolys;
-      for ( int index0 = 0, pointIndex = 0; index0 < nPolys; ++index0 )
-      {
-        wkbPtr += 1 + sizeof( int ); //skip endian and polygon type
-        int nRings;
-        wkbPtr >> nRings;
-
-        for ( int index1 = 0; index1 < nRings; ++index1 )
-        {
-          int nPoints;
-          wkbPtr >> nPoints;
-          for ( int index2 = 0; index2 < nPoints; ++index2 )
-          {
-            wkbPtr += ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-            if ( pointIndex == atVertex )
-            {
-              // Found the vertex of the linear-ring of the polygon we were looking for.
-              // assign the rubber band indices
-
-              if ( index2 == 0 )
-              {
-                beforeVertex = pointIndex + ( nPoints - 2 );
-                afterVertex = pointIndex + 1;
-              }
-              else if ( index2 == nPoints - 1 )
-              {
-                beforeVertex = pointIndex - 1;
-                afterVertex = pointIndex - ( nPoints - 2 );
-              }
-              else
-              {
-                beforeVertex = pointIndex - 1;
-                afterVertex = pointIndex + 1;
-              }
-            }
-            ++pointIndex;
-          }
-        }
-      }
-
-      break;
-    }
-
-    default:
-      break;
-  } // switch (wkbType)
-#endif //0
+  QgsGeometryEditor geomEdit( d->geometry );
+  QgsVertexId beforeVertexId, afterVertexId;
+  geomEdit.adjacentVertices( id, beforeVertexId, afterVertexId );
+  beforeVertex = vertexNrFromVertexId( beforeVertexId );
+  afterVertex = vertexNrFromVertexId( afterVertexId );
 }
 
 bool QgsGeometry::moveVertex( double x, double y, int atVertex )
 {
-  return false; //todo...
-
-#if 0
-  if ( atVertex < 0 )
-    return false;
-
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return false;
   }
 
-  QGis::WkbType wkbType;
-  bool hasZValue = false;
-  QgsWkbPtr wkbPtr( mGeometry + 1 );
-  wkbPtr >> wkbType;
-
-  switch ( wkbType )
+  QgsVertexId id;
+  if ( !vertexIdFromVertexNr( atVertex, id ) )
   {
-    case QGis::WKBPoint25D:
-      hasZValue = true;
-    case QGis::WKBPoint:
-    {
-      if ( atVertex != 0 )
-        return false;
-
-      wkbPtr << x << y;
-      mDirtyGeos = true;
-      return true;
-    }
-
-    case QGis::WKBLineString25D:
-      hasZValue = true;
-    case QGis::WKBLineString:
-    {
-      int pointIndex = 0;
-      if ( moveVertex( wkbPtr, x, y, atVertex, hasZValue, pointIndex, false ) )
-      {
-        mDirtyGeos = true;
-        return true;
-      }
-
-      return false;
-    }
-
-    case QGis::WKBMultiPoint25D:
-      hasZValue = true;
-    case QGis::WKBMultiPoint:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-
-      if ( atVertex < nPoints )
-      {
-        wkbPtr += atVertex * ( 1 + sizeof( int ) + ( hasZValue ? 3 : 2 ) * sizeof( double ) ) + 1 + sizeof( int );
-        wkbPtr << x << y;
-        if ( hasZValue )
-          wkbPtr << 0.0;
-        mDirtyGeos = true;
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-
-    case QGis::WKBMultiLineString25D:
-      hasZValue = true;
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-
-      for ( int linenr = 0, pointIndex = 0; linenr < nLines; ++linenr )
-      {
-        wkbPtr += 1 + sizeof( int );
-        if ( moveVertex( wkbPtr, x, y, atVertex, hasZValue, pointIndex, false ) )
-        {
-          mDirtyGeos = true;
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    case QGis::WKBPolygon25D:
-      hasZValue = true;
-    case QGis::WKBPolygon:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-
-      for ( int linenr = 0, pointIndex = 0; linenr < nLines; ++linenr )
-      {
-        if ( moveVertex( wkbPtr, x, y, atVertex, hasZValue, pointIndex, true ) )
-        {
-          mDirtyGeos = true;
-          return true;
-        }
-      }
-      return false;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-      hasZValue = true;
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolygons;
-      wkbPtr >> nPolygons;
-      for ( int polynr = 0, pointIndex = 0; polynr < nPolygons; ++polynr )
-      {
-        wkbPtr += 1 + sizeof( int ); // skip endian and polygon type
-
-        int nRings;
-        wkbPtr >> nRings;
-
-        for ( int ringnr = 0; ringnr < nRings; ++ringnr )
-        {
-          if ( moveVertex( wkbPtr, x, y, atVertex, hasZValue, pointIndex, true ) )
-          {
-            mDirtyGeos = true;
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    default:
-      return false;
+    return false;
   }
-#endif //0
+
+  return d->geometry->moveVertex( id, QgsPointV2( x, y ) );
 }
 
 bool QgsGeometry::deleteVertex( int atVertex )
 {
-  return false;
-#if 0
-  QgsDebugMsg( QString( "atVertex:%1" ).arg( atVertex ) );
-  if ( atVertex < 0 )
-    return false;
-
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return false;
   }
 
-  QgsConstWkbPtr srcPtr( mGeometry );
-  char endianness;
-  QGis::WkbType wkbType;
-  srcPtr >> endianness >> wkbType;
-
-  bool hasZValue = QGis::wkbDimensions( wkbType ) == 3;
-
-  int ps = ( hasZValue ? 3 : 2 ) * sizeof( double );
-  if ( QGis::flatType( wkbType ) == QGis::WKBMultiPoint )
-    ps += 1 + sizeof( int );
-
-  unsigned char *dstBuffer = new unsigned char[mGeometrySize - ps];
-  QgsWkbPtr dstPtr( dstBuffer );
-  dstPtr << endianness << wkbType;
-
-  bool deleted = false;
-  switch ( wkbType )
+  QgsVertexId id;
+  if ( !vertexIdFromVertexNr( atVertex, id ) )
   {
-    case QGis::WKBPoint25D:
-    case QGis::WKBPoint:
-      break; //cannot remove the only point vertex
-
-    case QGis::WKBLineString25D:
-    case QGis::WKBLineString:
-    {
-      int pointIndex = 0;
-      int res = deleteVertex( srcPtr, dstPtr, atVertex, hasZValue, pointIndex, false, true );
-      if ( res == 2 )
-      {
-        // Linestring with 0 points
-        dstPtr << 0;
-      }
-
-      deleted = res != 0;
-      break;
-    }
-
-    case QGis::WKBPolygon25D:
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      srcPtr >> nRings;
-      QgsWkbPtr ptrN( dstPtr );
-      dstPtr << nRings;
-
-      for ( int ringnr = 0, pointIndex = 0; ringnr < nRings; ++ringnr )
-      {
-        int res = deleteVertex( srcPtr, dstPtr, atVertex, hasZValue, pointIndex, true, ringnr == nRings - 1 );
-        if ( res == 2 )
-          ptrN << nRings - 1;
-
-        deleted |= res != 0;
-      }
-
-      break;
-    }
-
-    case QGis::WKBMultiPoint25D:
-    case QGis::WKBMultiPoint:
-    {
-      int nPoints;
-      srcPtr >> nPoints;
-
-      if ( atVertex < nPoints )
-      {
-        dstPtr << nPoints - 1;
-
-        int len = ps * atVertex;
-        if ( len > 0 )
-        {
-          memcpy( dstPtr, srcPtr, len );
-          srcPtr += len;
-          dstPtr += len;
-        }
-
-        srcPtr += ps;
-
-        len = ps * ( nPoints - atVertex - 1 );
-        if ( len > 0 )
-        {
-          memcpy( dstPtr, srcPtr, len );
-          srcPtr += len;
-          dstPtr += len;
-        }
-
-        deleted = true;
-      }
-
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      srcPtr >> nLines;
-      QgsWkbPtr ptrN( dstPtr );
-      dstPtr << nLines;
-
-      for ( int linenr = 0, pointIndex = 0; linenr < nLines; ++linenr )
-      {
-        QgsWkbPtr saveDstPtr( dstPtr );
-        srcPtr >> endianness >> wkbType;
-        dstPtr << endianness << wkbType;
-
-        int res = deleteVertex( srcPtr, dstPtr, atVertex, hasZValue, pointIndex, false, linenr == nLines - 1 );
-        if ( res == 2 )
-        {
-          // line string was completely removed
-          ptrN << nLines - 1;
-          dstPtr = saveDstPtr;
-        }
-
-        deleted |= res != 0;
-      }
-
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolys;
-      srcPtr >> nPolys;
-      QgsWkbPtr ptrNPolys( dstPtr );
-      dstPtr << nPolys;
-
-      for ( int polynr = 0, pointIndex = 0; polynr < nPolys; ++polynr )
-      {
-        int nRings;
-        srcPtr >> endianness >> wkbType >> nRings;
-        QgsWkbPtr saveDstPolyPtr( dstPtr );
-        dstPtr << endianness << wkbType;
-        QgsWkbPtr ptrNRings( dstPtr );
-        dstPtr << nRings;
-
-        for ( int ringnr = 0; ringnr < nRings; ++ringnr )
-        {
-          int res = deleteVertex( srcPtr, dstPtr, atVertex, hasZValue, pointIndex, true, polynr == nPolys - 1 && ringnr == nRings - 1 );
-          if ( res == 2 )
-          {
-            // ring was completely removed
-            if ( nRings == 1 )
-            {
-              // last ring => remove polygon
-              ptrNPolys << nPolys - 1;
-              dstPtr = saveDstPolyPtr;
-            }
-            else
-            {
-              ptrNRings << nRings - 1;
-            }
-          }
-
-          deleted |= res != 0;
-        }
-      }
-      break;
-    }
-
-    case QGis::WKBNoGeometry:
-    case QGis::WKBUnknown:
-      break;
-  }
-
-  if ( deleted )
-  {
-    delete [] mGeometry;
-    mGeometry = dstBuffer;
-    mGeometrySize -= ps;
-    mDirtyGeos = true;
-    return true;
-  }
-  else
-  {
-    delete [] dstBuffer;
     return false;
   }
-#endif //0
+
+  return d->geometry->deleteVertex( id );
 }
 
 bool QgsGeometry::insertVertex( double x, double y, int beforeVertex )
 {
-  return false;
-
-#if 0
-  // TODO: implement with GEOS
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return false;
   }
 
-  if ( beforeVertex < 0 )
-    return false;
-
-  QgsConstWkbPtr srcPtr( mGeometry );
-  char endianness;
-  QGis::WkbType wkbType;
-  srcPtr >> endianness >> wkbType;
-
-  bool hasZValue = QGis::wkbDimensions( wkbType ) == 3;
-
-  int ps = ( hasZValue ? 3 : 2 ) * sizeof( double );
-  if ( QGis::flatType( wkbType ) == QGis::WKBMultiPoint )
-    ps += 1 + sizeof( int );
-
-  unsigned char *dstBuffer = new unsigned char[mGeometrySize + ps];
-  QgsWkbPtr dstPtr( dstBuffer );
-  dstPtr << endianness << wkbType;
-
-  bool inserted = false;
-  switch ( wkbType )
+  QgsVertexId id;
+  if ( !vertexIdFromVertexNr( beforeVertex, id ) )
   {
-    case QGis::WKBPoint25D:
-    case QGis::WKBPoint: //cannot insert a vertex before another one on point types
-      break;
-
-    case QGis::WKBLineString25D:
-    case QGis::WKBLineString:
-    {
-      int pointIndex = 0;
-      inserted = insertVertex( srcPtr, dstPtr, beforeVertex, x, y, hasZValue, pointIndex, false );
-      break;
-    }
-
-    case QGis::WKBPolygon25D:
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      srcPtr >> nRings;
-      dstPtr << nRings;
-
-      for ( int ringnr = 0, pointIndex = 0; ringnr < nRings; ++ringnr )
-        inserted |= insertVertex( srcPtr, dstPtr, beforeVertex, x, y, hasZValue, pointIndex, true );
-
-      break;
-    }
-
-    case QGis::WKBMultiPoint25D:
-    case QGis::WKBMultiPoint:
-    {
-      int nPoints;
-      srcPtr >> nPoints;
-
-      if ( beforeVertex <= nPoints )
-      {
-        dstPtr << nPoints + 1;
-
-        int len = ps * beforeVertex;
-        if ( len > 0 )
-        {
-          memcpy( dstPtr, srcPtr, len );
-          srcPtr += len;
-          dstPtr += len;
-        }
-
-        dstPtr << endianness << ( hasZValue ? QGis::WKBPoint25D : QGis::WKBPoint ) << x << y;
-        if ( hasZValue )
-          dstPtr << 0.0;
-
-        len = ps * ( nPoints - beforeVertex );
-        if ( len > 0 )
-          memcpy( dstPtr, srcPtr, len );
-
-        inserted = true;
-      }
-
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      srcPtr >> nLines;
-      dstPtr << nLines;
-
-      for ( int linenr = 0, pointIndex = 0; linenr < nLines; ++linenr )
-      {
-        srcPtr >> endianness >> wkbType;
-        dstPtr << endianness << wkbType;
-        inserted |= insertVertex( srcPtr, dstPtr, beforeVertex, x, y, hasZValue, pointIndex, false );
-      }
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolys;
-      srcPtr >> nPolys;
-      dstPtr << nPolys;
-
-      for ( int polynr = 0, pointIndex = 0; polynr < nPolys; ++polynr )
-      {
-        int nRings;
-        srcPtr >> endianness >> wkbType >> nRings;
-        dstPtr << endianness << wkbType << nRings;
-
-        for ( int ringnr = 0; ringnr < nRings; ++ringnr )
-          inserted |= insertVertex( srcPtr, dstPtr, beforeVertex, x, y, hasZValue, pointIndex, true );
-      }
-      break;
-    }
-
-    case QGis::WKBNoGeometry:
-    case QGis::WKBUnknown:
-      break;
-  }
-
-  if ( inserted )
-  {
-    delete [] mGeometry;
-    mGeometry = dstBuffer;
-    mGeometrySize += ps;
-    mDirtyGeos = true;
-    return true;
-  }
-  else
-  {
-    delete [] dstBuffer;
     return false;
   }
-#endif //0
+
+  return d->geometry->insertVertex( id, QgsPointV2( x, y ) );
 }
 
 QgsPoint QgsGeometry::vertexAt( int atVertex )
@@ -6143,4 +5306,67 @@ void QgsGeometry::draw( QPainter& p ) const
   {
     d->geometry->draw( p );
   }
+}
+
+bool QgsGeometry::vertexIdFromVertexNr( int nr, QgsVertexId& id ) const
+{
+  if ( !d || !d->geometry )
+  {
+    return false;
+  }
+
+  QList< QList< QList< QgsPointV2 > > > coords;
+  d->geometry->coordinateSequence( coords );
+
+  int vertexCount = 0;
+  for ( int feature = 0; feature < coords.size(); ++feature )
+  {
+    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
+    for ( int ring = 0; ring < featureCoords.size(); ++ring )
+    {
+      const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
+      for ( int vertex = 0; vertex < ringCoords.size(); ++vertex )
+      {
+        if ( vertexCount == nr )
+        {
+          id.feature = feature;
+          id.ring = ring;
+          id.vertex = vertex;
+          return true;
+        }
+        ++vertexCount;
+      }
+    }
+  }
+  return false;
+}
+
+int QgsGeometry::vertexNrFromVertexId( const QgsVertexId& id ) const
+{
+  if ( !d || !d->geometry )
+  {
+    return false;
+  }
+
+  QList< QList< QList< QgsPointV2 > > > coords;
+  d->geometry->coordinateSequence( coords );
+
+  int vertexCount = 0;
+  for ( int feature = 0; feature < coords.size(); ++feature )
+  {
+    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
+    for ( int ring = 0; ring < featureCoords.size(); ++ring )
+    {
+      const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
+      for ( int vertex = 0; vertex < ringCoords.size(); ++vertex )
+      {
+        if ( vertex == id.vertex && ring == id.ring && feature == id.feature )
+        {
+          return vertexCount;
+        }
+        ++vertexCount;
+      }
+    }
+  }
+  return -1;
 }

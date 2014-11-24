@@ -16,6 +16,7 @@
 #include "nodetool/qgsselectedfeature.h"
 #include "nodetool/qgsvertexentry.h"
 
+#include "qgspointv2.h"
 #include <qgslogger.h>
 #include <qgsvertexmarker.h>
 #include <qgsgeometryvalidator.h>
@@ -502,7 +503,6 @@ void QgsSelectedFeature::createVertexMapPoint()
 
 void QgsSelectedFeature::createVertexMap()
 {
-  QgsDebugCall;
 
   if ( !mGeometry )
   {
@@ -510,27 +510,68 @@ void QgsSelectedFeature::createVertexMap()
     updateGeometry( 0 );
   }
 
+  if ( !mGeometry )
+  {
+    return;
+  }
+
+  const QgsAbstractGeometryV2* geom = mGeometry->geometry();
+  if ( !geom )
+  {
+    return;
+  }
+
+  QList< QList< QList< QgsPointV2 > > > coords;
+  geom->coordinateSequence( coords );
+
+  for ( int feature = 0; feature < coords.size(); ++feature )
+  {
+    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
+    for ( int ring = 0; ring < featureCoords.size(); ++ring )
+    {
+      const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
+      for ( int vertex = 0; vertex < ringCoords.size(); ++vertex )
+      {
+        const QgsPointV2& pt = ringCoords.at( vertex );
+        mVertexMap.append( new QgsVertexEntry( mCanvas, mVlayer, QgsPoint( pt.x(), pt.y() ), tr( "ring %1, vertex %2" ).arg( ring ).arg( vertex ) ) );
+      }
+    }
+  }
+  //mVertexMap.insert( y + i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "ring %1, vertex %2" ).arg( i2 ).arg( i ) ) );
+
+
+
+
+  /*
+  QgsDebugCall;
+
+  if ( !mGeometry )
+  {
+  QgsDebugMsg( "Loading feature" );
+  updateGeometry( 0 );
+  }
+
   Q_ASSERT( mGeometry );
 
   // createvertexmap for correct geometry type
   switch ( mGeometry->type() )
   {
-    case QGis::Polygon:
-      createVertexMapPolygon();
-      break;
+  case QGis::Polygon:
+    createVertexMapPolygon();
+    break;
 
-    case QGis::Line:
-      createVertexMapLine();
-      break;
+  case QGis::Line:
+    createVertexMapLine();
+    break;
 
-    case QGis::Point:
-      createVertexMapPoint();
-      break;
+  case QGis::Point:
+    createVertexMapPoint();
+    break;
 
-    case QGis::UnknownGeometry:
-    case QGis::NoGeometry:
-      break;
-  }
+  case QGis::UnknownGeometry:
+  case QGis::NoGeometry:
+    break;
+  }*/
 }
 
 void QgsSelectedFeature::selectVertex( int vertexNr )

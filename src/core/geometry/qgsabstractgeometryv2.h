@@ -28,6 +28,15 @@ class QgsMultiPointV2;
 class QgsPointV2;
 class QPainter;
 
+struct QgsVertexId
+{
+  QgsVertexId(): feature( - 1 ), ring( -1 ), vertex( -1 ) {}
+  bool isValid() const { return feature >= 0 && ring >= 0 && vertex >= 0; }
+  int feature;
+  int ring;
+  int vertex;
+};
+
 /**Abstract base class for all geometries*/
 class QgsAbstractGeometryV2
 {
@@ -76,6 +85,11 @@ class QgsAbstractGeometryV2
     virtual void draw( QPainter& p ) const = 0;
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
+
+    //low-level editing
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) { return false; } //= 0
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { return false; } //0
+    virtual bool deleteVertex( const QgsVertexId& position ) { return false; } //0
 
   protected:
     QGis::WkbType mWkbType;

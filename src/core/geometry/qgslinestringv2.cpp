@@ -330,3 +330,59 @@ void QgsLineStringV2::mapToPixel( const QgsMapToPixel& mtp )
     mtp.transformInPlace( mCoords[i].rx(), mCoords[i].ry() );
   }
 }
+
+bool QgsLineStringV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
+{
+  if ( position.vertex > mCoords.size() )
+  {
+    return false;
+  }
+  mCoords.insert( position.vertex, QPointF( vertex.x(), vertex.y() ) );
+  if ( is3D() )
+  {
+    mZ.insert( position.vertex, vertex.z() );
+  }
+  if ( isMeasure() )
+  {
+    mM.insert( position.vertex, vertex.m() );
+  }
+  return true;
+}
+
+bool QgsLineStringV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+{
+  if ( position.vertex > mCoords.size() )
+  {
+    return false;
+  }
+  mCoords[position.vertex].rx() = newPos.x();
+  mCoords[position.vertex].ry() = newPos.y();
+  if ( is3D() )
+  {
+    mZ[position.vertex] = newPos.z();
+  }
+  if ( isMeasure() )
+  {
+    mM[position.vertex] = newPos.m();
+  }
+  return true;
+}
+
+bool QgsLineStringV2::deleteVertex( const QgsVertexId& position )
+{
+  if ( position.vertex > mCoords.size() )
+  {
+    return false;
+  }
+
+  mCoords.remove( position.vertex );
+  if ( is3D() )
+  {
+    mZ.remove( position.vertex );
+  }
+  if ( isMeasure() )
+  {
+    mM.remove( position.vertex );
+  }
+  return true;
+}
