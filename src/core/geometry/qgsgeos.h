@@ -76,6 +76,10 @@ class QgsGeos: public QgsGeometryEngine
     bool relation( const QgsAbstractGeometryV2& geom, Relation r ) const;
     static GEOSCoordSequence* createCoordinateSequence( const QgsCurveV2* curve );
     static QgsLineStringV2* sequenceToLinestring( const GEOSGeometry* geos, bool hasZ, bool hasM );
+
+    static GEOSGeometry* createGeosPoint( const QgsAbstractGeometryV2* point, int coordDims );
+    static GEOSGeometry* createGeosLinestring( const QgsAbstractGeometryV2* curve );
+    static GEOSGeometry* createGeosPolygon( const QgsAbstractGeometryV2* poly );
 };
 
 #endif // QGSGEOS_H

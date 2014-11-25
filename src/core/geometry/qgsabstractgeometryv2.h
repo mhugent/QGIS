@@ -87,9 +87,9 @@ class QgsAbstractGeometryV2
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
 
     //low-level editing
-    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) { return false; } //= 0
-    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { return false; } //0
-    virtual bool deleteVertex( const QgsVertexId& position ) { return false; } //0
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) = 0;
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) = 0;
+    virtual bool deleteVertex( const QgsVertexId& position ) = 0;
 
   protected:
     QGis::WkbType mWkbType;

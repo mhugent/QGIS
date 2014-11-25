@@ -15,6 +15,7 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include "qgsgeos.h"
 #include "qgsabstractgeometryv2.h"
+#include "qgsgeometrycollectionv2.h"
 #include "qgsgeometryimport.h"
 #include "qgslinestringv2.h"
 #include "qgsmessagelog.h"
@@ -325,57 +326,60 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
   //point
   if ( geom->geometryType() == "Point" )
   {
-    const QgsPointV2* point = dynamic_cast<const QgsPointV2*>( geom );
-    if ( point )
-    {
-      GEOSCoordSequence* coordSeq = GEOSCoordSeq_create( 1, coordDims );
-      GEOSCoordSeq_setX( coordSeq, 0, point->x() );
-      GEOSCoordSeq_setY( coordSeq, 0, point->y() );
-      if ( hasZ )
-      {
-        GEOSCoordSeq_setOrdinate( coordSeq, 0, 2, point->z() );
-      }
-      if ( hasM )
-      {
-        GEOSCoordSeq_setOrdinate( coordSeq, 0, 3, point->m() );
-      }
-      return GEOSGeom_createPoint( coordSeq );
-    }
+    return createGeosPoint( geom, coordDims );
   }
-
-  //curve
-  const QgsCurveV2* curve = dynamic_cast<const QgsCurveV2*>( geom );
-  if ( curve )
+  else if ( geom->geometryType() == "LineString" )
   {
-    GEOSCoordSequence* coordSeq = createCoordinateSequence( curve );
-    if ( !coordSeq )
+    return createGeosLinestring( geom );
+  }
+  else if ( geom->geometryType() == "Polygon" )
+  {
+    return createGeosPolygon( geom );
+  }
+  else if ( geom->geometryType() == "MultiPoint" )
+  {
+    const QgsGeometryCollectionV2* c = dynamic_cast<const QgsGeometryCollectionV2*>( geom );
+    if ( !c )
     {
       return 0;
     }
-    return GEOSGeom_createLineString( coordSeq );
+
+    GEOSGeometry **geomarr = new GEOSGeometry*[ c->numGeometries()];
+    for ( int i = 0; i < c->numGeometries(); ++i )
+    {
+      geomarr[i] = createGeosPoint( c->geometryN( i ), coordDims );
+    }
+    return GEOSGeom_createCollection( GEOS_MULTIPOINT, geomarr, c->numGeometries() ); //todo: geos exceptions
   }
-
-  const QgsCurvePolygonV2* polygon = dynamic_cast<const QgsCurvePolygonV2*>( geom );
-  if ( polygon )
+  else if ( geom->geometryType() == "MultiCurve" )
   {
-    const QgsCurveV2* exteriorRing = polygon->exteriorRing();
-    GEOSGeometry* exteriorRingGeos = GEOSGeom_createLinearRing( createCoordinateSequence( exteriorRing ) );
-
-    int nHoles = polygon->numInteriorRings();
-    GEOSGeometry** holes = 0;
-    if ( nHoles > 0 )
+    const QgsGeometryCollectionV2* c = dynamic_cast<const QgsGeometryCollectionV2*>( geom );
+    if ( !c )
     {
-      holes = new GEOSGeometry*[ nHoles ];
+      return 0;
     }
 
-    for ( int i = 0; i < nHoles; ++i )
+    GEOSGeometry **geomarr = new GEOSGeometry*[ c->numGeometries()];
+    for ( int i = 0; i < c->numGeometries(); ++i )
     {
-      const QgsCurveV2* interiorRing = polygon->interiorRing( i );
-      holes[i] = GEOSGeom_createLinearRing( createCoordinateSequence( interiorRing ) );
+      geomarr[i] = createGeosLinestring( c->geometryN( i ) );
     }
-    GEOSGeometry* geosPolygon = GEOSGeom_createPolygon( exteriorRingGeos, holes, nHoles );
-    delete[] holes;
-    return geosPolygon;
+    return GEOSGeom_createCollection( GEOS_MULTILINESTRING, geomarr, c->numGeometries() ); //todo: geos exceptions
+  }
+  else if ( geom->geometryType() == "MultiSurface" )
+  {
+    const QgsGeometryCollectionV2* c = dynamic_cast<const QgsGeometryCollectionV2*>( geom );
+    if ( !c )
+    {
+      return 0;
+    }
+
+    GEOSGeometry **geomarr = new GEOSGeometry*[ c->numGeometries()];
+    for ( int i = 0; i < c->numGeometries(); ++i )
+    {
+      geomarr[i] = createGeosPolygon( c->geometryN( i ) );
+    }
+    return GEOSGeom_createCollection( GEOS_MULTIPOLYGON, geomarr, c->numGeometries() ); //todo: geos exceptions
   }
 
   //todo: multitypes
@@ -557,4 +561,64 @@ GEOSCoordSequence* QgsGeos::createCoordinateSequence( const QgsCurveV2* curve )
     delete line;
   }
   return coordSeq;
+}
+
+GEOSGeometry* QgsGeos::createGeosPoint( const QgsAbstractGeometryV2* point, int coordDims )
+{
+  const QgsPointV2* pt = dynamic_cast<const QgsPointV2*>( point );
+  if ( pt )
+  {
+    GEOSCoordSequence* coordSeq = GEOSCoordSeq_create( 1, coordDims );
+    GEOSCoordSeq_setX( coordSeq, 0, pt->x() );
+    GEOSCoordSeq_setY( coordSeq, 0, pt->y() );
+    if ( pt->is3D() )
+    {
+      GEOSCoordSeq_setOrdinate( coordSeq, 0, 2, pt->z() );
+    }
+    if ( pt->isMeasure() )
+    {
+      GEOSCoordSeq_setOrdinate( coordSeq, 0, 3, pt->m() );
+    }
+    return GEOSGeom_createPoint( coordSeq );
+  }
+}
+
+GEOSGeometry* QgsGeos::createGeosLinestring( const QgsAbstractGeometryV2* curve )
+{
+  const QgsCurveV2* c = dynamic_cast<const QgsCurveV2*>( curve );
+  if ( c )
+  {
+    GEOSCoordSequence* coordSeq = createCoordinateSequence( c );
+    if ( !coordSeq )
+    {
+      return 0;
+    }
+    return GEOSGeom_createLineString( coordSeq );
+  }
+}
+
+GEOSGeometry* QgsGeos::createGeosPolygon( const QgsAbstractGeometryV2* poly )
+{
+  const QgsCurvePolygonV2* polygon = dynamic_cast<const QgsCurvePolygonV2*>( poly );
+  if ( polygon )
+  {
+    const QgsCurveV2* exteriorRing = polygon->exteriorRing();
+    GEOSGeometry* exteriorRingGeos = GEOSGeom_createLinearRing( createCoordinateSequence( exteriorRing ) );
+
+    int nHoles = polygon->numInteriorRings();
+    GEOSGeometry** holes = 0;
+    if ( nHoles > 0 )
+    {
+      holes = new GEOSGeometry*[ nHoles ];
+    }
+
+    for ( int i = 0; i < nHoles; ++i )
+    {
+      const QgsCurveV2* interiorRing = polygon->interiorRing( i );
+      holes[i] = GEOSGeom_createLinearRing( createCoordinateSequence( interiorRing ) );
+    }
+    GEOSGeometry* geosPolygon = GEOSGeom_createPolygon( exteriorRingGeos, holes, nHoles );
+    delete[] holes;
+    return geosPolygon;
+  }
 }

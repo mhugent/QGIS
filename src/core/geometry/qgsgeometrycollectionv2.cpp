@@ -239,3 +239,33 @@ void QgsGeometryCollectionV2::coordinateSequence( QList< QList< QList< QgsPointV
     }
   }
 }
+
+bool QgsGeometryCollectionV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
+{
+  if ( position.feature >= mGeometries.size() )
+  {
+    return false;
+  }
+
+  return mGeometries[position.feature]->insertVertex( position, vertex );
+}
+
+bool QgsGeometryCollectionV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+{
+  if ( position.feature >= mGeometries.size() )
+  {
+    return false;
+  }
+
+  return mGeometries[position.feature]->moveVertex( position, newPos );
+}
+
+bool QgsGeometryCollectionV2::deleteVertex( const QgsVertexId& position )
+{
+  if ( position.feature >= mGeometries.size() )
+  {
+    return false;
+  }
+
+  return mGeometries[position.feature]->deleteVertex( position );
+}

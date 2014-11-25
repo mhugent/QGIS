@@ -49,6 +49,11 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 
+    //low-level editing
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
+    virtual bool deleteVertex( const QgsVertexId& position );
+
   protected:
     QVector< QgsAbstractGeometryV2* > mGeometries;
     void removeGeometries();

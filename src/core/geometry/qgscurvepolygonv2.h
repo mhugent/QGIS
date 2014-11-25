@@ -65,6 +65,10 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     void mapToPixel( const QgsMapToPixel& mtp );
     void transform( const QgsCoordinateTransform& ct );
 
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
+    virtual bool deleteVertex( const QgsVertexId& position );
+
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 
   protected:
@@ -74,6 +78,9 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 
     void removeRings();
     void addRingWkb( unsigned char** wkb, const QgsCurveV2* ring ) const;
+
+    /**Returns two vertices in case of start/endpoint*/
+    QList< QgsVertexId > ringVertexIds( const QgsVertexId& id ) const;
 };
 
 #endif // QGSCURVEPOLYGONV2_H

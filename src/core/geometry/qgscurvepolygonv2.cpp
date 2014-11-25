@@ -398,4 +398,94 @@ void QgsCurvePolygonV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > 
   coord.append( coordinates );
 }
 
+bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
+{
+  return false;
+  /*QList< QgsVertexId > vertexIds = ringVertexIds( position );
+  QList< QgsVertexId >::const_iterator vIt = vertexIds.constBegin();
+  for(; vIt != vertexIds.constEnd(); ++vIt )
+  {
+      if( vIt->ring == 0 )
+      {
+          mExteriorRing->insertVertex( *vIt, newPos );
+      }
+      else
+      {
+          mInteriorRings[vIt->ring - 1]->insertVertex( *vIt, newPos );
+      }
+  }
+  return ( vertexIds.size() > 0 );*/
+}
+
+bool QgsCurvePolygonV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+{
+  QList< QgsVertexId > vertexIds = ringVertexIds( position );
+  QList< QgsVertexId >::const_iterator vIt = vertexIds.constBegin();
+  for ( ; vIt != vertexIds.constEnd(); ++vIt )
+  {
+    if ( vIt->ring == 0 )
+    {
+      mExteriorRing->moveVertex( *vIt, newPos );
+    }
+    else
+    {
+      mInteriorRings[vIt->ring - 1]->moveVertex( *vIt, newPos );
+    }
+  }
+  return ( vertexIds.size() > 0 );
+}
+
+bool QgsCurvePolygonV2::deleteVertex( const QgsVertexId& position )
+{
+  QList< QgsVertexId > vertexIds = ringVertexIds( position );
+  QList< QgsVertexId >::const_iterator vIt = vertexIds.constBegin();
+  for ( ; vIt != vertexIds.constEnd(); ++vIt )
+  {
+    if ( vIt->ring == 0 )
+    {
+      mExteriorRing->deleteVertex( *vIt );
+    }
+    else
+    {
+      mInteriorRings[vIt->ring - 1]->deleteVertex( *vIt );
+    }
+  }
+  return ( vertexIds.size() > 0 );
+}
+
+QList< QgsVertexId > QgsCurvePolygonV2::ringVertexIds( const QgsVertexId& id ) const
+{
+  QList< QgsVertexId > vertexList;
+
+  int numRingPoints;
+  if ( mExteriorRing && id.ring == 0 )
+  {
+    numRingPoints = mExteriorRing->numPoints();
+  }
+  else if ( id.ring > 0 && id.ring <= mInteriorRings.size() )
+  {
+    numRingPoints = mInteriorRings[id.ring - 1]->numPoints();
+  }
+
+  if ( numRingPoints < 1 )
+  {
+    return vertexList;
+  }
+
+  vertexList.append( id );
+  if ( id.vertex == 0 )
+  {
+    QgsVertexId vId = id;
+    vId.vertex = numRingPoints - 1;
+    vertexList.append( vId );
+  }
+  else if ( id.vertex == ( numRingPoints - 1 ) )
+  {
+    QgsVertexId vId = id;
+    vId.vertex = 0;
+    vertexList.append( vId );
+  }
+  return vertexList;
+}
+
 
