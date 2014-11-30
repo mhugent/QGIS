@@ -37,6 +37,7 @@ email                : morb at ozemail dot com dot au
 
 #include <QSet>
 
+class QgsGeometryEngine;
 class QgsVectorLayer;
 class QgsMapToPixel;
 class QPainter;
@@ -537,7 +538,8 @@ class CORE_EXPORT QgsGeometry
 
     bool vertexIdFromVertexNr( int nr, QgsVertexId& id ) const;
     int vertexNrFromVertexId( const QgsVertexId& i ) const;
-
+    //convert point list from v1 to v2
+    static void convertPointList( const QList<QgsPoint>& input, QList<QgsPointV2>& output );
 }; // class QgsGeometry
 
 Q_DECLARE_METATYPE( QgsGeometry );

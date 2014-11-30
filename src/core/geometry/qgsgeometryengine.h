@@ -21,7 +21,7 @@ class QgsAbstractGeometryV2;
 class QgsGeometryEngine
 {
   public:
-    QgsGeometryEngine( QgsAbstractGeometryV2* geometry ): mGeometry( geometry ) {}
+    QgsGeometryEngine( const QgsAbstractGeometryV2* geometry ): mGeometry( geometry ) {}
     virtual ~QgsGeometryEngine() {}
 
     virtual void geometryChanged() = 0;
@@ -38,9 +38,10 @@ class QgsGeometryEngine
     virtual bool within( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool overlaps( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool contains( const QgsAbstractGeometryV2& geom ) const = 0;
+    virtual bool disjoint( const QgsAbstractGeometryV2& geom ) const = 0;
 
   protected:
-    QgsAbstractGeometryV2* mGeometry;
+    const QgsAbstractGeometryV2* mGeometry;
 
     QgsGeometryEngine();
 };

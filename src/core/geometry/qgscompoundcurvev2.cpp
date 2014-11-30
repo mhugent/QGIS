@@ -217,16 +217,6 @@ int QgsCompoundCurveV2::numPoints() const
   return nPoints;
 }
 
-bool QgsCompoundCurveV2::isClosed() const
-{
-  return ( startPoint() == endPoint() ) ;
-}
-
-bool QgsCompoundCurveV2::isRing() const
-{
-  return false;
-}
-
 QgsLineStringV2* QgsCompoundCurveV2::curveToLine() const
 {
   QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();

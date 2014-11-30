@@ -44,8 +44,6 @@ class QgsLineStringV2: public QgsCurveV2
     virtual double length() const;
     virtual QgsPointV2 startPoint() const;
     virtual QgsPointV2 endPoint() const;
-    virtual bool isClosed() const;
-    virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
 
     int numPoints() const;

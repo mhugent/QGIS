@@ -46,8 +46,6 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual QgsPointV2 endPoint() const;
     virtual void points( QList<QgsPointV2>& pts ) const;
     virtual int numPoints() const;
-    virtual bool isClosed() const;
-    virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const;
     int nCurves() const { return mCurves.size(); }
     const QgsCurveV2* curveAt( int i ) const;

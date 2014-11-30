@@ -116,7 +116,7 @@ class GEOSInit
 
 static GEOSInit geosinit;
 
-QgsGeos::QgsGeos( QgsAbstractGeometryV2* geometry ): QgsGeometryEngine( geometry ), mGeos( 0 ), mGeosPrepared( 0 )
+QgsGeos::QgsGeos( const QgsAbstractGeometryV2* geometry ): QgsGeometryEngine( geometry ), mGeos( 0 ), mGeosPrepared( 0 )
 {
 
 }
@@ -208,6 +208,11 @@ bool QgsGeos::overlaps( const QgsAbstractGeometryV2& geom ) const
 bool QgsGeos::contains( const QgsAbstractGeometryV2& geom ) const
 {
   return relation( geom, CONTAINS );
+}
+
+bool QgsGeos::disjoint( const QgsAbstractGeometryV2& geom ) const
+{
+  return relation( geom, DISJOINT );
 }
 
 QgsAbstractGeometryV2* QgsGeos::fromGeos( const GEOSGeometry* geos )
@@ -323,18 +328,22 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
   bool hasZ = geom->is3D();
   bool hasM = geom->isMeasure();
 
-  //point
-  if ( geom->geometryType() == "Point" )
+  //curve
+  const QgsCurveV2* curve = dynamic_cast< const QgsCurveV2* >( geom );
+  const QgsCurvePolygonV2* curvePolygon = dynamic_cast< const QgsCurvePolygonV2* >( geom );
+  if ( curve )
+  {
+    QScopedPointer< QgsLineStringV2>  lineString( curve->curveToLine() );
+    return createGeosLinestring( lineString.data() );
+  }
+  else if ( curvePolygon )
+  {
+    QScopedPointer<QgsPolygonV2> polygon( curvePolygon->toPolygon() );
+    return createGeosPolygon( polygon.data() );
+  }
+  else if ( geom->geometryType() == "Point" )
   {
     return createGeosPoint( geom, coordDims );
-  }
-  else if ( geom->geometryType() == "LineString" )
-  {
-    return createGeosLinestring( geom );
-  }
-  else if ( geom->geometryType() == "Polygon" )
-  {
-    return createGeosPolygon( geom );
   }
   else if ( geom->geometryType() == "MultiPoint" )
   {
@@ -471,6 +480,9 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
         case CONTAINS:
           result = ( GEOSPreparedContains( mGeosPrepared, geosGeom ) == 1 );
           break;
+        case DISJOINT:
+          result = ( GEOSPreparedDisjoint( mGeosPrepared, geosGeom ) == 1 );
+          break;
         default:
           GEOSGeom_destroy( geosGeom );
           return false;
@@ -495,6 +507,9 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
         break;
       case CONTAINS:
         result = ( GEOSContains( mGeos, geosGeom ) == 1 );
+        break;
+      case DISJOINT:
+        result = ( GEOSDisjoint( mGeos, geosGeom ) == 1 );
         break;
       default:
         GEOSGeom_destroy( geosGeom );

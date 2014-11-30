@@ -87,9 +87,9 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 
     //low-level editing
-    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) {}
-    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { *this = newPos; }
-    virtual bool deleteVertex( const QgsVertexId& position ) {}
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) { return false; }
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { *this = newPos; return true; }
+    virtual bool deleteVertex( const QgsVertexId& position ) { return false; }
 
   private:
     double mX;

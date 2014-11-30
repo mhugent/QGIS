@@ -32,8 +32,8 @@ class QgsCurveV2: public QgsAbstractGeometryV2
     virtual double length() const = 0;
     virtual QgsPointV2 startPoint() const = 0;
     virtual QgsPointV2 endPoint() const = 0;
-    virtual bool isClosed() const = 0;
-    virtual bool isRing() const = 0;
+    virtual bool isClosed() const;
+    virtual bool isRing() const;
     virtual QgsLineStringV2* curveToLine() const = 0;
 
     virtual void addToPainterPath( QPainterPath& path ) const = 0;

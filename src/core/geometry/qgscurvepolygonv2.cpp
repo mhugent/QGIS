@@ -311,6 +311,11 @@ void QgsCurvePolygonV2::setInteriorRings( QList<QgsCurveV2*> rings )
   mInteriorRings = rings;
 }
 
+void QgsCurvePolygonV2::addInteriorRing( QgsCurveV2* ring )
+{
+  mInteriorRings.append( ring );
+}
+
 QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
 {
   if ( !mExteriorRing )

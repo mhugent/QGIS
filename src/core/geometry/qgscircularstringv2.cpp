@@ -158,16 +158,6 @@ QgsPointV2 QgsCircularStringV2::endPoint() const
   return pointN( numPoints() - 1 );
 }
 
-bool QgsCircularStringV2::isClosed() const
-{
-  return ( numPoints() > 0 && pointN( 0 ) == pointN( numPoints() - 1 ) );
-}
-
-bool QgsCircularStringV2::isRing() const
-{
-  return false; //soon...
-}
-
 QgsLineStringV2* QgsCircularStringV2::curveToLine() const
 {
   QgsLineStringV2* line = new QgsLineStringV2();

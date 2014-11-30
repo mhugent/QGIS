@@ -26,7 +26,7 @@ class QgsLineStringV2;
 class QgsGeos: public QgsGeometryEngine
 {
   public:
-    QgsGeos( QgsAbstractGeometryV2* geometry );
+    QgsGeos( const QgsAbstractGeometryV2* geometry );
     ~QgsGeos();
 
     /**Removes caches*/
@@ -44,6 +44,7 @@ class QgsGeos: public QgsGeometryEngine
     bool within( const QgsAbstractGeometryV2& geom ) const;
     bool overlaps( const QgsAbstractGeometryV2& geom ) const;
     bool contains( const QgsAbstractGeometryV2& geom ) const;
+    bool disjoint( const QgsAbstractGeometryV2& geom ) const;
 
     static QgsAbstractGeometryV2* fromGeos( const GEOSGeometry* geos );
     static GEOSGeometry* asGeos( const QgsAbstractGeometryV2* geom );
@@ -68,7 +69,8 @@ class QgsGeos: public QgsGeometryEngine
       CROSSES,
       WITHIN,
       OVERLAPS,
-      CONTAINS
+      CONTAINS,
+      DISJOINT
     };
 
     void cacheGeos() const;

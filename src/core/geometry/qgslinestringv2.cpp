@@ -132,16 +132,6 @@ QgsPointV2 QgsLineStringV2::endPoint() const
   return pointN( numPoints() - 1 );
 }
 
-bool QgsLineStringV2::isClosed() const
-{
-  return ( numPoints() > 0 && pointN( 0 ) == pointN( numPoints() - 1 ) );
-}
-
-bool QgsLineStringV2::isRing() const
-{
-  return false;
-}
-
 QgsLineStringV2* QgsLineStringV2::curveToLine() const
 {
   return dynamic_cast<QgsLineStringV2*>( clone() );

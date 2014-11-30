@@ -29,6 +29,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
 
     int numGeometries() const;
     const QgsAbstractGeometryV2* geometryN( int n ) const;
+    QgsAbstractGeometryV2* geometryN( int n );
 
     //methods inherited from QgsAbstractGeometry
     virtual int dimension() const;

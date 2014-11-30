@@ -1212,203 +1212,18 @@ double QgsGeometry::closestSegmentWithContext(
 
 int QgsGeometry::addRing( const QList<QgsPoint>& ring )
 {
-  return 0; //todo...
-#if 0
-  //bail out if this geometry is not polygon/multipolygon
-  if ( type() != QGis::Polygon )
+  if ( !d || !d->geometry )
+  {
     return 1;
-
-  //test for invalid geometries
-  if ( ring.size() < 4 )
-    return 3;
-
-  //ring must be closed
-  if ( ring.first() != ring.last() )
-    return 2;
-
-  //create geos geometry from wkb if not already there
-  if ( mDirtyGeos )
-  {
-    exportWkbToGeos();
   }
 
-  if ( !mGeos )
-  {
-    return 6;
-  }
+  QgsLineStringV2* ringLine = new QgsLineStringV2();
+  QList< QgsPointV2 > ringPoints;
+  convertPointList( ring, ringPoints );
 
-  int type = GEOSGeomTypeId( mGeos );
-
-  //Fill GEOS Polygons of the feature into list
-  QVector<const GEOSGeometry*> polygonList;
-
-  if ( wkbType() == QGis::WKBPolygon )
-  {
-    if ( type != GEOS_POLYGON )
-      return 1;
-
-    polygonList << mGeos;
-  }
-  else if ( wkbType() == QGis::WKBMultiPolygon )
-  {
-    if ( type != GEOS_MULTIPOLYGON )
-      return 1;
-
-    for ( int i = 0; i < GEOSGetNumGeometries( mGeos ); ++i )
-      polygonList << GEOSGetGeometryN( mGeos, i );
-  }
-
-  //create new ring
-  GEOSGeometry *newRing = 0;
-  GEOSGeometry *newRingPolygon = 0;
-
-  try
-  {
-    newRing = createGeosLinearRing( ring.toVector() );
-    if ( !GEOSisValid( newRing ) )
-    {
-      throwGEOSException( "ring is invalid" );
-    }
-
-    newRingPolygon = createGeosPolygon( newRing );
-    if ( !GEOSisValid( newRingPolygon ) )
-    {
-      throwGEOSException( "ring is invalid" );
-    }
-  }
-  catch ( GEOSException &e )
-  {
-    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-
-    if ( newRingPolygon )
-      GEOSGeom_destroy( newRingPolygon );
-    else if ( newRing )
-      GEOSGeom_destroy( newRing );
-
-    return 3;
-  }
-
-  QVector<GEOSGeometry*> rings;
-
-  int i;
-  for ( i = 0; i < polygonList.size(); i++ )
-  {
-    for ( int j = 0; j < rings.size(); j++ )
-      GEOSGeom_destroy( rings[j] );
-    rings.clear();
-
-    GEOSGeometry *shellRing = 0;
-    GEOSGeometry *shell = 0;
-    try
-    {
-      shellRing = GEOSGeom_clone( GEOSGetExteriorRing( polygonList[i] ) );
-      shell = createGeosPolygon( shellRing );
-
-      if ( !GEOSWithin( newRingPolygon, shell ) )
-      {
-        GEOSGeom_destroy( shell );
-        continue;
-      }
-    }
-    catch ( GEOSException &e )
-    {
-      QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-
-      if ( shell )
-        GEOSGeom_destroy( shell );
-      else if ( shellRing )
-        GEOSGeom_destroy( shellRing );
-
-      GEOSGeom_destroy( newRingPolygon );
-
-      return 4;
-    }
-
-    // add outer ring
-    rings << GEOSGeom_clone( shellRing );
-
-    GEOSGeom_destroy( shell );
-
-    // check inner rings
-    int n = GEOSGetNumInteriorRings( polygonList[i] );
-
-    int j;
-    for ( j = 0; j < n; j++ )
-    {
-      GEOSGeometry *holeRing = 0;
-      GEOSGeometry *hole = 0;
-      try
-      {
-        holeRing = GEOSGeom_clone( GEOSGetInteriorRingN( polygonList[i], j ) );
-        hole = createGeosPolygon( holeRing );
-
-        if ( !GEOSDisjoint( hole, newRingPolygon ) )
-        {
-          GEOSGeom_destroy( hole );
-          break;
-        }
-      }
-      catch ( GEOSException &e )
-      {
-        QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-
-        if ( hole )
-          GEOSGeom_destroy( hole );
-        else if ( holeRing )
-          GEOSGeom_destroy( holeRing );
-
-        break;
-      }
-
-      rings << GEOSGeom_clone( holeRing );
-      GEOSGeom_destroy( hole );
-    }
-
-    if ( j == n )
-      // this is it...
-      break;
-  }
-
-  if ( i == polygonList.size() )
-  {
-    // clear rings
-    for ( int j = 0; j < rings.size(); j++ )
-      GEOSGeom_destroy( rings[j] );
-    rings.clear();
-
-    GEOSGeom_destroy( newRingPolygon );
-
-    // no containing polygon found
-    return 5;
-  }
-
-  rings << GEOSGeom_clone( newRing );
-  GEOSGeom_destroy( newRingPolygon );
-
-  GEOSGeometry *newPolygon = createGeosPolygon( rings );
-
-  if ( wkbType() == QGis::WKBPolygon )
-  {
-    GEOSGeom_destroy( mGeos );
-    mGeos = newPolygon;
-  }
-  else if ( wkbType() == QGis::WKBMultiPolygon )
-  {
-    QVector<GEOSGeometry*> newPolygons;
-
-    for ( int j = 0; j < polygonList.size(); j++ )
-    {
-      newPolygons << ( i == j ? newPolygon : GEOSGeom_clone( polygonList[j] ) );
-    }
-
-    GEOSGeom_destroy( mGeos );
-    mGeos = createGeosCollection( GEOS_MULTIPOLYGON, newPolygons );
-  }
-
-  mDirtyWkb = true;
-  mDirtyGeos = false;
-  return 0;
-#endif //0
+  ringLine->setPoints( ringPoints );
+  QgsGeometryEditor geomEditor( d->geometry );
+  return geomEditor.addRing( ringLine );
 }
 
 int QgsGeometry::addPart( const QList<QgsPoint> &points, QGis::GeometryType geomType )
@@ -5369,4 +5184,13 @@ int QgsGeometry::vertexNrFromVertexId( const QgsVertexId& id ) const
     }
   }
   return -1;
+}
+
+void QgsGeometry::convertPointList( const QList<QgsPoint>& input, QList<QgsPointV2>& output )
+{
+  QList<QgsPoint>::const_iterator it = input.constBegin();
+  for ( ; it != input.constEnd(); ++it )
+  {
+    output.append( QgsPointV2( it->x(), it->y() ) );
+  }
 }
