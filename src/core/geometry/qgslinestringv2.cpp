@@ -376,3 +376,16 @@ bool QgsLineStringV2::deleteVertex( const QgsVertexId& position )
   }
   return true;
 }
+
+void QgsLineStringV2::addVertex( const QgsPointV2& pt )
+{
+  mCoords.append( QPointF( pt.x(), pt.y() ) );
+  if ( is3D() )
+  {
+    mZ.append( pt.z() );
+  }
+  if ( isMeasure() )
+  {
+    mM.append( pt.m() );
+  }
+}

@@ -24,6 +24,7 @@
 #include <QPoint>
 #include <QList>
 
+class QgsCompoundCurveV2;
 class QgsRubberBand;
 class QgsVertexMarker;
 class QgsMapLayer;
@@ -62,6 +63,11 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
 
     //! deactive the tool
     virtual void deactivate();
+
+    const QgsCompoundCurveV2* geometry() const { return mGeometry; }
+
+    /**Adds curve part. Takes ownership*/
+    void addCurve( QgsCurveV2* c );
 
   public slots:
     void currentLayerChanged( QgsMapLayer *layer );
@@ -116,6 +122,8 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
     bool mCaptureModeFromLayer;
 
     QgsVertexMarker* mSnappingMarker;
+
+    QgsCompoundCurveV2* mGeometry;
 };
 
 #endif

@@ -46,6 +46,7 @@ SET(QGIS_APP_SRCS
   qgssavestyletodbdialog.cpp
   qgsguivectorlayertools.cpp
 
+  qgsmaptooladdcircularstring.cpp
   qgsmaptooladdfeature.cpp
   qgsmaptooladdpart.cpp
   qgsmaptooladdring.cpp

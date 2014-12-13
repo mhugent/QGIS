@@ -259,6 +259,33 @@ void QgsCompoundCurveV2::addCurve( QgsCurveV2* c )
   }
 }
 
+void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
+{
+  //is last curve QgsLineStringV2
+  QgsCurveV2* lastCurve = 0;
+  if ( mCurves.size() > 0 )
+  {
+    lastCurve = mCurves.at( mCurves.size() - 1 );
+  }
+
+  QgsLineStringV2* line = 0;
+  if ( !lastCurve || lastCurve->geometryType() != "LineString" )
+  {
+    line = new QgsLineStringV2();
+    mCurves.append( line );
+    if ( lastCurve )
+    {
+      line->addVertex( lastCurve->endPoint() );
+    }
+    lastCurve = line;
+  }
+  else //create new QgsLineStringV2* with point in it
+  {
+    line = dynamic_cast<QgsLineStringV2*>( lastCurve );
+  }
+  line->addVertex( pt );
+}
+
 void QgsCompoundCurveV2::removeCurves()
 {
   qDeleteAll( mCurves );

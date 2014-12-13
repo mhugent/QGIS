@@ -16,6 +16,7 @@
 #include "qgsmaptooladdfeature.h"
 #include "qgsapplication.h"
 #include "qgsattributedialog.h"
+#include "qgscompoundcurvev2.h"
 #include "qgscsexception.h"
 #include "qgsfield.h"
 #include "qgsgeometry.h"
@@ -191,6 +192,7 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
       // End of string
       deleteTempRubberBand();
 
+#if 0
       //lines: bail out if there are not at least two vertices
       if ( mode() == CaptureLine && size() < 2 )
       {
@@ -204,17 +206,38 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
         stopCapturing();
         return;
       }
+#endif //0
 
       //create QgsFeature with wkb representation
       QgsFeature* f = new QgsFeature( vlayer->pendingFields(),  0 );
 
-      QgsGeometry *g;
+      QgsGeometry* g = 0;
+      const QgsCompoundCurveV2* geom = geometry();
+      if ( !geom || geom->nCurves() < 1 )
+      {
+        return;
+      }
 
       if ( mode() == CaptureLine )
       {
-        if ( layerWKBType == QGis::WKBLineString || layerWKBType == QGis::WKBLineString25D )
+        if ( geom->nCurves() < 2 )
         {
-          g = QgsGeometry::fromPolyline( points().toVector() );
+          g = new QgsGeometry( geom->curveAt( 0 )->clone() );
+        }
+        else
+        {
+          g = new QgsGeometry( geom->clone() );
+        }
+        f->setGeometry( g );
+
+        /*if ( layerWKBType == QGis::WKBLineString || layerWKBType == QGis::WKBLineString25D )
+        {
+          //g = QgsGeometry::fromPolyline( points().toVector() );
+            QgsAbstractGeometryV2* geom = geometry();
+            if( geom )
+            {
+                g = new QgsGeometry( geom->clone() );
+            }
         }
         else if ( layerWKBType == QGis::WKBMultiLineString || layerWKBType == QGis::WKBMultiLineString25D )
         {
@@ -227,70 +250,72 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
           return; //unknown wkbtype
         }
 
-        f->setGeometry( g );
+        f->setGeometry( g );*/
       }
-      else // polygon
-      {
-        if ( layerWKBType == QGis::WKBPolygon ||  layerWKBType == QGis::WKBPolygon25D )
-        {
-          g = QgsGeometry::fromPolygon( QgsPolygon() << points().toVector() );
-        }
-        else if ( layerWKBType == QGis::WKBMultiPolygon ||  layerWKBType == QGis::WKBMultiPolygon25D )
-        {
-          g = QgsGeometry::fromMultiPolygon( QgsMultiPolygon() << ( QgsPolygon() << points().toVector() ) );
-        }
-        else
-        {
-          QMessageBox::critical( 0, tr( "Error" ), tr( "Cannot add feature. Unknown WKB type" ) );
-          stopCapturing();
-          return; //unknown wkbtype
-        }
+      else // polygon*/
 
-        if ( !g )
+        if ( mode() == CapturePolygon )
         {
-          stopCapturing();
-          delete f;
-          return; // invalid geometry; one possibility is from duplicate points
-        }
-        f->setGeometry( g );
-
-        int avoidIntersectionsReturn = f->geometry()->avoidIntersections();
-        if ( avoidIntersectionsReturn == 1 )
-        {
-          //not a polygon type. Impossible to get there
-        }
-#if 0
-        else if ( avoidIntersectionsReturn == 2 ) //MH120131: disable this error message until there is a better way to cope with the single type / multi type problem
-        {
-          //bail out...
-          QMessageBox::critical( 0, tr( "Error" ), tr( "The feature could not be added because removing the polygon intersections would change the geometry type" ) );
-          delete f;
-          stopCapturing();
-          return;
-        }
-#endif
-        else if ( avoidIntersectionsReturn == 3 )
-        {
-          QMessageBox::critical( 0, tr( "Error" ), tr( "An error was reported during intersection removal" ) );
-        }
-
-        if ( !f->geometry()->asWkb() ) //avoid intersection might have removed the whole geometry
-        {
-          QString reason;
-          if ( avoidIntersectionsReturn != 2 )
+          /*if ( layerWKBType == QGis::WKBPolygon ||  layerWKBType == QGis::WKBPolygon25D )
           {
-            reason = tr( "The feature cannot be added because it's geometry is empty" );
+            g = QgsGeometry::fromPolygon( QgsPolygon() << points().toVector() );
+          }
+          else if ( layerWKBType == QGis::WKBMultiPolygon ||  layerWKBType == QGis::WKBMultiPolygon25D )
+          {
+            g = QgsGeometry::fromMultiPolygon( QgsMultiPolygon() << ( QgsPolygon() << points().toVector() ) );
           }
           else
           {
-            reason = tr( "The feature cannot be added because it's geometry collapsed due to intersection avoidance" );
+            QMessageBox::critical( 0, tr( "Error" ), tr( "Cannot add feature. Unknown WKB type" ) );
+            stopCapturing();
+            return; //unknown wkbtype
           }
-          QMessageBox::critical( 0, tr( "Error" ), reason );
-          delete f;
-          stopCapturing();
-          return;
+
+          if ( !g )
+          {
+            stopCapturing();
+            delete f;
+            return; // invalid geometry; one possibility is from duplicate points
+          }
+          f->setGeometry( g );*/
+
+          int avoidIntersectionsReturn = f->geometry()->avoidIntersections();
+          if ( avoidIntersectionsReturn == 1 )
+          {
+            //not a polygon type. Impossible to get there
+          }
+#if 0
+          else if ( avoidIntersectionsReturn == 2 ) //MH120131: disable this error message until there is a better way to cope with the single type / multi type problem
+          {
+            //bail out...
+            QMessageBox::critical( 0, tr( "Error" ), tr( "The feature could not be added because removing the polygon intersections would change the geometry type" ) );
+            delete f;
+            stopCapturing();
+            return;
+          }
+#endif
+          else if ( avoidIntersectionsReturn == 3 )
+          {
+            QMessageBox::critical( 0, tr( "Error" ), tr( "An error was reported during intersection removal" ) );
+          }
+
+          if ( !f->geometry()->asWkb() ) //avoid intersection might have removed the whole geometry
+          {
+            QString reason;
+            if ( avoidIntersectionsReturn != 2 )
+            {
+              reason = tr( "The feature cannot be added because it's geometry is empty" );
+            }
+            else
+            {
+              reason = tr( "The feature cannot be added because it's geometry collapsed due to intersection avoidance" );
+            }
+            QMessageBox::critical( 0, tr( "Error" ), reason );
+            delete f;
+            stopCapturing();
+            return;
+          }
         }
-      }
 
       if ( addFeature( vlayer, f ) )
       {

@@ -69,6 +69,7 @@ class QgsLineStringV2: public QgsCurveV2
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
     virtual bool deleteVertex( const QgsVertexId& position );
+    void addVertex( const QgsPointV2& pt );
 
   private:
     void importVerticesFromWkb( const QgsConstWkbPtr& wkb );

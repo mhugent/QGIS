@@ -16,6 +16,7 @@
 #include "qgsmaptoolcapture.h"
 
 #include "qgisapp.h"
+#include "qgscompoundcurvev2.h"
 #include "qgscursors.h"
 #include "qgsgeometryvalidator.h"
 #include "qgslayertreeview.h"
@@ -40,9 +41,12 @@ QgsMapToolCapture::QgsMapToolCapture( QgsMapCanvas* canvas, enum CaptureMode too
     , mTempRubberBand( 0 )
     , mValidator( 0 )
     , mSnappingMarker( 0 )
+    , mGeometry( 0 )
 {
   mCaptureModeFromLayer = tool == CaptureNone;
   mCapturing = false;
+
+  mGeometry = new QgsCompoundCurveV2();
 
   QPixmap mySelectQPixmap = QPixmap(( const char ** ) capture_point_cursor );
   mCursor = QCursor( mySelectQPixmap, 8, 8 );
@@ -62,6 +66,8 @@ QgsMapToolCapture::~QgsMapToolCapture()
     mValidator->deleteLater();
     mValidator = 0;
   }
+
+  delete mGeometry;
 }
 
 void QgsMapToolCapture::deactivate()
@@ -181,8 +187,28 @@ int QgsMapToolCapture::nextPoint( const QPoint &p, QgsPoint &layerPoint, QgsPoin
   return 0;
 }
 
+void QgsMapToolCapture::addCurve( QgsCurveV2* c )
+{
+  mGeometry->addCurve( c );
+}
+
 int QgsMapToolCapture::addVertex( const QPoint &p )
 {
+  QgsPoint layerPoint;
+  QgsPoint mapPoint;
+  int res = nextPoint( p, layerPoint, mapPoint );
+  if ( res != 0 )
+  {
+    QgsDebugMsg( "nextPoint failed: " + QString::number( res ) );
+    return res;
+  }
+
+  if ( mGeometry )
+  {
+    mGeometry->addVertex( QgsPointV2( layerPoint.x(), layerPoint.y() ) );
+  }
+
+#if 0
   QgsPoint layerPoint;
   QgsPoint mapPoint;
 
@@ -227,6 +253,7 @@ int QgsMapToolCapture::addVertex( const QPoint &p )
   }
 
   validateGeometry();
+#endif //0
 
   return 0;
 }
@@ -283,6 +310,9 @@ void QgsMapToolCapture::startCapturing()
 
 void QgsMapToolCapture::stopCapturing()
 {
+  delete mGeometry;
+  mGeometry = new QgsCompoundCurveV2();
+
   if ( mRubberBand )
   {
     delete mRubberBand;

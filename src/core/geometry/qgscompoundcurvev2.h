@@ -52,6 +52,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
 
     /**Adds curve (takes ownership)*/
     void addCurve( QgsCurveV2* c );
+    void addVertex( const QgsPointV2& pt );
 
     virtual QgsRectangle calculateBoundingBox() const;
 

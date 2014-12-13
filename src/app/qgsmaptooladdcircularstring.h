@@ -1,9 +1,9 @@
 /***************************************************************************
-    qgsmaptooladdfeature.h  -  map tool for adding point/line/polygon features
+    qgsmaptooladdcirularstring.h  -  map tool for adding circular strings
     ---------------------
-    begin                : April 2007
-    copyright            : (C) 2007 by Marco Hugentobler
-    email                : marco dot hugentobler at karto dot baug dot ethz dot ch
+    begin                : December 2014
+    copyright            : (C) 2014 by Marco Hugentobler
+    email                : marco dot hugentobler at sourcepole dot ch
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -13,23 +13,26 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSMAPTOOLADDFEATURE_H
-#define QGSMAPTOOLADDFEATURE_H
+#ifndef QGSMAPTOOLADDCIRCULARSTRING_H
+#define QGSMAPTOOLADDCIRCULARSTRING_H
 
-#include "qgsmaptoolcapture.h"
-#include "qgsfeature.h"
+#include "qgsmaptooladdfeature.h"
 
-/**This tool adds new point/line/polygon features to already existing vector layers*/
-class APP_EXPORT QgsMapToolAddFeature : public QgsMapToolCapture
+class QgsMapToolAddCircularString: public QgsMapToolCapture
 {
-    Q_OBJECT
   public:
-    QgsMapToolAddFeature( QgsMapCanvas* canvas );
-    virtual ~QgsMapToolAddFeature();
+    QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas );
+    ~QgsMapToolAddCircularString();
+
     void canvasReleaseEvent( QMouseEvent * e );
 
-    bool addFeature( QgsVectorLayer *vlayer, QgsFeature *f );
-    void activate();
+    void deactivate();
+
+  private:
+    QgsMapToolAddCircularString( QgsMapCanvas* canvas = 0 ); //forbidden
+
+    QgsMapToolAddFeature* mParentTool;
+    QList< QgsPointV2 > mPoints;
 };
 
-#endif //QGSMAPTOOLADDFEATURE_H
+#endif // QGSMAPTOOLADDCIRCULARSTRING_H
