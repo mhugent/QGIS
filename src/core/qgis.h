@@ -223,16 +223,32 @@ class CORE_EXPORT QGis
         case WKBLineStringM:
         case WKBLineStringZM:
           return WKBLineString;
+        case WKBCircularStringZ:
+        case WKBCircularStringM:
+        case WKBCircularStringZM:
+          return WKBCircularString;
+        case WKBCompoundCurveZ:
+        case WKBCompoundCurveM:
+        case WKBCompoundCurveZM:
+          return WKBCompoundCurve;
         case WKBPolygon25D:
         case WKBPolygonZ:
         case WKBPolygonM:
         case WKBPolygonZM:
           return WKBPolygon;
+        case WKBCurvePolygonZ:
+        case WKBCurvePolygonM:
+        case WKBCurvePolygonZM:
+          return WKBCurvePolygon;
         case WKBMultiPoint25D:
         case WKBMultiPointZ:
         case WKBMultiPointM:
         case WKBMultiPointZM:
           return WKBMultiPoint;
+        case WKBMultiCurveZ:
+        case WKBMultiCurveM:
+        case WKBMultiCurveZM:
+          return WKBMultiCurve;
         case WKBMultiLineString25D:
         case WKBMultiLineStringZ:
         case WKBMultiLineStringM:
@@ -243,6 +259,10 @@ class CORE_EXPORT QGis
         case WKBMultiPolygonM:
         case WKBMultiPolygonZM:
           return WKBMultiPolygon;
+        case WKBMultiSurfaceZ:
+        case WKBMultiSurfaceM:
+        case WKBMultiSurfaceZM:
+          return WKBMultiSurface;
         default:
           return type;
       }
@@ -250,14 +270,13 @@ class CORE_EXPORT QGis
 
     static bool isSingleType( WkbType type )
     {
-      switch ( flatType( type ) )
+      if ( type == QGis::WKBNoGeometry )
       {
-        case WKBPoint:
-        case WKBLineString:
-        case WKBPolygon:
-          return true;
-        default:
-          return false;
+        return false;
+      }
+      else
+      {
+        return !isMultiType( type );
       }
     }
 
@@ -267,7 +286,9 @@ class CORE_EXPORT QGis
       {
         case WKBMultiPoint:
         case WKBMultiLineString:
+        case WKBMultiCurve:
         case WKBMultiPolygon:
+        case WKBMultiSurface:
           return true;
         default:
           return false;

@@ -114,24 +114,6 @@ int QgsGeometryCollectionV2::dimension() const
   return maxDim;
 }
 
-QgsRectangle QgsGeometryCollectionV2::calculateBoundingBox() const
-{
-  if ( mGeometries.size() < 1 )
-  {
-    return QgsRectangle();
-  }
-
-  QVector< QgsAbstractGeometryV2* >::const_iterator it = mGeometries.constBegin();
-  QgsRectangle bbox = ( *it )->calculateBoundingBox();
-  ++it;
-  for ( ; it != mGeometries.constEnd(); ++it )
-  {
-    QgsRectangle box = ( *it )->calculateBoundingBox();
-    bbox.combineExtentWith( &box );
-  }
-  return bbox;
-}
-
 void QgsGeometryCollectionV2::transform( const QgsCoordinateTransform& ct )
 {
   QVector< QgsAbstractGeometryV2* >::iterator it = mGeometries.begin();

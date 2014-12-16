@@ -51,8 +51,6 @@ class QgsCircularStringV2: public QgsCurveV2
     virtual QgsPointV2 endPoint() const;
     virtual QgsLineStringV2* curveToLine() const;
 
-    virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle(); }
-
     void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );

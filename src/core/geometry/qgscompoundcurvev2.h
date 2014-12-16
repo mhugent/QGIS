@@ -54,8 +54,6 @@ class QgsCompoundCurveV2: public QgsCurveV2
     void addCurve( QgsCurveV2* c );
     void addVertex( const QgsPointV2& pt );
 
-    virtual QgsRectangle calculateBoundingBox() const;
-
     void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );

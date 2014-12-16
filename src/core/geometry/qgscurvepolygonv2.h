@@ -60,8 +60,6 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     void setInteriorRings( QList<QgsCurveV2*> rings );
     void addInteriorRing( QgsCurveV2* ring );
 
-    virtual QgsRectangle calculateBoundingBox() const;
-
     virtual void draw( QPainter& p ) const;
     void mapToPixel( const QgsMapToPixel& mtp );
     void transform( const QgsCoordinateTransform& ct );

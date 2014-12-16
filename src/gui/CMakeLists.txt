@@ -164,6 +164,7 @@ qgsfiledropedit.cpp
 qgsfilterlineedit.cpp
 qgsformannotationitem.cpp
 qgsgenericprojectionselector.cpp
+qgsgeometryrubberband.cpp
 qgshighlight.cpp
 qgshtmlannotationitem.cpp
 qgslegendinterface.cpp

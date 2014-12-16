@@ -256,11 +256,21 @@ void QgsCompoundCurveV2::addCurve( QgsCurveV2* c )
   if ( c )
   {
     mCurves.append( c );
+
+    if ( mWkbType == QGis::WKBUnknown )
+    {
+      setZMTypeFromSubGeometry( c, QGis::WKBCompoundCurve );
+    }
   }
 }
 
 void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
 {
+  if ( mWkbType == QGis::WKBUnknown )
+  {
+    setZMTypeFromSubGeometry( &pt, QGis::WKBCompoundCurve );
+  }
+
   //is last curve QgsLineStringV2
   QgsCurveV2* lastCurve = 0;
   if ( mCurves.size() > 0 )
@@ -290,24 +300,6 @@ void QgsCompoundCurveV2::removeCurves()
 {
   qDeleteAll( mCurves );
   mCurves.clear();
-}
-
-QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
-{
-  if ( mCurves.size() < 1 )
-  {
-    return QgsRectangle();
-  }
-
-  QgsRectangle bbox = mCurves.at( 0 )->boundingBox();
-
-  QgsRectangle curveBBox;
-  for ( int i = 1; i < mCurves.size(); ++i )
-  {
-    curveBBox = mCurves.at( i )->boundingBox();
-    bbox.combineExtentWith( &curveBBox );
-  }
-  return bbox;
 }
 
 void QgsCompoundCurveV2::draw( QPainter& p ) const

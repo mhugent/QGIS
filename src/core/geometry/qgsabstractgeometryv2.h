@@ -58,6 +58,8 @@ class QgsAbstractGeometryV2
     bool is3D() const;
     bool isMeasure() const;
 
+    void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QGis::WkbType baseGeomType );
+
     /*virtual bool transform( const QgsCoordinateTransform& ct ) =  0;
     virtual bool isEmpty() const = 0;
     virtual bool isSimple() const = 0;
@@ -76,7 +78,7 @@ class QgsAbstractGeometryV2
     virtual void fromWkb( const unsigned char * wkb ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
 
-    virtual QgsRectangle calculateBoundingBox() const = 0;
+    QgsRectangle calculateBoundingBox() const;
 
     //render pipeline
     virtual void transform( const QgsCoordinateTransform& ct ) = 0;

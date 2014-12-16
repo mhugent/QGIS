@@ -16,11 +16,12 @@
 #include "qgsmaptooladdcircularstring.h"
 #include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
+#include "qgsgeometryrubberband.h"
 #include "qgsmapcanvas.h"
 #include "qgspointv2.h"
 #include <QMouseEvent>
 
-QgsMapToolAddCircularString::QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas ): QgsMapToolCapture( canvas ), mParentTool( parentTool )
+QgsMapToolAddCircularString::QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas ): QgsMapToolCapture( canvas ), mParentTool( parentTool ), mRubberBand( 0 )
 {
 
 }
@@ -32,7 +33,7 @@ QgsMapToolAddCircularString::QgsMapToolAddCircularString( QgsMapCanvas* canvas )
 
 QgsMapToolAddCircularString::~QgsMapToolAddCircularString()
 {
-
+  delete mRubberBand;
 }
 
 void QgsMapToolAddCircularString::canvasReleaseEvent( QMouseEvent* e )
@@ -45,28 +46,34 @@ void QgsMapToolAddCircularString::canvasReleaseEvent( QMouseEvent* e )
   {
     if ( mPoints.size() < 1 ) //connection to vertex of previous line segment needed?
     {
-        const QgsCompoundCurveV2* compoundCurve = mParentTool->geometry();
-        if ( compoundCurve )
+      const QgsCompoundCurveV2* compoundCurve = mParentTool->geometry();
+      if ( compoundCurve )
+      {
+        if ( compoundCurve->nCurves() > 0 )
         {
-            if ( compoundCurve->nCurves() > 0 )
-            {
-                const QgsCurveV2* curve = compoundCurve->curveAt( compoundCurve->nCurves() - 1 );
-                if( curve )
-                {
-                    mPoints.append( curve->endPoint() );
-                }
-            }
+          const QgsCurveV2* curve = compoundCurve->curveAt( compoundCurve->nCurves() - 1 );
+          if ( curve )
+          {
+            mPoints.append( curve->endPoint() );
+          }
         }
+      }
+      mRubberBand = new QgsGeometryRubberBand( mCanvas );
+      mRubberBand->show();
     }
     mPoints.append( QgsPointV2( layerPoint.x(), layerPoint.y() ) );
+    QgsCircularStringV2* c = new QgsCircularStringV2();
+    c->setPoints( mPoints );
+    mRubberBand->setGeometry( c );
   }
   else if ( e->button() == Qt::RightButton )
   {
-      deactivate();
-      if( mParentTool )
-      {
-          mParentTool->canvasReleaseEvent( e );
-      }
+    delete mRubberBand; mRubberBand = 0;
+    deactivate();
+    if ( mParentTool )
+    {
+      mParentTool->canvasReleaseEvent( e );
+    }
   }
 }
 
@@ -79,5 +86,5 @@ void QgsMapToolAddCircularString::deactivate()
     mParentTool->addCurve( c );
   }
   mPoints.clear();
-  //add Curve to mParentTool
+  delete mRubberBand; mRubberBand = 0;
 }

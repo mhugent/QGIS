@@ -53,8 +53,6 @@ class QgsLineStringV2: public QgsCurveV2
     void setPoints( const QList<QgsPointV2>& points );
     void append( const QgsLineStringV2* line );
 
-    virtual QgsRectangle calculateBoundingBox() const;
-
     void fromWkbPoints( QGis::WkbType type, const QgsConstWkbPtr& wkb );
 
     void draw( QPainter& p ) const;

@@ -22,6 +22,7 @@
 #include "qgsgeometry.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
+#include "qgsmulticurvev2.h"
 #include "qgsproject.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
@@ -220,42 +221,50 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
 
       if ( mode() == CaptureLine )
       {
+        QgsAbstractGeometryV2* geometry;
         if ( geom->nCurves() < 2 )
         {
-          g = new QgsGeometry( geom->curveAt( 0 )->clone() );
+          geometry = geom->curveAt( 0 )->clone();
         }
         else
         {
-          g = new QgsGeometry( geom->clone() );
+          geometry = geom->clone();
         }
+
+        //multitype?
+        if ( layerWKBType == QGis::WKBMultiLineString || layerWKBType == QGis::WKBMultiLineString25D )
+        {
+          QgsMultiCurveV2* multiCurve = new QgsMultiCurveV2();
+          multiCurve->addGeometry( geometry );
+          geometry = multiCurve;
+        }
+
+        g = new QgsGeometry( geometry );
         f->setGeometry( g );
-
-        /*if ( layerWKBType == QGis::WKBLineString || layerWKBType == QGis::WKBLineString25D )
-        {
-          //g = QgsGeometry::fromPolyline( points().toVector() );
-            QgsAbstractGeometryV2* geom = geometry();
-            if( geom )
-            {
-                g = new QgsGeometry( geom->clone() );
-            }
-        }
-        else if ( layerWKBType == QGis::WKBMultiLineString || layerWKBType == QGis::WKBMultiLineString25D )
-        {
-          g = QgsGeometry::fromMultiPolyline( QgsMultiPolyline() << points().toVector() );
-        }
-        else
-        {
-          QMessageBox::critical( 0, tr( "Error" ), tr( "Cannot add feature. Unknown WKB type" ) );
-          stopCapturing();
-          return; //unknown wkbtype
-        }
-
-        f->setGeometry( g );*/
+        stopCapturing();
       }
       else // polygon*/
 
         if ( mode() == CapturePolygon )
         {
+          if ( !geom->isClosed() )
+          {
+            //bail out
+          }
+
+          /* QgsAbstractGeometryV2* ringGeom;
+           QgsAbstractGeometryV2* geometry;
+           if ( geom->nCurves() < 2 )
+           {
+             geometry = geom->curveAt( 0 )->clone();
+           }
+           else
+           {
+             geometry = geom->clone();
+           }*/
+
+
+          //normal polygon or curve polygon
           /*if ( layerWKBType == QGis::WKBPolygon ||  layerWKBType == QGis::WKBPolygon25D )
           {
             g = QgsGeometry::fromPolygon( QgsPolygon() << points().toVector() );

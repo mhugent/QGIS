@@ -263,45 +263,13 @@ void QgsCurvePolygonV2::setExteriorRing( QgsCurveV2* ring )
   mExteriorRing = ring;
 
   //set proper wkb type
-  bool hasZ = ring->is3D();
-  bool hasM = ring->isMeasure();
   if ( geometryType() == "Polygon" )
   {
-    if ( hasZ && hasM )
-    {
-      mWkbType = QGis::WKBPolygonZM;
-    }
-    else if ( hasZ )
-    {
-      mWkbType = QGis::WKBPolygonZ;
-    }
-    else if ( hasM )
-    {
-      mWkbType = QGis::WKBPolygonM;
-    }
-    else
-    {
-      mWkbType = QGis::WKBPolygon;
-    }
+    setZMTypeFromSubGeometry( ring, QGis::WKBPolygon );
   }
   else if ( geometryType() == "CurvePolygon" )
   {
-    if ( hasZ && hasM )
-    {
-      mWkbType = QGis::WKBCurvePolygonZM;
-    }
-    else if ( hasZ )
-    {
-      mWkbType = QGis::WKBCurvePolygonZ;
-    }
-    else if ( hasM )
-    {
-      mWkbType = QGis::WKBCurvePolygonM;
-    }
-    else
-    {
-      mWkbType = QGis::WKBCurvePolygon;
-    }
+    setZMTypeFromSubGeometry( ring, QGis::WKBCurvePolygon );
   }
 }
 
@@ -314,24 +282,6 @@ void QgsCurvePolygonV2::setInteriorRings( QList<QgsCurveV2*> rings )
 void QgsCurvePolygonV2::addInteriorRing( QgsCurveV2* ring )
 {
   mInteriorRings.append( ring );
-}
-
-QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
-{
-  if ( !mExteriorRing )
-  {
-    return QgsRectangle();
-  }
-
-  QgsRectangle bbox = mExteriorRing->calculateBoundingBox();
-  QgsRectangle ringBBox;
-  QList<QgsCurveV2*>::const_iterator it = mInteriorRings.constBegin();
-  for ( ; it != mInteriorRings.constEnd(); ++it )
-  {
-    ringBBox = ( *it )->boundingBox();
-    bbox.combineExtentWith( &ringBBox );
-  }
-  return bbox;
 }
 
 void QgsCurvePolygonV2::draw( QPainter& p ) const

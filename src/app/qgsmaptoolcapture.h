@@ -25,6 +25,7 @@
 #include <QList>
 
 class QgsCompoundCurveV2;
+class QgsGeometryRubberBand;
 class QgsRubberBand;
 class QgsVertexMarker;
 class QgsMapLayer;
@@ -124,6 +125,7 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
     QgsVertexMarker* mSnappingMarker;
 
     QgsCompoundCurveV2* mGeometry;
+    QgsGeometryRubberBand* mGeometryRubberBand;
 };
 
 #endif

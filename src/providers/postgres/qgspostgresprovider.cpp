@@ -1500,34 +1500,7 @@ void QgsPostgresProvider::dropOrphanedTopoGeoms( )
 QString QgsPostgresProvider::geomParam( int offset ) const
 {
   QString geometry;
-
-  bool forceMulti = false;
-
-  if ( mSpatialColType != sctTopoGeometry )
-  {
-    switch ( geometryType() )
-    {
-      case QGis::WKBPoint:
-      case QGis::WKBLineString:
-      case QGis::WKBPolygon:
-      case QGis::WKBPoint25D:
-      case QGis::WKBLineString25D:
-      case QGis::WKBPolygon25D:
-      case QGis::WKBUnknown:
-      case QGis::WKBNoGeometry:
-        forceMulti = false;
-        break;
-
-      case QGis::WKBMultiPoint:
-      case QGis::WKBMultiLineString:
-      case QGis::WKBMultiPolygon:
-      case QGis::WKBMultiPoint25D:
-      case QGis::WKBMultiLineString25D:
-      case QGis::WKBMultiPolygon25D:
-        forceMulti = true;
-        break;
-    }
-  }
+  bool forceMulti = QGis::isMultiType( geometryType() );
 
   if ( mSpatialColType == sctTopoGeometry )
   {

@@ -18,6 +18,8 @@
 
 #include "qgsmaptooladdfeature.h"
 
+class QgsGeometryRubberBand;
+
 class QgsMapToolAddCircularString: public QgsMapToolCapture
 {
   public:
@@ -33,6 +35,7 @@ class QgsMapToolAddCircularString: public QgsMapToolCapture
 
     QgsMapToolAddFeature* mParentTool;
     QList< QgsPointV2 > mPoints;
+    QgsGeometryRubberBand* mRubberBand;
 };
 
 #endif // QGSMAPTOOLADDCIRCULARSTRING_H
