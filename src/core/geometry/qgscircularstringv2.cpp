@@ -96,7 +96,35 @@ int QgsCircularStringV2::wkbSize() const
 
 QString QgsCircularStringV2::asText( int precision ) const
 {
-  return ""; //soon...
+  QString wkt( "CIRCULARSTRING(" );
+
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+
+  int nPoints = numPoints();
+  for ( int i = 0; i < nPoints; ++i )
+  {
+    if ( i > 0 )
+    {
+      wkt.append( "," );
+    }
+    wkt.append( qgsDoubleToString( mX[i], precision ) );
+    wkt.append( " " );
+    wkt.append( qgsDoubleToString( mY[i], precision ) );
+    wkt.append( " " );
+    if ( hasZ )
+    {
+      wkt.append( qgsDoubleToString( mZ[i], precision ) );
+      wkt.append( " " );
+    }
+    if ( hasM )
+    {
+      wkt.append( qgsDoubleToString( mM[i], precision ) );
+    }
+  }
+
+  wkt.append( ")" );
+  return wkt;
 }
 
 unsigned char* QgsCircularStringV2::asBinary( int& binarySize ) const
@@ -472,7 +500,11 @@ void QgsCircularStringV2::addToPainterPath( QPainterPath& path ) const
     return;
   }
 
-  path.moveTo( QPointF( mX[0], mY[0] ) );
+  if ( path.isEmpty() || path.currentPosition() != QPointF( mX[0], mY[0] ) )
+  {
+    path.moveTo( QPointF( mX[0], mY[0] ) );
+  }
+
   for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
   {
     arcTo( path, QPointF( mX[i], mY[i] ), QPointF( mX[i + 1], mY[i + 1] ), QPointF( mX[i + 2], mY[i + 2] ) );

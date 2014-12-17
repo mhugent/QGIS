@@ -128,7 +128,17 @@ int QgsCompoundCurveV2::wkbSize() const
 
 QString QgsCompoundCurveV2::asText( int precision ) const
 {
-  return ""; //todo...
+  QString wkt( "COMPOUNDCURVE(" );
+  for ( int i = 0; i < mCurves.size(); ++i )
+  {
+    if ( i > 0 )
+    {
+      wkt.append( "," );
+    }
+    wkt.append( mCurves[i]->asText( precision ) );
+  }
+  wkt.append( ")" );
+  return wkt;
 }
 
 unsigned char* QgsCompoundCurveV2::asBinary( int& binarySize ) const
@@ -294,6 +304,18 @@ void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
     line = dynamic_cast<QgsLineStringV2*>( lastCurve );
   }
   line->addVertex( pt );
+}
+
+QgsCompoundCurveV2* QgsCompoundCurveV2::close() const
+{
+  QgsCompoundCurveV2* closedCurve = static_cast<QgsCompoundCurveV2*>( clone() );
+  if ( numPoints() < 1 || ( startPoint() == endPoint() ) )
+  {
+    return closedCurve;
+  }
+
+  closedCurve->addVertex( startPoint() );
+  return closedCurve;
 }
 
 void QgsCompoundCurveV2::removeCurves()

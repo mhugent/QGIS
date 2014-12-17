@@ -123,7 +123,18 @@ void QgsCurvePolygonV2::fromWkt( const QString& wkt )
 
 QString QgsCurvePolygonV2::asText( int precision ) const
 {
-  return QString();
+  QString wkt( "CURVEPOLYGON(" );
+  if ( mExteriorRing )
+  {
+    wkt.append( mExteriorRing->asText( precision ) );
+  }
+  for ( int i = 0; i < mInteriorRings.size(); ++i )
+  {
+    wkt.append( "," );
+    wkt.append( mInteriorRings[i]->asText( precision ) );
+  }
+  wkt.append( ")" );
+  return wkt;
 }
 
 unsigned char* QgsCurvePolygonV2::asBinary( int& binarySize ) const

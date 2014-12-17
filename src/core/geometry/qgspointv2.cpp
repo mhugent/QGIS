@@ -43,7 +43,8 @@ QgsPointV2::~QgsPointV2()
 
 bool QgsPointV2::operator==( const QgsPointV2& pt ) const
 {
-  return ( pt.wkbType() == wkbType() && pt.x() == mX && pt.y() == mY && pt.z() == mZ && pt.m() == mM );
+  return ( pt.wkbType() == wkbType() && qgsDoubleNear( pt.x(), mX ) && qgsDoubleNear( pt.y(), mY ) &&
+           qgsDoubleNear( pt.z(), mZ ) && qgsDoubleNear( pt.m(), mM ) );
 }
 
 QgsAbstractGeometryV2* QgsPointV2::clone() const

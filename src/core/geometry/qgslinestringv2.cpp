@@ -71,7 +71,35 @@ void QgsLineStringV2::fromWkt( const QString& wkt )
 
 QString QgsLineStringV2::asText( int precision ) const
 {
-  return QString(); //soon...
+  QString wkt( "LINESTRING(" );
+
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+
+  int nPoints = numPoints();
+  for ( int i = 0; i < nPoints; ++i )
+  {
+    if ( i > 0 )
+    {
+      wkt.append( "," );
+    }
+    wkt.append( qgsDoubleToString( mCoords[i].x(), precision ) );
+    wkt.append( " " );
+    wkt.append( qgsDoubleToString( mCoords[i].y(), precision ) );
+    wkt.append( " " );
+    if ( hasZ )
+    {
+      wkt.append( qgsDoubleToString( mZ[i], precision ) );
+      wkt.append( " " );
+    }
+    if ( hasM )
+    {
+      wkt.append( qgsDoubleToString( mM[i], precision ) );
+    }
+  }
+
+  wkt.append( ")" );
+  return wkt;
 }
 
 unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
@@ -278,7 +306,21 @@ void QgsLineStringV2::draw( QPainter& p ) const
 
 void QgsLineStringV2::addToPainterPath( QPainterPath& path ) const
 {
-  path.addPolygon( mCoords );
+  int nPoints = numPoints();
+  if ( nPoints < 1 )
+  {
+    return;
+  }
+
+  if ( path.isEmpty() || path.currentPosition() != mCoords[0] )
+  {
+    path.moveTo( mCoords[0] );
+  }
+
+  for ( int i = 1; i < nPoints; ++i )
+  {
+    path.lineTo( mCoords[i] );
+  }
 }
 
 void QgsLineStringV2::drawAsPolygon( QPainter& p ) const

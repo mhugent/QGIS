@@ -229,7 +229,7 @@ int QgsMapToolCapture::addVertex( const QPoint &p )
     mGeometryRubberBand->show();
   }
 
-  mGeometryRubberBand->setGeometry( mGeometry->clone() );
+  mGeometryRubberBand->setGeometry( mGeometry->close() );
   validateGeometry();
   return 0;
 }

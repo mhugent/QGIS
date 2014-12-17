@@ -18,11 +18,13 @@
 #include "qgsattributedialog.h"
 #include "qgscompoundcurvev2.h"
 #include "qgscsexception.h"
+#include "qgscurvepolygonv2.h"
 #include "qgsfield.h"
 #include "qgsgeometry.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsmulticurvev2.h"
+#include "qgspolygonv2.h"
 #include "qgsproject.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
@@ -213,14 +215,15 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
       QgsFeature* f = new QgsFeature( vlayer->pendingFields(),  0 );
 
       QgsGeometry* g = 0;
-      const QgsCompoundCurveV2* geom = geometry();
-      if ( !geom || geom->nCurves() < 1 )
+
+      /*if ( !geom || geom->nCurves() < 1 )
       {
         return;
-      }
+      }*/
 
       if ( mode() == CaptureLine )
       {
+        const QgsCompoundCurveV2* geom = geometry();
         QgsAbstractGeometryV2* geometry;
         if ( geom->nCurves() < 2 )
         {
@@ -247,21 +250,36 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
 
         if ( mode() == CapturePolygon )
         {
+          QgsCompoundCurveV2* geom = geometry()->close();
           if ( !geom->isClosed() )
           {
-            //bail out
+            return; //todo: throw error
           }
 
-          /* QgsAbstractGeometryV2* ringGeom;
-           QgsAbstractGeometryV2* geometry;
-           if ( geom->nCurves() < 2 )
-           {
-             geometry = geom->curveAt( 0 )->clone();
-           }
-           else
-           {
-             geometry = geom->clone();
-           }*/
+          QgsCurveV2* ringGeom;
+          QgsCurvePolygonV2* geometry;
+          if ( geom->nCurves() < 2 )
+          {
+            ringGeom = dynamic_cast<QgsCurveV2*>( geom->curveAt( 0 )->clone() );
+            if ( ringGeom->geometryType() == "LineString" )
+            {
+              geometry = new QgsPolygonV2();
+            }
+            else
+            {
+              geometry = new QgsCurvePolygonV2();
+            }
+            geometry->setExteriorRing( ringGeom );
+          }
+          else
+          {
+            geometry = new QgsCurvePolygonV2();
+            geometry->setExteriorRing( dynamic_cast<QgsCurveV2*>( geom->clone() ) );
+          }
+          qWarning( geometry->asText().toLocal8Bit().data() );
+          delete geom;
+          g = new QgsGeometry( geometry );
+
 
 
           //normal polygon or curve polygon
@@ -278,7 +296,7 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
             QMessageBox::critical( 0, tr( "Error" ), tr( "Cannot add feature. Unknown WKB type" ) );
             stopCapturing();
             return; //unknown wkbtype
-          }
+          }*/
 
           if ( !g )
           {
@@ -286,7 +304,7 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
             delete f;
             return; // invalid geometry; one possibility is from duplicate points
           }
-          f->setGeometry( g );*/
+          f->setGeometry( g );
 
           int avoidIntersectionsReturn = f->geometry()->avoidIntersections();
           if ( avoidIntersectionsReturn == 1 )
