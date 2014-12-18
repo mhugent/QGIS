@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptooledit.h"
+#include "qgsgeometryrubberband.h"
 #include "qgsproject.h"
 #include "qgsmapcanvas.h"
 #include "qgsrubberband.h"
@@ -87,6 +88,21 @@ QgsRubberBand* QgsMapToolEdit::createRubberBand( QGis::GeometryType geometryType
   }
   color.setAlphaF( myAlpha );
   rb->setColor( color );
+  rb->show();
+  return rb;
+}
+
+QgsGeometryRubberBand* QgsMapToolEdit::createGeometryRubberBand( QGis::GeometryType geometryType ) const
+{
+  QSettings settings;
+  QgsGeometryRubberBand* rb = new QgsGeometryRubberBand( mCanvas );
+  QColor color( settings.value( "/qgis/digitizing/line_color_red", 255 ).toInt(),
+                settings.value( "/qgis/digitizing/line_color_green", 0 ).toInt(),
+                settings.value( "/qgis/digitizing/line_color_blue", 0 ).toInt() );
+  double myAlpha = settings.value( "/qgis/digitizing/line_color_alpha", 200 ).toInt() / 255.0 ;
+  color.setAlphaF( myAlpha );
+  rb->setOutlineColor( color );
+  rb->setFillColor( color );
   rb->show();
   return rb;
 }

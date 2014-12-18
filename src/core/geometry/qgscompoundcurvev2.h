@@ -52,6 +52,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
 
     /**Adds curve (takes ownership)*/
     void addCurve( QgsCurveV2* c );
+    void removeCurve( int i );
     void addVertex( const QgsPointV2& pt );
     /**Returns closed ring based on curve (connects to start point if not already done)*/
     QgsCompoundCurveV2* close() const;

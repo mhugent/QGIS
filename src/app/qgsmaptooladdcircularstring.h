@@ -23,10 +23,11 @@ class QgsGeometryRubberBand;
 class QgsMapToolAddCircularString: public QgsMapToolCapture
 {
   public:
-    QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas );
+    QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas, CaptureMode mode = CaptureLine );
     ~QgsMapToolAddCircularString();
 
     void canvasReleaseEvent( QMouseEvent * e );
+    void canvasMoveEvent( QMouseEvent * e );
 
     void deactivate();
 

@@ -602,6 +602,7 @@ bool QgsCircularStringV2::moveVertex( const QgsVertexId& position, const QgsPoin
   {
     mM[position.vertex] = newPos.m();
   }
+  mBoundingBox = QgsRectangle(); //set bounding box invalid
   return true;
 }
 

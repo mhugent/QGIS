@@ -18,6 +18,7 @@
 #include "qgisapp.h"
 #include "qgscompoundcurvev2.h"
 #include "qgscursors.h"
+#include "qgscurvepolygonv2.h"
 #include "qgsgeometryrubberband.h"
 #include "qgsgeometryvalidator.h"
 #include "qgslayertreeview.h"
@@ -190,20 +191,26 @@ int QgsMapToolCapture::nextPoint( const QPoint &p, QgsPoint &layerPoint, QgsPoin
   return 0;
 }
 
-void QgsMapToolCapture::addCurve( QgsCurveV2* c )
+void QgsMapToolCapture::setCurve( QgsCurveV2* c )
 {
   if ( !mGeometry )
   {
     return;
   }
+
+  int nCurves = mGeometry->nCurves();
+  if ( nCurves > 0 && mGeometry->curveAt( nCurves - 1 )->geometryType() == "CircularString" )
+  {
+    mGeometry->removeCurve( nCurves - 1 );
+  }
+
   mGeometry->addCurve( c );
 
   if ( !mGeometryRubberBand )
   {
-    mGeometryRubberBand = new QgsGeometryRubberBand( mCanvas );
-    mGeometryRubberBand->show();
+    mGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
   }
-  mGeometryRubberBand->setGeometry( mGeometry->clone() );
+  setGeometryToRubberBand();
 }
 
 int QgsMapToolCapture::addVertex( const QPoint &p )
@@ -225,14 +232,28 @@ int QgsMapToolCapture::addVertex( const QPoint &p )
 
   if ( !mGeometryRubberBand )
   {
-    mGeometryRubberBand = new QgsGeometryRubberBand( mCanvas );
-    mGeometryRubberBand->show();
+    mGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
   }
 
-  mGeometryRubberBand->setGeometry( mGeometry->close() );
+  setGeometryToRubberBand();
   validateGeometry();
   return 0;
 }
+
+void QgsMapToolCapture::setGeometryToRubberBand()
+{
+  if ( mCaptureMode == CapturePolygon )
+  {
+    QgsCurvePolygonV2* polygon = new QgsCurvePolygonV2();
+    polygon->setExteriorRing( mGeometry->close() );
+    mGeometryRubberBand->setGeometry( polygon );
+  }
+  else
+  {
+    mGeometryRubberBand->setGeometry( mGeometry->clone() );
+  }
+}
+
 
 void QgsMapToolCapture::undo()
 {

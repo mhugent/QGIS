@@ -68,7 +68,7 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
     const QgsCompoundCurveV2* geometry() const { return mGeometry; }
 
     /**Adds curve part. Takes ownership*/
-    void addCurve( QgsCurveV2* c );
+    void setCurve( QgsCurveV2* c );
 
   public slots:
     void currentLayerChanged( QgsMapLayer *layer );
@@ -97,10 +97,12 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
     const QList<QgsPoint> &points() { return mCaptureList; }
     void setPoints( const QList<QgsPoint>& pointList ) { mCaptureList = pointList; }
     void closePolygon();
+    void setGeometryToRubberBand();
 
-  private:
     /** which capturing tool is being used */
     enum CaptureMode mCaptureMode;
+
+  private:
 
     /** Flag to indicate a map canvas capture operation is taking place */
     bool mCapturing;

@@ -274,6 +274,17 @@ void QgsCompoundCurveV2::addCurve( QgsCurveV2* c )
   }
 }
 
+void QgsCompoundCurveV2::removeCurve( int i )
+{
+  if ( mCurves.size() - 1  < i )
+  {
+    return;
+  }
+
+  delete( mCurves[i] );
+  mCurves.removeAt( i );
+}
+
 void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
 {
   if ( mWkbType == QGis::WKBUnknown )
