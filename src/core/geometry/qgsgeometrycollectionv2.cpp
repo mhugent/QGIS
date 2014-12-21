@@ -215,6 +215,22 @@ int QgsGeometryCollectionV2::wkbSize() const
   return size;
 }
 
+QgsRectangle QgsGeometryCollectionV2::calculateBoundingBox() const
+{
+  if ( mGeometries.size() < 1 )
+  {
+    return QgsRectangle();
+  }
+
+  QgsRectangle bbox = mGeometries.at( 0 )->calculateBoundingBox();
+  for ( int i = 1; i < mGeometries.size(); ++i )
+  {
+    QgsRectangle geomBox = mGeometries.at( i )->calculateBoundingBox();
+    bbox.combineExtentWith( &geomBox );
+  }
+  return bbox;
+}
+
 void QgsGeometryCollectionV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
 {
   coord.clear();

@@ -78,7 +78,7 @@ class QgsAbstractGeometryV2
     virtual void fromWkb( const unsigned char * wkb ) = 0;
     virtual void fromWkt( const QString& wkt ) = 0;
 
-    QgsRectangle calculateBoundingBox() const;
+    virtual QgsRectangle calculateBoundingBox() const;
 
     //render pipeline
     virtual void transform( const QgsCoordinateTransform& ct ) = 0;

@@ -35,6 +35,8 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual void fromWkb( const unsigned char* wkb );
     virtual void fromWkt( const QString& wkt );
 
+    virtual QgsRectangle calculateBoundingBox() const;
+
     virtual QString asText( int precision = 17 ) const;
     virtual unsigned char* asBinary( int& binarySize ) const;
     virtual int wkbSize() const;

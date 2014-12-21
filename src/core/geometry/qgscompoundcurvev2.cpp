@@ -114,6 +114,22 @@ void QgsCompoundCurveV2::fromWkt( const QString& wkt )
 {
 }
 
+QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
+{
+  if ( mCurves.size() < 1 )
+  {
+    return QgsRectangle();
+  }
+
+  QgsRectangle bbox = mCurves.at( 0 )->calculateBoundingBox();
+  for ( int i = 1; i < mCurves.size(); ++i )
+  {
+    QgsRectangle curveBox = mCurves.at( i )->calculateBoundingBox();
+    bbox.combineExtentWith( &curveBox );
+  }
+  return bbox;
+}
+
 int QgsCompoundCurveV2::wkbSize() const
 {
   int size = 0;

@@ -121,6 +121,15 @@ void QgsCurvePolygonV2::fromWkt( const QString& wkt )
 
 }
 
+QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
+{
+  if ( mExteriorRing )
+  {
+    return mExteriorRing->calculateBoundingBox();
+  }
+  return QgsRectangle();
+}
+
 QString QgsCurvePolygonV2::asText( int precision ) const
 {
   QString wkt( "CURVEPOLYGON(" );

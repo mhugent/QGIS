@@ -47,6 +47,8 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     unsigned char* asBinary( int& binarySize ) const;
     int wkbSize() const;
 
+    virtual QgsRectangle calculateBoundingBox() const;
+
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 
     //low-level editing

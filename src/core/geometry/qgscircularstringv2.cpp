@@ -80,6 +80,139 @@ void QgsCircularStringV2::fromWkt( const QString& wkt )
 {
 }
 
+QgsRectangle QgsCircularStringV2::calculateBoundingBox() const
+{
+  QgsRectangle bbox;
+  int nPoints = numPoints();
+  for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
+  {
+    if ( i == 0 )
+    {
+      bbox = segmentBoundingBox( QgsPointV2( mX[i], mY[i] ), QgsPointV2( mX[i + 1], mY[i + 1] ), QgsPointV2( mX[i + 2], mY[i + 2] ) );
+    }
+    else
+    {
+      QgsRectangle segmentBox = segmentBoundingBox( QgsPointV2( mX[i], mY[i] ), QgsPointV2( mX[i + 1], mY[i + 1] ), QgsPointV2( mX[i + 2], mY[i + 2] ) );
+      bbox.combineExtentWith( &segmentBox );
+    }
+  }
+  return bbox;
+}
+
+QgsRectangle QgsCircularStringV2::segmentBoundingBox( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 )
+{
+  double centerX, centerY, radius;
+  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
+
+  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX ) + 90;
+  if ( p1Angle > 360 )
+  {
+    p1Angle -= 360;
+  }
+  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX ) + 90;
+  if ( p2Angle > 360 )
+  {
+    p2Angle -= 360;
+  }
+  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX ) + 90;
+  if ( p3Angle > 360 )
+  {
+    p3Angle -= 360;
+  }
+
+  //start point, end point and compass points in between can be on bounding box
+  QgsRectangle bbox( pt1.x(), pt1.y(), pt1.x(), pt1.y() );
+  bbox.combineExtentWith( pt3.x(), pt3.y() );
+
+  QList<QgsPointV2> compassPoints = compassPointsOnSegment( p1Angle, p2Angle, p3Angle, centerX, centerY, radius );
+  QList<QgsPointV2>::const_iterator cpIt = compassPoints.constBegin();
+  for ( ; cpIt != compassPoints.constEnd(); ++cpIt )
+  {
+    bbox.combineExtentWith( cpIt->x(), cpIt->y() );
+  }
+  return bbox;
+}
+
+QList<QgsPointV2> QgsCircularStringV2::compassPointsOnSegment( double p1Angle, double p2Angle, double p3Angle, double centerX, double centerY, double radius )
+{
+  QList<QgsPointV2> pointList;
+
+  QgsPointV2 nPoint( centerX, centerY + radius );
+  QgsPointV2 ePoint( centerX + radius, centerY );
+  QgsPointV2 sPoint( centerX, centerY - radius );
+  QgsPointV2 wPoint( centerX - radius, centerY );
+
+  if ( p3Angle >= p1Angle )
+  {
+    if ( p2Angle > p1Angle && p2Angle < p3Angle )
+    {
+      if ( p1Angle <= 90 && p3Angle >= 90 )
+      {
+        pointList.append( ePoint );
+      }
+      if ( p1Angle <= 180 && p3Angle >= 180 )
+      {
+        pointList.append( sPoint );
+      }
+      if ( p1Angle <= 270 && p3Angle >= 270 )
+      {
+        pointList.append( wPoint );
+      }
+    }
+    else
+    {
+      pointList.append( nPoint );
+      if ( p1Angle >= 90 || p3Angle <= 90 )
+      {
+        pointList.append( ePoint );
+      }
+      if ( p1Angle >= 180 || p3Angle <= 180 )
+      {
+        pointList.append( ePoint );
+      }
+      if ( p1Angle >= 270 || p3Angle <= 270 )
+      {
+        pointList.append( ePoint );
+      }
+    }
+  }
+  else
+  {
+    if ( p2Angle < p1Angle && p2Angle > p3Angle )
+    {
+      if ( p1Angle >= 270 && p3Angle <= 270 )
+      {
+        pointList.append( wPoint );
+      }
+      if ( p1Angle >= 180 && p3Angle <= 180 )
+      {
+        pointList.append( sPoint );
+      }
+      if ( p1Angle >= 90 && p3Angle <= 90 )
+      {
+        pointList.append( ePoint );
+      }
+    }
+    else
+    {
+      pointList.append( nPoint );
+      if ( p1Angle <= 270 || p3Angle >= 270 )
+      {
+        pointList.append( wPoint );
+      }
+      if ( p1Angle <= 180 || p3Angle >= 180 )
+      {
+        pointList.append( sPoint );
+      }
+      if ( p1Angle <= 90 || p3Angle >= 90 )
+      {
+        pointList.append( ePoint );
+      }
+    }
+  }
+  return pointList;
+}
+
 int QgsCircularStringV2::wkbSize() const
 {
   int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );

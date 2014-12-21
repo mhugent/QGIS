@@ -34,6 +34,8 @@ class QgsCircularStringV2: public QgsCurveV2
     virtual void fromWkb( const unsigned char * wkb );
     virtual void fromWkt( const QString& wkt );
 
+    virtual QgsRectangle calculateBoundingBox() const;
+
     virtual QString asText( int precision = 17 ) const;
     virtual unsigned char* asBinary( int& binarySize ) const;
     virtual int wkbSize() const;
@@ -76,6 +78,9 @@ class QgsCircularStringV2: public QgsCurveV2
     double interpolateArc( double angle, double a1, double a2, double a3, double zm1, double zm2, double zm3 ) const;
     static void arcTo( QPainterPath& path, const QPointF& pt1, const QPointF& pt2, const QPointF& pt3 );
     static double ccwAngle( double dy, double dx );
+    //bounding box of a single segment
+    static QgsRectangle segmentBoundingBox( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
+    static QList<QgsPointV2> compassPointsOnSegment( double p1Angle, double p2Angle, double p3Angle, double centerX, double centerY, double radius );
 };
 
 #endif // QGSCIRCULARSTRING_H
