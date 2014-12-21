@@ -39,12 +39,12 @@
 QgsMapToolCapture::QgsMapToolCapture( QgsMapCanvas* canvas, enum CaptureMode tool )
     : QgsMapToolEdit( canvas )
     , mCaptureMode( tool )
-    , mRubberBand( 0 )
-    , mTempRubberBand( 0 )
     , mValidator( 0 )
     , mSnappingMarker( 0 )
     , mGeometry( 0 )
     , mGeometryRubberBand( 0 )
+    , mTempGeometryRubberBand( 0 )
+    , mCurrentRubberBandVertex( -1 )
 {
   mCaptureModeFromLayer = tool == CaptureNone;
   mCapturing = false;
@@ -72,6 +72,7 @@ QgsMapToolCapture::~QgsMapToolCapture()
 
   delete mGeometry;
   delete mGeometryRubberBand;
+  delete mTempGeometryRubberBand;
 }
 
 void QgsMapToolCapture::deactivate()
@@ -135,10 +136,11 @@ void QgsMapToolCapture::canvasMoveEvent( QMouseEvent * e )
       mSnappingMarker->setCenter( snapResults.constBegin()->snappedVertex );
     }
 
-    if ( mCaptureMode != CapturePoint && mTempRubberBand && mCapturing )
+    if ( mCaptureMode != CapturePoint && mGeometryRubberBand && mCapturing && mCurrentRubberBandVertex >= 0 )
     {
       mapPoint = snapPointFromResults( snapResults, e->pos() );
-      mTempRubberBand->movePoint( mapPoint );
+      QgsVertexId vId; vId.feature = 0; vId.ring = 0; vId.vertex = mCurrentRubberBandVertex;
+      mGeometryRubberBand->moveVertex( vId, QgsPointV2( mapPoint.x(), mapPoint.y() ) );
     }
   }
 } // mouseMoveEvent
@@ -205,11 +207,6 @@ void QgsMapToolCapture::setCurve( QgsCurveV2* c )
   }
 
   mGeometry->addCurve( c );
-
-  if ( !mGeometryRubberBand )
-  {
-    mGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
-  }
   setGeometryToRubberBand();
 }
 
@@ -230,11 +227,6 @@ int QgsMapToolCapture::addVertex( const QPoint &p )
   }
   mGeometry->addVertex( QgsPointV2( layerPoint.x(), layerPoint.y() ) );
 
-  if ( !mGeometryRubberBand )
-  {
-    mGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
-  }
-
   setGeometryToRubberBand();
   validateGeometry();
   return 0;
@@ -242,21 +234,29 @@ int QgsMapToolCapture::addVertex( const QPoint &p )
 
 void QgsMapToolCapture::setGeometryToRubberBand()
 {
+  if ( !mGeometryRubberBand )
+  {
+    mGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
+  }
+  if ( !mTempGeometryRubberBand )
+  {
+    mTempGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
+  }
+
+  QgsCompoundCurveV2* rubberBandGeom = dynamic_cast<QgsCompoundCurveV2*>( mGeometry->clone() );
+  rubberBandGeom->addVertex( rubberBandGeom->endPoint() );
+  mCurrentRubberBandVertex = rubberBandGeom->numPoints() - 1;
   if ( mCaptureMode == CapturePolygon )
   {
-    QgsCurvePolygonV2* polygon = new QgsCurvePolygonV2();
-    polygon->setExteriorRing( mGeometry->close() );
-    mGeometryRubberBand->setGeometry( polygon );
+    rubberBandGeom->close();
   }
-  else
-  {
-    mGeometryRubberBand->setGeometry( mGeometry->clone() );
-  }
+  mGeometryRubberBand->setGeometry( rubberBandGeom );
 }
 
 
 void QgsMapToolCapture::undo()
 {
+#if 0
   if ( mRubberBand )
   {
     int rubberBandSize = mRubberBand->numberOfVertices();
@@ -287,6 +287,7 @@ void QgsMapToolCapture::undo()
 
     validateGeometry();
   }
+#endif //0
 }
 
 void QgsMapToolCapture::keyPressEvent( QKeyEvent* e )
@@ -312,18 +313,6 @@ void QgsMapToolCapture::stopCapturing()
 
   delete mGeometryRubberBand; mGeometryRubberBand = 0;
 
-  if ( mRubberBand )
-  {
-    delete mRubberBand;
-    mRubberBand = 0;
-  }
-
-  if ( mTempRubberBand )
-  {
-    delete mTempRubberBand;
-    mTempRubberBand = 0;
-  }
-
   while ( !mGeomErrorMarkers.isEmpty() )
   {
     delete mGeomErrorMarkers.takeFirst();
@@ -339,15 +328,6 @@ void QgsMapToolCapture::stopCapturing()
   mCapturing = false;
   mCaptureList.clear();
   mCanvas->refresh();
-}
-
-void QgsMapToolCapture::deleteTempRubberBand()
-{
-  if ( mTempRubberBand )
-  {
-    delete mTempRubberBand;
-    mTempRubberBand = 0;
-  }
 }
 
 void QgsMapToolCapture::closePolygon()

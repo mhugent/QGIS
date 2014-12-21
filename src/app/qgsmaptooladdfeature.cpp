@@ -192,9 +192,6 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
     }
     else if ( e->button() == Qt::RightButton )
     {
-      // End of string
-      deleteTempRubberBand();
-
 #if 0
       //lines: bail out if there are not at least two vertices
       if ( mode() == CaptureLine && size() < 2 )
@@ -250,7 +247,8 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
 
         if ( mode() == CapturePolygon )
         {
-          QgsCompoundCurveV2* geom = geometry()->close();
+          QgsCompoundCurveV2* geom = dynamic_cast< QgsCompoundCurveV2* >( geometry()->clone() );
+          geom->close();
           if ( !geom->isClosed() )
           {
             return; //todo: throw error

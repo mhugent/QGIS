@@ -333,16 +333,13 @@ void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
   line->addVertex( pt );
 }
 
-QgsCompoundCurveV2* QgsCompoundCurveV2::close() const
+void QgsCompoundCurveV2::close()
 {
-  QgsCompoundCurveV2* closedCurve = static_cast<QgsCompoundCurveV2*>( clone() );
   if ( numPoints() < 1 || ( startPoint() == endPoint() ) )
   {
-    return closedCurve;
+    return;
   }
-
-  closedCurve->addVertex( startPoint() );
-  return closedCurve;
+  addVertex( startPoint() );
 }
 
 void QgsCompoundCurveV2::removeCurves()
@@ -421,6 +418,7 @@ bool QgsCompoundCurveV2::moveVertex( const QgsVertexId& position, const QgsPoint
   {
     mCurves[idIt->first]->moveVertex( idIt->second, newPos );
   }
+  mBoundingBox = QgsRectangle(); //bbox changed
   return curveIds.size() > 0;
 }
 

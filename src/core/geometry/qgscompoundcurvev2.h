@@ -57,7 +57,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     void removeCurve( int i );
     void addVertex( const QgsPointV2& pt );
     /**Returns closed ring based on curve (connects to start point if not already done)*/
-    QgsCompoundCurveV2* close() const;
+    void close();
 
     void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );

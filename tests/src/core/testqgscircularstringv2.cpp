@@ -40,6 +40,9 @@ void TestQgsCircularStringV2::testBoundingBox_data()
   pointList.clear();
   pointList << QPointF( 1.5, 0 ) << QPointF( 2.0, 0.5 ) << QPointF( 1.0, 0.5 ) << QPointF( 0.5, 0.0 ) << QPointF( 0.5, 1.0 );
   QTest::newRow( "bboxTest2" ) << pointList << 0.0 << 0.0 << 2.0 << 1.0;
+  pointList.clear();
+  pointList << QPointF( 0.5, 1 ) << QPointF( 0, 0.5 ) << QPointF( 1, 0.5 );
+  QTest::newRow( "bboxTest3" ) << pointList << 0.0 << 0.0 << 1.0 << 1.0;
 }
 
 void TestQgsCircularStringV2::testBoundingBox()

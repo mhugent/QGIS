@@ -87,7 +87,7 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
 
     void startCapturing();
     void stopCapturing();
-    void deleteTempRubberBand();
+    void deleteTempRubberBand() {} //todo: remove
 
     CaptureMode mode() { return mCaptureMode; }
 
@@ -107,12 +107,6 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
     /** Flag to indicate a map canvas capture operation is taking place */
     bool mCapturing;
 
-    /** rubber band for polylines and polygons */
-    QgsRubberBand* mRubberBand;
-
-    /** temporary rubber band for polylines and polygons. this connects the last added point to the mouse cursor position */
-    QgsRubberBand* mTempRubberBand;
-
     /** List to store the points of digitised lines and polygons (in layer coordinates)*/
     QList<QgsPoint> mCaptureList;
 
@@ -128,6 +122,8 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
 
     QgsCompoundCurveV2* mGeometry;
     QgsGeometryRubberBand* mGeometryRubberBand;
+    QgsGeometryRubberBand* mTempGeometryRubberBand;
+    int mCurrentRubberBandVertex; //last vertex in temp rubber band
 };
 
 #endif
