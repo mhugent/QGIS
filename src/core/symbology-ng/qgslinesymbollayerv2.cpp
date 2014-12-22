@@ -305,6 +305,7 @@ void QgsSimpleLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
   applyDataDefinedSymbology( context, mPen, mSelPen, offset );
 
   p->setPen( context.selected() ? mSelPen : mPen );
+  p->setBrush( QBrush( Qt::NoBrush ) );
 
 #if 0
   // Disable 'Antialiasing' if the geometry was generalized in the current RenderContext (We known that it must have least #2 points).
