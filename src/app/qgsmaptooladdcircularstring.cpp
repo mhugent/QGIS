@@ -108,7 +108,7 @@ void QgsMapToolAddCircularString::canvasReleaseEvent( QMouseEvent* e )
 
 void QgsMapToolAddCircularString::deactivate()
 {
-  if ( mParentTool )
+  if ( mParentTool && mPoints.size() > 0 )
   {
     QgsCircularStringV2* c = new QgsCircularStringV2();
     c->setPoints( mPoints );

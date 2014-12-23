@@ -407,6 +407,7 @@ bool QgsCurvePolygonV2::moveVertex( const QgsVertexId& position, const QgsPointV
       mInteriorRings[vIt->ring - 1]->moveVertex( *vIt, newPos );
     }
   }
+  mBoundingBox = QgsRectangle();
   return ( vertexIds.size() > 0 );
 }
 

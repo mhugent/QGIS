@@ -43,7 +43,7 @@ void QgsGeometryRubberBand::paint( QPainter* painter )
   painter->save();
   painter->translate( -pos() );
 
-  if ( mGeometry->dimension() > 1 )
+  if ( mGeometryType == QGis::Polygon )
   {
     painter->setBrush( mBrush );
   }
@@ -55,7 +55,6 @@ void QgsGeometryRubberBand::paint( QPainter* painter )
 
 
   QgsAbstractGeometryV2* paintGeom = mGeometry->clone();
-  //todo: CRS transform
 
   paintGeom->mapToPixel( *( mMapCanvas->getCoordinateTransform() ) );
   paintGeom->draw( *painter );

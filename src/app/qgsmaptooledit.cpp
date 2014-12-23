@@ -95,7 +95,7 @@ QgsRubberBand* QgsMapToolEdit::createRubberBand( QGis::GeometryType geometryType
 QgsGeometryRubberBand* QgsMapToolEdit::createGeometryRubberBand( QGis::GeometryType geometryType ) const
 {
   QSettings settings;
-  QgsGeometryRubberBand* rb = new QgsGeometryRubberBand( mCanvas );
+  QgsGeometryRubberBand* rb = new QgsGeometryRubberBand( mCanvas, geometryType );
   QColor color( settings.value( "/qgis/digitizing/line_color_red", 255 ).toInt(),
                 settings.value( "/qgis/digitizing/line_color_green", 0 ).toInt(),
                 settings.value( "/qgis/digitizing/line_color_blue", 0 ).toInt() );

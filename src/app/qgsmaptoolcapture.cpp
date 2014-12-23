@@ -249,8 +249,14 @@ void QgsMapToolCapture::setGeometryToRubberBand()
   if ( mCaptureMode == CapturePolygon )
   {
     rubberBandGeom->close();
+    QgsCurvePolygonV2* poly = new QgsCurvePolygonV2();
+    poly->setExteriorRing( rubberBandGeom );
+    mGeometryRubberBand->setGeometry( poly );
   }
-  mGeometryRubberBand->setGeometry( rubberBandGeom );
+  else
+  {
+    mGeometryRubberBand->setGeometry( rubberBandGeom );
+  }
 }
 
 
