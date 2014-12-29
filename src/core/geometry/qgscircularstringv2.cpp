@@ -640,7 +640,13 @@ void QgsCircularStringV2::addToPainterPath( QPainterPath& path ) const
 
   for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
   {
-    arcTo( path, QPointF( mX[i], mY[i] ), QPointF( mX[i + 1], mY[i + 1] ), QPointF( mX[i + 2], mY[i + 2] ) );
+    QList<QgsPointV2> pt;
+    segmentize( QgsPointV2( mX[i], mY[i] ), QgsPointV2( mX[i + 1], mY[i + 1] ), QgsPointV2( mX[i + 2], mY[i + 2] ), pt );
+    for ( int j = 1; j < pt.size(); ++j )
+    {
+      path.lineTo( pt.at( j ).x(), pt.at( j ).y() );
+    }
+    //arcTo( path, QPointF( mX[i], mY[i] ), QPointF( mX[i + 1], mY[i + 1] ), QPointF( mX[i + 2], mY[i + 2] ) );
   }
 }
 
