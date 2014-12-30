@@ -20,9 +20,13 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgslinestringv2.h"
 #include "qgsmessagelog.h"
 #include "qgsmulticurvev2.h"
+#include "qgsmultipointv2.h"
+#include "qgsmultisurfacev2.h"
 #include "qgslogger.h"
 #include "qgspolygonv2.h"
 #include <cstdio>
+
+#define DEFAULT_QUADRANT_SEGMENTS 8
 
 #define CATCH_GEOS(r) \
   catch (GEOSException &e) \
@@ -126,7 +130,8 @@ QgsGeos::QgsGeos( const QgsAbstractGeometryV2* geometry ): QgsGeometryEngine( ge
 
 QgsGeos::~QgsGeos()
 {
-  geometryChanged(); //remove caches
+  GEOSGeom_destroy_r( geosinit.ctxt, mGeos );
+  GEOSPreparedGeom_destroy_r( geosinit.ctxt, mGeosPrepared );
 }
 
 void QgsGeos::geometryChanged()
@@ -296,6 +301,8 @@ int QgsGeos::splitGeometry( const QgsLineStringV2& splitLine,
 
   return returnCode;
 }
+
+
 
 int QgsGeos::topologicalTestPointsSplit( const GEOSGeometry* splitLine, QList<QgsPointV2>& testPoints ) const
 {
@@ -703,29 +710,88 @@ QgsAbstractGeometryV2* QgsGeos::fromGeos( const GEOSGeometry* geos )
       return sequenceToLinestring( geos, hasZ, hasM );
     }
     case GEOS_POLYGON:
-
-      QgsPolygonV2* polygon = new QgsPolygonV2();
-
-      const GEOSGeometry* ring = GEOSGetExteriorRing_r( geosinit.ctxt, geos );
-      if ( ring )
+    {
+      return fromGeosPolygon( geos );
+    }
+    case GEOS_MULTIPOINT:
+    {
+      QgsMultiPointV2* multiPoint = new QgsMultiPointV2();
+      int nParts = GEOSGetNumGeometries_r( geosinit.ctxt, geos );
+      for ( int i = 0; i < nParts; ++i )
       {
-        polygon->setExteriorRing( sequenceToLinestring( ring, hasZ, hasM ) );
-      }
-
-      QList<QgsCurveV2*> interiorRings;
-      for ( int i = 0; i < GEOSGetNumInteriorRings_r( geosinit.ctxt, geos ); ++i )
-      {
-        ring = GEOSGetInteriorRingN_r( geosinit.ctxt, geos, i );
-        if ( ring )
+        const GEOSCoordSequence* cs = GEOSGeom_getCoordSeq_r( geosinit.ctxt, GEOSGetGeometryN_r( geosinit.ctxt, geos, i ) );
+        if ( cs )
         {
-          interiorRings.push_back( sequenceToLinestring( ring, hasZ, hasM ) );
+          multiPoint->addGeometry( coordSeqPoint( cs, 0, hasZ, hasM ).clone() );
         }
       }
-      polygon->setInteriorRings( interiorRings );
+      return multiPoint;
+    }
+    case GEOS_MULTILINESTRING:
+    {
+      QgsMultiCurveV2* multiCurve = new QgsMultiCurveV2();
+      int nParts = GEOSGetNumGeometries_r( geosinit.ctxt, geos );
+      for ( int i = 0; i < nParts; ++i )
+      {
+        QgsLineStringV2* line = sequenceToLinestring( GEOSGetGeometryN_r( geosinit.ctxt, geos, i ), hasZ, hasM );
+        if ( line )
+        {
+          multiCurve->addGeometry( line );
+        }
+      }
+      return multiCurve;
+    }
+    case GEOS_MULTIPOLYGON:
+    {
+      QgsMultiSurfaceV2* multiSurface = new QgsMultiSurfaceV2();
 
-      return polygon;
+      int nParts = GEOSGetNumGeometries_r( geosinit.ctxt, geos );
+      for ( int i = 0; i < nParts; ++i )
+      {
+        QgsPolygonV2* poly = fromGeosPolygon( GEOSGetGeometryN_r( geosinit.ctxt, geos, i ) );
+        if ( poly )
+        {
+          multiSurface->addGeometry( poly );
+        }
+      }
+      return multiSurface;
+    }
   }
   return 0;
+}
+
+QgsPolygonV2* QgsGeos::fromGeosPolygon( const GEOSGeometry* geos )
+{
+  if ( GEOSGeomTypeId_r( geosinit.ctxt, geos ) != GEOS_POLYGON )
+  {
+    return 0;
+  }
+
+  int nCoordDims = GEOSGeom_getCoordinateDimension_r( geosinit.ctxt, geos );
+  int nDims = GEOSGeom_getDimensions_r( geosinit.ctxt, geos );
+  bool hasZ = ( nCoordDims == 3 );
+  bool hasM = (( nDims - nCoordDims ) == 1 );
+
+  QgsPolygonV2* polygon = new QgsPolygonV2();
+
+  const GEOSGeometry* ring = GEOSGetExteriorRing_r( geosinit.ctxt, geos );
+  if ( ring )
+  {
+    polygon->setExteriorRing( sequenceToLinestring( ring, hasZ, hasM ) );
+  }
+
+  QList<QgsCurveV2*> interiorRings;
+  for ( int i = 0; i < GEOSGetNumInteriorRings_r( geosinit.ctxt, geos ); ++i )
+  {
+    ring = GEOSGetInteriorRingN_r( geosinit.ctxt, geos, i );
+    if ( ring )
+    {
+      interiorRings.push_back( sequenceToLinestring( ring, hasZ, hasM ) );
+    }
+  }
+  polygon->setInteriorRings( interiorRings );
+
+  return polygon;
 }
 
 QgsLineStringV2* QgsGeos::sequenceToLinestring( const GEOSGeometry* geos, bool hasZ, bool hasM )
@@ -1112,4 +1178,538 @@ GEOSGeometry* QgsGeos::createGeosPolygon( const QgsAbstractGeometryV2* poly )
     delete[] holes;
     return geosPolygon;
   }
+}
+
+QgsAbstractGeometryV2* QgsGeos::reshapeGeometry( const QgsLineStringV2& reshapeWithLine, int* errorCode ) const
+{
+  if ( !mGeos || reshapeWithLine.numPoints() < 2 || mGeometry->dimension() == 0 )
+  {
+    if ( errorCode ) { *errorCode = 1; }
+    return 0;
+  }
+
+  GEOSGeometry* reshapeLineGeos = createGeosLinestring( &reshapeWithLine );
+
+  //single or multi?
+  int numGeoms = GEOSGetNumGeometries_r( geosinit.ctxt, mGeos );
+  if ( numGeoms == -1 )
+  {
+    if ( errorCode ) { *errorCode = 1; }
+    return 0;
+  }
+
+  bool isMultiGeom = false;
+  int geosTypeId = GEOSGeomTypeId_r( geosinit.ctxt, mGeos );
+  if ( geosTypeId == GEOS_MULTILINESTRING || geosTypeId == GEOS_MULTIPOLYGON )
+    isMultiGeom = true;
+
+  bool isLine = ( mGeometry->dimension() == 1 );
+
+  if ( !isMultiGeom )
+  {
+    GEOSGeometry* reshapedGeometry;
+    if ( isLine )
+    {
+      reshapedGeometry = reshapeLine( mGeos, reshapeLineGeos );
+    }
+    else
+    {
+      reshapedGeometry = reshapePolygon( mGeos, reshapeLineGeos );
+    }
+
+    if ( errorCode ) { *errorCode = 0; }
+    QgsAbstractGeometryV2* reshapeResult = fromGeos( reshapedGeometry );
+    GEOSGeom_destroy_r( geosinit.ctxt, reshapedGeometry );
+    return reshapeResult;
+  }
+  else
+  {
+    //call reshape for each geometry part and replace mGeos with new geometry if reshape took place
+    bool reshapeTookPlace = false;
+
+    GEOSGeometry* currentReshapeGeometry = 0;
+    GEOSGeometry** newGeoms = new GEOSGeometry*[numGeoms];
+
+    for ( int i = 0; i < numGeoms; ++i )
+    {
+      if ( isLine )
+        currentReshapeGeometry = reshapeLine( GEOSGetGeometryN_r( geosinit.ctxt, mGeos, i ), reshapeLineGeos );
+      else
+        currentReshapeGeometry = reshapePolygon( GEOSGetGeometryN_r( geosinit.ctxt, mGeos, i ), reshapeLineGeos );
+
+      if ( currentReshapeGeometry )
+      {
+        newGeoms[i] = currentReshapeGeometry;
+        reshapeTookPlace = true;
+      }
+      else
+      {
+        newGeoms[i] = GEOSGeom_clone_r( geosinit.ctxt, GEOSGetGeometryN( mGeos, i ) );
+      }
+    }
+    GEOSGeom_destroy_r( geosinit.ctxt, reshapeLineGeos );
+
+    GEOSGeometry* newMultiGeom = 0;
+    if ( isLine )
+    {
+      newMultiGeom = GEOSGeom_createCollection_r( geosinit.ctxt, GEOS_MULTILINESTRING, newGeoms, numGeoms );
+    }
+    else //multipolygon
+    {
+      newMultiGeom = GEOSGeom_createCollection_r( geosinit.ctxt, GEOS_MULTIPOLYGON, newGeoms, numGeoms );
+    }
+
+    delete[] newGeoms;
+    if ( !newMultiGeom )
+    {
+      if ( errorCode ) { *errorCode = 3; }
+      return 0;
+    }
+
+    if ( reshapeTookPlace )
+    {
+      if ( errorCode ) { *errorCode = 0; }
+      QgsAbstractGeometryV2* reshapedMultiGeom = fromGeos( newMultiGeom );
+      GEOSGeom_destroy_r( geosinit.ctxt, newMultiGeom );
+      return reshapedMultiGeom;
+    }
+    else
+    {
+      GEOSGeom_destroy_r( geosinit.ctxt, newMultiGeom );
+      if ( errorCode ) { *errorCode = 1; }
+      return 0;
+    }
+  }
+  return 0;
+}
+
+GEOSGeometry* QgsGeos::reshapeLine( const GEOSGeometry* line, const GEOSGeometry* reshapeLineGeos )
+{
+  if ( !line || !reshapeLineGeos )
+    return 0;
+
+  bool atLeastTwoIntersections = false;
+
+  try
+  {
+    //make sure there are at least two intersection between line and reshape geometry
+    GEOSGeometry* intersectGeom = GEOSIntersection_r( geosinit.ctxt, line, reshapeLineGeos );
+    if ( intersectGeom )
+    {
+      atLeastTwoIntersections = ( GEOSGeomTypeId_r( geosinit.ctxt, intersectGeom ) == GEOS_MULTIPOINT
+                                  && GEOSGetNumGeometries_r( geosinit.ctxt, intersectGeom ) > 1 );
+      GEOSGeom_destroy_r( geosinit.ctxt, intersectGeom );
+    }
+  }
+  catch ( GEOSException &e )
+  {
+    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
+    atLeastTwoIntersections = false;
+  }
+
+  if ( !atLeastTwoIntersections )
+    return 0;
+
+  //begin and end point of original line
+  const GEOSCoordSequence* lineCoordSeq = GEOSGeom_getCoordSeq_r( geosinit.ctxt, line );
+  if ( !lineCoordSeq )
+    return 0;
+
+  unsigned int lineCoordSeqSize;
+  if ( GEOSCoordSeq_getSize_r( geosinit.ctxt, lineCoordSeq, &lineCoordSeqSize ) == 0 )
+    return 0;
+
+  if ( lineCoordSeqSize < 2 )
+    return 0;
+
+  //first and last vertex of line
+  double x1, y1, x2, y2;
+  GEOSCoordSeq_getX_r( geosinit.ctxt, lineCoordSeq, 0, &x1 );
+  GEOSCoordSeq_getY_r( geosinit.ctxt, lineCoordSeq, 0, &y1 );
+  GEOSCoordSeq_getX_r( geosinit.ctxt, lineCoordSeq, lineCoordSeqSize - 1, &x2 );
+  GEOSCoordSeq_getY_r( geosinit.ctxt, lineCoordSeq, lineCoordSeqSize - 1, &y2 );
+  QgsPointV2 beginPoint( x1, y1 );
+  GEOSGeometry* beginLineVertex = createGeosPoint( &beginPoint, 2 );
+  QgsPointV2 endPoint( x2, y2 );
+  GEOSGeometry* endLineVertex = createGeosPoint( &endPoint, 2 );
+
+  bool isRing = false;
+  if ( GEOSGeomTypeId_r( geosinit.ctxt, line ) == GEOS_LINEARRING
+       || GEOSEquals_r( geosinit.ctxt, beginLineVertex, endLineVertex ) == 1 )
+    isRing = true;
+
+  //node line and reshape line
+  GEOSGeometry* nodedGeometry = nodeGeometries( reshapeLineGeos, line );
+  if ( !nodedGeometry )
+  {
+    GEOSGeom_destroy( beginLineVertex );
+    GEOSGeom_destroy( endLineVertex );
+    return 0;
+  }
+
+  //and merge them together
+  GEOSGeometry *mergedLines = GEOSLineMerge_r( geosinit.ctxt, nodedGeometry );
+  GEOSGeom_destroy( nodedGeometry );
+  if ( !mergedLines )
+  {
+    GEOSGeom_destroy( beginLineVertex );
+    GEOSGeom_destroy( endLineVertex );
+    return 0;
+  }
+
+  int numMergedLines = GEOSGetNumGeometries_r( geosinit.ctxt, mergedLines );
+  if ( numMergedLines < 2 ) //some special cases. Normally it is >2
+  {
+    GEOSGeom_destroy( beginLineVertex );
+    GEOSGeom_destroy( endLineVertex );
+    if ( numMergedLines == 1 ) //reshape line is from begin to endpoint. So we keep the reshapeline
+      return GEOSGeom_clone_r( geosinit.ctxt, reshapeLineGeos );
+    else
+      return 0;
+  }
+
+  QList<GEOSGeometry*> resultLineParts; //collection with the line segments that will be contained in result
+  QList<GEOSGeometry*> probableParts; //parts where we can decide on inclusion only after going through all the candidates
+
+  for ( int i = 0; i < numMergedLines; ++i )
+  {
+    const GEOSGeometry* currentGeom;
+
+    currentGeom = GEOSGetGeometryN_r( geosinit.ctxt, mergedLines, i );
+    const GEOSCoordSequence* currentCoordSeq = GEOSGeom_getCoordSeq_r( geosinit.ctxt, currentGeom );
+    unsigned int currentCoordSeqSize;
+    GEOSCoordSeq_getSize_r( geosinit.ctxt, currentCoordSeq, &currentCoordSeqSize );
+    if ( currentCoordSeqSize < 2 )
+      continue;
+
+    //get the two endpoints of the current line merge result
+    double xBegin, xEnd, yBegin, yEnd;
+    GEOSCoordSeq_getX_r( geosinit.ctxt, currentCoordSeq, 0, &xBegin );
+    GEOSCoordSeq_getY_r( geosinit.ctxt, currentCoordSeq, 0, &yBegin );
+    GEOSCoordSeq_getX_r( geosinit.ctxt, currentCoordSeq, currentCoordSeqSize - 1, &xEnd );
+    GEOSCoordSeq_getY_r( geosinit.ctxt, currentCoordSeq, currentCoordSeqSize - 1, &yEnd );
+    QgsPointV2 beginPoint( xBegin, yBegin );
+    GEOSGeometry* beginCurrentGeomVertex = createGeosPoint( &beginPoint, 2 );
+    QgsPointV2 endPoint( xEnd, yEnd );
+    GEOSGeometry* endCurrentGeomVertex = createGeosPoint( &endPoint, 2 );
+
+    //check how many endpoints of the line merge result are on the (original) line
+    int nEndpointsOnOriginalLine = 0;
+    if ( pointContainedInLine( beginCurrentGeomVertex, line ) == 1 )
+      nEndpointsOnOriginalLine += 1;
+
+    if ( pointContainedInLine( endCurrentGeomVertex, line ) == 1 )
+      nEndpointsOnOriginalLine += 1;
+
+    //check how many endpoints equal the endpoints of the original line
+    int nEndpointsSameAsOriginalLine = 0;
+    if ( GEOSEquals_r( geosinit.ctxt, beginCurrentGeomVertex, beginLineVertex ) == 1
+         || GEOSEquals_r( geosinit.ctxt, beginCurrentGeomVertex, endLineVertex ) == 1 )
+      nEndpointsSameAsOriginalLine += 1;
+
+    if ( GEOSEquals_r( geosinit.ctxt, endCurrentGeomVertex, beginLineVertex ) == 1
+         || GEOSEquals_r( geosinit.ctxt, endCurrentGeomVertex, endLineVertex ) == 1 )
+      nEndpointsSameAsOriginalLine += 1;
+
+    //check if the current geometry overlaps the original geometry (GEOSOverlap does not seem to work with linestrings)
+    bool currentGeomOverlapsOriginalGeom = false;
+    bool currentGeomOverlapsReshapeLine = false;
+    if ( lineContainedInLine( currentGeom, line ) == 1 )
+      currentGeomOverlapsOriginalGeom = true;
+
+    if ( lineContainedInLine( currentGeom, reshapeLineGeos ) == 1 )
+      currentGeomOverlapsReshapeLine = true;
+
+    //logic to decide if this part belongs to the result
+    if ( nEndpointsSameAsOriginalLine == 1 && nEndpointsOnOriginalLine == 2 && currentGeomOverlapsOriginalGeom )
+    {
+      resultLineParts.push_back( GEOSGeom_clone_r( geosinit.ctxt, currentGeom ) );
+    }
+    //for closed rings, we take one segment from the candidate list
+    else if ( isRing && nEndpointsOnOriginalLine == 2 && currentGeomOverlapsOriginalGeom )
+    {
+      probableParts.push_back( GEOSGeom_clone_r( geosinit.ctxt, currentGeom ) );
+    }
+    else if ( nEndpointsOnOriginalLine == 2 && !currentGeomOverlapsOriginalGeom )
+    {
+      resultLineParts.push_back( GEOSGeom_clone_r( geosinit.ctxt, currentGeom ) );
+    }
+    else if ( nEndpointsSameAsOriginalLine == 2 && !currentGeomOverlapsOriginalGeom )
+    {
+      resultLineParts.push_back( GEOSGeom_clone_r( geosinit.ctxt, currentGeom ) );
+    }
+    else if ( currentGeomOverlapsOriginalGeom && currentGeomOverlapsReshapeLine )
+    {
+      resultLineParts.push_back( GEOSGeom_clone_r( geosinit.ctxt, currentGeom ) );
+    }
+
+    GEOSGeom_destroy_r( geosinit.ctxt, beginCurrentGeomVertex );
+    GEOSGeom_destroy_r( geosinit.ctxt, endCurrentGeomVertex );
+  }
+
+  //add the longest segment from the probable list for rings (only used for polygon rings)
+  if ( isRing && probableParts.size() > 0 )
+  {
+    GEOSGeometry* maxGeom = 0; //the longest geometry in the probabla list
+    GEOSGeometry* currentGeom = 0;
+    double maxLength = -DBL_MAX;
+    double currentLength = 0;
+    for ( int i = 0; i < probableParts.size(); ++i )
+    {
+      currentGeom = probableParts.at( i );
+      GEOSLength_r( geosinit.ctxt, currentGeom, &currentLength );
+      if ( currentLength > maxLength )
+      {
+        maxLength = currentLength;
+        GEOSGeom_destroy_r( geosinit.ctxt, maxGeom );
+        maxGeom = currentGeom;
+      }
+      else
+      {
+        GEOSGeom_destroy_r( geosinit.ctxt, currentGeom );
+      }
+    }
+    resultLineParts.push_back( maxGeom );
+  }
+
+  GEOSGeom_destroy_r( geosinit.ctxt, beginLineVertex );
+  GEOSGeom_destroy_r( geosinit.ctxt, endLineVertex );
+  GEOSGeom_destroy_r( geosinit.ctxt, mergedLines );
+
+  GEOSGeometry* result = 0;
+  if ( resultLineParts.size() < 1 )
+    return 0;
+
+  if ( resultLineParts.size() == 1 ) //the whole result was reshaped
+  {
+    result = resultLineParts[0];
+  }
+  else //>1
+  {
+    GEOSGeometry **lineArray = new GEOSGeometry*[resultLineParts.size()];
+    for ( int i = 0; i < resultLineParts.size(); ++i )
+    {
+      lineArray[i] = resultLineParts[i];
+    }
+
+    //create multiline from resultLineParts
+    GEOSGeometry* multiLineGeom = GEOSGeom_createCollection_r( geosinit.ctxt, GEOS_MULTILINESTRING, lineArray, resultLineParts.size() );
+    delete [] lineArray;
+
+    //then do a linemerge with the newly combined partstrings
+    result = GEOSLineMerge_r( geosinit.ctxt, multiLineGeom );
+    GEOSGeom_destroy_r( geosinit.ctxt, multiLineGeom );
+  }
+
+  //now test if the result is a linestring. Otherwise something went wrong
+  if ( GEOSGeomTypeId_r( geosinit.ctxt, result ) != GEOS_LINESTRING )
+  {
+    GEOSGeom_destroy_r( geosinit.ctxt, result );
+    return 0;
+  }
+
+  return result;
+}
+
+GEOSGeometry* QgsGeos::reshapePolygon( const GEOSGeometry* polygon, const GEOSGeometry* reshapeLineGeos )
+{
+  //go through outer shell and all inner rings and check if there is exactly one intersection of a ring and the reshape line
+  int nIntersections = 0;
+  int lastIntersectingRing = -2;
+  const GEOSGeometry* lastIntersectingGeom = 0;
+
+  int nRings = GEOSGetNumInteriorRings_r( geosinit.ctxt, polygon );
+  if ( nRings < 0 )
+    return 0;
+
+  //does outer ring intersect?
+  const GEOSGeometry* outerRing = GEOSGetExteriorRing_r( geosinit.ctxt, polygon );
+  if ( GEOSIntersects_r( geosinit.ctxt, outerRing, reshapeLineGeos ) == 1 )
+  {
+    ++nIntersections;
+    lastIntersectingRing = -1;
+    lastIntersectingGeom = outerRing;
+  }
+
+  //do inner rings intersect?
+  const GEOSGeometry **innerRings = new const GEOSGeometry*[nRings];
+
+  try
+  {
+    for ( int i = 0; i < nRings; ++i )
+    {
+      innerRings[i] = GEOSGetInteriorRingN_r( geosinit.ctxt, polygon, i );
+      if ( GEOSIntersects_r( geosinit.ctxt, innerRings[i], reshapeLineGeos ) == 1 )
+      {
+        ++nIntersections;
+        lastIntersectingRing = i;
+        lastIntersectingGeom = innerRings[i];
+      }
+    }
+  }
+  catch ( GEOSException &e )
+  {
+    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
+    nIntersections = 0;
+  }
+
+  if ( nIntersections != 1 ) //reshape line is only allowed to intersect one ring
+  {
+    delete [] innerRings;
+    return 0;
+  }
+
+  //we have one intersecting ring, let's try to reshape it
+  GEOSGeometry* reshapeResult = reshapeLine( lastIntersectingGeom, reshapeLineGeos );
+  if ( !reshapeResult )
+  {
+    delete [] innerRings;
+    return 0;
+  }
+
+  //if reshaping took place, we need to reassemble the polygon and its rings
+  GEOSGeometry* newRing = 0;
+  const GEOSCoordSequence* reshapeSequence = GEOSGeom_getCoordSeq_r( geosinit.ctxt, reshapeResult );
+  GEOSCoordSequence* newCoordSequence = GEOSCoordSeq_clone_r( geosinit.ctxt, reshapeSequence );
+
+  GEOSGeom_destroy_r( geosinit.ctxt, reshapeResult );
+
+  newRing = GEOSGeom_createLinearRing_r( geosinit.ctxt, newCoordSequence );
+  if ( !newRing )
+  {
+    delete [] innerRings;
+    return 0;
+  }
+
+  GEOSGeometry* newOuterRing = 0;
+  if ( lastIntersectingRing == -1 )
+    newOuterRing = newRing;
+  else
+    newOuterRing = GEOSGeom_clone_r( geosinit.ctxt, outerRing );
+
+  //check if all the rings are still inside the outer boundary
+  QList<GEOSGeometry*> ringList;
+  if ( nRings > 0 )
+  {
+    GEOSGeometry* outerRingPoly = GEOSGeom_createPolygon_r( geosinit.ctxt, GEOSGeom_clone( newOuterRing ), 0, 0 );
+    if ( outerRingPoly )
+    {
+      GEOSGeometry* currentRing = 0;
+      for ( int i = 0; i < nRings; ++i )
+      {
+        if ( lastIntersectingRing == i )
+          currentRing = newRing;
+        else
+          currentRing = GEOSGeom_clone_r( geosinit.ctxt, innerRings[i] );
+
+        //possibly a ring is no longer contained in the result polygon after reshape
+        if ( GEOSContains_r( geosinit.ctxt, outerRingPoly, currentRing ) == 1 )
+          ringList.push_back( currentRing );
+        else
+          GEOSGeom_destroy_r( geosinit.ctxt, currentRing );
+      }
+    }
+    GEOSGeom_destroy_r( geosinit.ctxt, outerRingPoly );
+  }
+
+  GEOSGeometry** newInnerRings = new GEOSGeometry*[ringList.size()];
+  for ( int i = 0; i < ringList.size(); ++i )
+    newInnerRings[i] = ringList.at( i );
+
+  delete [] innerRings;
+
+  GEOSGeometry* reshapedPolygon = GEOSGeom_createPolygon_r( geosinit.ctxt, newOuterRing, newInnerRings, ringList.size() );
+  delete[] newInnerRings;
+
+  return reshapedPolygon;
+}
+
+int QgsGeos::lineContainedInLine( const GEOSGeometry* line1, const GEOSGeometry* line2 )
+{
+  if ( !line1 || !line2 )
+  {
+    return -1;
+  }
+
+  double bufferDistance = pow( 1.0L, geomDigits( line2 ) - 11 );
+
+  GEOSGeometry* bufferGeom = GEOSBuffer_r( geosinit.ctxt, line2, bufferDistance, DEFAULT_QUADRANT_SEGMENTS );
+  if ( !bufferGeom )
+    return -2;
+
+  GEOSGeometry* intersectionGeom = GEOSIntersection_r( geosinit.ctxt, bufferGeom, line1 );
+
+  //compare ratio between line1Length and intersectGeomLength (usually close to 1 if line1 is contained in line2)
+  double intersectGeomLength;
+  double line1Length;
+
+  GEOSLength_r( geosinit.ctxt, intersectionGeom, &intersectGeomLength );
+  GEOSLength_r( geosinit.ctxt, line1, &line1Length );
+
+  GEOSGeom_destroy_r( geosinit.ctxt, bufferGeom );
+  GEOSGeom_destroy_r( geosinit.ctxt, intersectionGeom );
+
+  double intersectRatio = line1Length / intersectGeomLength;
+  if ( intersectRatio > 0.9 && intersectRatio < 1.1 )
+    return 1;
+
+  return 0;
+}
+
+int QgsGeos::pointContainedInLine( const GEOSGeometry* point, const GEOSGeometry* line )
+{
+  if ( !point || !line )
+    return -1;
+
+  double bufferDistance = pow( 1.0L, geomDigits( line ) - 11 );
+
+  GEOSGeometry* lineBuffer = GEOSBuffer_r( geosinit.ctxt, line, bufferDistance, 8 );
+  if ( !lineBuffer )
+    return -2;
+
+  bool contained = false;
+  if ( GEOSContains_r( geosinit.ctxt, lineBuffer, point ) == 1 )
+    contained = true;
+
+  GEOSGeom_destroy_r( geosinit.ctxt, lineBuffer );
+  return contained;
+}
+
+int QgsGeos::geomDigits( const GEOSGeometry* geom )
+{
+  GEOSGeometry* bbox = GEOSEnvelope_r( geosinit.ctxt, geom );
+  if ( !bbox )
+    return -1;
+
+  const GEOSGeometry* bBoxRing = GEOSGetExteriorRing_r( geosinit.ctxt, bbox );
+  if ( !bBoxRing )
+    return -1;
+
+  const GEOSCoordSequence* bBoxCoordSeq = GEOSGeom_getCoordSeq_r( geosinit.ctxt, bBoxRing );
+
+  if ( !bBoxCoordSeq )
+    return -1;
+
+  unsigned int nCoords = 0;
+  if ( !GEOSCoordSeq_getSize_r( geosinit.ctxt, bBoxCoordSeq, &nCoords ) )
+    return -1;
+
+  int maxDigits = -1;
+  for ( unsigned int i = 0; i < nCoords - 1; ++i )
+  {
+    double t;
+    GEOSCoordSeq_getX_r( geosinit.ctxt, bBoxCoordSeq, i, &t );
+
+    int digits;
+    digits = ceil( log10( fabs( t ) ) );
+    if ( digits > maxDigits )
+      maxDigits = digits;
+
+    GEOSCoordSeq_getY_r( geosinit.ctxt, bBoxCoordSeq, i, &t );
+    digits = ceil( log10( fabs( t ) ) );
+    if ( digits > maxDigits )
+      maxDigits = digits;
+  }
+
+  return maxDigits;
 }

@@ -1579,113 +1579,26 @@ int QgsGeometry::splitGeometry( const QList<QgsPoint>& splitLine, QList<QgsGeome
 /**Replaces a part of this geometry with another line*/
 int QgsGeometry::reshapeGeometry( const QList<QgsPoint>& reshapeWithLine )
 {
-  return 0; //todo...
-
-#if 0
-  if ( reshapeWithLine.size() < 2 )
-    return 1;
-
-  if ( type() == QGis::Point )
-    return 1; //cannot reshape points
-
-  GEOSGeometry* reshapeLineGeos = createGeosLineString( reshapeWithLine.toVector() );
-
-  //make sure this geos geometry is up-to-date
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 1;
-
-  //single or multi?
-  int numGeoms = GEOSGetNumGeometries( mGeos );
-  if ( numGeoms == -1 )
-    return 1;
-
-  bool isMultiGeom = false;
-  int geosTypeId = GEOSGeomTypeId( mGeos );
-  if ( geosTypeId == GEOS_MULTILINESTRING || geosTypeId == GEOS_MULTIPOLYGON )
-    isMultiGeom = true;
-
-  bool isLine = ( type() == QGis::Line );
-
-  //polygon or multipolygon?
-  if ( !isMultiGeom )
+  if ( !d || !d->geometry )
   {
-    GEOSGeometry* reshapedGeometry;
-    if ( isLine )
-      reshapedGeometry = reshapeLine( mGeos, reshapeLineGeos );
-    else
-      reshapedGeometry = reshapePolygon( mGeos, reshapeLineGeos );
-
-    GEOSGeom_destroy( reshapeLineGeos );
-    if ( reshapedGeometry )
-    {
-      GEOSGeom_destroy( mGeos );
-      mGeos = reshapedGeometry;
-      mDirtyWkb = true;
-      return 0;
-    }
-    else
-    {
-      return 1;
-    }
+    return 0;
   }
-  else
+
+  QList<QgsPointV2> reshapeLine;
+  convertPointList( reshapeWithLine, reshapeLine );
+  QgsLineStringV2 reshapeLineString;
+  reshapeLineString.setPoints( reshapeLine );
+
+  QgsGeos geos( d->geometry );
+  int errorCode = 0;
+  QgsAbstractGeometryV2* geom = geos.reshapeGeometry( reshapeLineString, &errorCode );
+  if ( errorCode == 0 && geom )
   {
-    //call reshape for each geometry part and replace mGeos with new geometry if reshape took place
-    bool reshapeTookPlace = false;
-
-    GEOSGeometry* currentReshapeGeometry = 0;
-    GEOSGeometry** newGeoms = new GEOSGeometry*[numGeoms];
-
-    for ( int i = 0; i < numGeoms; ++i )
-    {
-      if ( isLine )
-        currentReshapeGeometry = reshapeLine( GEOSGetGeometryN( mGeos, i ), reshapeLineGeos );
-      else
-        currentReshapeGeometry = reshapePolygon( GEOSGetGeometryN( mGeos, i ), reshapeLineGeos );
-
-      if ( currentReshapeGeometry )
-      {
-        newGeoms[i] = currentReshapeGeometry;
-        reshapeTookPlace = true;
-      }
-      else
-      {
-        newGeoms[i] = GEOSGeom_clone( GEOSGetGeometryN( mGeos, i ) );
-      }
-    }
-    GEOSGeom_destroy( reshapeLineGeos );
-
-    GEOSGeometry* newMultiGeom = 0;
-    if ( isLine )
-    {
-      newMultiGeom = GEOSGeom_createCollection( GEOS_MULTILINESTRING, newGeoms, numGeoms );
-    }
-    else //multipolygon
-    {
-      newMultiGeom = GEOSGeom_createCollection( GEOS_MULTIPOLYGON, newGeoms, numGeoms );
-    }
-
-    delete[] newGeoms;
-    if ( !newMultiGeom )
-      return 3;
-
-    if ( reshapeTookPlace )
-    {
-      GEOSGeom_destroy( mGeos );
-      mGeos = newMultiGeom;
-      mDirtyWkb = true;
-      return 0;
-    }
-    else
-    {
-      GEOSGeom_destroy( newMultiGeom );
-      return 1;
-    }
+    delete d->geometry;
+    d->geometry = geom;
+    return 0;
   }
-#endif //0
+  return errorCode;
 }
 
 int QgsGeometry::makeDifference( QgsGeometry* other )

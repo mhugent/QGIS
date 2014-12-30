@@ -21,6 +21,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include <geos_c.h>
 
 class QgsLineStringV2;
+class QgsPolygonV2;
 
 /**Does vector analysis using the geos library and handles import, export, exception handling*/
 class QgsGeos: public QgsGeometryEngine
@@ -57,7 +58,10 @@ class QgsGeos: public QgsGeometryEngine
                        bool topological,
                        QList<QgsPointV2> &topologyTestPoints ) const;
 
+    QgsAbstractGeometryV2* reshapeGeometry( const QgsLineStringV2& reshapeWithLine, int* errorCode ) const;
+
     static QgsAbstractGeometryV2* fromGeos( const GEOSGeometry* geos );
+    static QgsPolygonV2* fromGeosPolygon( const GEOSGeometry* geos );
     static GEOSGeometry* asGeos( const QgsAbstractGeometryV2* geom );
     static QgsPointV2 coordSeqPoint( const GEOSCoordSequence* cs, int i, bool hasZ, bool hasM );
 
@@ -104,6 +108,13 @@ class QgsGeos: public QgsGeometryEngine
     GEOSGeometry* linePointDifference( GEOSGeometry* GEOSsplitPoint ) const;
     int splitLinearGeometry( GEOSGeometry* splitLine, QList<QgsAbstractGeometryV2*>& newGeometries ) const;
     int splitPolygonGeometry( GEOSGeometry* splitLine, QList<QgsAbstractGeometryV2*>& newGeometries ) const;
+
+    //utils for reshape
+    static GEOSGeometry* reshapeLine( const GEOSGeometry* line, const GEOSGeometry* reshapeLineGeos );
+    static GEOSGeometry* reshapePolygon( const GEOSGeometry* polygon, const GEOSGeometry* reshapeLineGeos );
+    static int lineContainedInLine( const GEOSGeometry* line1, const GEOSGeometry* line2 );
+    static int pointContainedInLine( const GEOSGeometry* point, const GEOSGeometry* line );
+    static int geomDigits( const GEOSGeometry* geom );
 };
 
 #endif // QGSGEOS_H

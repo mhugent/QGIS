@@ -91,7 +91,7 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
 
     CaptureMode mode() { return mCaptureMode; }
 
-    int size() { return mCaptureList.size(); }
+    int size() { return points().size(); }
     QList<QgsPoint>::iterator begin() { return mCaptureList.begin(); }
     QList<QgsPoint>::iterator end() { return mCaptureList.end(); }
     QList<QgsPoint> points();
