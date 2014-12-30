@@ -246,26 +246,32 @@ int QgsCompoundCurveV2::numPoints() const
 QgsLineStringV2* QgsCompoundCurveV2::curveToLine() const
 {
   QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
-  QgsLineStringV2* line = 0;
+  QgsLineStringV2* line = new QgsLineStringV2();
   QgsLineStringV2* currentLine = 0;
   for ( ; curveIt != mCurves.constEnd(); ++curveIt )
   {
-    if ( curveIt == mCurves.constBegin() )
+    currentLine = ( *curveIt )->curveToLine();
+    line->append( currentLine );
+    delete currentLine;
+  }
+#if 0
+  if ( curveIt == mCurves.constBegin() )
+  {
+    line = ( *curveIt )->curveToLine();
+    if ( !line )
     {
-      line = ( *curveIt )->curveToLine();
-      if ( !line )
-      {
-        return 0;
-      }
-    }
-    else
-    {
-      currentLine = ( *curveIt )->curveToLine();
-      line->append( currentLine );
-      delete currentLine;
+      return 0;
     }
   }
-  return line;
+  else
+  {
+    currentLine = ( *curveIt )->curveToLine();
+    line->append( currentLine );
+    delete currentLine;
+  }
+}
+#endif //0
+return line;
 }
 
 const QgsCurveV2* QgsCompoundCurveV2::curveAt( int i ) const

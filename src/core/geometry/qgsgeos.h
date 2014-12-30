@@ -46,6 +46,17 @@ class QgsGeos: public QgsGeometryEngine
     bool contains( const QgsAbstractGeometryV2& geom ) const;
     bool disjoint( const QgsAbstractGeometryV2& geom ) const;
 
+    /**Splits this geometry according to a given line.
+    @param splitLine the line that splits the geometry
+    @param[out] newGeometries list of new geometries that have been created with the split
+    @param topological true if topological editing is enabled
+    @param[out] topologyTestPoints points that need to be tested for topological completeness in the dataset
+    @return 0 in case of success, 1 if geometry has not been split, error else*/
+    int splitGeometry( const QgsLineStringV2& splitLine,
+                       QList<QgsAbstractGeometryV2*>&newGeometries,
+                       bool topological,
+                       QList<QgsPointV2> &topologyTestPoints ) const;
+
     static QgsAbstractGeometryV2* fromGeos( const GEOSGeometry* geos );
     static GEOSGeometry* asGeos( const QgsAbstractGeometryV2* geom );
     static QgsPointV2 coordSeqPoint( const GEOSCoordSequence* cs, int i, bool hasZ, bool hasM );
@@ -73,15 +84,26 @@ class QgsGeos: public QgsGeometryEngine
       DISJOINT
     };
 
+    //geos util functions
     void cacheGeos() const;
     QgsAbstractGeometryV2* overlay( const QgsAbstractGeometryV2& geom, Overlay op ) const;
     bool relation( const QgsAbstractGeometryV2& geom, Relation r ) const;
     static GEOSCoordSequence* createCoordinateSequence( const QgsCurveV2* curve );
     static QgsLineStringV2* sequenceToLinestring( const GEOSGeometry* geos, bool hasZ, bool hasM );
+    static int numberOfGeometries( GEOSGeometry* g );
+    static GEOSGeometry* nodeGeometries( const GEOSGeometry *splitLine, const GEOSGeometry *geom );
+    int mergeGeometriesMultiTypeSplit( QVector<GEOSGeometry*>& splitResult ) const;
+    GEOSGeometry* createGeosCollection( int typeId, QVector<GEOSGeometry*> geoms ) const;
 
     static GEOSGeometry* createGeosPoint( const QgsAbstractGeometryV2* point, int coordDims );
     static GEOSGeometry* createGeosLinestring( const QgsAbstractGeometryV2* curve );
     static GEOSGeometry* createGeosPolygon( const QgsAbstractGeometryV2* poly );
+
+    //utils for geometry split
+    int topologicalTestPointsSplit( const GEOSGeometry* splitLine, QList<QgsPointV2>& testPoints ) const;
+    GEOSGeometry* linePointDifference( GEOSGeometry* GEOSsplitPoint ) const;
+    int splitLinearGeometry( GEOSGeometry* splitLine, QList<QgsAbstractGeometryV2*>& newGeometries ) const;
+    int splitPolygonGeometry( GEOSGeometry* splitLine, QList<QgsAbstractGeometryV2*>& newGeometries ) const;
 };
 
 #endif // QGSGEOS_H

@@ -1551,85 +1551,29 @@ int QgsGeometry::translate( double dx, double dy )
 
 int QgsGeometry::splitGeometry( const QList<QgsPoint>& splitLine, QList<QgsGeometry*>& newGeometries, bool topological, QList<QgsPoint> &topologyTestPoints )
 {
-  return 0; //todo...
-
-#if 0
-  int returnCode = 0;
-
-  //return if this type is point/multipoint
-  if ( type() == QGis::Point )
+  if ( !d || !d->geometry )
   {
-    return 1; //cannot split points
+    return 0;
   }
 
-  //make sure, mGeos and mWkb are there and up-to-date
-  if ( mDirtyWkb )
-    exportGeosToWkb();
+  QList<QgsAbstractGeometryV2*> newGeoms;
+  QgsLineStringV2 splitLineString;
+  QList<QgsPointV2> splitLinePointsV2;
+  convertPointList( splitLine, splitLinePointsV2 );
+  splitLineString.setPoints( splitLinePointsV2 );
+  QList<QgsPointV2> tp;
 
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 1;
-
-  if ( !GEOSisValid( mGeos ) )
-    return 7;
-
-  //make sure splitLine is valid
-  if (( type() == QGis::Line    && splitLine.size() < 1 ) ||
-      ( type() == QGis::Polygon && splitLine.size() < 2 ) )
-    return 1;
+  QgsGeos geos( d->geometry );
+  int result = geos.splitGeometry( splitLineString, newGeoms, topological, tp );
 
   newGeometries.clear();
-
-  try
+  for ( int i = 0; i < newGeoms.size(); ++i )
   {
-    GEOSGeometry* splitLineGeos;
-    if ( splitLine.size() > 1 )
-    {
-      splitLineGeos = createGeosLineString( splitLine.toVector() );
-    }
-    else if ( splitLine.size() == 1 )
-    {
-      splitLineGeos = createGeosPoint( splitLine.at( 0 ) );
-    }
-    else
-    {
-      return 1;
-    }
-    if ( !GEOSisValid( splitLineGeos ) || !GEOSisSimple( splitLineGeos ) )
-    {
-      GEOSGeom_destroy( splitLineGeos );
-      return 1;
-    }
-
-    if ( topological )
-    {
-      //find out candidate points for topological corrections
-      if ( topologicalTestPointsSplit( splitLineGeos, topologyTestPoints ) != 0 )
-        return 1;
-    }
-
-    //call split function depending on geometry type
-    if ( type() == QGis::Line )
-    {
-      returnCode = splitLinearGeometry( splitLineGeos, newGeometries );
-      GEOSGeom_destroy( splitLineGeos );
-    }
-    else if ( type() == QGis::Polygon )
-    {
-      returnCode = splitPolygonGeometry( splitLineGeos, newGeometries );
-      GEOSGeom_destroy( splitLineGeos );
-    }
-    else
-    {
-      return 1;
-    }
+    newGeometries.push_back( new QgsGeometry( newGeoms.at( i ) ) );
   }
-  CATCH_GEOS( 2 )
 
-  return returnCode;
-#endif //0
+  convertPointList( tp, topologyTestPoints );
+  return result;
 }
 
 /**Replaces a part of this geometry with another line*/
@@ -5188,9 +5132,20 @@ int QgsGeometry::vertexNrFromVertexId( const QgsVertexId& id ) const
 
 void QgsGeometry::convertPointList( const QList<QgsPoint>& input, QList<QgsPointV2>& output )
 {
+  output.clear();
   QList<QgsPoint>::const_iterator it = input.constBegin();
   for ( ; it != input.constEnd(); ++it )
   {
     output.append( QgsPointV2( it->x(), it->y() ) );
+  }
+}
+
+void QgsGeometry::convertPointList( const QList<QgsPointV2>& input, QList<QgsPoint>& output )
+{
+  output.clear();
+  QList<QgsPointV2>::const_iterator it = input.constBegin();
+  for ( ; it != input.constEnd(); ++it )
+  {
+    output.append( QgsPoint( it->x(), it->y() ) );
   }
 }

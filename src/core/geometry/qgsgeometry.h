@@ -296,8 +296,7 @@ class CORE_EXPORT QgsGeometry
      @return 0 in case of success*/
     int translate( double dx, double dy );
 
-    /**Splits this geometry according to a given line. Note that the geometry is only split once. If there are several intersections
-     between geometry and splitLine, only the first one is considered.
+    /**Splits this geometry according to a given line.
     @param splitLine the line that splits the geometry
     @param[out] newGeometries list of new geometries that have been created with the split
     @param topological true if topological editing is enabled
@@ -540,6 +539,7 @@ class CORE_EXPORT QgsGeometry
     int vertexNrFromVertexId( const QgsVertexId& i ) const;
     //convert point list from v1 to v2
     static void convertPointList( const QList<QgsPoint>& input, QList<QgsPointV2>& output );
+    static void convertPointList( const QList<QgsPointV2>& input, QList<QgsPoint>& output );
 }; // class QgsGeometry
 
 Q_DECLARE_METATYPE( QgsGeometry );

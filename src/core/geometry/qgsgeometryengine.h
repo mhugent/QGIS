@@ -16,7 +16,11 @@ email                : marco.hugentobler at sourcepole dot com
 #ifndef QGSVECTORTOPOLOGY_H
 #define QGSVECTORTOPOLOGY_H
 
+#include "qgspointv2.h"
+#include <QList>
+
 class QgsAbstractGeometryV2;
+class QgsLineStringV2;
 
 class QgsGeometryEngine
 {
@@ -39,6 +43,11 @@ class QgsGeometryEngine
     virtual bool overlaps( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool contains( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool disjoint( const QgsAbstractGeometryV2& geom ) const = 0;
+
+    virtual int splitGeometry( const QgsLineStringV2& splitLine,
+                               QList<QgsAbstractGeometryV2*>& newGeometries,
+                               bool topological,
+                               QList<QgsPointV2> &topologyTestPoints ) const = 0;
 
   protected:
     const QgsAbstractGeometryV2* mGeometry;

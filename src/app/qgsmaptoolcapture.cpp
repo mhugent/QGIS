@@ -22,6 +22,7 @@
 #include "qgsgeometryrubberband.h"
 #include "qgsgeometryvalidator.h"
 #include "qgslayertreeview.h"
+#include "qgslinestringv2.h"
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaprenderer.h"
@@ -257,6 +258,23 @@ void QgsMapToolCapture::setGeometryToRubberBand()
   {
     mGeometryRubberBand->setGeometry( rubberBandGeom );
   }
+}
+
+QList<QgsPoint> QgsMapToolCapture::points()
+{
+  QList<QgsPoint> pointList;
+  if ( mGeometry )
+  {
+    QgsLineStringV2* line = mGeometry->curveToLine();
+    int nPt = line->numPoints();
+    for ( int i = 0; i < nPt; ++i )
+    {
+      QgsPointV2 pt = line->pointN( i );
+      pointList.append( QgsPoint( pt.x(), pt.y() ) );
+    }
+    delete line;
+  }
+  return pointList;
 }
 
 
