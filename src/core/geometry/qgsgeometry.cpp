@@ -1151,123 +1151,13 @@ int QgsGeometry::addPart( GEOSGeometry *newPart )
 
 int QgsGeometry::translate( double dx, double dy )
 {
-  return 0;
-
-#if 0
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return 1;
   }
 
-  QgsWkbPtr wkbPtr( mGeometry + 1 );
-  QGis::WkbType wkbType;
-  wkbPtr >> wkbType;
-
-  bool hasZValue = false;
-  switch ( wkbType )
-  {
-    case QGis::WKBPoint25D:
-    case QGis::WKBPoint:
-    {
-      translateVertex( wkbPtr, dx, dy, hasZValue );
-    }
-    break;
-
-    case QGis::WKBLineString25D:
-      hasZValue = true;
-    case QGis::WKBLineString:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-      for ( int index = 0; index < nPoints; ++index )
-        translateVertex( wkbPtr, dx, dy, hasZValue );
-
-      break;
-    }
-
-    case QGis::WKBPolygon25D:
-      hasZValue = true;
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      wkbPtr >> nRings;
-      for ( int index = 0; index < nRings; ++index )
-      {
-        int nPoints;
-        wkbPtr >> nPoints;
-        for ( int index2 = 0; index2 < nPoints; ++index2 )
-          translateVertex( wkbPtr, dx, dy, hasZValue );
-
-      }
-      break;
-    }
-
-    case QGis::WKBMultiPoint25D:
-      hasZValue = true;
-    case QGis::WKBMultiPoint:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-
-      for ( int index = 0; index < nPoints; ++index )
-      {
-        wkbPtr += 1 + sizeof( int );
-        translateVertex( wkbPtr, dx, dy, hasZValue );
-      }
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-      hasZValue = true;
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-      for ( int index = 0; index < nLines; ++index )
-      {
-        wkbPtr += 1 + sizeof( int );
-        int nPoints;
-        wkbPtr >> nPoints;
-        for ( int index2 = 0; index2 < nPoints; ++index2 )
-          translateVertex( wkbPtr, dx, dy, hasZValue );
-      }
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-      hasZValue = true;
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolys;
-      wkbPtr >> nPolys;
-      for ( int index = 0; index < nPolys; ++index )
-      {
-        wkbPtr += 1 + sizeof( int ); //skip endian and polygon type
-
-        int nRings;
-        wkbPtr >> nRings;
-
-        for ( int index2 = 0; index2 < nRings; ++index2 )
-        {
-          int nPoints;
-          wkbPtr >> nPoints;
-          for ( int index3 = 0; index3 < nPoints; ++index3 )
-            translateVertex( wkbPtr, dx, dy, hasZValue );
-        }
-      }
-      break;
-    }
-
-    default:
-      break;
-  }
-  mDirtyGeos = true;
+  d->geometry->translate( dx, dy, 0, 0 );
   return 0;
-#endif //0
 }
 
 int QgsGeometry::splitGeometry( const QList<QgsPoint>& splitLine, QList<QgsGeometry*>& newGeometries, bool topological, QList<QgsPoint> &topologyTestPoints )

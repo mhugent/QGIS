@@ -352,6 +352,19 @@ void QgsCurvePolygonV2::transform( const QgsCoordinateTransform& ct )
   }
 }
 
+void QgsCurvePolygonV2::translate( double dx, double dy, double dz, double dm )
+{
+  if ( mExteriorRing )
+  {
+    mExteriorRing->translate( dx, dy, dz, dm );
+  }
+  QList<QgsCurveV2*>::iterator it = mInteriorRings.begin();
+  for ( ; it != mInteriorRings.end(); ++it )
+  {
+    ( *it )->translate( dx, dy, dz, dm );
+  }
+}
+
 void QgsCurvePolygonV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
 {
   coord.clear();

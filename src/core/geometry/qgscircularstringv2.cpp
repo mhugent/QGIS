@@ -620,6 +620,26 @@ void QgsCircularStringV2::mapToPixel( const QgsMapToPixel& mtp )
   }
 }
 
+void QgsCircularStringV2::translate( double dx, double dy, double dz, double dm )
+{
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+  int nPoints = numPoints();
+  for ( int i = 0; i < nPoints; ++i )
+  {
+    mX[i] += dx;
+    mY[i] += dy;
+    if ( hasZ )
+    {
+      mZ[i] += dz;
+    }
+    if ( hasM )
+    {
+      mM[i] += dm;
+    }
+  }
+}
+
 void QgsCircularStringV2::clip( const QgsRectangle& rect )
 {
 

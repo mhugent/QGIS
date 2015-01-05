@@ -46,28 +46,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
 
     //implementation of inherited methods
     virtual int dimension() const { return 0; }
-    /*virtual QString geometryType() const = 0;
-    virtual bool transform( const QgsCoordinateTransform& ct ) =  0;
-    virtual bool isEmpty() const = 0;
-    virtual bool isSimple() const = 0;
-    virtual bool isValid() const = 0;
-    virtual QgsMultiPointV2* locateAlong() const = 0;
-    virtual QgsMultiCurveV2* locateBetween() const = 0;
-    virtual QgsCurveV2* boundary() const = 0;
-    virtual QgsRectangle envelope() const = 0;
-    virtual QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const = 0; //should be union, but this is a C++ keyword
-    virtual QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual QString asText() const = 0;
-    virtual unsigned char* asBinary( int& binarySize ) const = 0;
-    virtual QString asGML() const = 0;
-    virtual bool intersects( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool touches( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool crosses( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool within( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool contains( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual bool overlaps( const QgsAbstractGeometryV2& geom ) const = 0;*/
+
 
     virtual void fromWkb( const unsigned char* wkb );
     virtual void fromWkt( const QString& wkt );
@@ -83,6 +62,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
     void draw( QPainter& p ) const {}
     void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );
+    void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 );
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 

@@ -92,6 +92,7 @@ class QgsAbstractGeometryV2
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) = 0;
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) = 0;
     virtual bool deleteVertex( const QgsVertexId& position ) = 0;
+    virtual void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 ) = 0;
 
   protected:
     QGis::WkbType mWkbType;

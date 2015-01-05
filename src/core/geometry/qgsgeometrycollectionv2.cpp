@@ -132,6 +132,15 @@ void QgsGeometryCollectionV2::mapToPixel( const QgsMapToPixel& mtp )
   }
 }
 
+void QgsGeometryCollectionV2::translate( double dx, double dy, double dz, double dm )
+{
+  QVector< QgsAbstractGeometryV2* >::iterator it = mGeometries.begin();
+  for ( ; it != mGeometries.end(); ++it )
+  {
+    ( *it )->translate( dx, dy, dz, dm );
+  }
+}
+
 void QgsGeometryCollectionV2::clip( const QgsRectangle& rect )
 {
   QVector< QgsAbstractGeometryV2* >::iterator it = mGeometries.begin();

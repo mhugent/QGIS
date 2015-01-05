@@ -62,6 +62,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );
     void mapToPixel( const QgsMapToPixel& mtp );
+    void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 );
     void addToPainterPath( QPainterPath& path ) const;
     void drawAsPolygon( QPainter& p ) const;
 
