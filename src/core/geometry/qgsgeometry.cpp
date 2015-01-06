@@ -36,7 +36,9 @@ email                : morb at ozemail dot com dot au
 #include "qgsmessagelog.h"
 #include "qgsgeometryvalidator.h"
 
+#include "qgsmulticurvev2.h"
 #include "qgsmultipointv2.h"
+#include "qgsmultisurfacev2.h"
 #include "qgspointv2.h"
 #include "qgspolygonv2.h"
 #include "qgslinestringv2.h"
@@ -1967,12 +1969,36 @@ QgsPolyline QgsGeometry::asPolyline() const
 
 QgsPolygon QgsGeometry::asPolygon() const
 {
-  return QgsPolygon();
-  /*if( !mGeometry )
+  bool doSegmentation = ( d->geometry->geometryType() == "CurvePolygon" );
+
+  QgsPolygonV2* p = 0;
+  if ( doSegmentation )
   {
+    QgsCurvePolygonV2* curvePoly = dynamic_cast<QgsCurvePolygonV2*>( d->geometry );
+    if ( !curvePoly )
+    {
       return QgsPolygon();
+    }
+    p = curvePoly->toPolygon();
   }
-  return mGeometry->asPolygon();*/
+  else
+  {
+    p = dynamic_cast<QgsPolygonV2*>( d->geometry );
+  }
+
+  if ( !p )
+  {
+    return QgsPolygon();
+  }
+
+  QgsPolygon polygon;
+  convertPolygon( *p, polygon );
+
+  if ( doSegmentation )
+  {
+    delete p;
+  }
+  return polygon;
 }
 
 QgsMultiPoint QgsGeometry::asMultiPoint() const
@@ -2001,22 +2027,79 @@ QgsMultiPoint QgsGeometry::asMultiPoint() const
 
 QgsMultiPolyline QgsGeometry::asMultiPolyline() const
 {
-  return QgsMultiPolyline();
-  /*if( !mGeometry )
+  if ( !d || !d->geometry || d->geometry->geometryType() != "MultiCurve" )
   {
-      QgsMultiPolyline();
+    return QgsMultiPolyline();
   }
-  return mGeometry->asMultiPolyline();*/
+
+  QgsMultiCurveV2* multiCurve = dynamic_cast<QgsMultiCurveV2*>( d->geometry );
+  if ( !multiCurve )
+  {
+    return QgsMultiPolyline();
+  }
+
+  int nLines = multiCurve->numGeometries();
+  if ( nLines < 1 )
+  {
+    return QgsMultiPolyline();
+  }
+
+  QgsMultiPolyline mpl;
+  for ( int i = 0; i < nLines; ++i )
+  {
+    QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( multiCurve->geometryN( i ) );
+    if ( !curve )
+    {
+      continue;
+    }
+    QgsLineStringV2* linestring = curve->curveToLine();
+    if ( linestring )
+    {
+      QList< QgsPointV2 > lineCoords;
+      linestring->points( lineCoords );
+      delete linestring;
+      QgsPolyline polyLine;
+      convertToPolyline( lineCoords, polyLine );
+      mpl.append( polyLine );
+    }
+  }
+  return mpl;
 }
 
 QgsMultiPolygon QgsGeometry::asMultiPolygon() const
 {
-  return QgsMultiPolygon();
-  /*if( !mGeometry )
+  if ( !d || !d->geometry || d->geometry->geometryType() != "MultiSurface" )
   {
-      return QgsMultiPolygon();
+    return QgsMultiPolygon();
   }
-  return mGeometry->asMultiPolygon();*/
+
+  QgsMultiSurfaceV2* multiSurface = dynamic_cast<QgsMultiSurfaceV2*>( d->geometry );
+  if ( !multiSurface )
+  {
+    return QgsMultiPolygon();
+  }
+
+  int nPolygons = multiSurface->numGeometries();
+  if ( nPolygons < 1 )
+  {
+    return QgsMultiPolygon();
+  }
+
+  QgsMultiPolygon mp;
+  for ( int i = 0; i < nPolygons; ++i )
+  {
+    QgsCurvePolygonV2* curvePolygon = dynamic_cast<QgsCurvePolygonV2*>( multiSurface->geometryN( i ) );
+    if ( !curvePolygon )
+    {
+      continue;
+    }
+    QgsPolygonV2* polygon = curvePolygon->toPolygon();
+    QgsPolygon poly;
+    convertPolygon( *polygon, poly );
+    delete polygon;
+    mp.append( poly );
+  }
+  return mp;
 }
 
 double QgsGeometry::area()
@@ -2859,5 +2942,36 @@ void QgsGeometry::convertPointList( const QList<QgsPointV2>& input, QList<QgsPoi
   for ( ; it != input.constEnd(); ++it )
   {
     output.append( QgsPoint( it->x(), it->y() ) );
+  }
+}
+
+void QgsGeometry::convertToPolyline( const QList<QgsPointV2>& input, QgsPolyline& output )
+{
+  output.clear();
+  output.resize( input.size() );
+
+  for ( int i = 0; i < input.size(); ++i )
+  {
+    const QgsPointV2& pt = input.at( i );
+    output[i].setX( pt.x() );
+    output[i].setY( pt.y() );
+  }
+}
+
+void QgsGeometry::convertPolygon( const QgsPolygonV2& input, QgsPolygon& output )
+{
+  output.clear();
+  QList< QList< QList< QgsPointV2 > > > coord;
+  input.coordinateSequence( coord );
+  if ( coord.size() < 1 )
+  {
+    return;
+  }
+
+  const QList< QList< QgsPointV2 > >& rings = coord[0];
+  output.resize( rings.size() );
+  for ( int i = 0; i < rings.size(); ++i )
+  {
+    convertToPolyline( rings[i], output[i] );
   }
 }

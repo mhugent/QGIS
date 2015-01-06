@@ -41,6 +41,7 @@ class QgsGeometryEngine;
 class QgsVectorLayer;
 class QgsMapToPixel;
 class QPainter;
+class QgsPolygonV2;
 
 /** polyline is represented as a vector of points */
 typedef QVector<QgsPoint> QgsPolyline;
@@ -540,6 +541,8 @@ class CORE_EXPORT QgsGeometry
     //convert point list from v1 to v2
     static void convertPointList( const QList<QgsPoint>& input, QList<QgsPointV2>& output );
     static void convertPointList( const QList<QgsPointV2>& input, QList<QgsPoint>& output );
+    static void convertToPolyline( const QList<QgsPointV2>& input, QgsPolyline& output );
+    static void convertPolygon( const QgsPolygonV2& input, QgsPolygon& output );
 }; // class QgsGeometry
 
 Q_DECLARE_METATYPE( QgsGeometry );
