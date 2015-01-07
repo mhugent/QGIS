@@ -130,7 +130,14 @@ QgsAbstractGeometryV2* QgsGeometryImport::fromPoint( const QgsPoint& point )
 
 QgsAbstractGeometryV2* QgsGeometryImport::fromMultiPoint( const QgsMultiPoint& multipoint )
 {
-  return 0; //todo...
+  QgsMultiPointV2* mp = new QgsMultiPointV2();
+  QgsMultiPoint::const_iterator ptIt = multipoint.constBegin();
+  for ( ; ptIt != multipoint.constEnd(); ++ptIt )
+  {
+    QgsPointV2* pt = new QgsPointV2( ptIt->x(), ptIt->y() );
+    mp->addGeometry( pt );
+  }
+  return mp;
 }
 
 QgsAbstractGeometryV2* QgsGeometryImport::fromPolyline( const QgsPolyline& polyline )

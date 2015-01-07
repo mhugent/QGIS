@@ -341,7 +341,7 @@ void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
 
 void QgsCompoundCurveV2::close()
 {
-  if ( numPoints() < 1 || ( startPoint() == endPoint() ) )
+  if ( numPoints() < 1 || isClosed() )
   {
     return;
   }

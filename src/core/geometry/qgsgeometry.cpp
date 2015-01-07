@@ -943,212 +943,58 @@ int QgsGeometry::addRing( const QList<QgsPoint>& ring )
   QgsLineStringV2* ringLine = new QgsLineStringV2();
   QList< QgsPointV2 > ringPoints;
   convertPointList( ring, ringPoints );
-
   ringLine->setPoints( ringPoints );
+
   QgsGeometryEditor geomEditor( d->geometry );
   return geomEditor.addRing( ringLine );
 }
 
 int QgsGeometry::addPart( const QList<QgsPoint> &points, QGis::GeometryType geomType )
 {
-  return 0; //todo...
-
-#if 0
-  if ( geomType == QGis::UnknownGeometry )
+  if ( !d || !d->geometry )
   {
-    geomType = type();
+    return 2;
   }
 
-  switch ( geomType )
+  QgsAbstractGeometryV2* partGeom = 0;
+  if ( points.size() == 1 )
   {
-    case QGis::Point:
-      // only one part at a time
-      if ( points.size() != 1 )
-      {
-        QgsDebugMsg( "expected 1 point: " + QString::number( points.size() ) );
-        return 2;
-      }
-      break;
-
-    case QGis::Line:
-      // line needs to have at least two points
-      if ( points.size() < 2 )
-      {
-        QgsDebugMsg( "line must at least have two points: " + QString::number( points.size() ) );
-        return 2;
-      }
-      break;
-
-    case QGis::Polygon:
-      // polygon needs to have at least three distinct points and must be closed
-      if ( points.size() < 4 )
-      {
-        QgsDebugMsg( "polygon must at least have three distinct points and must be closed: " + QString::number( points.size() ) );
-        return 2;
-      }
-
-      // Polygon must be closed
-      if ( points.first() != points.last() )
-      {
-        QgsDebugMsg( "polygon not closed" );
-        return 2;
-      }
-      break;
-
-    default:
-      QgsDebugMsg( "unsupported geometry type: " + QString::number( geomType ) );
-      return 2;
+    partGeom = new QgsPointV2( points[0].x(), points[0].y() );
   }
-
-  GEOSGeometry *newPart = 0;
-
-  switch ( geomType )
+  else if ( points.size() > 1 )
   {
-    case QGis::Point:
-      newPart = createGeosPoint( points[0] );
-      break;
-
-    case QGis::Line:
-      newPart = createGeosLineString( points.toVector() );
-      break;
-
-    case QGis::Polygon:
-    {
-      //create new polygon from ring
-      GEOSGeometry *newRing = 0;
-
-      try
-      {
-        newRing = createGeosLinearRing( points.toVector() );
-        if ( !GEOSisValid( newRing ) )
-          throw GEOSException( "ring invalid" );
-
-        newPart = createGeosPolygon( newRing );
-      }
-      catch ( GEOSException &e )
-      {
-        QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-
-        if ( newRing )
-          GEOSGeom_destroy( newRing );
-
-        return 2;
-      }
-    }
-    break;
-
-    default:
-      QgsDebugMsg( "unsupported type: " + QString::number( type() ) );
-      return 2;
+    QgsLineStringV2* ringLine = new QgsLineStringV2();
+    QList< QgsPointV2 > partPoints;
+    convertPointList( points, partPoints );
+    ringLine->setPoints( partPoints );
+    partGeom = ringLine;
   }
-
-  if ( type() == QGis::UnknownGeometry )
-  {
-    fromGeos( newPart );
-    return 0;
-  }
-  return addPart( newPart );
-#endif //0
+  QgsGeometryEditor geomEditor( d->geometry );
+  return geomEditor.addPart( partGeom );
 }
 
 int QgsGeometry::addPart( QgsGeometry *newPart )
 {
-  return 0; //todo...
-#if 0
-  if ( !newPart )
-    return 4;
+  if ( !d || !d->geometry || !newPart || !newPart->d || !newPart->d->geometry )
+  {
+    return 1;
+  }
 
-  const GEOSGeometry * geosPart = newPart->asGeos();
-  return addPart( GEOSGeom_clone( geosPart ) );
-#endif //0
+  QgsAbstractGeometryV2* geom = newPart->d->geometry->clone();
+  QgsGeometryEditor geomEditor( d->geometry );
+  return geomEditor.addPart( geom );
 }
 
 int QgsGeometry::addPart( GEOSGeometry *newPart )
 {
-  return 0;
-#if 0
-  QGis::GeometryType geomType = type();
-
-  if ( !isMultipart() && !convertToMultiType() )
+  if ( !d || !d->geometry || !newPart )
   {
-    QgsDebugMsg( "could not convert to multipart" );
     return 1;
   }
 
-  //create geos geometry from wkb if not already there
-  if ( mDirtyGeos )
-  {
-    exportWkbToGeos();
-  }
-
-  if ( !mGeos )
-  {
-    QgsDebugMsg( "GEOS geometry not available!" );
-    return 4;
-  }
-
-  int geosType = GEOSGeomTypeId( mGeos );
-
-  Q_ASSERT( newPart );
-
-  try
-  {
-    if ( !GEOSisValid( newPart ) )
-      throw GEOSException( "new part geometry invalid" );
-  }
-  catch ( GEOSException &e )
-  {
-    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-
-    if ( newPart )
-      GEOSGeom_destroy( newPart );
-
-    QgsDebugMsg( "part invalid: " + e.what() );
-    return 2;
-  }
-
-  QVector<GEOSGeometry*> parts;
-
-  //create new multipolygon
-  int n = GEOSGetNumGeometries( mGeos );
-  int i;
-  for ( i = 0; i < n; ++i )
-  {
-    const GEOSGeometry *partN = GEOSGetGeometryN( mGeos, i );
-
-    if ( geomType == QGis::Polygon && GEOSOverlaps( partN, newPart ) )
-      //bail out if new polygon overlaps with existing ones
-      break;
-
-    parts << GEOSGeom_clone( partN );
-  }
-
-  if ( i < n )
-  {
-    // bailed out
-    for ( int i = 0; i < parts.size(); i++ )
-      GEOSGeom_destroy( parts[i] );
-
-    QgsDebugMsg( "new polygon part overlaps" );
-    return 3;
-  }
-
-  int nPartGeoms = GEOSGetNumGeometries( newPart );
-  for ( int i = 0; i < nPartGeoms; ++i )
-  {
-    parts << GEOSGeom_clone( GEOSGetGeometryN( newPart, i ) );
-  }
-  GEOSGeom_destroy( newPart );
-
-  GEOSGeom_destroy( mGeos );
-
-  mGeos = createGeosCollection( geosType, parts );
-
-  mDirtyWkb = true;
-  mDirtyGeos = false;
-
-  return 0;
-#endif //0
+  QgsAbstractGeometryV2* geom = QgsGeos::fromGeos( newPart );
+  QgsGeometryEditor geomEditor( d->geometry );
+  return geomEditor.addPart( geom );
 }
 
 int QgsGeometry::translate( double dx, double dy )
@@ -1295,9 +1141,9 @@ bool QgsGeometry::intersects( const QgsRectangle& r ) const
 
 bool QgsGeometry::intersects( const QgsGeometry* geometry ) const
 {
-  if ( !d || !d->geometry )
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
   {
-    return 0;
+    return false;
   }
 
   QgsGeos geos( d->geometry );
@@ -1306,52 +1152,36 @@ bool QgsGeometry::intersects( const QgsGeometry* geometry ) const
 
 bool QgsGeometry::contains( const QgsPoint* p ) const
 {
-  return false; //todo...
-#if 0
-  exportWkbToGeos();
-
-  if ( !p )
+  if ( !d || !d->geometry || !p )
   {
-    QgsDebugMsg( "pointer p is 0" );
     return false;
   }
 
-  if ( !mGeos )
-  {
-    QgsDebugMsg( "GEOS geometry not available!" );
-    return false;
-  }
-
-  GEOSGeometry *geosPoint = 0;
-
-  bool returnval = false;
-
-  try
-  {
-    geosPoint = createGeosPoint( *p );
-    returnval = GEOSContains( mGeos, geosPoint );
-  }
-  catch ( GEOSException &e )
-  {
-    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-    returnval = false;
-  }
-
-  if ( geosPoint )
-    GEOSGeom_destroy( geosPoint );
-
-  return returnval;
-#endif //0
+  QgsPointV2 pt( p->x(), p->y() );
+  QgsGeos geos( d->geometry );
+  return geos.contains( pt );
 }
 
 bool QgsGeometry::contains( const QgsGeometry* geometry ) const
 {
-  return false; //todo //return geosRelOp( GEOSContains, this, geometry );
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
+  {
+    return false;
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.contains( *( geometry->d->geometry ) );
 }
 
 bool QgsGeometry::disjoint( const QgsGeometry* geometry ) const
 {
-  return false; //todo //return geosRelOp( GEOSDisjoint, this, geometry );
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
+  {
+    return false;
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.disjoint( *( geometry->d->geometry ) );
 }
 
 bool QgsGeometry::equals( const QgsGeometry* geometry ) const
@@ -1361,22 +1191,46 @@ bool QgsGeometry::equals( const QgsGeometry* geometry ) const
 
 bool QgsGeometry::touches( const QgsGeometry* geometry ) const
 {
-  return false; //todo //return geosRelOp( GEOSTouches, this, geometry );
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
+  {
+    return false;
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.touches( *( geometry->d->geometry ) );
 }
 
 bool QgsGeometry::overlaps( const QgsGeometry* geometry ) const
 {
-  return false; //todo //return geosRelOp( GEOSOverlaps, this, geometry );
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
+  {
+    return false;
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.overlaps( *( geometry->d->geometry ) );
 }
 
 bool QgsGeometry::within( const QgsGeometry* geometry ) const
 {
-  return false; //todo //return geosRelOp( GEOSWithin, this, geometry );
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
+  {
+    return false;
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.within( *( geometry->d->geometry ) );
 }
 
 bool QgsGeometry::crosses( const QgsGeometry* geometry ) const
 {
-  return false; //todo //return geosRelOp( GEOSCrosses, this, geometry );
+  if ( !d || !d->geometry || !geometry || !geometry->d || !geometry->d->geometry )
+  {
+    return false;
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.crosses( *( geometry->d->geometry ) );
 }
 
 QString QgsGeometry::exportToWkt( const int &precision ) const

@@ -64,5 +64,19 @@ bool QgsMultiCurveV2::addGeometry( QgsAbstractGeometryV2* g )
     delete g;
     return false;
   }
+
+  //all geometries linestrings?
+  bool isMultiLineString = true;
+  QVector< QgsAbstractGeometryV2* >::const_iterator it = mGeometries.constBegin();
+  for ( ; it != mGeometries.constEnd(); ++it )
+  {
+    if (( *it )->geometryType() != "LineString" )
+    {
+      isMultiLineString = false;
+      break;
+    }
+  }
+
+  setZMTypeFromSubGeometry( g, isMultiLineString ? QGis::WKBMultiLineString : QGis::WKBMultiCurve );
   return QgsGeometryCollectionV2::addGeometry( g );
 }

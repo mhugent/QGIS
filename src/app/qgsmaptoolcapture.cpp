@@ -356,7 +356,10 @@ void QgsMapToolCapture::stopCapturing()
 
 void QgsMapToolCapture::closePolygon()
 {
-  mCaptureList.append( mCaptureList[0] );
+  if ( mGeometry )
+  {
+    mGeometry->close();
+  }
 }
 
 void QgsMapToolCapture::validateGeometry()

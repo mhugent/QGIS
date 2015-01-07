@@ -54,7 +54,7 @@ QgsAbstractGeometryV2* QgsPointV2::clone() const
 
 int QgsPointV2::wkbSize() const
 {
-  int binarySize = 1 + sizeof( int ) + sizeof( double );
+  int binarySize = 1 + sizeof( int ) + 2 * sizeof( double );
   if ( is3D() > 2 )
   {
     binarySize += sizeof( double );

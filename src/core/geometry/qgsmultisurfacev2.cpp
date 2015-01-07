@@ -64,5 +64,19 @@ bool QgsMultiSurfaceV2::addGeometry( QgsAbstractGeometryV2* g )
     delete g;
     return false;
   }
+
+  //all geometries polygons?
+  bool isPolygon = true;
+  QVector< QgsAbstractGeometryV2* >::const_iterator it = mGeometries.constBegin();
+  for ( ; it != mGeometries.constEnd(); ++it )
+  {
+    if (( *it )->geometryType() != "Polygon" )
+    {
+      isPolygon = false;
+      break;
+    }
+  }
+
+  setZMTypeFromSubGeometry( g, isPolygon ? QGis::WKBMultiPolygon : QGis::WKBMultiSurface );
   return QgsGeometryCollectionV2::addGeometry( g );
 }

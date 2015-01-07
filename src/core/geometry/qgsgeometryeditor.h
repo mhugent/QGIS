@@ -24,26 +24,31 @@ class QgsGeometryEngine;
 /**Modifies geometry*/
 class QgsGeometryEditor
 {
-    public:
-        QgsGeometryEditor( QgsAbstractGeometryV2* geom );
-        ~QgsGeometryEditor();
+  public:
+    QgsGeometryEditor( QgsAbstractGeometryV2* geom );
+    ~QgsGeometryEditor();
 
-        QgsPointV2 closestVertex( const QgsPointV2& pt, QgsVertexId& id ) const;
-        void adjacentVertices( const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex ) const;
+    QgsPointV2 closestVertex( const QgsPointV2& pt, QgsVertexId& id ) const;
+    void adjacentVertices( const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex ) const;
 
-        /**Adds interior ring (taking ownership).
-     @return 0 in case of success (ring added), 1 problem with geometry type, 2 ring not closed,
-     3 ring is not valid geometry, 4 ring not disjoint with existing rings, 5 no polygon found which contained the ring*/
-        int addRing( QgsCurveV2* ring );
+    /**Adds interior ring (taking ownership).
+    @return 0 in case of success (ring added), 1 problem with geometry type, 2 ring not closed,
+    3 ring is not valid geometry, 4 ring not disjoint with existing rings, 5 no polygon found which contained the ring*/
+    int addRing( QgsCurveV2* ring );
 
-    private:
+    /**Adds part to multi type geometry (taking ownership)
+    @return 0 in case of success, 1 if not a multigeometry, 2 if part is not a valid geometry, 3 if new polygon ring
+    not disjoint with existing polygons of the feature*/
+    int addPart( QgsAbstractGeometryV2* part );
 
-        QgsAbstractGeometryV2* mGeometry;
+  private:
 
-        //default constructor forbidden
-        QgsGeometryEditor();
-        //Caller takes ownership
-        static QgsGeometryEngine* createGeometryEngine( const QgsAbstractGeometryV2* geometry );
+    QgsAbstractGeometryV2* mGeometry;
+
+    //default constructor forbidden
+    QgsGeometryEditor();
+    //Caller takes ownership
+    static QgsGeometryEngine* createGeometryEngine( const QgsAbstractGeometryV2* geometry );
 };
 
 #endif // QGSGEOMETRYEDITOR_H

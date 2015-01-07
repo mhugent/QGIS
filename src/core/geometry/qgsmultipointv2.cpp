@@ -62,5 +62,6 @@ bool QgsMultiPointV2::addGeometry( QgsAbstractGeometryV2* g )
     delete g;
     return false;
   }
+  setZMTypeFromSubGeometry( g, QGis::WKBMultiPoint );
   return QgsGeometryCollectionV2::addGeometry( g );
 }
