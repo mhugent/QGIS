@@ -386,6 +386,13 @@ void QgsCurvePolygonV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > 
   coord.append( coordinates );
 }
 
+double QgsCurvePolygonV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
+{
+  //soon...
+  segmentPt = pt;
+  return 0.0;
+}
+
 bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
   return false;

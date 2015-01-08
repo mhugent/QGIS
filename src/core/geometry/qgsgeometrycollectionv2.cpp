@@ -16,6 +16,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeometrycollectionv2.h"
 #include "qgsapplication.h"
 #include "qgsgeometryimport.h"
+#include "qgsgeometryutils.h"
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
 
@@ -254,6 +255,11 @@ void QgsGeometryCollectionV2::coordinateSequence( QList< QList< QList< QgsPointV
       coord.push_back( *cIt );
     }
   }
+}
+
+double QgsGeometryCollectionV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
+{
+  return QgsGeometryUtils::closestSegmentFromComponents( mGeometries, pt, segmentPt, vertexAfter, leftOf, epsilon );
 }
 
 bool QgsGeometryCollectionV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )

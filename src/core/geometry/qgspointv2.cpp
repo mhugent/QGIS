@@ -19,6 +19,7 @@
 #include "qgspointv2.h"
 #include "qgsapplication.h"
 #include "qgscoordinatetransform.h"
+#include "qgsgeometryutils.h"
 #include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
 
@@ -202,4 +203,9 @@ void QgsPointV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coor
   QList< QList< QgsPointV2 > > featureCoord;
   featureCoord.append( QList< QgsPointV2 >() << QgsPointV2( *this ) );
   coord.append( featureCoord );
+}
+
+double QgsPointV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
+{
+    return QgsGeometryUtils::sqrDistance2D( *this, pt );
 }

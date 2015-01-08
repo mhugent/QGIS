@@ -18,9 +18,11 @@
 #include "qgslinestringv2.h"
 #include "qgsapplication.h"
 #include "qgscoordinatetransform.h"
+#include "qgsgeometryutils.h"
 #include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
 #include <QPainter>
+#include <limits>
 
 QgsLineStringV2::QgsLineStringV2(): QgsCurveV2()
 {
@@ -435,4 +437,30 @@ void QgsLineStringV2::addVertex( const QgsPointV2& pt )
   {
     mM.append( pt.m() );
   }
+}
+
+double QgsLineStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
+{
+  double sqrDist = std::numeric_limits<double>::max();
+  double testDist = 0;
+  double segmentPtX, segmentPtY;
+
+  int size = mCoords.size();
+  for ( int i = 1; i < size; ++i )
+  {
+    const QPointF& prev = mCoords.at( i - 1 );
+    const QPointF& currentPt = mCoords.at( i );
+    testDist = QgsGeometryUtils::sqrDistToLine( pt.x(), pt.y(), prev.x(), prev.y(), currentPt.x(), currentPt.y(), segmentPtX, segmentPtY, epsilon );
+    if ( testDist < sqrDist )
+    {
+      sqrDist = testDist;
+      segmentPt.setX( segmentPtX );
+      segmentPt.setY( segmentPtY );
+      if ( leftOf )
+      {
+        *leftOf = QgsGeometryUtils::leftOfLine( segmentPtX, segmentPtY, prev.x(), prev.y(), pt.x(), pt.y() );
+      }
+    }
+  }
+  return sqrDist;
 }

@@ -18,6 +18,7 @@
 #include "qgscompoundcurvev2.h"
 #include "qgsapplication.h"
 #include "qgscircularstringv2.h"
+#include "qgsgeometryutils.h"
 #include "qgslinestringv2.h"
 #include "qgswkbptr.h"
 #include <QPainter>
@@ -469,5 +470,10 @@ QList< QPair<int, QgsVertexId> > QgsCompoundCurveV2::curveVertexId( const QgsVer
   }
 
   return curveIds;
+}
+
+double QgsCompoundCurveV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
+{
+  return QgsGeometryUtils::closestSegmentFromComponents( mCurves, pt, segmentPt, vertexAfter, leftOf, epsilon );
 }
 

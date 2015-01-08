@@ -710,227 +710,25 @@ double QgsGeometry::closestSegmentWithContext(
   double *leftOf,
   double epsilon )
 {
-  return 0; //todo...
-
-#if 0
-  QgsDebugMsg( "Entering." );
-
-  // TODO: implement with GEOS
-  if ( mDirtyWkb ) //convert latest geos to mGeometry
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
-    return -1;
+    return 0;
   }
 
-  QgsWkbPtr wkbPtr( mGeometry + 1 );
-  QGis::WkbType wkbType;
-  wkbPtr >> wkbType;
+  QgsPointV2 segmentPt;
+  QgsVertexId vertexAfter;
+  bool leftOfBool;
 
-  // Initialise some stuff
-  double sqrDist = std::numeric_limits<double>::max();
+  double sqrDist = d->geometry->closestSegment( QgsPointV2( point.x(), point.y() ), segmentPt,  vertexAfter, &leftOfBool, epsilon );
 
-  QgsPoint distPoint;
-  int closestSegmentIndex = 0;
-  bool hasZValue = false;
-  switch ( wkbType )
+  minDistPoint.setX( segmentPt.x() );
+  minDistPoint.setY( segmentPt.y() );
+  afterVertex = vertexNrFromVertexId( vertexAfter );
+  if ( leftOf )
   {
-    case QGis::WKBPoint25D:
-    case QGis::WKBPoint:
-    case QGis::WKBMultiPoint25D:
-    case QGis::WKBMultiPoint:
-    {
-      // Points have no lines
-      return -1;
-    }
-
-    case QGis::WKBLineString25D:
-      hasZValue = true;
-    case QGis::WKBLineString:
-    {
-      int nPoints;
-      wkbPtr >> nPoints;
-
-      double prevx = 0.0, prevy = 0.0;
-      for ( int index = 0; index < nPoints; ++index )
-      {
-        double thisx, thisy;
-        wkbPtr >> thisx >> thisy;
-        if ( hasZValue )
-          wkbPtr += sizeof( double );
-
-        if ( index > 0 )
-        {
-          double testdist = point.sqrDistToSegment( prevx, prevy, thisx, thisy, distPoint, epsilon );
-          if ( testdist < sqrDist )
-          {
-            closestSegmentIndex = index;
-            sqrDist = testdist;
-            minDistPoint = distPoint;
-            if ( leftOf )
-            {
-              *leftOf = QgsGeometry::leftOf( point.x(), point.y(), prevx, prevy, thisx, thisy );
-            }
-          }
-        }
-
-        prevx = thisx;
-        prevy = thisy;
-      }
-      afterVertex = closestSegmentIndex;
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-      hasZValue = true;
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-      for ( int linenr = 0, pointIndex = 0; linenr < nLines; ++linenr )
-      {
-        wkbPtr += 1 + sizeof( int );
-        int nPoints;
-        wkbPtr >> nPoints;
-
-        double prevx = 0.0, prevy = 0.0;
-        for ( int pointnr = 0; pointnr < nPoints; ++pointnr )
-        {
-          double thisx, thisy;
-          wkbPtr >> thisx >> thisy;
-          if ( hasZValue )
-            wkbPtr += sizeof( double );
-
-          if ( pointnr > 0 )
-          {
-            double testdist = point.sqrDistToSegment( prevx, prevy, thisx, thisy, distPoint, epsilon );
-            if ( testdist < sqrDist )
-            {
-              closestSegmentIndex = pointIndex;
-              sqrDist = testdist;
-              minDistPoint = distPoint;
-              if ( leftOf )
-              {
-                *leftOf = QgsGeometry::leftOf( point.x(), point.y(), prevx, prevy, thisx, thisy );
-              }
-            }
-          }
-
-          prevx = thisx;
-          prevy = thisy;
-          ++pointIndex;
-        }
-      }
-      afterVertex = closestSegmentIndex;
-      break;
-    }
-
-    case QGis::WKBPolygon25D:
-      hasZValue = true;
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      wkbPtr >> nRings;
-
-      for ( int ringnr = 0, pointIndex = 0; ringnr < nRings; ++ringnr )//loop over rings
-      {
-        int nPoints;
-        wkbPtr >> nPoints;
-
-        double prevx = 0.0, prevy = 0.0;
-        for ( int pointnr = 0; pointnr < nPoints; ++pointnr )//loop over points in a ring
-        {
-          double thisx, thisy;
-          wkbPtr >> thisx >> thisy;
-          if ( hasZValue )
-            wkbPtr += sizeof( double );
-
-          if ( pointnr > 0 )
-          {
-            double testdist = point.sqrDistToSegment( prevx, prevy, thisx, thisy, distPoint, epsilon );
-            if ( testdist < sqrDist )
-            {
-              closestSegmentIndex = pointIndex;
-              sqrDist = testdist;
-              minDistPoint = distPoint;
-              if ( leftOf )
-              {
-                *leftOf = QgsGeometry::leftOf( point.x(), point.y(), prevx, prevy, thisx, thisy );
-              }
-            }
-          }
-
-          prevx = thisx;
-          prevy = thisy;
-          ++pointIndex;
-        }
-      }
-      afterVertex = closestSegmentIndex;
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-      hasZValue = true;
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolygons;
-      wkbPtr >> nPolygons;
-      for ( int polynr = 0, pointIndex = 0; polynr < nPolygons; ++polynr )
-      {
-        wkbPtr += 1 + sizeof( int );
-        int nRings;
-        wkbPtr >> nRings;
-        for ( int ringnr = 0; ringnr < nRings; ++ringnr )
-        {
-          int nPoints;
-          wkbPtr >> nPoints;
-
-          double prevx = 0.0, prevy = 0.0;
-          for ( int pointnr = 0; pointnr < nPoints; ++pointnr )
-          {
-            double thisx, thisy;
-            wkbPtr >> thisx >> thisy;
-            if ( hasZValue )
-              wkbPtr += sizeof( double );
-
-            if ( pointnr > 0 )
-            {
-              double testdist = point.sqrDistToSegment( prevx, prevy, thisx, thisy, distPoint, epsilon );
-              if ( testdist < sqrDist )
-              {
-                closestSegmentIndex = pointIndex;
-                sqrDist = testdist;
-                minDistPoint = distPoint;
-                if ( leftOf )
-                {
-                  *leftOf = QgsGeometry::leftOf( point.x(), point.y(), prevx, prevy, thisx, thisy );
-                }
-              }
-            }
-
-            prevx = thisx;
-            prevy = thisy;
-            ++pointIndex;
-          }
-        }
-      }
-      afterVertex = closestSegmentIndex;
-      break;
-    }
-
-    case QGis::WKBUnknown:
-    default:
-      return -1;
-      break;
-  } // switch (wkbType)
-
-  QgsDebugMsg( QString( "Exiting with nearest point %1, dist %2." )
-               .arg( point.toString() ).arg( sqrDist ) );
-
+    *leftOf = leftOfBool ? -1.0 : 1.0;
+  }
   return sqrDist;
-#endif //0
 }
 
 int QgsGeometry::addRing( const QList<QgsPoint>& ring )

@@ -58,8 +58,6 @@ class QgsAbstractGeometryV2
     bool is3D() const;
     bool isMeasure() const;
 
-    void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QGis::WkbType baseGeomType );
-
     /*virtual bool transform( const QgsCoordinateTransform& ct ) =  0;
     virtual bool isEmpty() const = 0;
     virtual bool isSimple() const = 0;
@@ -87,6 +85,7 @@ class QgsAbstractGeometryV2
     virtual void draw( QPainter& p ) const = 0;
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
+    virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const = 0;
 
     //low-level editing
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) = 0;
@@ -97,6 +96,8 @@ class QgsAbstractGeometryV2
   protected:
     QGis::WkbType mWkbType;
     mutable QgsRectangle mBoundingBox;
+
+    void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QGis::WkbType baseGeomType );
 };
 
 #endif //QGSABSTRACTGEOMETRYV2

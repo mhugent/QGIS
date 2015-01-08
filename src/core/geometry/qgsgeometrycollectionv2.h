@@ -51,6 +51,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual QgsRectangle calculateBoundingBox() const;
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
+    virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
 
     //low-level editing
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );

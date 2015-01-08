@@ -71,6 +71,8 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { *this = newPos; return true; }
     virtual bool deleteVertex( const QgsVertexId& position ) { return false; }
 
+    double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
+
   private:
     double mX;
     double mY;

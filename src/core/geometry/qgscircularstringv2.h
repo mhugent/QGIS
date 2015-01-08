@@ -65,6 +65,8 @@ class QgsCircularStringV2: public QgsCurveV2
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
     virtual bool deleteVertex( const QgsVertexId& position );
 
+    double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
+
   private:
     QVector<double> mX;
     QVector<double> mY;
@@ -82,6 +84,11 @@ class QgsCircularStringV2: public QgsCurveV2
     //bounding box of a single segment
     static QgsRectangle segmentBoundingBox( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
     static QList<QgsPointV2> compassPointsOnSegment( double p1Angle, double p2Angle, double p3Angle, double centerX, double centerY, double radius );
+    static double closestPointOnArc( double x1, double y1, double x2, double y2, double x3, double y3,
+    const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon );
+    /**Returns true if circle is ordered clockwise*/
+    static bool circleClockwise( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
+    static bool angleOnCircle( double angle, const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
 };
 
 #endif // QGSCIRCULARSTRING_H

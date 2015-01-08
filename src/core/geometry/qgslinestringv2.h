@@ -70,6 +70,8 @@ class QgsLineStringV2: public QgsCurveV2
     virtual bool deleteVertex( const QgsVertexId& position );
     void addVertex( const QgsPointV2& pt );
 
+    double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
+
   private:
     void importVerticesFromWkb( const QgsConstWkbPtr& wkb );
 
