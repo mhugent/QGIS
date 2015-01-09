@@ -61,6 +61,8 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     /**Sets interior rings (takes ownership)*/
     void setInteriorRings( QList<QgsCurveV2*> rings );
     void addInteriorRing( QgsCurveV2* ring );
+    /**Removes ring. Exterior ring is 0, first interior ring 1, ...*/
+    bool removeInteriorRing( int nr );
 
     virtual void draw( QPainter& p ) const;
     void mapToPixel( const QgsMapToPixel& mtp );

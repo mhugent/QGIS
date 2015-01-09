@@ -305,6 +305,16 @@ void QgsCurvePolygonV2::addInteriorRing( QgsCurveV2* ring )
   mInteriorRings.append( ring );
 }
 
+bool QgsCurvePolygonV2::removeInteriorRing( int nr )
+{
+  if ( nr >= mInteriorRings.size() )
+  {
+    return false;
+  }
+  mInteriorRings.removeAt( nr );
+  return true;
+}
+
 void QgsCurvePolygonV2::draw( QPainter& p ) const
 {
   if ( mInteriorRings.size() < 1 )

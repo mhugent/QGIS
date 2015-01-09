@@ -1923,55 +1923,33 @@ QList<QgsGeometry*> QgsGeometry::asGeometryCollection() const
 
 bool QgsGeometry::deleteRing( int ringNum, int partNum )
 {
-  return false; //todo...
-
-#if 0
-  if ( ringNum <= 0 || partNum < 0 )
-    return false;
-
-  switch ( wkbType() )
+  if ( !d || !d->geometry )
   {
-    case QGis::WKBPolygon25D:
-    case QGis::WKBPolygon:
-    {
-      if ( partNum != 0 )
-        return false;
-
-      QgsPolygon polygon = asPolygon();
-      if ( ringNum >= polygon.count() )
-        return false;
-
-      polygon.remove( ringNum );
-
-      QgsGeometry* g2 = QgsGeometry::fromPolygon( polygon );
-      *this = *g2;
-      delete g2;
-      return true;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-    case QGis::WKBMultiPolygon:
-    {
-      QgsMultiPolygon mpolygon = asMultiPolygon();
-
-      if ( partNum >= mpolygon.count() )
-        return false;
-
-      if ( ringNum >= mpolygon[partNum].count() )
-        return false;
-
-      mpolygon[partNum].remove( ringNum );
-
-      QgsGeometry* g2 = QgsGeometry::fromMultiPolygon( mpolygon );
-      *this = *g2;
-      delete g2;
-      return true;
-    }
-
-    default:
-      return false; // only makes sense with polygons and multipolygons
+    return false;
   }
-#endif //0
+
+  if ( ringNum < 1 ) //cannot remove exterior ring
+  {
+    return false;
+  }
+
+  QgsAbstractGeometryV2* geom = d->geometry;
+  if ( partNum > 0 )
+  {
+    QgsMultiSurfaceV2* multiSurface = dynamic_cast<QgsMultiSurfaceV2*>( d->geometry );
+    if ( !multiSurface )
+    {
+      return false;
+    }
+    geom = multiSurface->geometryN( partNum );
+  }
+  QgsCurvePolygonV2* cpoly = dynamic_cast<QgsCurvePolygonV2*>( geom );
+  if ( !cpoly )
+  {
+    return false;
+  }
+
+  return cpoly->removeInteriorRing( ringNum - 1 );
 }
 
 bool QgsGeometry::deletePart( int partNum )
