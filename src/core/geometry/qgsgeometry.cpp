@@ -314,9 +314,24 @@ QGis::GeometryType QgsGeometry::type() const
       return QGis::Point;
 
     case QGis::WKBLineString:
+    case QGis::WKBLineStringZ:
+    case QGis::WKBLineStringM:
+    case QGis::WKBLineStringZM:
     case QGis::WKBLineString25D:
     case QGis::WKBMultiLineString:
     case QGis::WKBMultiLineString25D:
+    case QGis::WKBCircularString:
+    case QGis::WKBCircularStringZ:
+    case QGis::WKBCircularStringM:
+    case QGis::WKBCircularStringZM:
+    case QGis::WKBCompoundCurve:
+    case QGis::WKBCompoundCurveZ:
+    case QGis::WKBCompoundCurveM:
+    case QGis::WKBCompoundCurveZM:
+    case QGis::WKBMultiCurve:
+    case QGis::WKBMultiCurveZ:
+    case QGis::WKBMultiCurveM:
+    case QGis::WKBMultiCurveZM:
       return QGis::Line;
 
     case QGis::WKBPolygon:
@@ -324,8 +339,19 @@ QGis::GeometryType QgsGeometry::type() const
     case QGis::WKBPolygonZ:
     case QGis::WKBPolygonM:
     case QGis::WKBPolygonZM:
+    case QGis::WKBCurvePolygon:
+    case QGis::WKBCurvePolygonZ:
+    case QGis::WKBCurvePolygonM:
+    case QGis::WKBCurvePolygonZM:
     case QGis::WKBMultiPolygon:
+    case QGis::WKBMultiPolygonZ:
+    case QGis::WKBMultiPolygonM:
+    case QGis::WKBMultiPolygonZM:
     case QGis::WKBMultiPolygon25D:
+    case QGis::WKBMultiSurface:
+    case QGis::WKBMultiSurfaceZ:
+    case QGis::WKBMultiSurfaceM:
+    case QGis::WKBMultiSurfaceZM:
       return QGis::Polygon;
 
     default:
@@ -340,26 +366,11 @@ bool QgsGeometry::isMultipart() const
 
 void QgsGeometry::fromGeos( GEOSGeometry *geos )
 {
-#if 0
-  // TODO - make this more heap-friendly
-
-  if ( mGeos )
+  if ( d && d->geometry )
   {
-    GEOSGeom_destroy( mGeos );
-    mGeos = 0;
+    delete d->geometry;
+    d->geometry = QgsGeos::fromGeos( geos );
   }
-
-  if ( mGeometry )
-  {
-    delete [] mGeometry;
-    mGeometry = 0;
-  }
-
-  mGeos = geos;
-
-  mDirtyWkb   = true;
-  mDirtyGeos  = false;
-#endif //0
 }
 
 QgsPoint QgsGeometry::closestVertex( const QgsPoint& point, int& atVertex, int& beforeVertex, int& afterVertex, double& sqrDist )
@@ -455,252 +466,36 @@ bool QgsGeometry::insertVertex( double x, double y, int beforeVertex )
 
 QgsPoint QgsGeometry::vertexAt( int atVertex )
 {
-  return QgsPoint( 0, 0 ); //todo...
-
-#if 0
-  if ( atVertex < 0 )
-    return QgsPoint( 0, 0 );
-
-  if ( mDirtyWkb )
-    exportGeosToWkb();
-
-  if ( !mGeometry )
+  if ( !d || !d->geometry )
   {
-    QgsDebugMsg( "WKB geometry not available!" );
     return QgsPoint( 0, 0 );
   }
 
-  QgsConstWkbPtr wkbPtr( mGeometry + 1 );
-  QGis::WkbType wkbType;
-  wkbPtr >> wkbType;
-
-  bool hasZValue = false;
-  switch ( wkbType )
-  {
-    case QGis::WKBPoint25D:
-    case QGis::WKBPoint:
-    {
-      if ( atVertex != 0 )
-        return QgsPoint( 0, 0 );
-
-      double x, y;
-      wkbPtr >> x >> y;
-
-      return QgsPoint( x, y );
-    }
-
-    case QGis::WKBLineString25D:
-      hasZValue = true;
-    case QGis::WKBLineString:
-    {
-      // get number of points in the line
-      int nPoints;
-      wkbPtr >> nPoints;
-
-      if ( atVertex >= nPoints )
-        return QgsPoint( 0, 0 );
-
-      // copy the vertex coordinates
-      wkbPtr += atVertex * ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-      double x, y;
-      wkbPtr >> x >> y;
-
-      return QgsPoint( x, y );
-    }
-
-    case QGis::WKBPolygon25D:
-      hasZValue = true;
-    case QGis::WKBPolygon:
-    {
-      int nRings;
-      wkbPtr >> nRings;
-
-      for ( int ringnr = 0, pointIndex = 0; ringnr < nRings; ++ringnr )
-      {
-        int nPoints;
-        wkbPtr >> nPoints;
-
-        if ( atVertex >= pointIndex + nPoints )
-        {
-          wkbPtr += nPoints * ( hasZValue ? 3 : 2 ) * sizeof( double );
-          pointIndex += nPoints;
-          continue;
-        }
-
-        wkbPtr += ( atVertex - pointIndex ) * ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-        double x, y;
-        wkbPtr >> x >> y;
-        return QgsPoint( x, y );
-      }
-
-      return QgsPoint( 0, 0 );
-    }
-
-    case QGis::WKBMultiPoint25D:
-      hasZValue = true;
-    case QGis::WKBMultiPoint:
-    {
-      // get number of points in the line
-      int nPoints;
-      wkbPtr >> nPoints;
-
-      if ( atVertex >= nPoints )
-        return QgsPoint( 0, 0 );
-
-      wkbPtr += atVertex * ( 1 + sizeof( int ) + ( hasZValue ? 3 : 2 ) * sizeof( double ) ) + 1 + sizeof( int );
-
-      double x, y;
-      wkbPtr >> x >> y;
-      return QgsPoint( x, y );
-    }
-
-    case QGis::WKBMultiLineString25D:
-      hasZValue = true;
-    case QGis::WKBMultiLineString:
-    {
-      int nLines;
-      wkbPtr >> nLines;
-
-      for ( int linenr = 0, pointIndex = 0; linenr < nLines; ++linenr )
-      {
-        wkbPtr += 1 + sizeof( int );
-        int nPoints;
-        wkbPtr >> nPoints;
-
-        if ( atVertex >= pointIndex + nPoints )
-        {
-          wkbPtr += nPoints * ( hasZValue ? 3 : 2 ) * sizeof( double );
-          pointIndex += nPoints;
-          continue;
-        }
-
-        wkbPtr += ( atVertex - pointIndex ) * ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-        double x, y;
-        wkbPtr >> x >> y;
-
-        return QgsPoint( x, y );
-      }
-
-      return QgsPoint( 0, 0 );
-    }
-
-    case QGis::WKBMultiPolygon25D:
-      hasZValue = true;
-    case QGis::WKBMultiPolygon:
-    {
-      int nPolygons;
-      wkbPtr >> nPolygons;
-
-      for ( int polynr = 0, pointIndex = 0; polynr < nPolygons; ++polynr )
-      {
-        wkbPtr += 1 + sizeof( int );
-
-        int nRings;
-        wkbPtr >> nRings;
-        for ( int ringnr = 0; ringnr < nRings; ++ringnr )
-        {
-          int nPoints;
-          wkbPtr >> nPoints;
-
-          if ( atVertex >= pointIndex + nPoints )
-          {
-            wkbPtr += nPoints * ( hasZValue ? 3 : 2 ) * sizeof( double );
-            pointIndex += nPoints;
-            continue;
-          }
-
-          wkbPtr += ( atVertex - pointIndex ) * ( hasZValue ? 3 : 2 ) * sizeof( double );
-
-          double x, y;
-          wkbPtr >> x >> y;
-
-          return QgsPoint( x, y );
-        }
-      }
-      return QgsPoint( 0, 0 );
-    }
-
-    default:
-      QgsDebugMsg( "error: mGeometry type not recognized" );
-      return QgsPoint( 0, 0 );
-  }
-#endif //0
+  QgsVertexId vId;
+  vertexIdFromVertexNr( atVertex, vId );
+  QgsPointV2 pt = d->geometry->pointAt( vId );
+  return QgsPoint( pt.x(), pt.y() );
 }
 
 double QgsGeometry::sqrDistToVertexAt( QgsPoint& point, int atVertex )
 {
-  return 0; //todo...
-#if 0
-  QgsPoint pnt = vertexAt( atVertex );
-  if ( pnt != QgsPoint( 0, 0 ) )
-  {
-    QgsDebugMsg( "Exiting with distance to " + pnt.toString() );
-    return point.sqrDist( pnt );
-  }
-  else
-  {
-    QgsDebugMsg( "Exiting with std::numeric_limits<double>::max()." );
-    // probably safest to bail out with a very large number
-    return std::numeric_limits<double>::max();
-  }
-#endif //0
+  QgsPoint vertexPoint = vertexAt( atVertex );
+  return QgsGeometryUtils::sqrDistance2D( QgsPointV2( vertexPoint.x(), vertexPoint.y() ), QgsPointV2( point.x(), point.y() ) );
 }
 
 double QgsGeometry::closestVertexWithContext( const QgsPoint& point, int& atVertex )
 {
-  return 0; //todo...
-
-#if 0
-  double sqrDist = std::numeric_limits<double>::max();
-
-  try
+  if ( !d || !d->geometry )
   {
-    // Initialise some stuff
-    int closestVertexIndex = 0;
-
-    // set up the GEOS geometry
-    if ( mDirtyGeos )
-      exportWkbToGeos();
-
-    if ( !mGeos )
-      return -1;
-
-    const GEOSGeometry *g = GEOSGetExteriorRing( mGeos );
-    if ( !g )
-      return -1;
-
-    const GEOSCoordSequence *sequence = GEOSGeom_getCoordSeq( g );
-
-    unsigned int n;
-    GEOSCoordSeq_getSize( sequence, &n );
-
-    for ( unsigned int i = 0; i < n; i++ )
-    {
-      double x, y;
-      GEOSCoordSeq_getX( sequence, i, &x );
-      GEOSCoordSeq_getY( sequence, i, &y );
-
-      double testDist = point.sqrDist( x, y );
-      if ( testDist < sqrDist )
-      {
-        closestVertexIndex = i;
-        sqrDist = testDist;
-      }
-    }
-
-    atVertex = closestVertexIndex;
-  }
-  catch ( GEOSException &e )
-  {
-    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-    return -1;
+    return 0.0;
   }
 
-  return sqrDist;
-#endif //0
+  QgsGeometryEditor ge( d->geometry );
+  QgsVertexId vId;
+  QgsPointV2 pt( point.x(), point.y() );
+  QgsPointV2 closestPoint = ge.closestVertex( pt, vId );
+  atVertex = vertexNrFromVertexId( vId );
+  return QgsGeometryUtils::sqrDistance2D( closestPoint, pt );
 }
 
 double QgsGeometry::closestSegmentWithContext(
@@ -2181,69 +1976,18 @@ bool QgsGeometry::deleteRing( int ringNum, int partNum )
 
 bool QgsGeometry::deletePart( int partNum )
 {
-  return 0; //todo....
-
-#if 0
-  if ( partNum < 0 )
-    return false;
-
-  switch ( wkbType() )
+  if ( !d || !d->geometry )
   {
-    case QGis::WKBMultiPoint25D:
-    case QGis::WKBMultiPoint:
-    {
-      QgsMultiPoint mpoint = asMultiPoint();
-
-      if ( partNum >= mpoint.size() || mpoint.size() == 1 )
-        return false;
-
-      mpoint.remove( partNum );
-
-      QgsGeometry* g2 = QgsGeometry::fromMultiPoint( mpoint );
-      *this = *g2;
-      delete g2;
-      break;
-    }
-
-    case QGis::WKBMultiLineString25D:
-    case QGis::WKBMultiLineString:
-    {
-      QgsMultiPolyline mline = asMultiPolyline();
-
-      if ( partNum >= mline.size() || mline.size() == 1 )
-        return false;
-
-      mline.remove( partNum );
-
-      QgsGeometry* g2 = QgsGeometry::fromMultiPolyline( mline );
-      *this = *g2;
-      delete g2;
-      break;
-    }
-
-    case QGis::WKBMultiPolygon25D:
-    case QGis::WKBMultiPolygon:
-    {
-      QgsMultiPolygon mpolygon = asMultiPolygon();
-
-      if ( partNum >= mpolygon.size() || mpolygon.size() == 1 )
-        return false;
-
-      mpolygon.remove( partNum );
-
-      QgsGeometry* g2 = QgsGeometry::fromMultiPolygon( mpolygon );
-      *this = *g2;
-      delete g2;
-      break;
-    }
-
-    default:
-      // single part geometries are ignored
-      return false;
+    return false;
   }
 
-  return true;
-#endif //0
+  QgsGeometryCollectionV2* c = dynamic_cast<QgsGeometryCollectionV2*>( d->geometry );
+  if ( !c )
+  {
+    return false;
+  }
+
+  return c->removeGeometry( partNum );
 }
 
 /** Return union of several geometries - try to use unary union if available (GEOS >= 3.3) otherwise use a cascade of unions.

@@ -19,6 +19,7 @@
 #include "qgsapplication.h"
 #include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
+#include "qgsgeometryutils.h"
 #include "qgslinestringv2.h"
 #include "qgspolygonv2.h"
 #include "qgswkbptr.h"
@@ -388,9 +389,14 @@ void QgsCurvePolygonV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > 
 
 double QgsCurvePolygonV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
-  //soon...
-  segmentPt = pt;
-  return 0.0;
+  if ( !mExteriorRing )
+  {
+    return 0.0;
+  }
+  QList<QgsCurveV2*> segmentList;
+  segmentList.append( mExteriorRing );
+  segmentList.append( mInteriorRings );
+  return QgsGeometryUtils::closestSegmentFromComponents( segmentList, pt, segmentPt,  vertexAfter, leftOf, epsilon );
 }
 
 bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )

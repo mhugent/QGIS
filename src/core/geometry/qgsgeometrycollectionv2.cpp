@@ -100,6 +100,16 @@ bool QgsGeometryCollectionV2::addGeometry( QgsAbstractGeometryV2* g )
   return true;
 }
 
+bool QgsGeometryCollectionV2::removeGeometry( int nr )
+{
+  if ( nr >= mGeometries.size() )
+  {
+    return false;
+  }
+  mGeometries.remove( nr );
+  return true;
+}
+
 int QgsGeometryCollectionV2::dimension() const
 {
   int maxDim = 0;

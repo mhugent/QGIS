@@ -85,6 +85,7 @@ class QgsAbstractGeometryV2
     virtual void draw( QPainter& p ) const = 0;
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
+    QgsPointV2 pointAt( const QgsVertexId& id ) const;
     virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const = 0;
 
     //low-level editing

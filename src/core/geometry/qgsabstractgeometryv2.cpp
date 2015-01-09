@@ -122,3 +122,25 @@ QgsRectangle QgsAbstractGeometryV2::calculateBoundingBox() const
 
   return QgsRectangle( xmin, ymin, xmax, ymax );
 }
+
+QgsPointV2 QgsAbstractGeometryV2::pointAt( const QgsVertexId& id ) const
+{
+  QList< QList< QList< QgsPointV2 > > > coordinates;
+  coordinateSequence( coordinates );
+
+  if ( id.feature >= coordinates.size() )
+  {
+    return QgsPointV2();
+  }
+  const QList< QList< QgsPointV2 > >& part = coordinates.at( id.feature );
+  if ( id.ring >= part.size() )
+  {
+    return QgsPointV2();
+  }
+  const QList< QgsPointV2 >& ring = part.at( id.ring );
+  if ( id.vertex >= ring.size() )
+  {
+    return QgsPointV2();
+  }
+  return ring.at( id.vertex );
+}
