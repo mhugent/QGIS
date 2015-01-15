@@ -406,26 +406,29 @@ double QgsCurvePolygonV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segm
   QList<QgsCurveV2*> segmentList;
   segmentList.append( mExteriorRing );
   segmentList.append( mInteriorRings );
-  return QgsGeometryUtils::closestSegmentFromComponents( segmentList, pt, segmentPt,  vertexAfter, leftOf, epsilon );
+  return QgsGeometryUtils::closestSegmentFromComponents( segmentList, QgsGeometryUtils::RING, pt, segmentPt,  vertexAfter, leftOf, epsilon );
 }
 
 bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
-  return false;
-  /*QList< QgsVertexId > vertexIds = ringVertexIds( position );
-  QList< QgsVertexId >::const_iterator vIt = vertexIds.constBegin();
-  for(; vIt != vertexIds.constEnd(); ++vIt )
+  if ( !mExteriorRing || position.ring < 0 || position.vertex < 0 )
   {
-      if( vIt->ring == 0 )
-      {
-          mExteriorRing->insertVertex( *vIt, newPos );
-      }
-      else
-      {
-          mInteriorRings[vIt->ring - 1]->insertVertex( *vIt, newPos );
-      }
+    return false;
   }
-  return ( vertexIds.size() > 0 );*/
+
+  QgsVertexId ringId = position;
+  if ( position.ring == 0 )
+  {
+    ringId.ring = 0;
+    mExteriorRing->insertVertex( ringId, vertex );
+  }
+  else
+  {
+    ringId.ring = position.ring - 1;
+    mInteriorRings[ position.ring - 1 ]->insertVertex( ringId, vertex );
+  }
+
+  return false;
 }
 
 bool QgsCurvePolygonV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )

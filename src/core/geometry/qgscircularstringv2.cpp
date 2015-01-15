@@ -715,9 +715,13 @@ double QgsCircularStringV2::ccwAngle( double dy, double dx )
   double angle = atan2( dy, dx ) * 180 / M_PI;
   if ( angle < 0 )
   {
-    return -angle;
+    return 360 + angle;
   }
-  return 360 - angle;
+  else if ( angle > 360 )
+  {
+    return 360 - angle;
+  }
+  return angle;
 }
 
 void QgsCircularStringV2::drawAsPolygon( QPainter& p ) const
@@ -727,7 +731,7 @@ void QgsCircularStringV2::drawAsPolygon( QPainter& p ) const
 
 bool QgsCircularStringV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
-  if ( position.vertex > mX.size() )
+  if ( position.vertex > mX.size() || position.vertex < 1 )
   {
     return false;
   }
@@ -741,6 +745,16 @@ bool QgsCircularStringV2::insertVertex( const QgsVertexId& position, const QgsPo
   if ( isMeasure() )
   {
     mM.insert( position.vertex, vertex.m() );
+  }
+
+  bool vertexNrEven = ( position.vertex % 2 == 0 );
+  if ( vertexNrEven )
+  {
+    insertVertexBetween( position.vertex - 2, position.vertex - 1, position.vertex );
+  }
+  else
+  {
+    insertVertexBetween( position.vertex, position.vertex + 1, position.vertex - 1 );
   }
   return true;
 }
@@ -788,134 +802,200 @@ bool QgsCircularStringV2::deleteVertex( const QgsVertexId& position )
 
 double QgsCircularStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
-    double minDist = std::numeric_limits<double>::max();
-    QgsPointV2 minDistSegmentPoint;
-    QgsVertexId minDistVertexAfter;
-    bool minDistLeftOf;
+  double minDist = std::numeric_limits<double>::max();
+  QgsPointV2 minDistSegmentPoint;
+  QgsVertexId minDistVertexAfter;
+  bool minDistLeftOf;
 
-    double currentDist = 0.0;
+  double currentDist = 0.0;
 
-    int nPoints = numPoints();
-    for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
+  int nPoints = numPoints();
+  for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
+  {
+    currentDist = closestPointOnArc( mX[i], mY[i], mX[i + 1], mY[i + 1], mX[i + 2], mY[i + 2], pt, segmentPt, vertexAfter, leftOf, epsilon );
+    if ( currentDist < minDist )
     {
-        currentDist = closestPointOnArc( mX[i], mY[i], mX[i + 1], mY[i + 1], mX[i + 2], mY[i + 2], pt, segmentPt, vertexAfter, leftOf, epsilon );
-        if( currentDist < minDist )
-        {
-            minDist = currentDist;
-            minDistSegmentPoint = segmentPt;
-            minDistVertexAfter = vertexAfter;
-            if( leftOf )
-            {
-                minDistLeftOf = *leftOf;
-            }
-        }
+      minDist = currentDist;
+      minDistSegmentPoint = segmentPt;
+      minDistVertexAfter.vertex = vertexAfter.vertex + i;
+      if ( leftOf )
+      {
+        minDistLeftOf = *leftOf;
+      }
     }
+  }
 
-    segmentPt = minDistSegmentPoint;
-    vertexAfter = minDistVertexAfter;
-    if( leftOf )
-    {
-        *leftOf = minDistLeftOf;
-    }
-    return minDist;
+  segmentPt = minDistSegmentPoint;
+  vertexAfter = minDistVertexAfter;
+  vertexAfter.feature = 0; vertexAfter.ring = 0;
+  if ( leftOf )
+  {
+    *leftOf = minDistLeftOf;
+  }
+  return minDist;
 }
 
 double QgsCircularStringV2::closestPointOnArc( double x1, double y1, double x2, double y2, double x3, double y3,
     const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon )
 {
-    double radius, centerX, centerY;
-    QgsPointV2 pt1( x1, y1 );
-    QgsPointV2 pt2( x2, y2 );
-    QgsPointV2 pt3( x3, y3 );
+  double radius, centerX, centerY;
+  QgsPointV2 pt1( x1, y1 );
+  QgsPointV2 pt2( x2, y2 );
+  QgsPointV2 pt3( x3, y3 );
 
-    circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
-    if( angleOnCircle( ccwAngle( pt.y() - centerY, pt.x() - centerX ), pt1, pt2, pt3 ) )
-    {
-        //get point on line center -> pt with distance radius
-        segmentPt = QgsGeometryUtils::pointOnLineWithDistance( QgsPointV2( centerX, centerY ), pt, radius );
-    }
-    else
-    {
-        double distPtPt1 = QgsGeometryUtils::sqrDistance2D( pt, pt1 );
-        double distPtPt3 = QgsGeometryUtils::sqrDistance2D( pt, pt3 );
-        segmentPt = ( distPtPt1 <= distPtPt3 ) ? pt1 : pt3;
-    }
+  bool clockWise = circleClockwise( pt1, pt2, pt3 );
 
-    double sqrDistance = QgsGeometryUtils::sqrDistance2D( segmentPt, pt );
+  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
+  if ( angleOnCircle( ccwAngle( pt.y() - centerY, pt.x() - centerX ), pt1, pt2, pt3 ) )
+  {
+    //get point on line center -> pt with distance radius
+    segmentPt = QgsGeometryUtils::pointOnLineWithDistance( QgsPointV2( centerX, centerY ), pt, radius );
 
-    if( leftOf )
-    {
-        *leftOf = circleClockwise( pt1, pt2, pt3 ) ? sqrDistance > radius : sqrDistance < radius;
-    }
+    //vertexAfter
+    vertexAfter.vertex = vertexBetween( centerX, centerY, pt, pt1, pt2, clockWise ) ? 1 : 2;
+  }
+  else
+  {
+    double distPtPt1 = QgsGeometryUtils::sqrDistance2D( pt, pt1 );
+    double distPtPt3 = QgsGeometryUtils::sqrDistance2D( pt, pt3 );
+    segmentPt = ( distPtPt1 <= distPtPt3 ) ? pt1 : pt3;
+    vertexAfter.vertex = ( distPtPt1 <= distPtPt3 ) ? 1 : 2;
+  }
 
-    return sqrDistance;
+  double sqrDistance = QgsGeometryUtils::sqrDistance2D( segmentPt, pt );
+
+
+  if ( leftOf )
+  {
+    *leftOf = clockWise ? sqrDistance > radius : sqrDistance < radius;
+  }
+
+  return sqrDistance;
 }
 
 bool QgsCircularStringV2::circleClockwise( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 )
 {
-    double radius, centerX, centerY;
-    circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
+  double radius, centerX, centerY;
+  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
 
-    double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
-    double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
-    double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
+  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
+  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
+  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
 
-    bool clockwise;
-    if ( p3Angle >= p1Angle )
+  bool clockwise;
+  if ( p3Angle >= p1Angle )
+  {
+    if ( p2Angle > p1Angle && p2Angle < p3Angle )
     {
-        if ( p2Angle > p1Angle && p2Angle < p3Angle )
-        {
-            clockwise = false;
-        }
-        else
-        {
-            clockwise = true;
-        }
+      clockwise = false;
     }
     else
     {
-        if ( p2Angle < p1Angle && p2Angle > p3Angle )
-        {
-            clockwise = false;
-        }
-        else
-        {
-            clockwise = true;
-        }
+      clockwise = true;
     }
+  }
+  else
+  {
+    if ( p2Angle > p1Angle || p2Angle < p3Angle )
+    {
+      clockwise = false;
+    }
+    else
+    {
+      clockwise = true;
+    }
+  }
 
-    return clockwise;
+  return clockwise;
 }
 
 bool QgsCircularStringV2::angleOnCircle( double angle, const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 )
 {
-    double radius, centerX, centerY;
-    circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
+  double radius, centerX, centerY;
+  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
 
-    double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
-    double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
-    double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
+  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
+  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
+  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
 
-    if( p3Angle > p1Angle )
+  if ( p3Angle > p1Angle )
+  {
+    if ( p2Angle > p1Angle && p2Angle < p3Angle )
     {
-        if ( p2Angle > p1Angle && p2Angle < p3Angle )
-        {
-            return ( angle >= p1Angle && angle <= p3Angle );
-        }
-        else
-        {
-            return ( angle <= p1Angle || angle >= p3Angle );
-        }
+      return ( angle >= p1Angle && angle <= p3Angle );
     }
     else
     {
-        if ( p2Angle < p1Angle && p2Angle > p3Angle )
-        {
-            return ( angle >= p3Angle && angle <= p1Angle );
-        }
-        else
-        {
-            return ( angle <= p3Angle || angle >= p1Angle );
-        }
+      return ( angle <= p1Angle || angle >= p3Angle );
     }
+  }
+  else
+  {
+    if ( p2Angle < p1Angle && p2Angle > p3Angle )
+    {
+      return ( angle >= p3Angle && angle <= p1Angle );
+    }
+    else
+    {
+      return ( angle <= p3Angle || angle >= p1Angle );
+    }
+  }
+}
+
+void QgsCircularStringV2::insertVertexBetween( int after, int before, int pointOnCircle )
+{
+  double xAfter = mX[after];
+  double yAfter = mY[after];
+  double xBefore = mX[before];
+  double yBefore = mY[before];
+  double xOnCircle = mX[ pointOnCircle ];
+  double yOnCircle = mY[ pointOnCircle ];
+
+  double radius, centerX, centerY;
+  circleCenterRadius( QgsPointV2( xAfter, yAfter ), QgsPointV2( xBefore, yBefore ), QgsPointV2( xOnCircle, yOnCircle ), radius, centerX, centerY );
+
+  double x = ( xAfter + xBefore ) / 2.0;
+  double y = ( yAfter + yBefore ) / 2.0;
+
+  QgsPointV2 newVertex = QgsGeometryUtils::pointOnLineWithDistance( QgsPointV2( centerX, centerY ), QgsPointV2( x, y ), radius );
+  mX.insert( before, newVertex.x() );
+  mY.insert( before, newVertex.y() );
+
+  if ( is3D() )
+  {
+    mZ.insert( before, ( mZ[after] + mZ[before] ) / 2.0 );
+  }
+  if ( isMeasure() )
+  {
+    mM.insert( before, ( mM[after] + mM[before] ) / 2.0 );
+  }
+}
+
+bool QgsCircularStringV2::vertexBetween( double xCenter, double yCenter, const QgsPointV2& pt, const QgsPointV2& pt1, const QgsPointV2& pt2, bool clockWise )
+{
+  double angle = ccwAngle( pt.y() - yCenter, pt.x() - xCenter );
+  double angle1 = ccwAngle( pt1.y() - yCenter, pt1.x() - xCenter );
+  double angle2 = ccwAngle( pt2.y() - yCenter, pt2.x() - xCenter );
+  if ( clockWise )
+  {
+    if ( angle2 < angle1 )
+    {
+      return ( angle >= angle2 && angle <= angle1 );
+    }
+    else
+    {
+      return ( angle <= angle1 || angle >= angle2 );
+    }
+  }
+  else
+  {
+    if ( angle2 > angle1 )
+    {
+      return ( angle >= angle1 && angle <= angle2 );
+    }
+    else
+    {
+      return ( angle <= angle1 || angle >= angle2 );
+    }
+  }
 }

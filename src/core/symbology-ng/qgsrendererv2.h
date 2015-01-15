@@ -31,6 +31,7 @@ class QgsRenderContext;
 class QgsFeature;
 class QgsFields;
 class QgsVectorLayer;
+class QgsAbstractGeometryV2;
 
 typedef QMap<QString, QString> QgsStringMap;
 
@@ -211,13 +212,15 @@ class CORE_EXPORT QgsFeatureRendererV2
                                   bool selected,
                                   bool drawVertexMarker );
 
+    void renderVertexMarkers( const QgsAbstractGeometryV2* geom, QgsRenderContext& context );
+
+    //These methods are only here to keep API compatibility
     //! render editing vertex marker at specified point
     void renderVertexMarker( QPointF& pt, QgsRenderContext& context );
     //! render editing vertex marker for a polyline
     void renderVertexMarkerPolyline( QPolygonF& pts, QgsRenderContext& context );
     //! render editing vertex marker for a polygon
     void renderVertexMarkerPolygon( QPolygonF& pts, QList<QPolygonF>* rings, QgsRenderContext& context );
-
     static const unsigned char* _getPoint( QPointF& pt, QgsRenderContext& context, const unsigned char* wkb );
     static const unsigned char* _getLineString( QPolygonF& pts, QgsRenderContext& context, const unsigned char* wkb );
     static const unsigned char* _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, const unsigned char* wkb );

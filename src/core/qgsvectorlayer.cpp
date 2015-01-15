@@ -2477,6 +2477,12 @@ void QgsVectorLayer::snapToGeometry( const QgsPoint& startPoint,
     {
       sqrDistSegmentSnap = geom->closestSegmentWithContext( startPoint, snappedPoint, afterVertex, NULL, crs().geographicFlag() ? 1e-12 : 1e-8 );
 
+      //an error occured in snapping
+      if ( afterVertex == -1 )
+      {
+        return;
+      }
+
       if ( sqrDistSegmentSnap < sqrSnappingTolerance )
       {
         snappingResultSegment.snappedVertex = snappedPoint;

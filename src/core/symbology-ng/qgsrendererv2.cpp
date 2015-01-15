@@ -27,6 +27,7 @@
 #include "qgsgeometry.h"
 #include "qgsfeature.h"
 #include "qgslogger.h"
+#include "qgspointv2.h"
 #include "qgsvectorlayer.h"
 
 #include <QDomElement>
@@ -242,6 +243,10 @@ void QgsFeatureRendererV2::renderFeatureWithSymbol( QgsFeature& feature, QgsSymb
   }
   renderGeom.mapToPixel( context.mapToPixel() );
   symbol->renderGeometry( &renderGeom, &feature, context, layer, selected );
+  if ( drawVertexMarker )
+  {
+    renderVertexMarkers( renderGeom.geometry(), context );
+  }
 }
 
 QString QgsFeatureRendererV2::dump() const
@@ -429,6 +434,34 @@ void QgsFeatureRendererV2::setVertexMarkerAppearance( int type, int size )
 {
   mCurrentVertexMarkerType = type;
   mCurrentVertexMarkerSize = size;
+}
+
+void QgsFeatureRendererV2::renderVertexMarkers( const QgsAbstractGeometryV2* geom, QgsRenderContext& context )
+{
+  if ( !geom )
+  {
+    return;
+  }
+
+  QList< QList< QList< QgsPointV2 > > > coords;
+  geom->coordinateSequence( coords );
+  QList< QList< QList< QgsPointV2 > > >::const_iterator partIt = coords.constBegin();
+  for ( ; partIt != coords.constEnd(); ++partIt )
+  {
+    const QList< QList< QgsPointV2 > >& part = *partIt;
+    QList< QList< QgsPointV2 > >::const_iterator ringIt = part.constBegin();
+    for ( ; ringIt != part.constEnd(); ++ringIt )
+    {
+      const QList< QgsPointV2 >& ring = *ringIt;
+      QList< QgsPointV2 >::const_iterator vertexIt = ring.constBegin();
+      for ( ; vertexIt != ring.constEnd(); ++vertexIt )
+      {
+        QgsVectorLayer::drawVertexMarker( vertexIt->x(), vertexIt->y(), *context.painter(),
+                                          ( QgsVectorLayer::VertexMarkerType ) mCurrentVertexMarkerType,
+                                          mCurrentVertexMarkerSize );
+      }
+    }
+  }
 }
 
 void QgsFeatureRendererV2::renderVertexMarker( QPointF& pt, QgsRenderContext& context )

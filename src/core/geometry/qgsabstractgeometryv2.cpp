@@ -144,3 +144,23 @@ QgsPointV2 QgsAbstractGeometryV2::pointAt( const QgsVertexId& id ) const
   }
   return ring.at( id.vertex );
 }
+
+int QgsAbstractGeometryV2::nCoordinates() const
+{
+  QList< QList< QList< QgsPointV2 > > > coordinates;
+  coordinateSequence( coordinates );
+  int nCoords = 0;
+
+  QList< QList< QList< QgsPointV2 > > >::const_iterator partIt = coordinates.constBegin();
+  for ( ; partIt != coordinates.constEnd(); ++partIt )
+  {
+    const QList< QList< QgsPointV2 > >& part = *partIt;
+    QList< QList< QgsPointV2 > >::const_iterator ringIt = part.constBegin();
+    for ( ; ringIt != part.constEnd(); ++ringIt )
+    {
+      nCoords += ringIt->size();
+    }
+  }
+
+  return nCoords;
+}

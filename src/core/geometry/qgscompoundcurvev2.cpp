@@ -419,9 +419,9 @@ bool QgsCompoundCurveV2::insertVertex( const QgsVertexId& position, const QgsPoi
   QList< QPair<int, QgsVertexId> >::const_iterator idIt = curveIds.constBegin();
   for ( ; idIt != curveIds.constEnd(); ++idIt )
   {
-    mCurves[idIt->first]->insertVertex( idIt->second, vertex );
+    //return after first result
+    return mCurves[idIt->first]->insertVertex( idIt->second, vertex );
   }
-  return curveIds.size() > 0;
 }
 
 bool QgsCompoundCurveV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
@@ -474,6 +474,6 @@ QList< QPair<int, QgsVertexId> > QgsCompoundCurveV2::curveVertexId( const QgsVer
 
 double QgsCompoundCurveV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
-  return QgsGeometryUtils::closestSegmentFromComponents( mCurves, pt, segmentPt, vertexAfter, leftOf, epsilon );
+  return QgsGeometryUtils::closestSegmentFromComponents( mCurves, QgsGeometryUtils::VERTEX, pt, segmentPt, vertexAfter, leftOf, epsilon );
 }
 

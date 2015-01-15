@@ -31,14 +31,23 @@ class QgsGeometryUtils
 
     static QgsPointV2 pointOnLineWithDistance( const QgsPointV2& startPoint, const QgsPointV2& directionPoint, double distance );
 
-    template<class T> static double closestSegmentFromComponents( T& container, const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon )
+    enum componentType
+    {
+      VERTEX,
+      RING,
+      PART
+    };
+
+    template<class T> static double closestSegmentFromComponents( T& container, componentType ctype, const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon )
     {
       double minDist = std::numeric_limits<double>::max();
       double minDistSegmentX, minDistSegmentY;
       QgsVertexId minDistVertexAfter;
       bool minDistLeftOf;
-
       double sqrDist = 0.0;
+      int vertexOffset = 0;
+      int ringOffset = 0;
+      int partOffset = 0;
 
       for ( int i = 0; i < container.size(); ++i )
       {
@@ -49,10 +58,26 @@ class QgsGeometryUtils
           minDistSegmentX = segmentPt.x();
           minDistSegmentY = segmentPt.y();
           minDistVertexAfter = vertexAfter;
+          minDistVertexAfter.vertex = vertexAfter.vertex + vertexOffset;
+          minDistVertexAfter.feature = vertexAfter.feature + partOffset;
+          minDistVertexAfter.ring = vertexAfter.ring + ringOffset;
           if ( leftOf )
           {
             minDistLeftOf = *leftOf;
           }
+        }
+
+        if ( ctype == VERTEX )
+        {
+          vertexOffset += container.at( i )->nCoordinates();
+        }
+        else if ( ctype == RING )
+        {
+          ringOffset += 1;
+        }
+        else if ( ctype == PART )
+        {
+          partOffset += 1;
         }
       }
 
