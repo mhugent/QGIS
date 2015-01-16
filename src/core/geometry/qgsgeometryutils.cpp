@@ -159,7 +159,7 @@ bool QgsGeometryUtils::circleAngleBetween( double angle, double angle1, double a
   {
     if ( angle2 < angle1 )
     {
-      return ( angle >= angle2 && angle <= angle1 );
+      return ( angle <= angle1 && angle >= angle2 );
     }
     else
     {
@@ -174,7 +174,7 @@ bool QgsGeometryUtils::circleAngleBetween( double angle, double angle1, double a
     }
     else
     {
-      return ( angle <= angle1 || angle >= angle2 );
+      return ( angle >= angle1 || angle <= angle2 );
     }
   }
 }
