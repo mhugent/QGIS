@@ -84,6 +84,7 @@ class QgsCircularStringV2: public QgsCurveV2
     static double closestPointOnArc( double x1, double y1, double x2, double y2, double x3, double y3,
                                      const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon );
     void insertVertexBetween( int after, int before, int pointOnCircle );
+    void deleteVertex( int i );
 };
 
 #endif // QGSCIRCULARSTRING_H

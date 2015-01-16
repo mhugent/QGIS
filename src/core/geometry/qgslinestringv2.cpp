@@ -404,7 +404,7 @@ bool QgsLineStringV2::moveVertex( const QgsVertexId& position, const QgsPointV2&
 
 bool QgsLineStringV2::deleteVertex( const QgsVertexId& position )
 {
-  if ( position.vertex > mCoords.size() )
+  if ( position.vertex > ( mCoords.size() - 2 ) || position.vertex < 1 )
   {
     return false;
   }

@@ -736,22 +736,43 @@ bool QgsCircularStringV2::moveVertex( const QgsVertexId& position, const QgsPoin
 
 bool QgsCircularStringV2::deleteVertex( const QgsVertexId& position )
 {
-  if ( position.vertex > mX.size() )
+  int nVertices = this->numPoints();
+  if ( nVertices < 4 ) //circular string must have at least 3 vertices
+  {
+    return false;
+  }
+  if ( position.vertex < 1 || position.vertex > ( nVertices - 2 ) )
   {
     return false;
   }
 
-  mX.remove( position.vertex );
-  mY.remove( position.vertex );
+  if ( position.vertex < ( nVertices - 2 ) )
+  {
+    //remove this and the following vertex
+    deleteVertex( position.vertex + 1 );
+    deleteVertex( position.vertex );
+  }
+  else //remove this and the preceding vertex
+  {
+    deleteVertex( position.vertex );
+    deleteVertex( position.vertex - 1 );
+  }
+
+  return true;
+}
+
+void QgsCircularStringV2::deleteVertex( int i )
+{
+  mX.remove( i );
+  mY.remove( i );
   if ( is3D() )
   {
-    mZ.remove( position.vertex );
+    mZ.remove( i );
   }
   if ( isMeasure() )
   {
-    mM.remove( position.vertex );
+    mM.remove( i );
   }
-  return true;
 }
 
 double QgsCircularStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
