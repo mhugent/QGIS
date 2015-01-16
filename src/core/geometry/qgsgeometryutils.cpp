@@ -69,15 +69,118 @@ double QgsGeometryUtils::leftOfLine( double x, double y, double x1, double y1, d
 
 QgsPointV2 QgsGeometryUtils::pointOnLineWithDistance( const QgsPointV2& startPoint, const QgsPointV2& directionPoint, double distance )
 {
-    double dx = directionPoint.x() - startPoint.x();
-    double dy = directionPoint.y() - startPoint.y();
-    double length = sqrt( dx * dx + dy * dy );
+  double dx = directionPoint.x() - startPoint.x();
+  double dy = directionPoint.y() - startPoint.y();
+  double length = sqrt( dx * dx + dy * dy );
 
-    if( qgsDoubleNear( length, 0.0 ) )
+  if ( qgsDoubleNear( length, 0.0 ) )
+  {
+    return startPoint;
+  }
+
+  double scaleFactor = distance / length;
+  return QgsPointV2( startPoint.x() + dx * scaleFactor, startPoint.y() + dy * scaleFactor );
+}
+
+double QgsGeometryUtils::ccwAngle( double dy, double dx )
+{
+  double angle = atan2( dy, dx ) * 180 / M_PI;
+  if ( angle < 0 )
+  {
+    return 360 + angle;
+  }
+  else if ( angle > 360 )
+  {
+    return 360 - angle;
+  }
+  return angle;
+}
+
+void QgsGeometryUtils::circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius, double& centerX, double& centerY )
+{
+  double temp, bc, cd, det;
+
+  //closed circle
+  if ( qgsDoubleNear( pt1.x(), pt3.x() ) && qgsDoubleNear( pt1.y(), pt3.y() ) )
+  {
+    centerX = pt2.x();
+    centerY = pt2.y();
+    radius = sqrt( pow( pt2.x() - pt1.x(), 2.0 ) + pow( pt2.y() - pt1.y(), 2.0 ) );
+    return;
+  }
+
+  temp = pt2.x() * pt2.x() + pt2.y() * pt2.y();
+  bc = ( pt1.x() * pt1.x() + pt1.y() * pt1.y() - temp ) / 2.0;
+  cd = ( temp - pt3.x() * pt3.x() - pt3.y() * pt3.y() ) / 2.0;
+  det = ( pt1.x() - pt2.x() ) * ( pt2.y() - pt3.y() ) - ( pt2.x() - pt3.x() ) * ( pt1.y() - pt2.y() );
+
+  /* Check colinearity */
+  if ( qgsDoubleNear( fabs( det ), 0.0 ) )
+  {
+    radius = -1.0;
+    return;
+  }
+
+  det = 1.0 / det;
+  centerX = ( bc * ( pt2.y() - pt3.y() ) - cd * ( pt1.y() - pt2.y() ) ) * det;
+  centerY = (( pt1.x() - pt2.x() ) * cd - ( pt2.x() - pt3.x() ) * bc ) * det;
+  radius = sqrt(( centerX - pt1.x() ) * ( centerX - pt1.x() ) + ( centerY - pt1.y() ) * ( centerY - pt1.y() ) );
+}
+
+bool QgsGeometryUtils::circleClockwise( double angle1, double angle2, double angle3 )
+{
+  if ( angle3 >= angle1 )
+  {
+    if ( angle2 > angle1 && angle2 < angle3 )
     {
-        return startPoint;
+      return false;
     }
+    else
+    {
+      return true;
+    }
+  }
+  else
+  {
+    if ( angle2 > angle1 || angle2 < angle3 )
+    {
+      return false;
+    }
+    else
+    {
+      return true;
+    }
+  }
+}
 
-    double scaleFactor = distance / length;
-    return QgsPointV2( startPoint.x() + dx * scaleFactor, startPoint.y() + dy * scaleFactor );
+bool QgsGeometryUtils::circleAngleBetween( double angle, double angle1, double angle2, bool clockwise )
+{
+  if ( clockwise )
+  {
+    if ( angle2 < angle1 )
+    {
+      return ( angle >= angle2 && angle <= angle1 );
+    }
+    else
+    {
+      return ( angle <= angle1 || angle >= angle2 );
+    }
+  }
+  else
+  {
+    if ( angle2 > angle1 )
+    {
+      return ( angle >= angle1 && angle <= angle2 );
+    }
+    else
+    {
+      return ( angle <= angle1 || angle >= angle2 );
+    }
+  }
+}
+
+bool QgsGeometryUtils::angleOnCircle( double angle, double angle1, double angle2, double angle3 )
+{
+  bool clockwise = circleClockwise( angle1, angle2, angle3 );
+  return circleAngleBetween( angle, angle1, angle3, clockwise );
 }

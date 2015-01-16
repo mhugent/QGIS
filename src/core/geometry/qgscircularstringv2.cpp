@@ -103,19 +103,19 @@ QgsRectangle QgsCircularStringV2::calculateBoundingBox() const
 QgsRectangle QgsCircularStringV2::segmentBoundingBox( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 )
 {
   double centerX, centerY, radius;
-  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
+  QgsGeometryUtils::circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
 
-  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX ) + 90;
+  double p1Angle = QgsGeometryUtils::ccwAngle( pt1.y() - centerY, pt1.x() - centerX ) + 90;
   if ( p1Angle > 360 )
   {
     p1Angle -= 360;
   }
-  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX ) + 90;
+  double p2Angle = QgsGeometryUtils::ccwAngle( pt2.y() - centerY, pt2.x() - centerX ) + 90;
   if ( p2Angle > 360 )
   {
     p2Angle -= 360;
   }
-  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX ) + 90;
+  double p3Angle = QgsGeometryUtils::ccwAngle( pt3.y() - centerY, pt3.x() - centerX ) + 90;
   if ( p3Angle > 360 )
   {
     p3Angle -= 360;
@@ -429,7 +429,7 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
   double radius = 0;
   double centerX = 0;
   double centerY = 0;
-  circleCenterRadius( p1, p2, p3, radius, centerX, centerY );
+  QgsGeometryUtils::circleCenterRadius( p1, p2, p3, radius, centerX, centerY );
   int segSide = segmentSide( p1, p3, p2 );
 
   if ( radius < 0 || qgsDoubleNear( segSide, 0.0 ) ) //points are colinear
@@ -509,38 +509,6 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
     }
   }
   points.append( p3 );
-}
-
-void QgsCircularStringV2::circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
-    double& centerX, double& centerY )
-{
-  double temp, bc, cd, det;
-
-  //closed circle
-  if ( qgsDoubleNear( pt1.x(), pt3.x() ) && qgsDoubleNear( pt1.y(), pt3.y() ) )
-  {
-    centerX = pt2.x();
-    centerY = pt2.y();
-    radius = sqrt( pow( pt2.x() - pt1.x(), 2.0 ) + pow( pt2.y() - pt1.y(), 2.0 ) );
-    return;
-  }
-
-  temp = pt2.x() * pt2.x() + pt2.y() * pt2.y();
-  bc = ( pt1.x() * pt1.x() + pt1.y() * pt1.y() - temp ) / 2.0;
-  cd = ( temp - pt3.x() * pt3.x() - pt3.y() * pt3.y() ) / 2.0;
-  det = ( pt1.x() - pt2.x() ) * ( pt2.y() - pt3.y() ) - ( pt2.x() - pt3.x() ) * ( pt1.y() - pt2.y() );
-
-  /* Check colinearity */
-  if ( qgsDoubleNear( fabs( det ), 0.0 ) )
-  {
-    radius = -1.0;
-    return;
-  }
-
-  det = 1.0 / det;
-  centerX = ( bc * ( pt2.y() - pt3.y() ) - cd * ( pt1.y() - pt2.y() ) ) * det;
-  centerY = (( pt1.x() - pt2.x() ) * cd - ( pt2.x() - pt3.x() ) * bc ) * det;
-  radius = sqrt(( centerX - pt1.x() ) * ( centerX - pt1.x() ) + ( centerY - pt1.y() ) * ( centerY - pt1.y() ) );
 }
 
 int QgsCircularStringV2::segmentSide( const QgsPointV2& pt1, const QgsPointV2& pt3, const QgsPointV2& pt2 ) const
@@ -674,12 +642,12 @@ void QgsCircularStringV2::addToPainterPath( QPainterPath& path ) const
 void QgsCircularStringV2::arcTo( QPainterPath& path, const QPointF& pt1, const QPointF& pt2, const QPointF& pt3 )
 {
   double centerX, centerY, radius;
-  circleCenterRadius( QgsPointV2( pt1.x(), pt1.y() ), QgsPointV2( pt2.x(), pt2.y() ), QgsPointV2( pt3.x(), pt3.y() ),
-                      radius, centerX, centerY );
+  QgsGeometryUtils::circleCenterRadius( QgsPointV2( pt1.x(), pt1.y() ), QgsPointV2( pt2.x(), pt2.y() ), QgsPointV2( pt3.x(), pt3.y() ),
+                                        radius, centerX, centerY );
 
-  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
-  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
-  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
+  double p1Angle = QgsGeometryUtils::ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
+  double p2Angle = QgsGeometryUtils::ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
+  double p3Angle = QgsGeometryUtils::ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
 
   //clockwise or counterclockwise?
   double sweepAngle = 0;
@@ -708,20 +676,6 @@ void QgsCircularStringV2::arcTo( QPainterPath& path, const QPointF& pt1, const Q
 
   double diameter = 2 * radius;
   path.arcTo( centerX - radius, centerY - radius, diameter, diameter, p1Angle, sweepAngle );
-}
-
-double QgsCircularStringV2::ccwAngle( double dy, double dx )
-{
-  double angle = atan2( dy, dx ) * 180 / M_PI;
-  if ( angle < 0 )
-  {
-    return 360 + angle;
-  }
-  else if ( angle > 360 )
-  {
-    return 360 - angle;
-  }
-  return angle;
 }
 
 void QgsCircularStringV2::drawAsPolygon( QPainter& p ) const
@@ -843,16 +797,21 @@ double QgsCircularStringV2::closestPointOnArc( double x1, double y1, double x2, 
   QgsPointV2 pt2( x2, y2 );
   QgsPointV2 pt3( x3, y3 );
 
-  bool clockWise = circleClockwise( pt1, pt2, pt3 );
+  QgsGeometryUtils::circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
+  double angle = QgsGeometryUtils::ccwAngle( pt.y() - centerY, pt.x() - centerX );
+  double angle1 = QgsGeometryUtils::ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
+  double angle2 = QgsGeometryUtils::ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
+  double angle3 = QgsGeometryUtils::ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
 
-  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
-  if ( angleOnCircle( ccwAngle( pt.y() - centerY, pt.x() - centerX ), pt1, pt2, pt3 ) )
+  bool clockwise = QgsGeometryUtils::circleClockwise( angle1, angle2, angle3 );
+
+  if ( QgsGeometryUtils::angleOnCircle( angle, angle1, angle2, angle3 ) )
   {
     //get point on line center -> pt with distance radius
     segmentPt = QgsGeometryUtils::pointOnLineWithDistance( QgsPointV2( centerX, centerY ), pt, radius );
 
     //vertexAfter
-    vertexAfter.vertex = vertexBetween( centerX, centerY, pt, pt1, pt2, clockWise ) ? 1 : 2;
+    vertexAfter.vertex = QgsGeometryUtils::circleAngleBetween( angle, angle1, angle2, clockwise ) ? 1 : 2;
   }
   else
   {
@@ -867,79 +826,10 @@ double QgsCircularStringV2::closestPointOnArc( double x1, double y1, double x2, 
 
   if ( leftOf )
   {
-    *leftOf = clockWise ? sqrDistance > radius : sqrDistance < radius;
+    *leftOf = clockwise ? sqrDistance > radius : sqrDistance < radius;
   }
 
   return sqrDistance;
-}
-
-bool QgsCircularStringV2::circleClockwise( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 )
-{
-  double radius, centerX, centerY;
-  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
-
-  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
-  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
-  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
-
-  bool clockwise;
-  if ( p3Angle >= p1Angle )
-  {
-    if ( p2Angle > p1Angle && p2Angle < p3Angle )
-    {
-      clockwise = false;
-    }
-    else
-    {
-      clockwise = true;
-    }
-  }
-  else
-  {
-    if ( p2Angle > p1Angle || p2Angle < p3Angle )
-    {
-      clockwise = false;
-    }
-    else
-    {
-      clockwise = true;
-    }
-  }
-
-  return clockwise;
-}
-
-bool QgsCircularStringV2::angleOnCircle( double angle, const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 )
-{
-  double radius, centerX, centerY;
-  circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
-
-  double p1Angle = ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
-  double p2Angle = ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
-  double p3Angle = ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
-
-  if ( p3Angle > p1Angle )
-  {
-    if ( p2Angle > p1Angle && p2Angle < p3Angle )
-    {
-      return ( angle >= p1Angle && angle <= p3Angle );
-    }
-    else
-    {
-      return ( angle <= p1Angle || angle >= p3Angle );
-    }
-  }
-  else
-  {
-    if ( p2Angle < p1Angle && p2Angle > p3Angle )
-    {
-      return ( angle >= p3Angle && angle <= p1Angle );
-    }
-    else
-    {
-      return ( angle <= p3Angle || angle >= p1Angle );
-    }
-  }
 }
 
 void QgsCircularStringV2::insertVertexBetween( int after, int before, int pointOnCircle )
@@ -952,7 +842,7 @@ void QgsCircularStringV2::insertVertexBetween( int after, int before, int pointO
   double yOnCircle = mY[ pointOnCircle ];
 
   double radius, centerX, centerY;
-  circleCenterRadius( QgsPointV2( xAfter, yAfter ), QgsPointV2( xBefore, yBefore ), QgsPointV2( xOnCircle, yOnCircle ), radius, centerX, centerY );
+  QgsGeometryUtils::circleCenterRadius( QgsPointV2( xAfter, yAfter ), QgsPointV2( xBefore, yBefore ), QgsPointV2( xOnCircle, yOnCircle ), radius, centerX, centerY );
 
   double x = ( xAfter + xBefore ) / 2.0;
   double y = ( yAfter + yBefore ) / 2.0;
@@ -968,34 +858,5 @@ void QgsCircularStringV2::insertVertexBetween( int after, int before, int pointO
   if ( isMeasure() )
   {
     mM.insert( before, ( mM[after] + mM[before] ) / 2.0 );
-  }
-}
-
-bool QgsCircularStringV2::vertexBetween( double xCenter, double yCenter, const QgsPointV2& pt, const QgsPointV2& pt1, const QgsPointV2& pt2, bool clockWise )
-{
-  double angle = ccwAngle( pt.y() - yCenter, pt.x() - xCenter );
-  double angle1 = ccwAngle( pt1.y() - yCenter, pt1.x() - xCenter );
-  double angle2 = ccwAngle( pt2.y() - yCenter, pt2.x() - xCenter );
-  if ( clockWise )
-  {
-    if ( angle2 < angle1 )
-    {
-      return ( angle >= angle2 && angle <= angle1 );
-    }
-    else
-    {
-      return ( angle <= angle1 || angle >= angle2 );
-    }
-  }
-  else
-  {
-    if ( angle2 > angle1 )
-    {
-      return ( angle >= angle1 && angle <= angle2 );
-    }
-    else
-    {
-      return ( angle <= angle1 || angle >= angle2 );
-    }
   }
 }

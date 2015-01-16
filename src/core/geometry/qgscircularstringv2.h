@@ -75,22 +75,15 @@ class QgsCircularStringV2: public QgsCurveV2
 
     //helper methods for curveToLine
     void segmentize( const QgsPointV2& p1, const QgsPointV2& p2, const QgsPointV2& p3, QList<QgsPointV2>& points ) const;
-    static void circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
-                                    double& centerX, double& centerY );
     int segmentSide( const QgsPointV2& pt1, const QgsPointV2& pt3, const QgsPointV2& pt2 ) const;
     double interpolateArc( double angle, double a1, double a2, double a3, double zm1, double zm2, double zm3 ) const;
     static void arcTo( QPainterPath& path, const QPointF& pt1, const QPointF& pt2, const QPointF& pt3 );
-    static double ccwAngle( double dy, double dx );
     //bounding box of a single segment
     static QgsRectangle segmentBoundingBox( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
     static QList<QgsPointV2> compassPointsOnSegment( double p1Angle, double p2Angle, double p3Angle, double centerX, double centerY, double radius );
     static double closestPointOnArc( double x1, double y1, double x2, double y2, double x3, double y3,
                                      const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon );
-    /**Returns true if circle is ordered clockwise*/
-    static bool circleClockwise( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
-    static bool angleOnCircle( double angle, const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3 );
     void insertVertexBetween( int after, int before, int pointOnCircle );
-    static bool vertexBetween( double xCenter, double yCenter, const QgsPointV2& pt, const QgsPointV2& pt1, const QgsPointV2& pt2, bool clockWise );
 };
 
 #endif // QGSCIRCULARSTRING_H

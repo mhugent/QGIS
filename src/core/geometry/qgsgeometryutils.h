@@ -31,6 +31,21 @@ class QgsGeometryUtils
 
     static QgsPointV2 pointOnLineWithDistance( const QgsPointV2& startPoint, const QgsPointV2& directionPoint, double distance );
 
+    /**Returns the counter clockwise angle between a line with components dx, dy and the line with dx > 0 and dy = 0*/
+    static double ccwAngle( double dy, double dx );
+
+    /**Returns radius and center of the circle through pt1, pt2, pt3*/
+    static void circleCenterRadius( const QgsPointV2& pt1, const QgsPointV2& pt2, const QgsPointV2& pt3, double& radius,
+                                    double& centerX, double& centerY );
+
+    /**Returns true if circle is ordered clockwise*/
+    static bool circleClockwise( double angle1, double angle2, double angle3 );
+
+    /**Returns true if, in a circle, angle is between angle1 and angle2*/
+    static bool circleAngleBetween( double angle, double angle1, double angle2, bool clockwise );
+
+    static bool angleOnCircle( double angle, double angle1, double angle2, double angle3 );
+
     enum componentType
     {
       VERTEX,
@@ -69,7 +84,8 @@ class QgsGeometryUtils
 
         if ( ctype == VERTEX )
         {
-          vertexOffset += container.at( i )->nCoordinates();
+          //-1 because compoundcurve counts duplicated vertices of neighbour curves as one node
+          vertexOffset += container.at( i )->nCoordinates() - 1;
         }
         else if ( ctype == RING )
         {
