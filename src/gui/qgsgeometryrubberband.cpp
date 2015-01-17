@@ -79,6 +79,7 @@ void QgsGeometryRubberBand::paint( QPainter* painter )
     }
   }
 
+  delete paintGeom;
   painter->restore();
 }
 

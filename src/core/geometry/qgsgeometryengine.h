@@ -34,6 +34,7 @@ class QgsGeometryEngine
     virtual QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const = 0;
+    virtual QgsAbstractGeometryV2* combine( const QList< QgsAbstractGeometryV2* > ) const = 0;
     virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual double distance( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool intersects( const QgsAbstractGeometryV2& geom ) const = 0;

@@ -178,6 +178,25 @@ QgsAbstractGeometryV2* QgsGeos::combine( const QgsAbstractGeometryV2& geom ) con
   return overlay( geom, UNION );
 }
 
+QgsAbstractGeometryV2* QgsGeos::combine( const QList< QgsAbstractGeometryV2* > geomList ) const
+{
+
+  QVector< GEOSGeometry* > geosGeometries;
+  geosGeometries.resize( geomList.size() );
+  for ( int i = 0; i < geomList.size(); ++i )
+  {
+    geosGeometries[i] = asGeos( geomList.at( i ) );
+  }
+
+  GEOSGeometry* geomCollection =  createGeosCollection( GEOS_GEOMETRYCOLLECTION, geosGeometries );
+  GEOSGeometry* geomUnion = GEOSUnaryUnion_r( geosinit.ctxt, geomCollection );
+  GEOSGeom_destroy_r( geosinit.ctxt, geomCollection );
+
+  QgsAbstractGeometryV2* result = fromGeos( geomUnion );
+  GEOSGeom_destroy_r( geosinit.ctxt, geomUnion );
+  return result;
+}
+
 QgsAbstractGeometryV2* QgsGeos::symDifference( const QgsAbstractGeometryV2& geom ) const
 {
   return overlay( geom, SYMDIFFERENCE );

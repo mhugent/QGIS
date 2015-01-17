@@ -37,6 +37,7 @@ class QgsGeos: public QgsGeometryEngine
     QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const;
     QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const;
     QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const ;
+    QgsAbstractGeometryV2* combine( const QList< QgsAbstractGeometryV2* > ) const;
     QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
     double distance( const QgsAbstractGeometryV2& geom ) const;
     bool intersects( const QgsAbstractGeometryV2& geom ) const;

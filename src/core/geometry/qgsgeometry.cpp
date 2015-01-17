@@ -2000,10 +2000,12 @@ static GEOSGeometry* _makeUnion( QList<GEOSGeometry*> geoms )
 
 int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > > ignoreFeatures )
 {
-  return 0; //todo...
+  if ( !d || !d->geometry )
+  {
+    return 0;
+  }
 
-#if 0
-  int returnValue = 0;
+  QgsGeos geos( d->geometry );
 
   //check if g has polygon type
   if ( type() != QGis::Polygon )
@@ -2015,9 +2017,9 @@ int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > 
   bool listReadOk;
   QStringList avoidIntersectionsList = QgsProject::instance()->readListEntry( "Digitizing", "/AvoidIntersectionsList", QStringList(), &listReadOk );
   if ( !listReadOk )
-    return true; //no intersections stored in project does not mean error
+    return 0; //no intersections stored in project does not mean error
 
-  QList<GEOSGeometry*> nearGeometries;
+  QList< QgsAbstractGeometryV2* > nearGeometries;
 
   //go through list, convert each layer to vector layer and call QgsVectorLayer::removePolygonIntersections for each
   QgsVectorLayer* currentLayer = 0;
@@ -2044,7 +2046,7 @@ int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > 
         if ( !f.geometry() )
           continue;
 
-        nearGeometries << GEOSGeom_clone( f.geometry()->asGeos() );
+        nearGeometries << f.geometry()->geometry()->clone();
       }
     }
   }
@@ -2052,34 +2054,22 @@ int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > 
   if ( nearGeometries.isEmpty() )
     return 0;
 
-  GEOSGeometry* nearGeometriesUnion = 0;
-  GEOSGeometry* geomWithoutIntersections = 0;
-  try
+  QgsAbstractGeometryV2* combinedGeometries = geos.combine( nearGeometries );
+  qDeleteAll( nearGeometries );
+  if ( !combinedGeometries )
   {
-    nearGeometriesUnion = _makeUnion( nearGeometries );
-    geomWithoutIntersections = GEOSDifference( asGeos(), nearGeometriesUnion );
-
-    fromGeos( geomWithoutIntersections );
-
-    GEOSGeom_destroy( nearGeometriesUnion );
-  }
-  catch ( GEOSException &e )
-  {
-    if ( nearGeometriesUnion )
-      GEOSGeom_destroy( nearGeometriesUnion );
-    if ( geomWithoutIntersections )
-      GEOSGeom_destroy( geomWithoutIntersections );
-
-    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
     return 3;
   }
+
+  delete d->geometry;
+  d->geometry = geos.difference( *combinedGeometries );
+  delete combinedGeometries;
 
   //make sure the geometry still has the same type (e.g. no change from polygon to multipolygon)
   if ( wkbType() != geomTypeBeforeModification )
     return 2;
 
-  return returnValue;
-#endif //0
+  return 0;
 }
 
 void QgsGeometry::validateGeometry( QList<Error> &errors )
