@@ -23,7 +23,6 @@
 
 class QgsAbstractGeometryV2;
 class QgsLineStringV2;
-typedef struct GEOSGeom_t GEOSGeometry;
 
 //compatibility with old classes
 #include "qgspoint.h"

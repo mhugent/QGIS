@@ -101,7 +101,7 @@ QgsGeometry& QgsGeometry::operator=( QgsGeometry const & other )
   return *this;
 }
 
-void QgsGeometry::detach()
+void QgsGeometry::detach( bool cloneGeom )
 {
   if ( !d )
   {
@@ -114,7 +114,7 @@ void QgsGeometry::detach()
   {
     d->ref.deref();
     QgsAbstractGeometryV2* cloneGeom = 0;
-    if ( d->geometry )
+    if ( d->geometry && cloneGeom )
     {
       cloneGeom = d->geometry->clone();
     }
@@ -230,7 +230,7 @@ void QgsGeometry::fromWkb( unsigned char *wkb, size_t length )
     return;
   }
 
-  detach();
+  detach( false );
 
   if ( d->geometry )
   {
@@ -368,6 +368,7 @@ void QgsGeometry::fromGeos( GEOSGeometry *geos )
 {
   if ( d && d->geometry )
   {
+    detach( false );
     delete d->geometry;
     d->geometry = QgsGeos::fromGeos( geos );
   }
@@ -646,6 +647,7 @@ int QgsGeometry::reshapeGeometry( const QList<QgsPoint>& reshapeWithLine )
   QgsAbstractGeometryV2* geom = geos.reshapeGeometry( reshapeLineString, &errorCode );
   if ( errorCode == 0 && geom )
   {
+    detach( false );
     delete d->geometry;
     d->geometry = geom;
     return 0;
@@ -655,64 +657,24 @@ int QgsGeometry::reshapeGeometry( const QList<QgsPoint>& reshapeWithLine )
 
 int QgsGeometry::makeDifference( QgsGeometry* other )
 {
-  return 0;
-
-#if 0
-  //make sure geos geometry is up to date
-  if ( !other )
-    return 1;
-
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 1;
-
-  if ( !GEOSisValid( mGeos ) )
-    return 2;
-
-  if ( !GEOSisSimple( mGeos ) )
-    return 3;
-
-  //convert other geometry to geos
-  if ( other->mDirtyGeos )
-    other->exportWkbToGeos();
-
-  if ( !other->mGeos )
-    return 4;
-
-  //make geometry::difference
-  try
+  if ( !d || !d->geometry || !other->d || !other->d->geometry )
   {
-    if ( GEOSIntersects( mGeos, other->mGeos ) )
-    {
-      //check if multitype before and after
-      bool multiType = isMultipart();
-
-      mGeos = GEOSDifference( mGeos, other->mGeos );
-      mDirtyWkb = true;
-
-      if ( multiType && !isMultipart() )
-      {
-        convertToMultiType();
-        exportWkbToGeos();
-      }
-    }
-    else
-    {
-      return 0; //nothing to do
-    }
-  }
-  CATCH_GEOS( 5 )
-
-  if ( !mGeos )
-  {
-    mDirtyGeos = true;
-    return 6;
+    return 0;
   }
 
+  QgsGeos geos( d->geometry );
+
+  QgsAbstractGeometryV2* diffGeom = geos.intersection( *( other->geometry() ) );
+  if ( !diffGeom )
+  {
+    return 1;
+  }
+
+  detach( false );
+
+  delete d->geometry;
+  d->geometry = diffGeom;
   return 0;
-#endif //0
 }
 
 QgsRectangle QgsGeometry::boundingBox() const
@@ -1676,25 +1638,6 @@ QgsGeometry* QgsGeometry::offsetCurve( double distance, int segments, int joinSt
     return 0;
   }
   return new QgsGeometry( offsetGeom );
-
-#if 0
-#if defined(GEOS_VERSION_MAJOR) && defined(GEOS_VERSION_MINOR) && \
- ((GEOS_VERSION_MAJOR>3) || ((GEOS_VERSION_MAJOR==3) && (GEOS_VERSION_MINOR>=3)))
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos || this->type() != QGis::Line )
-    return 0;
-
-  try
-  {
-    return fromGeosGeom( GEOSOffsetCurve( mGeos, distance, segments, joinStyle, mitreLimit ) );
-  }
-  CATCH_GEOS( 0 )
-#else
-  return 0;
-#endif
-#endif //0
 }
 
 QgsGeometry* QgsGeometry::simplify( double tolerance )
@@ -1809,88 +1752,53 @@ QgsGeometry* QgsGeometry::intersection( QgsGeometry* geometry ) const
 
 QgsGeometry* QgsGeometry::combine( QgsGeometry* geometry )
 {
-  return 0; //todo...
-
-#if 0
-  if ( !geometry )
-    return NULL;
-
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( geometry->mDirtyGeos )
-    geometry->exportWkbToGeos();
-
-  if ( !mGeos || !geometry->mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry || !geometry->d || !geometry->d->geometry )
   {
-    GEOSGeometry* unionGeom = GEOSUnion( mGeos, geometry->mGeos );
-    if ( !unionGeom )
-      return 0;
-
-    if ( type() == QGis::Line )
-    {
-      GEOSGeometry* mergedGeom = GEOSLineMerge( unionGeom );
-      if ( mergedGeom )
-      {
-        GEOSGeom_destroy( unionGeom );
-        unionGeom = mergedGeom;
-      }
-    }
-    return fromGeosGeom( unionGeom );
+    return 0;
   }
-  CATCH_GEOS( new QgsGeometry( *this ) ) //return this geometry if union not possible
-#endif //0
+
+  QgsGeos geos( d->geometry );
+
+  QgsAbstractGeometryV2* resultGeom = geos.combine( *( geometry->d->geometry ) );
+  if ( !resultGeom )
+  {
+    return 0;
+  }
+  return new QgsGeometry( resultGeom );
 }
 
 QgsGeometry* QgsGeometry::difference( QgsGeometry* geometry )
 {
-  return 0; //todo...
-#if 0
-  if ( !geometry )
-    return NULL;
-
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( geometry->mDirtyGeos )
-    geometry->exportWkbToGeos();
-
-  if ( !mGeos || !geometry->mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry || !geometry->d || !geometry->d->geometry )
   {
-    return fromGeosGeom( GEOSDifference( mGeos, geometry->mGeos ) );
+    return 0;
   }
-  CATCH_GEOS( 0 )
-#endif //0
+
+  QgsGeos geos( d->geometry );
+
+  QgsAbstractGeometryV2* resultGeom = geos.difference( *( geometry->d->geometry ) );
+  if ( !resultGeom )
+  {
+    return 0;
+  }
+  return new QgsGeometry( resultGeom );
 }
 
 QgsGeometry* QgsGeometry::symDifference( QgsGeometry* geometry )
 {
-  return 0; //todo...
-#if 0
-  if ( !geometry )
-    return NULL;
-
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( geometry->mDirtyGeos )
-    geometry->exportWkbToGeos();
-
-  if ( !mGeos || !geometry->mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry || !geometry->d || !geometry->d->geometry )
   {
-    return fromGeosGeom( GEOSSymDifference( mGeos, geometry->mGeos ) );
+    return 0;
   }
-  CATCH_GEOS( 0 )
-#endif //0
+
+  QgsGeos geos( d->geometry );
+
+  QgsAbstractGeometryV2* resultGeom = geos.symDifference( *( geometry->d->geometry ) );
+  if ( !resultGeom )
+  {
+    return 0;
+  }
+  return new QgsGeometry( resultGeom );
 }
 
 QList<QgsGeometry*> QgsGeometry::asGeometryCollection() const
@@ -1979,36 +1887,6 @@ bool QgsGeometry::deletePart( int partNum )
   return c->removeGeometry( partNum );
 }
 
-/** Return union of several geometries - try to use unary union if available (GEOS >= 3.3) otherwise use a cascade of unions.
- *  Takes ownership of passed geometries, returns a new instance */
-static GEOSGeometry* _makeUnion( QList<GEOSGeometry*> geoms )
-{
-  return 0; //todo...
-
-#if 0
-#if defined(GEOS_VERSION_MAJOR) && defined(GEOS_VERSION_MINOR) && (((GEOS_VERSION_MAJOR==3) && (GEOS_VERSION_MINOR>=3)) || (GEOS_VERSION_MAJOR>3))
-  GEOSGeometry* geomCollection = 0;
-  geomCollection = createGeosCollection( GEOS_GEOMETRYCOLLECTION, geoms.toVector() );
-  GEOSGeometry* geomUnion = GEOSUnaryUnion( geomCollection );
-  GEOSGeom_destroy( geomCollection );
-  return geomUnion;
-#else
-  GEOSGeometry* geomCollection = geoms.takeFirst();
-
-  while ( !geoms.isEmpty() )
-  {
-    GEOSGeometry* g = geoms.takeFirst();
-    GEOSGeometry* geomCollectionNew = GEOSUnion( geomCollection, g );
-    GEOSGeom_destroy( geomCollection );
-    GEOSGeom_destroy( g );
-    geomCollection = geomCollectionNew;
-  }
-
-  return geomCollection;
-#endif
-#endif //0
-}
-
 int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > > ignoreFeatures )
 {
   if ( !d || !d->geometry )
@@ -2072,6 +1950,7 @@ int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > 
     return 3;
   }
 
+  detach( false );
   delete d->geometry;
   d->geometry = geos.difference( *combinedGeometries );
   delete combinedGeometries;

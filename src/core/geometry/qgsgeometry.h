@@ -533,7 +533,7 @@ class CORE_EXPORT QgsGeometry
     mutable int mWkbSize;
     mutable GEOSGeometry* mGeos;
 
-    void detach(); //make sure mGeometry only referenced from this instance
+    void detach( bool cloneGeom = true ); //make sure mGeometry only referenced from this instance
     void removeWkbGeos();
 
     bool vertexIdFromVertexNr( int nr, QgsVertexId& id ) const;
