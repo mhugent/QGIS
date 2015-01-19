@@ -25,7 +25,36 @@ class TestQgsGeometryUtils: public QObject
     void testCircleClockwise();
     void testAngleOnCircle_data();
     void testAngleOnCircle();
+    void testLeftOfLine_data();
+    void testLeftOfLine();
 };
+
+void TestQgsGeometryUtils::testLeftOfLine_data()
+{
+  QTest::addColumn<double>( "x" );
+  QTest::addColumn<double>( "y" );
+  QTest::addColumn<double>( "x1" );
+  QTest::addColumn<double>( "y1" );
+  QTest::addColumn<double>( "x2" );
+  QTest::addColumn<double>( "y2" );
+  QTest::addColumn<bool>( "expectedResult" );
+
+  QTest::newRow( "leftOfLine1" ) << 0.0 << 0.0 << 0.0 << 2.0 << 1.0 << 0.0 << false;
+  QTest::newRow( "leftOfLine1" ) << 0.0 << 0.0 << 1.0 << 0.0 << 0.0 << 2.0 << true;
+}
+
+void TestQgsGeometryUtils::testLeftOfLine()
+{
+  QFETCH( double, x );
+  QFETCH( double, y );
+  QFETCH( double, x1 );
+  QFETCH( double, y1 );
+  QFETCH( double, x2 );
+  QFETCH( double, y2 );
+  QFETCH( bool, expectedResult );
+
+  QCOMPARE( QgsGeometryUtils::leftOfLine( x, y, x1, y1, x2, y2 ) < 0, expectedResult );
+}
 
 void TestQgsGeometryUtils::testCircleClockwise_data()
 {

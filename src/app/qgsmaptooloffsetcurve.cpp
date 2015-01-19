@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptooloffsetcurve.h"
+#include "qgsgeos.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsrubberband.h"
@@ -344,10 +345,7 @@ void QgsMapToolOffsetCurve::deleteRubberBandAndGeometry()
 
 void QgsMapToolOffsetCurve::setOffsetForRubberBand( double offset, bool leftSide )
 {
-  // need at least geos 3.3 for OffsetCurve tool
-#if defined(GEOS_VERSION_MAJOR) && defined(GEOS_VERSION_MINOR) && \
-  ((GEOS_VERSION_MAJOR>3) || ((GEOS_VERSION_MAJOR==3) && (GEOS_VERSION_MINOR>=3)))
-  if ( !mRubberBand || !mOriginalGeometry )
+  if ( !mOriginalGeometry || !mOriginalGeometry->geometry() )
   {
     return;
   }
@@ -358,38 +356,21 @@ void QgsMapToolOffsetCurve::setOffsetForRubberBand( double offset, bool leftSide
     return;
   }
 
-  QgsGeometry geomCopy( *mOriginalGeometry );
-  const GEOSGeometry* geosGeom = geomCopy.asGeos();
-  if ( geosGeom )
+  QSettings s;
+  int joinStyle = s.value( "/qgis/digitizing/offset_join_style", 0 ).toInt();
+  int quadSegments = s.value( "/qgis/digitizing/offset_quad_seg", 8 ).toInt();
+  double mitreLimit = s.value( "/qgis/digitizing/offset_miter_limit", 5.0 ).toDouble();
+
+  const QgsAbstractGeometryV2* originalGeom = mOriginalGeometry->geometry();
+  QgsGeos geos( originalGeom );
+  QgsAbstractGeometryV2* offsetGeom = geos.offsetCurve( leftSide ? offset : -offset, quadSegments, joinStyle, mitreLimit );
+  if ( !offsetGeom )
   {
-    QSettings s;
-    int joinStyle = s.value( "/qgis/digitizing/offset_join_style", 0 ).toInt();
-    int quadSegments = s.value( "/qgis/digitizing/offset_quad_seg", 8 ).toInt();
-    double mitreLimit = s.value( "/qgis/digitizing/offset_miter_limit", 5.0 ).toDouble();
-
-    GEOSGeometry* offsetGeom = GEOSOffsetCurve( geosGeom, leftSide ? offset : -offset, quadSegments, joinStyle, mitreLimit );
-    if ( !offsetGeom )
-    {
-      deleteRubberBandAndGeometry();
-      deleteDistanceItem();
-      delete mSnapVertexMarker; mSnapVertexMarker = 0;
-      mForceCopy = false;
-      mGeometryModified = false;
-      deleteDistanceItem();
-      QMessageBox::critical( 0, tr( "Geometry error" ), tr( "Creating offset geometry failed" ) );
-      return;
-    }
-
-    if ( offsetGeom )
-    {
-      mModifiedGeometry.fromGeos( offsetGeom );
-      mRubberBand->setToGeometry( &mModifiedGeometry, sourceLayer );
-    }
+    return;
   }
-#else //GEOS_VERSION>=3.3
-  Q_UNUSED( offset );
-  Q_UNUSED( leftSide );
-#endif //GEOS_VERSION>=3.3
+
+  mModifiedGeometry = QgsGeometry( offsetGeom );
+  mRubberBand->setToGeometry( &mModifiedGeometry, sourceLayer );
 }
 
 QgsGeometry* QgsMapToolOffsetCurve::linestringFromPolygon( QgsGeometry* featureGeom, int vertex )
@@ -472,7 +453,7 @@ QgsGeometry* QgsMapToolOffsetCurve::convertToSingleLine( QgsGeometry* geom, int 
 
   isMulti = false;
   QGis::WkbType geomType = geom->wkbType();
-  if ( geomType == QGis::WKBLineString || geomType == QGis::WKBLineString25D )
+  if ( geomType == QGis::WKBLineString || geomType == QGis::WKBLineString25D || geomType == QGis::WKBCompoundCurve )
   {
     return geom;
   }

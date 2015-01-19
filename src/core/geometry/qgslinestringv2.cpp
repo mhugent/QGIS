@@ -458,7 +458,7 @@ double QgsLineStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmen
       segmentPt.setY( segmentPtY );
       if ( leftOf )
       {
-        *leftOf = QgsGeometryUtils::leftOfLine( segmentPtX, segmentPtY, prev.x(), prev.y(), pt.x(), pt.y() );
+        *leftOf = ( QgsGeometryUtils::leftOfLine( segmentPtX, segmentPtY, prev.x(), prev.y(), pt.x(), pt.y() ) < 0 );
       }
       vertexAfter.feature = 0; vertexAfter.ring = 0; vertexAfter.vertex = i;
     }

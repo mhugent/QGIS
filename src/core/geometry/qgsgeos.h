@@ -37,7 +37,7 @@ class QgsGeos: public QgsGeometryEngine
     QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const;
     QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const;
     QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const ;
-    QgsAbstractGeometryV2* combine( const QList< QgsAbstractGeometryV2* > ) const;
+    QgsAbstractGeometryV2* combine( const QList< const QgsAbstractGeometryV2* > ) const;
     QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
     double distance( const QgsAbstractGeometryV2& geom ) const;
     bool intersects( const QgsAbstractGeometryV2& geom ) const;
@@ -59,6 +59,7 @@ class QgsGeos: public QgsGeometryEngine
                        bool topological,
                        QList<QgsPointV2> &topologyTestPoints ) const;
 
+    QgsAbstractGeometryV2* offsetCurve( double distance, int segments, int joinStyle, double mitreLimit ) const;
     QgsAbstractGeometryV2* reshapeGeometry( const QgsLineStringV2& reshapeWithLine, int* errorCode ) const;
 
     static QgsAbstractGeometryV2* fromGeos( const GEOSGeometry* geos );

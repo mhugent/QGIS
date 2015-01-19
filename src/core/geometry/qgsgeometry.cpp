@@ -521,7 +521,7 @@ double QgsGeometry::closestSegmentWithContext(
   afterVertex = vertexNrFromVertexId( vertexAfter );
   if ( leftOf )
   {
-    *leftOf = leftOfBool ? -1.0 : 1.0;
+    *leftOf = leftOfBool ? 1.0 : -1.0;
   }
   return sqrDist;
 }
@@ -1664,7 +1664,18 @@ QgsGeometry* QgsGeometry::buffer( double distance, int segments, int endCapStyle
 
 QgsGeometry* QgsGeometry::offsetCurve( double distance, int segments, int joinStyle, double mitreLimit )
 {
-  return 0;
+  if ( !d || !d->geometry )
+  {
+    return 0;
+  }
+
+  QgsGeos geos( d->geometry );
+  QgsAbstractGeometryV2* offsetGeom = geos.offsetCurve( distance, segments, joinStyle, mitreLimit );
+  if ( !offsetGeom )
+  {
+    return 0;
+  }
+  return new QgsGeometry( offsetGeom );
 
 #if 0
 #if defined(GEOS_VERSION_MAJOR) && defined(GEOS_VERSION_MINOR) && \
@@ -2019,7 +2030,7 @@ int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > 
   if ( !listReadOk )
     return 0; //no intersections stored in project does not mean error
 
-  QList< QgsAbstractGeometryV2* > nearGeometries;
+  QList< const QgsAbstractGeometryV2* > nearGeometries;
 
   //go through list, convert each layer to vector layer and call QgsVectorLayer::removePolygonIntersections for each
   QgsVectorLayer* currentLayer = 0;
@@ -2126,18 +2137,20 @@ bool QgsGeometry::isGeosEmpty()
 
 QgsGeometry *QgsGeometry::unaryUnion( const QList<QgsGeometry*> &geometryList )
 {
-  return 0; //todo...
-#if 0
-  QList<GEOSGeometry*> geoms;
-  foreach ( QgsGeometry* g, geometryList )
+  QgsGeos geos( 0 );
+
+  QList<const QgsAbstractGeometryV2*> geomV2List;
+  QList<QgsGeometry*>::const_iterator it = geometryList.constBegin();
+  for ( ; it != geometryList.constEnd(); ++it )
   {
-    geoms.append( GEOSGeom_clone( g->asGeos() ) );
+    if ( *it )
+    {
+      geomV2List.append(( *it )->geometry() );
+    }
   }
-  GEOSGeometry *geomUnion = _makeUnion( geoms );
-  QgsGeometry *ret = new QgsGeometry();
-  ret->fromGeos( geomUnion );
-  return ret;
-#endif //0
+
+  QgsAbstractGeometryV2* geom = geos.combine( geomV2List );
+  return new QgsGeometry( geom );
 }
 
 void QgsGeometry::convertToStraightSegment()

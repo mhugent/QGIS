@@ -178,7 +178,7 @@ QgsAbstractGeometryV2* QgsGeos::combine( const QgsAbstractGeometryV2& geom ) con
   return overlay( geom, UNION );
 }
 
-QgsAbstractGeometryV2* QgsGeos::combine( const QList< QgsAbstractGeometryV2* > geomList ) const
+QgsAbstractGeometryV2* QgsGeos::combine( const QList< const QgsAbstractGeometryV2* > geomList ) const
 {
 
   QVector< GEOSGeometry* > geosGeometries;
@@ -1197,6 +1197,24 @@ GEOSGeometry* QgsGeos::createGeosPolygon( const QgsAbstractGeometryV2* poly )
     delete[] holes;
     return geosPolygon;
   }
+}
+
+QgsAbstractGeometryV2* QgsGeos::offsetCurve( double distance, int segments, int joinStyle, double mitreLimit ) const
+{
+  if ( !mGeos )
+  {
+    return 0;
+  }
+
+  GEOSGeometry* offset = 0;
+  try
+  {
+    offset = GEOSOffsetCurve_r( geosinit.ctxt, mGeos, distance, segments, joinStyle, mitreLimit );
+  }
+  CATCH_GEOS( 0 )
+  QgsAbstractGeometryV2* offsetGeom = fromGeos( offset );
+  GEOSGeom_destroy_r( geosinit.ctxt, offset );
+  return offsetGeom;
 }
 
 QgsAbstractGeometryV2* QgsGeos::reshapeGeometry( const QgsLineStringV2& reshapeWithLine, int* errorCode ) const

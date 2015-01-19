@@ -34,7 +34,7 @@ class QgsGeometryEngine
     virtual QgsAbstractGeometryV2* intersection( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual QgsAbstractGeometryV2* difference( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const = 0;
-    virtual QgsAbstractGeometryV2* combine( const QList< QgsAbstractGeometryV2* > ) const = 0;
+    virtual QgsAbstractGeometryV2* combine( const QList< const QgsAbstractGeometryV2* > ) const = 0;
     virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual double distance( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual bool intersects( const QgsAbstractGeometryV2& geom ) const = 0;
@@ -49,6 +49,8 @@ class QgsGeometryEngine
                                QList<QgsAbstractGeometryV2*>& newGeometries,
                                bool topological,
                                QList<QgsPointV2> &topologyTestPoints ) const = 0;
+
+    virtual QgsAbstractGeometryV2* offsetCurve( double distance, int segments, int joinStyle, double mitreLimit ) const = 0;
 
   protected:
     const QgsAbstractGeometryV2* mGeometry;
