@@ -378,7 +378,7 @@ void QgsCircularStringV2::setPoints( const QList<QgsPointV2>& points )
 {
   if ( points.size() < 1 )
   {
-    mWkbType = QGis::WKBUnknown; mX.clear(); mY.clear(); mZ.clear(); mM.clear();
+    mWkbType = QgsWKBTypes::Unknown; mX.clear(); mY.clear(); mZ.clear(); mM.clear();
     return;
   }
 
@@ -387,7 +387,7 @@ void QgsCircularStringV2::setPoints( const QList<QgsPointV2>& points )
   bool hasZ = firstPt.is3D();
   bool hasM = firstPt.isMeasure();
 
-  setZMTypeFromSubGeometry( &firstPt, QGis::WKBCircularString );
+  setZMTypeFromSubGeometry( &firstPt, QgsWKBTypes::CircularString );
 
   mX.resize( points.size() );
   mY.resize( points.size() );

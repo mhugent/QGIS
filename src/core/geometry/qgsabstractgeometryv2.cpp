@@ -17,7 +17,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeos.h"
 #include <limits>
 
-QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mWkbType( QGis::WKBUnknown )
+QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mWkbType( QgsWKBTypes::Unknown )
 {
 }
 
@@ -55,7 +55,7 @@ bool QgsAbstractGeometryV2::isMeasure() const
   return ( mWkbType >= 2001 && mWkbType <= 3012 );
 }
 
-void QgsAbstractGeometryV2::setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subgeom, QGis::WkbType baseGeomType )
+void QgsAbstractGeometryV2::setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subgeom, QgsWKBTypes::Type baseGeomType )
 {
   if ( !subgeom )
   {
@@ -67,15 +67,15 @@ void QgsAbstractGeometryV2::setZMTypeFromSubGeometry( const QgsAbstractGeometryV
 
   if ( hasZ && hasM )
   {
-    mWkbType = ( QGis::WkbType )( baseGeomType + 3000 );
+    mWkbType = ( QgsWKBTypes::Type )( baseGeomType + 3000 );
   }
   else if ( hasZ )
   {
-    mWkbType = ( QGis::WkbType )( baseGeomType + 1000 );
+    mWkbType = ( QgsWKBTypes::Type )( baseGeomType + 1000 );
   }
   else if ( hasM )
   {
-    mWkbType = ( QGis::WkbType )( baseGeomType + 2000 );
+    mWkbType = ( QgsWKBTypes::Type )( baseGeomType + 2000 );
   }
   else
   {

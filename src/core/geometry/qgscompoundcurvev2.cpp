@@ -85,17 +85,17 @@ void QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
   for ( int i = 0; i < nCurves; ++i )
   {
     wkbPtr += 1; //skip endian
-    QGis::WkbType curveType;
+    QgsWKBTypes::Type curveType;
     wkbPtr >> curveType;
     wkbPtr -= ( 1  + sizeof( int ) );
 
-    if ( curveType == QGis::WKBLineString || curveType == QGis::WKBLineStringZ || curveType == QGis::WKBLineStringM ||
-         curveType == QGis::WKBLineStringZM || curveType == QGis::WKBLineString25D )
+    if ( curveType == QgsWKBTypes::LineString || curveType == QgsWKBTypes::LineStringZ || curveType == QgsWKBTypes::LineStringM ||
+         curveType == QgsWKBTypes::LineStringZM || curveType == QgsWKBTypes::LineString25D )
     {
       currentCurve = new QgsLineStringV2();
     }
-    else if ( curveType == QGis::WKBCircularString || curveType == QGis::WKBCircularStringZ || curveType == QGis::WKBCircularStringZM ||
-              curveType == QGis::WKBCircularStringM )
+    else if ( curveType == QgsWKBTypes::CircularString || curveType == QgsWKBTypes::CircularStringZ || curveType == QgsWKBTypes::CircularStringZM ||
+              curveType == QgsWKBTypes::CircularStringM )
     {
       currentCurve = new QgsCircularStringV2();
     }
@@ -290,9 +290,9 @@ void QgsCompoundCurveV2::addCurve( QgsCurveV2* c )
   {
     mCurves.append( c );
 
-    if ( mWkbType == QGis::WKBUnknown )
+    if ( mWkbType == QgsWKBTypes::Unknown )
     {
-      setZMTypeFromSubGeometry( c, QGis::WKBCompoundCurve );
+      setZMTypeFromSubGeometry( c, QgsWKBTypes::CompoundCurve );
     }
   }
 }
@@ -310,9 +310,9 @@ void QgsCompoundCurveV2::removeCurve( int i )
 
 void QgsCompoundCurveV2::addVertex( const QgsPointV2& pt )
 {
-  if ( mWkbType == QGis::WKBUnknown )
+  if ( mWkbType == QgsWKBTypes::Unknown )
   {
-    setZMTypeFromSubGeometry( &pt, QGis::WKBCompoundCurve );
+    setZMTypeFromSubGeometry( &pt, QgsWKBTypes::CompoundCurve );
   }
 
   //is last curve QgsLineStringV2

@@ -210,7 +210,7 @@ void QgsLineStringV2::setPoints( const QList<QgsPointV2>& points )
 {
   if ( points.size() < 1 )
   {
-    mWkbType = QGis::WKBUnknown;
+    mWkbType = QgsWKBTypes::Unknown;
     mCoords.clear();
     mZ.clear();
     mM.clear();
@@ -222,7 +222,7 @@ void QgsLineStringV2::setPoints( const QList<QgsPointV2>& points )
   bool hasZ = firstPt.is3D();
   bool hasM = firstPt.isMeasure();
 
-  setZMTypeFromSubGeometry( &firstPt, QGis::WKBLineString );
+  setZMTypeFromSubGeometry( &firstPt, QgsWKBTypes::LineString );
 
   mCoords.resize( points.size() );
   if ( hasZ )
@@ -269,7 +269,7 @@ void QgsLineStringV2::append( const QgsLineStringV2* line )
   mM += line->mM;
 }
 
-void QgsLineStringV2::fromWkbPoints( QGis::WkbType type, const QgsConstWkbPtr& wkb )
+void QgsLineStringV2::fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb )
 {
   mWkbType = type;
   importVerticesFromWkb( wkb );
@@ -423,9 +423,9 @@ bool QgsLineStringV2::deleteVertex( const QgsVertexId& position )
 
 void QgsLineStringV2::addVertex( const QgsPointV2& pt )
 {
-  if ( mWkbType == QGis::WKBUnknown )
+  if ( mWkbType == QgsWKBTypes::Unknown )
   {
-    setZMTypeFromSubGeometry( &pt, QGis::WKBLineString );
+    setZMTypeFromSubGeometry( &pt, QgsWKBTypes::LineString );
   }
 
   mCoords.append( QPointF( pt.x(), pt.y() ) );

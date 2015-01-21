@@ -113,13 +113,13 @@ void QgsGeometry::detach( bool cloneGeom )
   if ( d->ref > 1 )
   {
     d->ref.deref();
-    QgsAbstractGeometryV2* cloneGeom = 0;
+    QgsAbstractGeometryV2* cGeom = 0;
     if ( d->geometry && cloneGeom )
     {
-      cloneGeom = d->geometry->clone();
+      cGeom = d->geometry->clone();
     }
     d = new QgsGeometryData();
-    d->geometry = cloneGeom;
+    d->geometry = cGeom;
     d->ref = QAtomicInt( 1 );
   }
 }
@@ -292,7 +292,7 @@ QGis::WkbType QgsGeometry::wkbType() const
   }
   else
   {
-    return d->geometry->wkbType();
+    return ( QGis::WkbType )d->geometry->wkbType();
   }
 }
 
@@ -2040,11 +2040,11 @@ void QgsGeometry::convertToStraightSegment()
   }
 
   detach();
-  QGis::WkbType geomType = d->geometry->wkbType();
-  if ( geomType == QGis::WKBCompoundCurve || geomType == QGis::WKBCompoundCurveZ ||
-       geomType == QGis::WKBCompoundCurveM || geomType == QGis::WKBCompoundCurveZM ||
-       geomType == QGis::WKBCircularString || geomType == QGis::WKBCircularStringZ ||
-       geomType == QGis::WKBCircularStringM || geomType == QGis::WKBCircularStringZM )
+  QgsWKBTypes::Type geomType = d->geometry->wkbType();
+  if ( geomType == QgsWKBTypes::CompoundCurve || geomType == QgsWKBTypes::CompoundCurveZ ||
+       geomType == QgsWKBTypes::CompoundCurveM || geomType == QgsWKBTypes::CompoundCurveZM ||
+       geomType == QgsWKBTypes::CircularString || geomType == QgsWKBTypes::CircularStringZ ||
+       geomType == QgsWKBTypes::CircularStringM || geomType == QgsWKBTypes::CircularStringZM )
   {
     QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( d->geometry );
     if ( !curve )
@@ -2054,8 +2054,8 @@ void QgsGeometry::convertToStraightSegment()
     d->geometry = curve->curveToLine();
     delete curve;
   }
-  else if ( geomType == QGis::WKBCurvePolygon || geomType == QGis::WKBCurvePolygonZ ||
-            geomType == QGis::WKBCurvePolygonM || geomType == QGis::WKBCurvePolygonZM )
+  else if ( geomType == QgsWKBTypes::CurvePolygon || geomType == QgsWKBTypes::CurvePolygonZ ||
+            geomType == QgsWKBTypes::CurvePolygonM || geomType == QgsWKBTypes::CurvePolygonZM )
   {
     QgsCurvePolygonV2* curvePolygon = dynamic_cast<QgsCurvePolygonV2*>( d->geometry );
     if ( !curvePolygon )

@@ -25,18 +25,18 @@
 
 QgsPointV2::QgsPointV2( double x, double y ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( 0.0 ), mM( 0.0 )
 {
-  mWkbType = QGis::WKBPoint;
+  mWkbType = QgsWKBTypes::Point;
 }
 
 QgsPointV2::QgsPointV2( double x, double y, double mz, bool hasM ): QgsAbstractGeometryV2(),
     mX( x ), mY( y ), mZ( hasM ? 0.0 : mz ), mM( hasM ? mz : 0.0 )
 {
-  mWkbType = hasM ? QGis::WKBPointM : QGis::WKBPointZ;
+  mWkbType = hasM ? QgsWKBTypes::PointM : QgsWKBTypes::PointZ;
 }
 
 QgsPointV2::QgsPointV2( double x, double y, double z, double m ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( z ), mM( m )
 {
-  mWkbType = QGis::WKBPointZM;
+  mWkbType = QgsWKBTypes::PointZM;
 }
 
 QgsPointV2::~QgsPointV2()
@@ -109,17 +109,17 @@ void QgsPointV2::fromWkt( const QString& wkt )
 
   if ( coords.size() > 2 )
   {
-    mWkbType = QGis::WKBPointZ;
+    mWkbType = QgsWKBTypes::PointZ;
     mZ = coords.at( 2 ).toDouble();
   }
   if ( coords.size() > 3 )
   {
-    mWkbType = QGis::WKBPointZM;
+    mWkbType = QgsWKBTypes::PointZM;
     mM = coords.at( 3 ).toDouble();
   }
   else
   {
-    mWkbType = QGis::WKBPoint;
+    mWkbType = QgsWKBTypes::Point;
   }
 }
 
@@ -169,7 +169,7 @@ QString QgsPointV2::asGML() const
 
 void QgsPointV2::reset()
 {
-  mWkbType = QGis::WKBUnknown;
+  mWkbType = QgsWKBTypes::Unknown;
   mX = 0; mY = 0; mZ = 0; mM = 0;
 }
 
@@ -207,5 +207,5 @@ void QgsPointV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coor
 
 double QgsPointV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
-    return QgsGeometryUtils::sqrDistance2D( *this, pt );
+  return QgsGeometryUtils::sqrDistance2D( *this, pt );
 }

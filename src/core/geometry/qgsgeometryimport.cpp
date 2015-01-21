@@ -24,6 +24,7 @@
 #include "qgsmulticurvev2.h"
 #include "qgsmultipointv2.h"
 #include "qgsmultisurfacev2.h"
+#include "qgswkbtypes.h"
 
 QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb )
 {
@@ -37,60 +38,31 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb 
   memcpy( &type, wkb + 1, sizeof( int ) );
   QgsAbstractGeometryV2* geom = 0;
 
+  type = QgsWKBTypes::instance()->flatType( QgsWKBTypes::Type( type ) );
   switch ( type )
   {
-    case QGis::WKBPoint:
-    case QGis::WKBPointZ:
-    case QGis::WKBPointM:
-    case QGis::WKBPointZM:
-    case QGis::WKBPoint25D:
+    case QgsWKBTypes::Point:
       geom = new QgsPointV2();
       break;
-    case QGis::WKBLineString:
-    case QGis::WKBLineStringZ:
-    case QGis::WKBLineStringM:
-    case QGis::WKBLineStringZM:
-    case QGis::WKBLineString25D:
+    case QgsWKBTypes::LineString:
       geom = new QgsLineStringV2();
       break;
-    case QGis::WKBCompoundCurve:
-    case QGis::WKBCompoundCurveZ:
-    case QGis::WKBCompoundCurveM:
-    case QGis::WKBCompoundCurveZM:
+    case QgsWKBTypes::CompoundCurve:
       geom = new QgsCompoundCurveV2();
       break;
-    case QGis::WKBPolygon:
-    case QGis::WKBPolygonZ:
-    case QGis::WKBPolygonM:
-    case QGis::WKBPolygonZM:
-    case QGis::WKBPolygon25D:
+    case QgsWKBTypes::Polygon:
       geom = new QgsPolygonV2();
       break;
-    case QGis::WKBCurvePolygon:
-    case QGis::WKBCurvePolygonZ:
-    case QGis::WKBCurvePolygonM:
-    case QGis::WKBCurvePolygonZM:
+    case QgsWKBTypes::CurvePolygon:
       geom = new QgsCurvePolygonV2();
       break;
-    case QGis::WKBMultiLineString:
-    case QGis::WKBMultiLineStringZ:
-    case QGis::WKBMultiLineStringM:
-    case QGis::WKBMultiLineStringZM:
-    case QGis::WKBMultiLineString25D:
+    case QgsWKBTypes::MultiLineString:
       geom = new QgsMultiCurveV2();
       break;
-    case QGis::WKBMultiPolygon:
-    case QGis::WKBMultiPolygonZ:
-    case QGis::WKBMultiPolygonM:
-    case QGis::WKBMultiPolygonZM:
-    case QGis::WKBMultiPolygon25D:
+    case QgsWKBTypes::MultiPolygon:
       geom = new QgsMultiSurfaceV2();
       break;
-    case QGis::WKBMultiPoint:
-    case QGis::WKBMultiPointZ:
-    case QGis::WKBMultiPointM:
-    case QGis::WKBMultiPointZM:
-    case QGis::WKBMultiPoint25D:
+    case QgsWKBTypes::MultiPoint:
       geom = new QgsMultiPointV2();
       break;
     default:

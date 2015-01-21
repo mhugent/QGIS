@@ -17,7 +17,7 @@ email                : marco.hugentobler at sourcepole dot com
 #define QGSABSTRACTGEOMETRYV2
 
 #include "qgsrectangle.h"
-
+#include "qgswkbtypes.h"
 #include <QString>
 
 class QgsCoordinateTransform;
@@ -54,7 +54,7 @@ class QgsAbstractGeometryV2
     virtual int dimension() const = 0;
     //virtual int coordDim() const { return mCoordDimension; }
     virtual QString geometryType() const = 0;
-    QGis::WkbType wkbType() const { return mWkbType; }
+    QgsWKBTypes::Type wkbType() const { return mWkbType; }
     bool is3D() const;
     bool isMeasure() const;
 
@@ -96,10 +96,10 @@ class QgsAbstractGeometryV2
     virtual void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 ) = 0;
 
   protected:
-    QGis::WkbType mWkbType;
+    QgsWKBTypes::Type mWkbType;
     mutable QgsRectangle mBoundingBox;
 
-    void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QGis::WkbType baseGeomType );
+    void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QgsWKBTypes::Type baseGeomType );
 };
 
 #endif //QGSABSTRACTGEOMETRYV2

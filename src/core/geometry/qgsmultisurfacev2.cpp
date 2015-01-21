@@ -77,6 +77,6 @@ bool QgsMultiSurfaceV2::addGeometry( QgsAbstractGeometryV2* g )
     }
   }
 
-  setZMTypeFromSubGeometry( g, isPolygon ? QGis::WKBMultiPolygon : QGis::WKBMultiSurface );
+  setZMTypeFromSubGeometry( g, isPolygon ? QgsWKBTypes::MultiPolygon : QgsWKBTypes::MultiSurface );
   return QgsGeometryCollectionV2::addGeometry( g );
 }

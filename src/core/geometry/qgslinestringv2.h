@@ -53,7 +53,7 @@ class QgsLineStringV2: public QgsCurveV2
     void setPoints( const QList<QgsPointV2>& points );
     void append( const QgsLineStringV2* line );
 
-    void fromWkbPoints( QGis::WkbType type, const QgsConstWkbPtr& wkb );
+    void fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb );
 
     void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );

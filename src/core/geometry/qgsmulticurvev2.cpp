@@ -77,6 +77,6 @@ bool QgsMultiCurveV2::addGeometry( QgsAbstractGeometryV2* g )
     }
   }
 
-  setZMTypeFromSubGeometry( g, isMultiLineString ? QGis::WKBMultiLineString : QGis::WKBMultiCurve );
+  setZMTypeFromSubGeometry( g, isMultiLineString ? QgsWKBTypes::MultiLineString : QgsWKBTypes::MultiCurve );
   return QgsGeometryCollectionV2::addGeometry( g );
 }

@@ -278,6 +278,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgsmulticurvev2.cpp
   geometry/qgsmultipointv2.cpp
   geometry/qgsmultisurfacev2.cpp
+  geometry/qgswkbtypes.cpp
 )
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

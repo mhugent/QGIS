@@ -84,21 +84,21 @@ void QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
   for ( int i = 0; i < nRings; ++i )
   {
     wkbPtr += 1; //skip endian
-    QGis::WkbType curveType;
+    QgsWKBTypes::Type curveType;
     wkbPtr >> curveType;
     wkbPtr -= ( 1  + sizeof( int ) );
 
-    if ( curveType == QGis::WKBLineString || curveType == QGis::WKBLineStringZ || curveType == QGis::WKBLineStringM ||
-         curveType == QGis::WKBLineStringZM || curveType == QGis::WKBLineString25D )
+    if ( curveType == QgsWKBTypes::LineString || curveType == QgsWKBTypes::LineStringZ || curveType == QgsWKBTypes::LineStringM ||
+         curveType == QgsWKBTypes::LineStringZM || curveType == QgsWKBTypes::LineString25D )
     {
       currentCurve = new QgsLineStringV2();
     }
-    else if ( curveType == QGis::WKBCircularString || curveType == QGis::WKBCircularStringZ || curveType == QGis::WKBCircularStringZM ||
-              curveType == QGis::WKBCircularStringM )
+    else if ( curveType == QgsWKBTypes::CircularString || curveType == QgsWKBTypes::CircularStringZ || curveType == QgsWKBTypes::CircularStringZM ||
+              curveType == QgsWKBTypes::CircularStringM )
     {
       currentCurve = new QgsCircularStringV2();
     }
-    else if ( curveType == QGis::WKBCompoundCurve || curveType == QGis::WKBCompoundCurveZ || curveType == QGis::WKBCompoundCurveZM )
+    else if ( curveType == QgsWKBTypes::CompoundCurve || curveType == QgsWKBTypes::CompoundCurveZ || curveType == QgsWKBTypes::CompoundCurveZM )
     {
       currentCurve = new QgsCompoundCurveV2();
     }
@@ -286,11 +286,11 @@ void QgsCurvePolygonV2::setExteriorRing( QgsCurveV2* ring )
   //set proper wkb type
   if ( geometryType() == "Polygon" )
   {
-    setZMTypeFromSubGeometry( ring, QGis::WKBPolygon );
+    setZMTypeFromSubGeometry( ring, QgsWKBTypes::Polygon );
   }
   else if ( geometryType() == "CurvePolygon" )
   {
-    setZMTypeFromSubGeometry( ring, QGis::WKBCurvePolygon );
+    setZMTypeFromSubGeometry( ring, QgsWKBTypes::CurvePolygon );
   }
 }
 

@@ -27,6 +27,7 @@
 #include <cfloat>
 #include <cmath>
 #include <qnumeric.h>
+#include "qgswkbtypes.h"
 
 /** \ingroup core
  * The QGis class provides global constants for use throughout the application.
@@ -49,7 +50,7 @@ class CORE_EXPORT QGis
     //
 
     //! Used for symbology operations
-    // Feature types (according to postgis definition, not iso draft)
+    //This enum has been moved to qgswkbtypes.h. The copy here is only for API compatibility.
     enum WkbType
     {
       WKBUnknown = 0,
@@ -106,211 +107,37 @@ class CORE_EXPORT QGis
       WKBMultiPolygon25D
     };
 
-
-
-#if 0
-#define WKB_CIRCULARSTRING_TYPE 8
-#define WKB_COMPOUNDCURVE_TYPE 9
-#define WKB_CURVEPOLYGON_TYPE 10
-#define WKB_MULTICURVE_TYPE 11
-#define WKB_MULTISURFACE_TYPE 12
-#define WKB_CURVE_TYPE 13 /* from ISO draft, not sure is real */
-#define WKB_SURFACE_TYPE 14 /* from ISO draft, not sure is real */
-#define WKB_POLYHEDRALSURFACE_TYPE 15
-#define WKB_TIN_TYPE 16
-#define WKB_TRIANGLE_TYPE 17
-#endif //0
-
-    //this is according to the iso draft
-    /*enum WkbType
-    {
-      WKBUnknown = 0,
-      WKBPoint = 1,
-      WKBLineString = 2,
-      WKBPolygon = 3,
-      WKBMultiPoint = 4,
-      WKBMultiLineString = 5,
-      WKBMultiPolygon = 6,
-      WKBNoGeometry = 100, //attributes only
-      WKBCircularString =  1000001,
-      WKBCompoundCurve =  1000002,
-      WKBCurvePolygon = 1000003,
-      WKBMultiCurve = 1000004,
-      WKBMultiSurface = 1000005,
-      WKBPointZM = 2000001,
-      WKBLineStringZM = 2000002,
-      WKBCircularStringZM = 2000003,
-      WKBCompoundCurveZM = 2000004,
-      WKBPolygonZM = 2000005,
-      WKBCurvePolygonZM = 2000006,
-      WKBMultiPointZM = 2000007,
-      WKBMultiCurveZM = 2000008,
-      WKBMultiLineStringZM = 2000009,
-      WKBMultiSurfaceZM = 2000010,
-      WKBMultiPolygonZM = 2000011,
-      WKBGeometryCollectionZM = 2000012,
-      WKBPointZ = 3000001,
-      WKBLineStringZ = 3000002,
-      WKBCircularStringZ = 3000003,
-      WKBCompoundCurveZ = 3000004,
-      WKBPolygonZ = 3000005,
-      WKBCurvePolygonZ = 3000006,
-      WKBMultiPointZ = 3000007,
-      WKBMultiCurveZ = 3000008,
-      WKBMultiLineStringZ = 3000009,
-      WKBMultiSurfaceZ = 3000010,
-      WKBMultiPolygonZ = 3000011,
-      WKBGeometryCollectionZ = 3000012,
-      WKBPointM = 4000001,
-      WKBLineStringM = 4000002,
-      WKBCircularStringM = 4000003,
-      WKBCompoundCurveM = 4000004,
-      WKBPolygonM = 4000005,
-      WKBCurvePolygonM = 4000006,
-      WKBMultiPointM = 4000007,
-      WKBMultiCurveM = 4000008,
-      WKBMultiLineStringM = 4000009,
-      WKBMultiSurfaceM = 4000010,
-      WKBMultiPolygonM = 4000011,
-      WKBGeometryCollectionM = 4000012,
-      WKBPoint25D = 0x80000001,
-      WKBLineString25D,
-      WKBPolygon25D,
-      WKBMultiPoint25D,
-      WKBMultiLineString25D,
-      WKBMultiPolygon25D
-    };*/
-
     static WkbType singleType( WkbType type )
     {
-      switch ( type )
-      {
-        case WKBMultiPoint:         return WKBPoint;
-        case WKBMultiLineString:    return WKBLineString;
-        case WKBMultiPolygon:       return WKBPolygon;
-        case WKBMultiPoint25D:      return WKBPoint25D;
-        case WKBMultiLineString25D: return WKBLineString25D;
-        case WKBMultiPolygon25D:    return WKBPolygon25D;
-        default:                    return type;
-      }
+      return ( WkbType )( QgsWKBTypes::instance()->singleType(( QgsWKBTypes::Type ) type ) );
     }
 
     static WkbType multiType( WkbType type )
     {
-      switch ( type )
-      {
-        case WKBPoint:         return WKBMultiPoint;
-        case WKBLineString:    return WKBMultiLineString;
-        case WKBPolygon:       return WKBMultiPolygon;
-        case WKBPoint25D:      return WKBMultiPoint25D;
-        case WKBLineString25D: return WKBMultiLineString25D;
-        case WKBPolygon25D:    return WKBMultiPolygon25D;
-        default:               return type;
-      }
+      return ( WkbType )( QgsWKBTypes::instance()->multiType(( QgsWKBTypes::Type ) type ) );
     }
 
     static WkbType flatType( WkbType type )
     {
-      switch ( type )
-      {
-        case WKBPoint25D:
-        case WKBPointZ:
-        case WKBPointM:
-        case WKBPointZM:
-          return WKBPoint;
-        case WKBLineString25D:
-        case WKBLineStringZ:
-        case WKBLineStringM:
-        case WKBLineStringZM:
-          return WKBLineString;
-        case WKBCircularStringZ:
-        case WKBCircularStringM:
-        case WKBCircularStringZM:
-          return WKBCircularString;
-        case WKBCompoundCurveZ:
-        case WKBCompoundCurveM:
-        case WKBCompoundCurveZM:
-          return WKBCompoundCurve;
-        case WKBPolygon25D:
-        case WKBPolygonZ:
-        case WKBPolygonM:
-        case WKBPolygonZM:
-          return WKBPolygon;
-        case WKBCurvePolygonZ:
-        case WKBCurvePolygonM:
-        case WKBCurvePolygonZM:
-          return WKBCurvePolygon;
-        case WKBMultiPoint25D:
-        case WKBMultiPointZ:
-        case WKBMultiPointM:
-        case WKBMultiPointZM:
-          return WKBMultiPoint;
-        case WKBMultiCurveZ:
-        case WKBMultiCurveM:
-        case WKBMultiCurveZM:
-          return WKBMultiCurve;
-        case WKBMultiLineString25D:
-        case WKBMultiLineStringZ:
-        case WKBMultiLineStringM:
-        case WKBMultiLineStringZM:
-          return WKBMultiLineString;
-        case WKBMultiPolygon25D:
-        case WKBMultiPolygonZ:
-        case WKBMultiPolygonM:
-        case WKBMultiPolygonZM:
-          return WKBMultiPolygon;
-        case WKBMultiSurfaceZ:
-        case WKBMultiSurfaceM:
-        case WKBMultiSurfaceZM:
-          return WKBMultiSurface;
-        default:
-          return type;
-      }
+      return ( WkbType )( QgsWKBTypes::instance()->flatType(( QgsWKBTypes::Type ) type ) );
     }
 
     static bool isSingleType( WkbType type )
     {
-      if ( type == QGis::WKBNoGeometry )
-      {
-        return false;
-      }
-      else
-      {
-        return !isMultiType( type );
-      }
+      return QgsWKBTypes::instance()->isSingleType(( QgsWKBTypes::Type ) type );
     }
 
     static bool isMultiType( WkbType type )
     {
-      switch ( flatType( type ) )
-      {
-        case WKBMultiPoint:
-        case WKBMultiLineString:
-        case WKBMultiCurve:
-        case WKBMultiPolygon:
-        case WKBMultiSurface:
-          return true;
-        default:
-          return false;
-      }
+      return QgsWKBTypes::instance()->isMultiType(( QgsWKBTypes::Type ) type );
     }
 
     static int wkbDimensions( WkbType type )
     {
-      switch ( type )
-      {
-        case WKBUnknown:            return 0;
-        case WKBNoGeometry:         return 0;
-        case WKBPoint25D:           return 3;
-        case WKBLineString25D:      return 3;
-        case WKBPolygon25D:         return 3;
-        case WKBMultiPoint25D:      return 3;
-        case WKBMultiLineString25D: return 3;
-        case WKBMultiPolygon25D:    return 3;
-        default:                    return 2;
-      }
+      return QgsWKBTypes::instance()->wkbDimensions(( QgsWKBTypes::Type ) type );
     }
 
+    //This enum has been moved to qgswkbtypes.h. The copy here is only for API compatibility.
     enum GeometryType
     {
       Point,
