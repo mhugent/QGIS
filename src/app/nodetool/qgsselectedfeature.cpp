@@ -521,6 +521,14 @@ void QgsSelectedFeature::createVertexMap()
     return;
   }
 
+  QgsVertexId vertexId;
+  QgsPointV2 pt;
+  while ( geom->nextVertex( vertexId, pt ) )
+  {
+    mVertexMap.append( new QgsVertexEntry( mCanvas, mVlayer, QgsPoint( pt.x(), pt.y() ), tr( "ring %1, vertex %2" ).arg( vertexId.ring ).arg( vertexId.vertex ) ) );
+  }
+
+#if 0
   QList< QList< QList< QgsPointV2 > > > coords;
   geom->coordinateSequence( coords );
 
@@ -537,41 +545,7 @@ void QgsSelectedFeature::createVertexMap()
       }
     }
   }
-  //mVertexMap.insert( y + i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "ring %1, vertex %2" ).arg( i2 ).arg( i ) ) );
-
-
-
-
-  /*
-  QgsDebugCall;
-
-  if ( !mGeometry )
-  {
-  QgsDebugMsg( "Loading feature" );
-  updateGeometry( 0 );
-  }
-
-  Q_ASSERT( mGeometry );
-
-  // createvertexmap for correct geometry type
-  switch ( mGeometry->type() )
-  {
-  case QGis::Polygon:
-    createVertexMapPolygon();
-    break;
-
-  case QGis::Line:
-    createVertexMapLine();
-    break;
-
-  case QGis::Point:
-    createVertexMapPoint();
-    break;
-
-  case QGis::UnknownGeometry:
-  case QGis::NoGeometry:
-    break;
-  }*/
+#endif //0
 }
 
 void QgsSelectedFeature::selectVertex( int vertexNr )

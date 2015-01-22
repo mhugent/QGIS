@@ -272,6 +272,26 @@ double QgsGeometryCollectionV2::closestSegment( const QgsPointV2& pt, QgsPointV2
   return QgsGeometryUtils::closestSegmentFromComponents( mGeometries, QgsGeometryUtils::PART, pt, segmentPt, vertexAfter, leftOf, epsilon );
 }
 
+bool QgsGeometryCollectionV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
+{
+  if ( id.feature < 0 )
+  {
+    id.feature = 0; id.ring = -1; id.vertex = -1;
+  }
+
+  QgsAbstractGeometryV2* geom = mGeometries.at( id.feature );
+  if ( geom->nextVertex( id, vertex ) )
+  {
+    return true;
+  }
+  if (( id.feature + 1 ) >= numGeometries() )
+  {
+    return false;
+  }
+  ++id.feature; id.ring = -1; id.vertex = -1;
+  return mGeometries.at( id.feature )->nextVertex( id, vertex );
+}
+
 bool QgsGeometryCollectionV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
   if ( position.feature >= mGeometries.size() )

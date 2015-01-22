@@ -409,6 +409,48 @@ double QgsCurvePolygonV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segm
   return QgsGeometryUtils::closestSegmentFromComponents( segmentList, QgsGeometryUtils::RING, pt, segmentPt,  vertexAfter, leftOf, epsilon );
 }
 
+bool QgsCurvePolygonV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
+{
+  if ( !mExteriorRing || id.ring >= ( mInteriorRings.size() + 1 ) )
+  {
+    return false;
+  }
+
+  if ( id.ring < 0 )
+  {
+    id.ring = 0; id.vertex = -1;
+    if ( id.feature < 0 )
+    {
+      id.feature = 0;
+    }
+    return mExteriorRing->nextVertex( id, vertex );
+  }
+  else
+  {
+    QgsCurveV2* ring = 0;
+    if ( id.ring == 0 )
+    {
+      ring = mExteriorRing;
+    }
+    else
+    {
+      ring = mInteriorRings.at( id.ring - 1 );
+    }
+
+    if ( ring->nextVertex( id, vertex ) )
+    {
+      return true;
+    }
+    ++id.ring; id.vertex = -1;
+    if ( id.ring >= ( mInteriorRings.size() + 1 ) )
+    {
+      return false;
+    }
+    ring = mInteriorRings.at( id.ring - 1 );
+    return ring->nextVertex( id, vertex );
+  }
+}
+
 bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
   if ( !mExteriorRing || position.ring < 0 || position.vertex < 0 )

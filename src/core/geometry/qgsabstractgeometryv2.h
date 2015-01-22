@@ -84,6 +84,10 @@ class QgsAbstractGeometryV2
     virtual void clip( const QgsRectangle& rect ) {}
     virtual void draw( QPainter& p ) const = 0;
 
+    /**Returns next vertex id and coordinates
+    @return false if at end*/
+    virtual bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const = 0;
+
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
     int nCoordinates() const;
     QgsPointV2 pointAt( const QgsVertexId& id ) const;

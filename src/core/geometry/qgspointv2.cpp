@@ -209,3 +209,25 @@ double QgsPointV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt, 
 {
   return QgsGeometryUtils::sqrDistance2D( *this, pt );
 }
+
+bool QgsPointV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
+{
+  if ( id.vertex < 0 )
+  {
+    id.vertex = 0;
+    if ( id.feature < 0 )
+    {
+      id.feature = 0;
+    }
+    if ( id.ring < 0 )
+    {
+      id.ring = 0;
+    }
+    vertex = *this;
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}

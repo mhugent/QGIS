@@ -48,26 +48,18 @@ QgsPointV2 QgsGeometryEditor::closestVertex( const QgsPointV2& pt, QgsVertexId& 
   double currentDist = 0;
   QgsPointV2 minDistPoint;
 
-  QList< QList< QList< QgsPointV2 > > > coords;
-  mGeometry->coordinateSequence( coords );
-  for ( int feature = 0; feature < coords.size(); ++feature )
+  QgsVertexId vertexId;
+  QgsPointV2 vertex;
+  while ( mGeometry->nextVertex( vertexId, vertex ) )
   {
-    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
-    for ( int ring = 0; ring < featureCoords.size(); ++ring )
+    currentDist = QgsGeometryUtils::sqrDistance2D( pt, vertex );
+    if ( currentDist < minDist )
     {
-      const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
-      for ( int vertex = 0; vertex < ringCoords.size(); ++vertex )
-      {
-        currentDist = QgsGeometryUtils::sqrDistance2D( pt, ringCoords.at( vertex ) );
-        if ( currentDist < minDist )
-        {
-          minDist = currentDist;
-          minDistPoint = ringCoords.at( vertex );
-          id.feature = feature;
-          id.ring = ring;
-          id.vertex = vertex;
-        }
-      }
+      minDist = currentDist;
+      minDistPoint = vertex;
+      id.feature = vertexId.feature;
+      id.ring = vertexId.ring;
+      id.vertex = vertexId.vertex;
     }
   }
 

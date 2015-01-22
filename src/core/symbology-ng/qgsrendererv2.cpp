@@ -443,6 +443,17 @@ void QgsFeatureRendererV2::renderVertexMarkers( const QgsAbstractGeometryV2* geo
     return;
   }
 
+  QgsVertexId id;
+  QgsPointV2 pt;
+
+  while ( geom->nextVertex( id, pt ) )
+  {
+    QgsVectorLayer::drawVertexMarker( pt.x(), pt.y(), *context.painter(),
+                                      ( QgsVectorLayer::VertexMarkerType ) mCurrentVertexMarkerType,
+                                      mCurrentVertexMarkerSize );
+  }
+
+#if 0
   QList< QList< QList< QgsPointV2 > > > coords;
   geom->coordinateSequence( coords );
   QList< QList< QList< QgsPointV2 > > >::const_iterator partIt = coords.constBegin();
@@ -462,6 +473,7 @@ void QgsFeatureRendererV2::renderVertexMarkers( const QgsAbstractGeometryV2* geo
       }
     }
   }
+#endif //0
 }
 
 void QgsFeatureRendererV2::renderVertexMarker( QPointF& pt, QgsRenderContext& context )

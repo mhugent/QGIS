@@ -25,20 +25,45 @@ QgsCurveV2::~QgsCurveV2()
 
 bool QgsCurveV2::isClosed() const
 {
-    return ( numPoints() > 0 && ( startPoint() == endPoint() ) );
+  return ( numPoints() > 0 && ( startPoint() == endPoint() ) );
 }
 
 bool QgsCurveV2::isRing() const
 {
-    return ( isClosed() && numPoints() >= 4 );
+  return ( isClosed() && numPoints() >= 4 );
 }
 
 void QgsCurveV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
 {
-    coord.clear();
-    QList<QgsPointV2> pts;
-    points( pts );
-    QList< QList<QgsPointV2> > ptsList;
-    ptsList.append( pts );
-    coord.append( ptsList );
+  coord.clear();
+  QList<QgsPointV2> pts;
+  points( pts );
+  QList< QList<QgsPointV2> > ptsList;
+  ptsList.append( pts );
+  coord.append( ptsList );
+}
+
+bool QgsCurveV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
+{
+  if ( id.vertex < 0 )
+  {
+    id.vertex = 0;
+    if ( id.feature < 0 )
+    {
+      id.feature = 0;
+    }
+    if ( id.ring < 0 )
+    {
+      id.ring = 0;
+    }
+  }
+  else
+  {
+    if ( id.vertex + 1 >= numPoints() )
+    {
+      return false;
+    }
+    ++id.vertex;
+  }
+  return pointAt( id.vertex, vertex );
 }

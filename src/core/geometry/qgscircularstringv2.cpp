@@ -810,6 +810,16 @@ double QgsCircularStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& se
   return minDist;
 }
 
+bool QgsCircularStringV2::pointAt( int i, QgsPointV2& vertex ) const
+{
+  if ( i >= numPoints() )
+  {
+    return false;
+  }
+  vertex = pointN( i );
+  return true;
+}
+
 double QgsCircularStringV2::closestPointOnArc( double x1, double y1, double x2, double y2, double x3, double y3,
     const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon )
 {
