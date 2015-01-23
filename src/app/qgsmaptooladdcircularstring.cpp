@@ -45,7 +45,7 @@ void QgsMapToolAddCircularString::canvasMoveEvent( QMouseEvent * e )
     QgsPoint mapPoint;
     nextPoint( e->pos(), layerPoint, mapPoint );
 
-    QgsVertexId idx; idx.feature = 0; idx.ring = 0; idx.vertex = mPoints.size();
+    QgsVertexId idx; idx.part = 0; idx.ring = 0; idx.vertex = mPoints.size();
     mRubberBand->moveVertex( idx, QgsPointV2( layerPoint.x(), layerPoint.y() ) );
   }
 }

@@ -140,7 +140,7 @@ void QgsMapToolCapture::canvasMoveEvent( QMouseEvent * e )
     if ( mCaptureMode != CapturePoint && mGeometryRubberBand && mCapturing && mCurrentRubberBandVertex >= 0 )
     {
       mapPoint = snapPointFromResults( snapResults, e->pos() );
-      QgsVertexId vId; vId.feature = 0; vId.ring = 0; vId.vertex = mCurrentRubberBandVertex;
+      QgsVertexId vId; vId.part = 0; vId.ring = 0; vId.vertex = mCurrentRubberBandVertex;
       mGeometryRubberBand->moveVertex( vId, QgsPointV2( mapPoint.x(), mapPoint.y() ) );
     }
   }

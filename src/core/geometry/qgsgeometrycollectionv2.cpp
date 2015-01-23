@@ -274,50 +274,50 @@ double QgsGeometryCollectionV2::closestSegment( const QgsPointV2& pt, QgsPointV2
 
 bool QgsGeometryCollectionV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
 {
-  if ( id.feature < 0 )
+  if ( id.part < 0 )
   {
-    id.feature = 0; id.ring = -1; id.vertex = -1;
+    id.part = 0; id.ring = -1; id.vertex = -1;
   }
 
-  QgsAbstractGeometryV2* geom = mGeometries.at( id.feature );
+  QgsAbstractGeometryV2* geom = mGeometries.at( id.part );
   if ( geom->nextVertex( id, vertex ) )
   {
     return true;
   }
-  if (( id.feature + 1 ) >= numGeometries() )
+  if (( id.part + 1 ) >= numGeometries() )
   {
     return false;
   }
-  ++id.feature; id.ring = -1; id.vertex = -1;
-  return mGeometries.at( id.feature )->nextVertex( id, vertex );
+  ++id.part; id.ring = -1; id.vertex = -1;
+  return mGeometries.at( id.part )->nextVertex( id, vertex );
 }
 
 bool QgsGeometryCollectionV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
-  if ( position.feature >= mGeometries.size() )
+  if ( position.part >= mGeometries.size() )
   {
     return false;
   }
 
-  return mGeometries[position.feature]->insertVertex( position, vertex );
+  return mGeometries[position.part]->insertVertex( position, vertex );
 }
 
 bool QgsGeometryCollectionV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
 {
-  if ( position.feature >= mGeometries.size() )
+  if ( position.part >= mGeometries.size() )
   {
     return false;
   }
 
-  return mGeometries[position.feature]->moveVertex( position, newPos );
+  return mGeometries[position.part]->moveVertex( position, newPos );
 }
 
 bool QgsGeometryCollectionV2::deleteVertex( const QgsVertexId& position )
 {
-  if ( position.feature >= mGeometries.size() )
+  if ( position.part >= mGeometries.size() )
   {
     return false;
   }
 
-  return mGeometries[position.feature]->deleteVertex( position );
+  return mGeometries[position.part]->deleteVertex( position );
 }

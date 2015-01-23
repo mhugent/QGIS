@@ -74,7 +74,7 @@ class QgsGeometryUtils
           minDistSegmentY = segmentPt.y();
           minDistVertexAfter = vertexAfter;
           minDistVertexAfter.vertex = vertexAfter.vertex + vertexOffset;
-          minDistVertexAfter.feature = vertexAfter.feature + partOffset;
+          minDistVertexAfter.part = vertexAfter.part + partOffset;
           minDistVertexAfter.ring = vertexAfter.ring + ringOffset;
           if ( leftOf )
           {

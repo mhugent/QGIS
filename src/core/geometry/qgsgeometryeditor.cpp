@@ -57,7 +57,7 @@ QgsPointV2 QgsGeometryEditor::closestVertex( const QgsPointV2& pt, QgsVertexId& 
     {
       minDist = currentDist;
       minDistPoint = vertex;
-      id.feature = vertexId.feature;
+      id.part = vertexId.part;
       id.ring = vertexId.ring;
       id.vertex = vertexId.vertex;
     }
@@ -78,18 +78,18 @@ void QgsGeometryEditor::adjacentVertices( const QgsVertexId& atVertex, QgsVertex
   mGeometry->coordinateSequence( coords );
 
   //get feature
-  if ( coords.size() <= atVertex.feature )
+  if ( coords.size() <= atVertex.part )
   {
     return; //error, no such feature
   }
-  const QList< QList< QgsPointV2 > >& feature = coords.at( atVertex.feature );
+  const QList< QList< QgsPointV2 > >& part = coords.at( atVertex.part );
 
   //get ring
-  if ( feature.size() <= atVertex.ring )
+  if ( part.size() <= atVertex.ring )
   {
     return; //error, no such ring
   }
-  const QList< QgsPointV2 >& ring = feature.at( atVertex.ring );
+  const QList< QgsPointV2 >& ring = part.at( atVertex.ring );
   if ( ring.size() <= atVertex.vertex )
   {
     return;
@@ -98,15 +98,15 @@ void QgsGeometryEditor::adjacentVertices( const QgsVertexId& atVertex, QgsVertex
   //vertex in the middle
   if ( atVertex.vertex > 0 && atVertex.vertex < ring.size() - 1 )
   {
-    beforeVertex.feature = atVertex.feature; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
-    afterVertex.feature = atVertex.feature; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
+    beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
+    afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
   }
   else if ( atVertex.vertex == 0 )
   {
-    afterVertex.feature = atVertex.feature; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
+    afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
     if ( polygonType && ring.size() > 3 )
     {
-      beforeVertex.feature = atVertex.feature; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = ring.size() - 2;
+      beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = ring.size() - 2;
     }
     else
     {
@@ -115,10 +115,10 @@ void QgsGeometryEditor::adjacentVertices( const QgsVertexId& atVertex, QgsVertex
   }
   else if ( atVertex.vertex == ring.size() - 1 )
   {
-    beforeVertex.feature = atVertex.feature; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
+    beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
     if ( polygonType )
     {
-      afterVertex.feature = atVertex.feature; afterVertex.ring = atVertex.ring; afterVertex.vertex = 0;
+      afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = 0;
     }
     else
     {

@@ -2129,9 +2129,9 @@ bool QgsGeometry::vertexIdFromVertexNr( int nr, QgsVertexId& id ) const
   d->geometry->coordinateSequence( coords );
 
   int vertexCount = 0;
-  for ( int feature = 0; feature < coords.size(); ++feature )
+  for ( int part = 0; part < coords.size(); ++part )
   {
-    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
+    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( part );
     for ( int ring = 0; ring < featureCoords.size(); ++ring )
     {
       const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
@@ -2139,7 +2139,7 @@ bool QgsGeometry::vertexIdFromVertexNr( int nr, QgsVertexId& id ) const
       {
         if ( vertexCount == nr )
         {
-          id.feature = feature;
+          id.part = part;
           id.ring = ring;
           id.vertex = vertex;
           return true;
@@ -2162,15 +2162,15 @@ int QgsGeometry::vertexNrFromVertexId( const QgsVertexId& id ) const
   d->geometry->coordinateSequence( coords );
 
   int vertexCount = 0;
-  for ( int feature = 0; feature < coords.size(); ++feature )
+  for ( int part = 0; part < coords.size(); ++part )
   {
-    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
+    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( part );
     for ( int ring = 0; ring < featureCoords.size(); ++ring )
     {
       const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
       for ( int vertex = 0; vertex < ringCoords.size(); ++vertex )
       {
-        if ( vertex == id.vertex && ring == id.ring && feature == id.feature )
+        if ( vertex == id.vertex && ring == id.ring && part == id.part )
         {
           return vertexCount;
         }

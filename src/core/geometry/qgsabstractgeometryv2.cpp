@@ -128,11 +128,11 @@ QgsPointV2 QgsAbstractGeometryV2::pointAt( const QgsVertexId& id ) const
   QList< QList< QList< QgsPointV2 > > > coordinates;
   coordinateSequence( coordinates );
 
-  if ( id.feature >= coordinates.size() )
+  if ( id.part >= coordinates.size() )
   {
     return QgsPointV2();
   }
-  const QList< QList< QgsPointV2 > >& part = coordinates.at( id.feature );
+  const QList< QList< QgsPointV2 > >& part = coordinates.at( id.part );
   if ( id.ring >= part.size() )
   {
     return QgsPointV2();

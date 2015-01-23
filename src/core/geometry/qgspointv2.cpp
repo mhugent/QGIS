@@ -215,9 +215,9 @@ bool QgsPointV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
   if ( id.vertex < 0 )
   {
     id.vertex = 0;
-    if ( id.feature < 0 )
+    if ( id.part < 0 )
     {
-      id.feature = 0;
+      id.part = 0;
     }
     if ( id.ring < 0 )
     {

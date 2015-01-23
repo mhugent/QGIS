@@ -419,9 +419,9 @@ bool QgsCurvePolygonV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
   if ( id.ring < 0 )
   {
     id.ring = 0; id.vertex = -1;
-    if ( id.feature < 0 )
+    if ( id.part < 0 )
     {
-      id.feature = 0;
+      id.part = 0;
     }
     return mExteriorRing->nextVertex( id, vertex );
   }

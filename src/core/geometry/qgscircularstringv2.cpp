@@ -802,7 +802,7 @@ double QgsCircularStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& se
 
   segmentPt = minDistSegmentPoint;
   vertexAfter = minDistVertexAfter;
-  vertexAfter.feature = 0; vertexAfter.ring = 0;
+  vertexAfter.part = 0; vertexAfter.ring = 0;
   if ( leftOf )
   {
     *leftOf = minDistLeftOf;

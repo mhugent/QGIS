@@ -30,9 +30,9 @@ class QPainter;
 
 struct QgsVertexId
 {
-  QgsVertexId(): feature( - 1 ), ring( -1 ), vertex( -1 ) {}
-  bool isValid() const { return feature >= 0 && ring >= 0 && vertex >= 0; }
-  int feature;
+  QgsVertexId(): part( - 1 ), ring( -1 ), vertex( -1 ) {}
+  bool isValid() const { return part >= 0 && ring >= 0 && vertex >= 0; }
+  int part;
   int ring;
   int vertex;
 };

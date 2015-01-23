@@ -460,7 +460,7 @@ double QgsLineStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmen
       {
         *leftOf = ( QgsGeometryUtils::leftOfLine( segmentPtX, segmentPtY, prev.x(), prev.y(), pt.x(), pt.y() ) < 0 );
       }
-      vertexAfter.feature = 0; vertexAfter.ring = 0; vertexAfter.vertex = i;
+      vertexAfter.part = 0; vertexAfter.ring = 0; vertexAfter.vertex = i;
     }
   }
   return sqrDist;
