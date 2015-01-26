@@ -41,6 +41,7 @@ class QgsGeos: public QgsGeometryEngine
     QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
     QgsAbstractGeometryV2* buffer( double distance, int segments ) const;
     QgsAbstractGeometryV2* simplify( double tolerance ) const;
+    QgsAbstractGeometryV2* interpolate( double distance ) const;
     bool centroid( QgsPointV2& pt ) const;
     bool pointOnSurface( QgsPointV2& pt ) const;
     QgsAbstractGeometryV2* convexHull() const;
@@ -56,6 +57,7 @@ class QgsGeos: public QgsGeometryEngine
     double length() const;
     bool isValid() const;
     bool isEqual( const QgsAbstractGeometryV2& geom ) const;
+    bool isEmpty() const;
 
     /**Splits this geometry according to a given line.
     @param splitLine the line that splits the geometry

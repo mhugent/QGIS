@@ -1149,6 +1149,21 @@ QgsAbstractGeometryV2* QgsGeos::simplify( double tolerance ) const
   return fromGeos( geos );
 }
 
+QgsAbstractGeometryV2* QgsGeos::interpolate( double distance ) const
+{
+  if ( !mGeos )
+  {
+    return 0;
+  }
+  GEOSGeometry* geos = 0;
+  try
+  {
+    geos = GEOSInterpolate_r( geosinit.ctxt, mGeos, distance );
+  }
+  CATCH_GEOS( 0 );
+  return fromGeos( geos );
+}
+
 bool QgsGeos::centroid( QgsPointV2& pt ) const
 {
   if ( !mGeos )
@@ -1202,17 +1217,68 @@ bool QgsGeos::pointOnSurface( QgsPointV2& pt ) const
 
 QgsAbstractGeometryV2* QgsGeos::convexHull() const
 {
-  return 0; //soon...
+  if ( !mGeos )
+  {
+    return 0;
+  }
+
+  try
+  {
+    GEOSGeometry* cHull = GEOSConvexHull_r( geosinit.ctxt, mGeos );
+    QgsAbstractGeometryV2* cHullGeom = fromGeos( cHull );
+    GEOSGeom_destroy_r( geosinit.ctxt, cHull );
+    return cHullGeom;
+  }
+  CATCH_GEOS( 0 );
 }
 
 bool QgsGeos::isValid() const
 {
-  return false; //soon...
+  if ( !mGeos )
+  {
+    return false;
+  }
+
+  try
+  {
+    return GEOSisValid_r( geosinit.ctxt, mGeos );
+  }
+  CATCH_GEOS( false );
 }
 
 bool QgsGeos::isEqual( const QgsAbstractGeometryV2& geom ) const
 {
-  return false; //soon...
+  if ( !mGeos )
+  {
+    return false;
+  }
+
+  try
+  {
+    GEOSGeometry* geosGeom = asGeos( &geom );
+    if ( !geosGeom )
+    {
+      return false;
+    }
+    bool equal = GEOSEquals_r( geosinit.ctxt, mGeos, geosGeom );
+    GEOSGeom_destroy_r( geosinit.ctxt, geosGeom );
+    return equal;
+  }
+  CATCH_GEOS( false );
+}
+
+bool QgsGeos::isEmpty() const
+{
+  if ( !mGeos )
+  {
+    return false;
+  }
+
+  try
+  {
+    return GEOSisEmpty_r( geosinit.ctxt, mGeos );
+  }
+  CATCH_GEOS( false );
 }
 
 GEOSCoordSequence* QgsGeos::createCoordinateSequence( const QgsCurveV2* curve )

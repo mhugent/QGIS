@@ -38,6 +38,7 @@ class QgsGeometryEngine
     virtual QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const = 0;
     virtual QgsAbstractGeometryV2* buffer( double distance, int segments ) const = 0;
     virtual QgsAbstractGeometryV2* simplify( double tolerance ) const = 0;
+    virtual QgsAbstractGeometryV2* interpolate( double distance ) const = 0;
     virtual bool centroid( QgsPointV2& pt ) const = 0;
     virtual bool pointOnSurface( QgsPointV2& pt ) const = 0;
     virtual QgsAbstractGeometryV2* convexHull() const = 0;
@@ -53,6 +54,7 @@ class QgsGeometryEngine
     virtual double length() const = 0;
     virtual bool isValid() const = 0;
     virtual bool isEqual( const QgsAbstractGeometryV2& geom ) const = 0;
+    virtual bool isEmpty() const = 0;
 
     virtual int splitGeometry( const QgsLineStringV2& splitLine,
                                QList<QgsAbstractGeometryV2*>& newGeometries,

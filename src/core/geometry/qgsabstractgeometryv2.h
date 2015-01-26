@@ -71,9 +71,9 @@ class QgsAbstractGeometryV2
     virtual QString asWkt( int precision = 17 ) const = 0;
     virtual unsigned char* asWkb( int& binarySize ) const = 0;
     virtual int wkbSize() const = 0;
-    /*virtual QString asGML2() const = 0;
-    virtual QString asGML3() const = 0;
-    virtual QString asJSON() const = 0;*/
+    virtual QString asGML2( int precision = 17 ) const { return QString(); } //todo...
+    virtual QString asGML3( int precision = 17 ) const { return QString(); } //todo...
+    virtual QString asJSON( int precision = 17 ) const { return QString(); } //todo...
 
     //virtual import methods
     virtual void fromWkb( const unsigned char * wkb ) = 0;

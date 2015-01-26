@@ -155,6 +155,7 @@ unsigned char* QgsCurvePolygonV2::asWkb( int& binarySize ) const
   QgsWkbPtr wkb( geomPtr );
   wkb << byteOrder;
   wkb << wkbType();
+  wkb << mInteriorRings.size() + 1;
   unsigned char* currentWkbPtr = wkb;
 
   if ( mExteriorRing )
@@ -180,8 +181,11 @@ void QgsCurvePolygonV2::addRingWkb( unsigned char** wkb, const QgsCurveV2* ring 
 
   int ringWkbSize = 0;
   unsigned char* ringWkb = ring->asWkb( ringWkbSize );
-  memcpy( *wkb, ringWkb, ringWkbSize );
-  *wkb += ringWkbSize;
+  if ( ringWkbSize > 5 )
+  {
+    memcpy( *wkb, ringWkb + 5, ringWkbSize - 5 );
+    *wkb += ringWkbSize;
+  }
   delete[] ringWkb;
 }
 
