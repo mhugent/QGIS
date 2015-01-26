@@ -23,6 +23,8 @@
 #include "qgslogger.h"
 #include "qgsvectorlayer.h"
 #include "qgsgeometrysimplifier.h"
+#include "qgsgeometryeditor.h"
+#include "qgsgeometryengine.h"
 
 #include <QPainter>
 #include <QDomDocument>
@@ -328,13 +330,14 @@ void QgsSimpleLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
   }
   else
   {
-    /*double scaledOffset = offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale );
-    QPolygonF points;
-    QList<QPolygonF> mline = ::offsetLine( points, scaledOffset, context.feature() ? context.feature()->geometry()->type() : QGis::Line );
-    for ( int part = 0; part < mline.count(); ++part )
+    double scaledOffset = offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale );
+    QgsGeometryEngine* geos = QgsGeometryEditor::createGeometryEngine( geom->geometry() );
+    if ( geos )
     {
-     // p->drawPolyline( mline[ part ] );
-    }*/
+      QgsAbstractGeometryV2* offsetGeometry = geos->offsetCurve( scaledOffset, 8, 0, 5 );
+      offsetGeometry->draw( *p );
+      delete offsetGeometry;
+    }
   }
 }
 

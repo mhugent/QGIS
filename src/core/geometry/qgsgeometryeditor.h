@@ -46,6 +46,8 @@ class QgsGeometryEditor
 
     int avoidIntersections( QMap<QgsVectorLayer*, QSet<QgsFeatureId> > ignoreFeatures = ( QMap<QgsVectorLayer*, QSet<QgsFeatureId> >() ) );
 
+    static QgsGeometryEngine* createGeometryEngine( const QgsAbstractGeometryV2* geometry );
+
   private:
 
     QgsAbstractGeometryV2* mGeometry;
@@ -53,7 +55,6 @@ class QgsGeometryEditor
     //default constructor forbidden
     QgsGeometryEditor();
     //Caller takes ownership
-    static QgsGeometryEngine* createGeometryEngine( const QgsAbstractGeometryV2* geometry );
 };
 
 #endif // QGSGEOMETRYEDITOR_H
