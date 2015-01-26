@@ -123,7 +123,7 @@ void QgsPointV2::fromWkt( const QString& wkt )
   }
 }
 
-QString QgsPointV2::asText( int precision ) const
+QString QgsPointV2::asWkt( int precision ) const
 {
   QString wkt = "POINT(" + qgsDoubleToString( mX, precision ) + " " + qgsDoubleToString( mY, precision );
   if ( is3D() )
@@ -140,7 +140,7 @@ QString QgsPointV2::asText( int precision ) const
   return wkt;
 }
 
-unsigned char* QgsPointV2::asBinary( int& binarySize ) const
+unsigned char* QgsPointV2::asWkb( int& binarySize ) const
 {
   binarySize = wkbSize();
   char byteOrder = QgsApplication::endian();
@@ -160,11 +160,6 @@ unsigned char* QgsPointV2::asBinary( int& binarySize ) const
   }
 
   return geomPtr;
-}
-
-QString QgsPointV2::asGML() const
-{
-  return QString();
 }
 
 void QgsPointV2::reset()

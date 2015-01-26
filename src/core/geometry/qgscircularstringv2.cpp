@@ -228,7 +228,7 @@ int QgsCircularStringV2::wkbSize() const
   return binarySize;
 }
 
-QString QgsCircularStringV2::asText( int precision ) const
+QString QgsCircularStringV2::asWkt( int precision ) const
 {
   QString wkt( "CIRCULARSTRING(" );
 
@@ -261,7 +261,7 @@ QString QgsCircularStringV2::asText( int precision ) const
   return wkt;
 }
 
-unsigned char* QgsCircularStringV2::asBinary( int& binarySize ) const
+unsigned char* QgsCircularStringV2::asWkb( int& binarySize ) const
 {
   bool hasZ = is3D();
   bool hasM = isMeasure();
@@ -289,11 +289,6 @@ unsigned char* QgsCircularStringV2::asBinary( int& binarySize ) const
   }
 
   return geomPtr;
-}
-
-QString QgsCircularStringV2::asGML() const
-{
-  return "";
 }
 
 //curve interface

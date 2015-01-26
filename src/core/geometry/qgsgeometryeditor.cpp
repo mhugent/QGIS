@@ -18,8 +18,12 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgscurvepolygonv2.h"
 #include "qgspolygonv2.h"
 #include "qgsgeometryutils.h"
+#include "qgsgeometry.h"
 #include "qgsgeos.h"
+#include "qgsmaplayerregistry.h"
 #include "qgsmultisurfacev2.h"
+#include "qgsproject.h"
+#include "qgsvectorlayer.h"
 #include <limits>
 
 QgsGeometryEditor::QgsGeometryEditor( QgsAbstractGeometryV2* geom ): mGeometry( geom )
@@ -35,96 +39,6 @@ QgsGeometryEditor::QgsGeometryEditor(): mGeometry( 0 )
 QgsGeometryEditor::~QgsGeometryEditor()
 {
 
-}
-
-QgsPointV2 QgsGeometryEditor::closestVertex( const QgsPointV2& pt, QgsVertexId& id ) const
-{
-  if ( !mGeometry )
-  {
-    return QgsPointV2();
-  }
-
-  double minDist = std::numeric_limits<double>::max();
-  double currentDist = 0;
-  QgsPointV2 minDistPoint;
-
-  QgsVertexId vertexId;
-  QgsPointV2 vertex;
-  while ( mGeometry->nextVertex( vertexId, vertex ) )
-  {
-    currentDist = QgsGeometryUtils::sqrDistance2D( pt, vertex );
-    if ( currentDist < minDist )
-    {
-      minDist = currentDist;
-      minDistPoint = vertex;
-      id.part = vertexId.part;
-      id.ring = vertexId.ring;
-      id.vertex = vertexId.vertex;
-    }
-  }
-
-  return minDistPoint;
-}
-
-void QgsGeometryEditor::adjacentVertices( const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex ) const
-{
-  if ( !mGeometry )
-  {
-    return;
-  }
-
-  bool polygonType = ( mGeometry->dimension()  == 2 );
-  QList< QList< QList< QgsPointV2 > > > coords;
-  mGeometry->coordinateSequence( coords );
-
-  //get feature
-  if ( coords.size() <= atVertex.part )
-  {
-    return; //error, no such feature
-  }
-  const QList< QList< QgsPointV2 > >& part = coords.at( atVertex.part );
-
-  //get ring
-  if ( part.size() <= atVertex.ring )
-  {
-    return; //error, no such ring
-  }
-  const QList< QgsPointV2 >& ring = part.at( atVertex.ring );
-  if ( ring.size() <= atVertex.vertex )
-  {
-    return;
-  }
-
-  //vertex in the middle
-  if ( atVertex.vertex > 0 && atVertex.vertex < ring.size() - 1 )
-  {
-    beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
-    afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
-  }
-  else if ( atVertex.vertex == 0 )
-  {
-    afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
-    if ( polygonType && ring.size() > 3 )
-    {
-      beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = ring.size() - 2;
-    }
-    else
-    {
-      beforeVertex = QgsVertexId(); //before vertex invalid
-    }
-  }
-  else if ( atVertex.vertex == ring.size() - 1 )
-  {
-    beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
-    if ( polygonType )
-    {
-      afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = 0;
-    }
-    else
-    {
-      afterVertex = QgsVertexId(); //after vertex invalid
-    }
-  }
 }
 
 int QgsGeometryEditor::addRing( QgsCurveV2* ring )
@@ -234,6 +148,137 @@ int QgsGeometryEditor::addPart( QgsAbstractGeometryV2* part )
     added = geomCollection->addGeometry( part );
   }
   return added ? 0 : 2;
+}
+
+bool QgsGeometryEditor::deleteRing( int ringNum, int partNum )
+{
+  if ( !mGeometry )
+  {
+    return false;
+  }
+
+  if ( ringNum < 1 ) //cannot remove exterior ring
+  {
+    return false;
+  }
+
+  QgsAbstractGeometryV2* geom = mGeometry;
+  if ( partNum > 0 )
+  {
+    QgsMultiSurfaceV2* multiSurface = dynamic_cast<QgsMultiSurfaceV2*>( mGeometry );
+    if ( !multiSurface )
+    {
+      return false;
+    }
+    geom = multiSurface->geometryN( partNum );
+  }
+  QgsCurvePolygonV2* cpoly = dynamic_cast<QgsCurvePolygonV2*>( geom );
+  if ( !cpoly )
+  {
+    return false;
+  }
+
+  return cpoly->removeInteriorRing( ringNum - 1 );
+}
+
+bool QgsGeometryEditor::deletePart( int partNum )
+{
+  if ( !mGeometry )
+  {
+    return false;
+  }
+
+  QgsGeometryCollectionV2* c = dynamic_cast<QgsGeometryCollectionV2*>( mGeometry );
+  if ( !c )
+  {
+    return false;
+  }
+
+  return c->removeGeometry( partNum );
+}
+
+int QgsGeometryEditor::avoidIntersections( QMap<QgsVectorLayer*, QSet<QgsFeatureId> > ignoreFeatures )
+{
+  if ( !mGeometry )
+  {
+    return 1;
+  }
+
+  QScopedPointer<QgsGeometryEngine> geomEngine( createGeometryEngine( mGeometry ) );
+  if ( geomEngine.isNull() )
+  {
+    return 1;
+  }
+  QgsWKBTypes::Type geomTypeBeforeModification = mGeometry->wkbType();
+
+
+  //check if g has polygon type
+  if ( QgsWKBTypes::instance()->geometryType( geomTypeBeforeModification ) != QgsWKBTypes::PolygonGeometry )
+  {
+    return 1;
+  }
+
+  //read avoid intersections list from project properties
+  bool listReadOk;
+  QStringList avoidIntersectionsList = QgsProject::instance()->readListEntry( "Digitizing", "/AvoidIntersectionsList", QStringList(), &listReadOk );
+  if ( !listReadOk )
+    return 0; //no intersections stored in project does not mean error
+
+  QList< const QgsAbstractGeometryV2* > nearGeometries;
+
+  //go through list, convert each layer to vector layer and call QgsVectorLayer::removePolygonIntersections for each
+  QgsVectorLayer* currentLayer = 0;
+  QStringList::const_iterator aIt = avoidIntersectionsList.constBegin();
+  for ( ; aIt != avoidIntersectionsList.constEnd(); ++aIt )
+  {
+    currentLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( *aIt ) );
+    if ( currentLayer )
+    {
+      QgsFeatureIds ignoreIds;
+      QMap<QgsVectorLayer*, QSet<qint64> >::const_iterator ignoreIt = ignoreFeatures.find( currentLayer );
+      if ( ignoreIt != ignoreFeatures.constEnd() )
+        ignoreIds = ignoreIt.value();
+
+      QgsFeatureIterator fi = currentLayer->getFeatures( QgsFeatureRequest( mGeometry->boundingBox() )
+                              .setFlags( QgsFeatureRequest::ExactIntersect )
+                              .setSubsetOfAttributes( QgsAttributeList() ) );
+      QgsFeature f;
+      while ( fi.nextFeature( f ) )
+      {
+        if ( ignoreIds.contains( f.id() ) )
+          continue;
+
+        if ( !f.geometry() )
+          continue;
+
+        nearGeometries << f.geometry()->geometry()->clone();
+      }
+    }
+  }
+
+  if ( nearGeometries.isEmpty() )
+  {
+    return 0;
+  }
+
+
+  QgsAbstractGeometryV2* combinedGeometries = geomEngine.data()->combine( nearGeometries );
+  qDeleteAll( nearGeometries );
+  if ( !combinedGeometries )
+  {
+    return 3;
+  }
+
+  QgsAbstractGeometryV2* diffGeom = geomEngine.data()->difference( *combinedGeometries );
+  if ( diffGeom->wkbType() != geomTypeBeforeModification )
+  {
+    delete diffGeom;
+    return 2;
+  }
+
+  *mGeometry = *diffGeom;
+  delete combinedGeometries;
+  return 0;
 }
 
 QgsGeometryEngine* QgsGeometryEditor::createGeometryEngine( const QgsAbstractGeometryV2* geometry )

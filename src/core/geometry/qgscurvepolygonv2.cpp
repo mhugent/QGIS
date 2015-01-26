@@ -131,23 +131,23 @@ QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
   return QgsRectangle();
 }
 
-QString QgsCurvePolygonV2::asText( int precision ) const
+QString QgsCurvePolygonV2::asWkt( int precision ) const
 {
   QString wkt( "CURVEPOLYGON(" );
   if ( mExteriorRing )
   {
-    wkt.append( mExteriorRing->asText( precision ) );
+    wkt.append( mExteriorRing->asWkt( precision ) );
   }
   for ( int i = 0; i < mInteriorRings.size(); ++i )
   {
     wkt.append( "," );
-    wkt.append( mInteriorRings[i]->asText( precision ) );
+    wkt.append( mInteriorRings[i]->asWkt( precision ) );
   }
   wkt.append( ")" );
   return wkt;
 }
 
-unsigned char* QgsCurvePolygonV2::asBinary( int& binarySize ) const
+unsigned char* QgsCurvePolygonV2::asWkb( int& binarySize ) const
 {
   binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
@@ -179,7 +179,7 @@ void QgsCurvePolygonV2::addRingWkb( unsigned char** wkb, const QgsCurveV2* ring 
   }
 
   int ringWkbSize = 0;
-  unsigned char* ringWkb = ring->asBinary( ringWkbSize );
+  unsigned char* ringWkb = ring->asWkb( ringWkbSize );
   memcpy( *wkb, ringWkb, ringWkbSize );
   *wkb += ringWkbSize;
   delete[] ringWkb;
@@ -200,11 +200,6 @@ int QgsCurvePolygonV2::wkbSize() const
 
   size += ( 1 + 2 * sizeof( int ) );
   return size;
-}
-
-QString QgsCurvePolygonV2::asGML() const
-{
-  return QString();
 }
 
 double QgsCurvePolygonV2::area() const

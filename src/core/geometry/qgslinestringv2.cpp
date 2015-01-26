@@ -71,7 +71,7 @@ void QgsLineStringV2::fromWkt( const QString& wkt )
   //todo...
 }
 
-QString QgsLineStringV2::asText( int precision ) const
+QString QgsLineStringV2::asWkt( int precision ) const
 {
   QString wkt( "LINESTRING(" );
 
@@ -104,7 +104,7 @@ QString QgsLineStringV2::asText( int precision ) const
   return wkt;
 }
 
-unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
+unsigned char* QgsLineStringV2::asWkb( int& binarySize ) const
 {
   bool hasZ = is3D();
   bool hasM = isMeasure();
@@ -132,11 +132,6 @@ unsigned char* QgsLineStringV2::asBinary( int& binarySize ) const
   }
 
   return geomPtr;
-}
-
-QString QgsLineStringV2::asGML() const
-{
-  return QString(); //todo...
 }
 
 double QgsLineStringV2::length() const

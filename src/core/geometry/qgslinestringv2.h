@@ -35,10 +35,9 @@ class QgsLineStringV2: public QgsCurveV2
     virtual void fromWkb( const unsigned char* wkb );
     virtual void fromWkt( const QString& wkt );
 
-    virtual QString asText( int precision = 17 ) const;
-    virtual unsigned char* asBinary( int& binarySize ) const;
+    virtual QString asWkt( int precision = 17 ) const;
+    virtual unsigned char* asWkb( int& binarySize ) const;
     virtual int wkbSize() const;
-    virtual QString asGML() const;
 
     //curve interface
     virtual double length() const;

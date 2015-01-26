@@ -274,7 +274,7 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
             geometry = new QgsCurvePolygonV2();
             geometry->setExteriorRing( dynamic_cast<QgsCurveV2*>( geom->clone() ) );
           }
-          qWarning( geometry->asText().toLocal8Bit().data() );
+          qWarning( geometry->asWkt().toLocal8Bit().data() );
           delete geom;
           g = new QgsGeometry( geometry );
 

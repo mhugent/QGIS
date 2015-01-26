@@ -143,7 +143,7 @@ int QgsCompoundCurveV2::wkbSize() const
   return size;
 }
 
-QString QgsCompoundCurveV2::asText( int precision ) const
+QString QgsCompoundCurveV2::asWkt( int precision ) const
 {
   QString wkt( "COMPOUNDCURVE(" );
   for ( int i = 0; i < mCurves.size(); ++i )
@@ -152,20 +152,20 @@ QString QgsCompoundCurveV2::asText( int precision ) const
     {
       wkt.append( "," );
     }
-    wkt.append( mCurves[i]->asText( precision ) );
+    wkt.append( mCurves[i]->asWkt( precision ) );
   }
   wkt.append( ")" );
   return wkt;
 }
 
-unsigned char* QgsCompoundCurveV2::asBinary( int& binarySize ) const
+unsigned char* QgsCompoundCurveV2::asWkb( int& binarySize ) const
 {
   QList< QPair< unsigned char*, int > > curveWkb;
   int currentCurveWkbSize = 0;
   QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
   for ( ; curveIt != mCurves.constEnd(); ++curveIt )
   {
-    curveWkb.push_back( qMakePair(( *curveIt )->asBinary( currentCurveWkbSize ), currentCurveWkbSize ) );
+    curveWkb.push_back( qMakePair(( *curveIt )->asWkb( currentCurveWkbSize ), currentCurveWkbSize ) );
   }
 
   binarySize = wkbSize();
@@ -185,11 +185,6 @@ unsigned char* QgsCompoundCurveV2::asBinary( int& binarySize ) const
   }
 
   return geomPtr;
-}
-
-QString QgsCompoundCurveV2::asGML() const
-{
-  return ""; //todo...
 }
 
 double QgsCompoundCurveV2::length() const

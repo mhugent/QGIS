@@ -242,6 +242,37 @@ bool QgsGeos::disjoint( const QgsAbstractGeometryV2& geom ) const
   return relation( geom, DISJOINT );
 }
 
+double QgsGeos::area() const
+{
+  double area = -1.0;
+  if ( !mGeos )
+  {
+    return area;
+  }
+
+  try
+  {
+    area = GEOSArea( mGeos, &area );
+  }
+  CATCH_GEOS( -1.0 );
+  return area;
+}
+
+double QgsGeos::length() const
+{
+  double length = -1.0;
+  if ( !mGeos )
+  {
+    return length;
+  }
+  try
+  {
+    length = GEOSLength( mGeos, &length );
+  }
+  CATCH_GEOS( -1.0 )
+  return length;
+}
+
 int QgsGeos::splitGeometry( const QgsLineStringV2& splitLine,
                             QList<QgsAbstractGeometryV2*>&newGeometries,
                             bool topological,
@@ -1085,6 +1116,103 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
 
   GEOSGeom_destroy_r( geosinit.ctxt, geosGeom );
   return result;
+}
+
+QgsAbstractGeometryV2* QgsGeos::buffer( double distance, int segments ) const
+{
+  if ( !mGeos )
+  {
+    return 0;
+  }
+
+  GEOSGeometry* geos = 0;
+  try
+  {
+    geos = GEOSBuffer_r( geosinit.ctxt, mGeos, distance, segments );
+  }
+  CATCH_GEOS( 0 );
+  return fromGeos( geos );
+}
+
+QgsAbstractGeometryV2* QgsGeos::simplify( double tolerance ) const
+{
+  if ( !mGeos )
+  {
+    return 0;
+  }
+  GEOSGeometry* geos = 0;
+  try
+  {
+    geos = GEOSTopologyPreserveSimplify_r( geosinit.ctxt, mGeos, tolerance );
+  }
+  CATCH_GEOS( 0 );
+  return fromGeos( geos );
+}
+
+bool QgsGeos::centroid( QgsPointV2& pt ) const
+{
+  if ( !mGeos )
+  {
+    return false;
+  }
+
+  GEOSGeometry* geos = 0;
+  try
+  {
+    geos = GEOSGetCentroid_r( geosinit.ctxt,  mGeos );
+  }
+  CATCH_GEOS( false );
+
+  if ( !geos )
+  {
+    return false;
+  }
+
+  double x, y;
+  GEOSGeomGetX_r( geosinit.ctxt, geos, &x );
+  GEOSGeomGetY_r( geosinit.ctxt, geos, &y );
+  pt.setX( x ); pt.setY( y );
+  return true;
+}
+
+bool QgsGeos::pointOnSurface( QgsPointV2& pt ) const
+{
+  if ( !mGeos )
+  {
+    return false;
+  }
+
+  GEOSGeometry* geos = 0;
+  try
+  {
+    geos = GEOSPointOnSurface_r( geosinit.ctxt, mGeos );
+  }
+  CATCH_GEOS( false );
+
+  if ( !geos )
+  {
+    return false;
+  }
+
+  double x, y;
+  GEOSGeomGetX_r( geosinit.ctxt, geos, &x );
+  GEOSGeomGetY_r( geosinit.ctxt, geos, &y );
+  return true;
+}
+
+QgsAbstractGeometryV2* QgsGeos::convexHull() const
+{
+  return 0; //soon...
+}
+
+bool QgsGeos::isValid() const
+{
+  return false; //soon...
+}
+
+bool QgsGeos::isEqual( const QgsAbstractGeometryV2& geom ) const
+{
+  return false; //soon...
 }
 
 GEOSCoordSequence* QgsGeos::createCoordinateSequence( const QgsCurveV2* curve )

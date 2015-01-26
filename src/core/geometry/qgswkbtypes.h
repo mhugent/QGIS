@@ -84,11 +84,11 @@ class QgsWKBTypes
 
     enum GeometryType
     {
-      PointType,
-      LineType,
-      PolygonType,
-      UnknownGeometryType,
-      NoGeometryType
+      PointGeometry,
+      LineGeometry,
+      PolygonGeometry,
+      UnknownGeometry,
+      NullGeometry
     };
 
     struct wkbEntry

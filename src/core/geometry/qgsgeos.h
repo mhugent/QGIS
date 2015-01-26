@@ -39,6 +39,11 @@ class QgsGeos: public QgsGeometryEngine
     QgsAbstractGeometryV2* combine( const QgsAbstractGeometryV2& geom ) const ;
     QgsAbstractGeometryV2* combine( const QList< const QgsAbstractGeometryV2* > ) const;
     QgsAbstractGeometryV2* symDifference( const QgsAbstractGeometryV2& geom ) const;
+    QgsAbstractGeometryV2* buffer( double distance, int segments ) const;
+    QgsAbstractGeometryV2* simplify( double tolerance ) const;
+    bool centroid( QgsPointV2& pt ) const;
+    bool pointOnSurface( QgsPointV2& pt ) const;
+    QgsAbstractGeometryV2* convexHull() const;
     double distance( const QgsAbstractGeometryV2& geom ) const;
     bool intersects( const QgsAbstractGeometryV2& geom ) const;
     bool touches( const QgsAbstractGeometryV2& geom ) const;
@@ -47,6 +52,10 @@ class QgsGeos: public QgsGeometryEngine
     bool overlaps( const QgsAbstractGeometryV2& geom ) const;
     bool contains( const QgsAbstractGeometryV2& geom ) const;
     bool disjoint( const QgsAbstractGeometryV2& geom ) const;
+    double area() const;
+    double length() const;
+    bool isValid() const;
+    bool isEqual( const QgsAbstractGeometryV2& geom ) const;
 
     /**Splits this geometry according to a given line.
     @param splitLine the line that splits the geometry

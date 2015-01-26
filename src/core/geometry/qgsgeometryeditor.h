@@ -18,7 +18,9 @@ email                : marco.hugentobler at sourcepole dot com
 
 class QgsAbstractGeometryV2;
 class QgsGeometryEngine;
+class QgsVectorLayer;
 
+#include "qgsfeature.h"
 #include "qgspointv2.h"
 
 /**Modifies geometry*/
@@ -27,9 +29,6 @@ class QgsGeometryEditor
   public:
     QgsGeometryEditor( QgsAbstractGeometryV2* geom );
     ~QgsGeometryEditor();
-
-    QgsPointV2 closestVertex( const QgsPointV2& pt, QgsVertexId& id ) const;
-    void adjacentVertices( const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex ) const;
 
     /**Adds interior ring (taking ownership).
     @return 0 in case of success (ring added), 1 problem with geometry type, 2 ring not closed,
@@ -40,6 +39,12 @@ class QgsGeometryEditor
     @return 0 in case of success, 1 if not a multigeometry, 2 if part is not a valid geometry, 3 if new polygon ring
     not disjoint with existing polygons of the feature*/
     int addPart( QgsAbstractGeometryV2* part );
+
+    bool deleteRing( int ringNum, int partNum = 0 );
+
+    bool deletePart( int partNum );
+
+    int avoidIntersections( QMap<QgsVectorLayer*, QSet<QgsFeatureId> > ignoreFeatures = ( QMap<QgsVectorLayer*, QSet<QgsFeatureId> >() ) );
 
   private:
 

@@ -15,6 +15,86 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include "qgsgeometryutils.h"
 
+QgsPointV2 QgsGeometryUtils::closestVertex( const QgsAbstractGeometryV2& geom, const QgsPointV2& pt, QgsVertexId& id )
+{
+  double minDist = std::numeric_limits<double>::max();
+  double currentDist = 0;
+  QgsPointV2 minDistPoint;
+
+  QgsVertexId vertexId;
+  QgsPointV2 vertex;
+  while ( geom.nextVertex( vertexId, vertex ) )
+  {
+    currentDist = QgsGeometryUtils::sqrDistance2D( pt, vertex );
+    if ( currentDist < minDist )
+    {
+      minDist = currentDist;
+      minDistPoint = vertex;
+      id.part = vertexId.part;
+      id.ring = vertexId.ring;
+      id.vertex = vertexId.vertex;
+    }
+  }
+
+  return minDistPoint;
+}
+
+void QgsGeometryUtils::adjacentVertices( const QgsAbstractGeometryV2& geom, const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex )
+{
+  bool polygonType = ( geom.dimension()  == 2 );
+  QList< QList< QList< QgsPointV2 > > > coords;
+  geom.coordinateSequence( coords );
+
+  //get feature
+  if ( coords.size() <= atVertex.part )
+  {
+    return; //error, no such feature
+  }
+  const QList< QList< QgsPointV2 > >& part = coords.at( atVertex.part );
+
+  //get ring
+  if ( part.size() <= atVertex.ring )
+  {
+    return; //error, no such ring
+  }
+  const QList< QgsPointV2 >& ring = part.at( atVertex.ring );
+  if ( ring.size() <= atVertex.vertex )
+  {
+    return;
+  }
+
+  //vertex in the middle
+  if ( atVertex.vertex > 0 && atVertex.vertex < ring.size() - 1 )
+  {
+    beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
+    afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
+  }
+  else if ( atVertex.vertex == 0 )
+  {
+    afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = atVertex.vertex + 1;
+    if ( polygonType && ring.size() > 3 )
+    {
+      beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = ring.size() - 2;
+    }
+    else
+    {
+      beforeVertex = QgsVertexId(); //before vertex invalid
+    }
+  }
+  else if ( atVertex.vertex == ring.size() - 1 )
+  {
+    beforeVertex.part = atVertex.part; beforeVertex.ring = atVertex.ring; beforeVertex.vertex = atVertex.vertex - 1;
+    if ( polygonType )
+    {
+      afterVertex.part = atVertex.part; afterVertex.ring = atVertex.ring; afterVertex.vertex = 0;
+    }
+    else
+    {
+      afterVertex = QgsVertexId(); //after vertex invalid
+    }
+  }
+}
+
 double QgsGeometryUtils::sqrDistance2D( const QgsPointV2& pt1, const QgsPointV2& pt2 )
 {
   return ( pt1.x() - pt2.x() ) * ( pt1.x() - pt2.x() ) + ( pt1.y() - pt2.y() ) * ( pt1.y() - pt2.y() );

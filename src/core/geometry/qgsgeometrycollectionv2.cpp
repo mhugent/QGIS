@@ -194,14 +194,14 @@ void QgsGeometryCollectionV2::fromWkb( const unsigned char * wkb )
   }
 }
 
-unsigned char* QgsGeometryCollectionV2::asBinary( int& binarySize ) const
+unsigned char* QgsGeometryCollectionV2::asWkb( int& binarySize ) const
 {
   QList< QPair< unsigned char*, int > > geometryWkb;
   int currentGeomWkbSize = 0;
   QVector< QgsAbstractGeometryV2* >::const_iterator geomIt = mGeometries.constBegin();
   for ( ; geomIt != mGeometries.constEnd(); ++geomIt )
   {
-    geometryWkb.push_back( qMakePair(( *geomIt )->asBinary( currentGeomWkbSize ), currentGeomWkbSize ) );
+    geometryWkb.push_back( qMakePair(( *geomIt )->asWkb( currentGeomWkbSize ), currentGeomWkbSize ) );
   }
 
   binarySize = wkbSize();

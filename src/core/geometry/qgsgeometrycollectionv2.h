@@ -46,7 +46,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual void draw( QPainter& p ) const;
 
     void fromWkb( const unsigned char * wkb );
-    unsigned char* asBinary( int& binarySize ) const;
+    unsigned char* asWkb( int& binarySize ) const;
     int wkbSize() const;
 
     virtual QgsRectangle calculateBoundingBox() const;

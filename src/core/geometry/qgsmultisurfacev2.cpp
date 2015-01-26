@@ -32,7 +32,7 @@ void QgsMultiSurfaceV2::fromWkt( const QString& wkt )
 
 }
 
-QString QgsMultiSurfaceV2::asText( int precision ) const
+QString QgsMultiSurfaceV2::asWkt( int precision ) const
 {
   return QString(); //todo...
 }

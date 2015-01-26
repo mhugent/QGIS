@@ -28,7 +28,7 @@ class QgsMultiCurveV2: public QgsGeometryCollectionV2
 
     void fromWkt( const QString& wkt );
 
-    QString asText( int precision = 17 ) const;
+    QString asWkt( int precision = 17 ) const;
     QString asGML() const;
 
     QgsAbstractGeometryV2* clone() const;

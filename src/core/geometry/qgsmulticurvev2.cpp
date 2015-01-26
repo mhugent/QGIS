@@ -31,7 +31,7 @@ void QgsMultiCurveV2::fromWkt( const QString& wkt )
 
 }
 
-QString QgsMultiCurveV2::asText( int precision ) const
+QString QgsMultiCurveV2::asWkt( int precision ) const
 {
   return QString(); //todo...
 }

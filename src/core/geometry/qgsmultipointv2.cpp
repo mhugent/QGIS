@@ -30,7 +30,7 @@ void QgsMultiPointV2::fromWkt( const QString& wkt )
   //todo...
 }
 
-QString QgsMultiPointV2::asText( int precision ) const
+QString QgsMultiPointV2::asWkt( int precision ) const
 {
   return QString();
 }

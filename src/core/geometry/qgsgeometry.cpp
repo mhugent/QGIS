@@ -250,7 +250,7 @@ const unsigned char *QgsGeometry::asWkb() const
 
   if ( !mWkb )
   {
-    mWkb = d->geometry->asBinary( mWkbSize );
+    mWkb = d->geometry->asWkb( mWkbSize );
   }
   return mWkb;
 }
@@ -264,7 +264,7 @@ size_t QgsGeometry::wkbSize() const
 
   if ( !mWkb )
   {
-    mWkb = d->geometry->asBinary( mWkbSize );
+    mWkb = d->geometry->asWkb( mWkbSize );
   }
   return mWkbSize;
 }
@@ -383,8 +383,7 @@ QgsPoint QgsGeometry::closestVertex( const QgsPoint& point, int& atVertex, int& 
   QgsPointV2 pt( point.x(), point.y() );
   QgsVertexId id;
 
-  QgsGeometryEditor geomEdit( d->geometry );
-  QgsPointV2 vp = geomEdit.closestVertex( pt, id );
+  QgsPointV2 vp = QgsGeometryUtils::closestVertex( *( d->geometry ), pt, id );
   if ( !id.isValid() )
   {
     sqrDist = -1;
@@ -410,9 +409,8 @@ void QgsGeometry::adjacentVertices( int atVertex, int& beforeVertex, int& afterV
     return;
   }
 
-  QgsGeometryEditor geomEdit( d->geometry );
   QgsVertexId beforeVertexId, afterVertexId;
-  geomEdit.adjacentVertices( id, beforeVertexId, afterVertexId );
+  QgsGeometryUtils::adjacentVertices( *( d->geometry ), id, beforeVertexId, afterVertexId );
   beforeVertex = vertexNrFromVertexId( beforeVertexId );
   afterVertex = vertexNrFromVertexId( afterVertexId );
 }
@@ -491,10 +489,9 @@ double QgsGeometry::closestVertexWithContext( const QgsPoint& point, int& atVert
     return 0.0;
   }
 
-  QgsGeometryEditor ge( d->geometry );
   QgsVertexId vId;
   QgsPointV2 pt( point.x(), point.y() );
-  QgsPointV2 closestPoint = ge.closestVertex( pt, vId );
+  QgsPointV2 closestPoint = QgsGeometryUtils::closestVertex( *( d->geometry ), pt, vId );
   atVertex = vertexNrFromVertexId( vId );
   return QgsGeometryUtils::sqrDistance2D( closestPoint, pt );
 }
@@ -1513,91 +1510,48 @@ QgsMultiPolygon QgsGeometry::asMultiPolygon() const
 
 double QgsGeometry::area()
 {
-  return 0; //todo...
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return -1.0;
-
-  double area;
-
-  try
+  if ( !d || !d->geometry )
   {
-    if ( GEOSArea( mGeos, &area ) == 0 )
-      return -1.0;
+    return -1.0;
   }
-  CATCH_GEOS( -1.0 )
-
-  return area;
-#endif //0
+  QgsGeos g( d->geometry );
+  return g.area();
 }
 
 double QgsGeometry::length()
 {
-  return 0; //todo...
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return -1.0;
-
-  double length;
-
-  try
+  if ( !d || !d->geometry )
   {
-    if ( GEOSLength( mGeos, &length ) == 0 )
-      return -1.0;
+    return -1.0;
   }
-  CATCH_GEOS( -1.0 )
-
-  return length;
-#endif //0
+  QgsGeos g( d->geometry );
+  return g.length();
 }
 double QgsGeometry::distance( QgsGeometry& geom )
 {
-  return 0; //todo...
-
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( geom.mDirtyGeos )
-    geom.exportWkbToGeos();
-
-  if ( !mGeos || !geom.mGeos )
-    return -1.0;
-
-  double dist = -1.0;
-
-  try
+  if ( !d || !d->geometry || !geom.d || !geom.d->geometry )
   {
-    GEOSDistance( mGeos, geom.mGeos, &dist );
+    return -1.0;
   }
-  CATCH_GEOS( -1.0 )
 
-  return dist;
-#endif //0
+  QgsGeos g( d->geometry );
+  return g.distance( *( geom.d->geometry ) );
 }
 
 QgsGeometry* QgsGeometry::buffer( double distance, int segments )
 {
-  return 0; //todo...
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry )
   {
-    return fromGeosGeom( GEOSBuffer( mGeos, distance, segments ) );
+    return 0;
   }
-  CATCH_GEOS( 0 )
-#endif //0
+
+  QgsGeos g( d->geometry );
+  QgsAbstractGeometryV2* geom = g.buffer( distance, segments );
+  if ( !geom )
+  {
+    return 0;
+  }
+  return new QgsGeometry( geom );
 }
 
 QgsGeometry* QgsGeometry::buffer( double distance, int segments, int endCapStyle, int joinStyle, double mitreLimit )
@@ -1642,56 +1596,52 @@ QgsGeometry* QgsGeometry::offsetCurve( double distance, int segments, int joinSt
 
 QgsGeometry* QgsGeometry::simplify( double tolerance )
 {
-  return 0; //todo...
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry )
   {
-    return fromGeosGeom( GEOSTopologyPreserveSimplify( mGeos, tolerance ) );
+    return 0;
   }
-  CATCH_GEOS( 0 )
-#endif //0
+
+  QgsGeos geos( d->geometry );
+  QgsAbstractGeometryV2* simplifiedGeom = geos.simplify( tolerance );
+  if ( !simplifiedGeom )
+  {
+    return 0;
+  }
+  return new QgsGeometry( simplifiedGeom );
 }
 
 QgsGeometry* QgsGeometry::centroid()
 {
-  return 0; //todo...
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry )
   {
-    return fromGeosGeom( GEOSGetCentroid( mGeos ) );
+    return 0;
   }
-  CATCH_GEOS( 0 )
-#endif //0
+
+  QgsGeos geos( d->geometry );
+  QgsPointV2 centroid;
+  bool ok = geos.centroid( centroid );
+  if ( !ok )
+  {
+    return false;
+  }
+  return new QgsGeometry( centroid.clone() );
 }
 
 QgsGeometry* QgsGeometry::pointOnSurface()
 {
-  return 0; //todo...
-#if 0
-  if ( mDirtyGeos )
-    exportWkbToGeos();
-
-  if ( !mGeos )
-    return 0;
-
-  try
+  if ( !d || !d->geometry )
   {
-    return fromGeosGeom( GEOSPointOnSurface( mGeos ) );
+    return 0;
   }
-  CATCH_GEOS( 0 )
-#endif //0
+
+  QgsGeos geos( d->geometry );
+  QgsPointV2 pt;
+  bool ok = geos.pointOnSurface( pt );
+  if ( !ok )
+  {
+    return 0;
+  }
+  return new QgsGeometry( pt.clone() );
 }
 
 QgsGeometry* QgsGeometry::convexHull()
@@ -1847,28 +1797,8 @@ bool QgsGeometry::deleteRing( int ringNum, int partNum )
     return false;
   }
 
-  if ( ringNum < 1 ) //cannot remove exterior ring
-  {
-    return false;
-  }
-
-  QgsAbstractGeometryV2* geom = d->geometry;
-  if ( partNum > 0 )
-  {
-    QgsMultiSurfaceV2* multiSurface = dynamic_cast<QgsMultiSurfaceV2*>( d->geometry );
-    if ( !multiSurface )
-    {
-      return false;
-    }
-    geom = multiSurface->geometryN( partNum );
-  }
-  QgsCurvePolygonV2* cpoly = dynamic_cast<QgsCurvePolygonV2*>( geom );
-  if ( !cpoly )
-  {
-    return false;
-  }
-
-  return cpoly->removeInteriorRing( ringNum - 1 );
+  QgsGeometryEditor ge( d->geometry );
+  return ge.deleteRing( ringNum, partNum );
 }
 
 bool QgsGeometry::deletePart( int partNum )
@@ -1878,21 +1808,21 @@ bool QgsGeometry::deletePart( int partNum )
     return false;
   }
 
-  QgsGeometryCollectionV2* c = dynamic_cast<QgsGeometryCollectionV2*>( d->geometry );
-  if ( !c )
-  {
-    return false;
-  }
-
-  return c->removeGeometry( partNum );
+  QgsGeometryEditor ge( d->geometry );
+  return ge.deletePart( partNum );
 }
 
 int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > > ignoreFeatures )
 {
+#if 0
   if ( !d || !d->geometry )
   {
     return 0;
   }
+
+  QgsGeometryEditor ge( d->geometry );
+  return ge.avoidIntersections( ignoreFeatures );
+#endif //0
 
   QgsGeos geos( d->geometry );
 

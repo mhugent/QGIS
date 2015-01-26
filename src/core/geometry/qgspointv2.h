@@ -52,10 +52,9 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual void fromWkt( const QString& wkt );
 
 
-    virtual QString asText( int precision = 17 ) const;
-    virtual unsigned char* asBinary( int& binarySize ) const;
+    virtual QString asWkt( int precision = 17 ) const;
+    virtual unsigned char* asWkb( int& binarySize ) const;
     virtual int wkbSize() const;
-    virtual QString asGML() const;
 
     virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle( mX, mY, mX, mY );}
 

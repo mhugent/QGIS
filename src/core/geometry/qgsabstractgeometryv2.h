@@ -44,7 +44,7 @@ class QgsAbstractGeometryV2
     QgsAbstractGeometryV2();
     virtual ~QgsAbstractGeometryV2();
     QgsAbstractGeometryV2( const QgsAbstractGeometryV2& geom );
-    QgsAbstractGeometryV2& operator=( const QgsAbstractGeometryV2& geom );
+    virtual QgsAbstractGeometryV2& operator=( const QgsAbstractGeometryV2& geom );
 
     virtual QgsAbstractGeometryV2* clone() const = 0;
 
@@ -67,10 +67,13 @@ class QgsAbstractGeometryV2
     virtual QgsCurveV2* boundary() const = 0;
     virtual QgsRectangle envelope() const = 0;*/
 
-    virtual QString asText( int precision = 17 ) const = 0;
-    virtual unsigned char* asBinary( int& binarySize ) const = 0;
+    //export
+    virtual QString asWkt( int precision = 17 ) const = 0;
+    virtual unsigned char* asWkb( int& binarySize ) const = 0;
     virtual int wkbSize() const = 0;
-    virtual QString asGML() const = 0;
+    /*virtual QString asGML2() const = 0;
+    virtual QString asGML3() const = 0;
+    virtual QString asJSON() const = 0;*/
 
     //virtual import methods
     virtual void fromWkb( const unsigned char * wkb ) = 0;

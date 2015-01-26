@@ -22,6 +22,10 @@ email                : marco.hugentobler at sourcepole dot com
 class QgsGeometryUtils
 {
   public:
+
+    static QgsPointV2 closestVertex( const QgsAbstractGeometryV2& geom, const QgsPointV2& pt, QgsVertexId& id );
+    static void adjacentVertices( const QgsAbstractGeometryV2& geom, const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex );
+
     static double sqrDistance2D( const QgsPointV2& pt1, const QgsPointV2& pt2 );
 
     static double sqrDistToLine( double ptX, double ptY, double x1, double y1, double x2, double y2, double& minDistX, double& minDistY, double epsilon );
