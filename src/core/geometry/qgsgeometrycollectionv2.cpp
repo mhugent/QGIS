@@ -134,21 +134,12 @@ void QgsGeometryCollectionV2::transform( const QgsCoordinateTransform& ct )
   }
 }
 
-void QgsGeometryCollectionV2::mapToPixel( const QgsMapToPixel& mtp )
+void QgsGeometryCollectionV2::transform( const QTransform& t )
 {
   QVector< QgsAbstractGeometryV2* >::iterator it = mGeometries.begin();
   for ( ; it != mGeometries.end(); ++it )
   {
-    ( *it )->mapToPixel( mtp );
-  }
-}
-
-void QgsGeometryCollectionV2::translate( double dx, double dy, double dz, double dm )
-{
-  QVector< QgsAbstractGeometryV2* >::iterator it = mGeometries.begin();
-  for ( ; it != mGeometries.end(); ++it )
-  {
-    ( *it )->translate( dx, dy, dz, dm );
+    ( *it )->transform( t );
   }
 }
 

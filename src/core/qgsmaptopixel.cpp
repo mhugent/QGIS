@@ -170,3 +170,8 @@ void QgsMapToPixel::transformInPlace( QVector<float>& x,
 }
 #endif
 
+QTransform QgsMapToPixel::transform() const
+{
+  return QTransform::fromScale( 1.0 / mMapUnitsPerPixel, -1.0 / mMapUnitsPerPixel )
+         .translate( -xMin, - ( yMin + yMax * mMapUnitsPerPixel ) );
+}

@@ -40,8 +40,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual bool removeGeometry( int nr );
 
     virtual void transform( const QgsCoordinateTransform& ct );
-    virtual void mapToPixel( const QgsMapToPixel& mtp );
-    virtual void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 );
+    void transform( const QTransform& t );
     virtual void clip( const QgsRectangle& rect );
     virtual void draw( QPainter& p ) const;
 

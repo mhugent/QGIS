@@ -334,20 +334,6 @@ void QgsCurvePolygonV2::draw( QPainter& p ) const
   }
 }
 
-void QgsCurvePolygonV2::mapToPixel( const QgsMapToPixel& mtp )
-{
-  if ( mExteriorRing )
-  {
-    mExteriorRing->mapToPixel( mtp );
-  }
-
-  QList<QgsCurveV2*>::iterator it = mInteriorRings.begin();
-  for ( ; it != mInteriorRings.constEnd(); ++it )
-  {
-    ( *it )->mapToPixel( mtp );
-  }
-}
-
 void QgsCurvePolygonV2::transform( const QgsCoordinateTransform& ct )
 {
   if ( mExteriorRing )
@@ -362,16 +348,17 @@ void QgsCurvePolygonV2::transform( const QgsCoordinateTransform& ct )
   }
 }
 
-void QgsCurvePolygonV2::translate( double dx, double dy, double dz, double dm )
+void QgsCurvePolygonV2::transform( const QTransform& t )
 {
   if ( mExteriorRing )
   {
-    mExteriorRing->translate( dx, dy, dz, dm );
+    mExteriorRing->transform( t );
   }
+
   QList<QgsCurveV2*>::iterator it = mInteriorRings.begin();
   for ( ; it != mInteriorRings.end(); ++it )
   {
-    ( *it )->translate( dx, dy, dz, dm );
+    ( *it )->transform( t );
   }
 }
 

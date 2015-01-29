@@ -19,6 +19,7 @@
 
 #include "qgspoint.h"
 #include <vector>
+#include <QTransform>
 
 #include <cassert>
 
@@ -118,6 +119,8 @@ class CORE_EXPORT QgsMapToPixel
     void setParameters( double mapUnitsPerPixel, double xmin, double ymin, double ymax );
     //! String representation of the parameters used in the transform
     QString showParameters();
+
+    QTransform transform() const;
 
   private:
     double mMapUnitsPerPixel;

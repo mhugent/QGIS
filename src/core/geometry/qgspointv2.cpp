@@ -173,25 +173,6 @@ void QgsPointV2::transform( const QgsCoordinateTransform& ct )
   ct.transformInPlace( mX, mY, mZ );
 }
 
-void QgsPointV2::mapToPixel( const QgsMapToPixel& mtp )
-{
-  mtp.transformInPlace( mX, mY );
-}
-
-void QgsPointV2::translate( double dx, double dy, double dz, double dm )
-{
-  mX += dx;
-  mY += dy;
-  if ( is3D() )
-  {
-    mZ += dz;
-  }
-  if ( isMeasure() )
-  {
-    mM += dm;
-  }
-}
-
 void QgsPointV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const
 {
   coord.clear();
@@ -225,4 +206,9 @@ bool QgsPointV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
   {
     return false;
   }
+}
+
+void QgsPointV2::transform( const QTransform& t )
+{
+  //todo...
 }

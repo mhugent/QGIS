@@ -83,7 +83,7 @@ class QgsAbstractGeometryV2
 
     //render pipeline
     virtual void transform( const QgsCoordinateTransform& ct ) = 0;
-    virtual void mapToPixel( const QgsMapToPixel& mtp ) = 0;
+    virtual void transform( const QTransform& t ) = 0;
     virtual void clip( const QgsRectangle& rect ) {}
     virtual void draw( QPainter& p ) const = 0;
 
@@ -100,7 +100,7 @@ class QgsAbstractGeometryV2
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) = 0;
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) = 0;
     virtual bool deleteVertex( const QgsVertexId& position ) = 0;
-    virtual void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 ) = 0;
+
 
   protected:
     QgsWKBTypes::Type mWkbType;

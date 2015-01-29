@@ -542,7 +542,7 @@ int QgsGeometry::translate( double dx, double dy )
     return 1;
   }
 
-  d->geometry->translate( dx, dy, 0, 0 );
+  d->geometry->transform( QTransform::fromTranslate( dx, dy ) );
   return 0;
 }
 
@@ -1533,7 +1533,7 @@ void QgsGeometry::mapToPixel( const QgsMapToPixel& mtp )
   if ( d && d->geometry )
   {
     detach();
-    d->geometry->mapToPixel( mtp );
+    d->geometry->transform( mtp.transform() );
   }
 }
 

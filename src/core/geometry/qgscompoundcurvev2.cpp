@@ -368,21 +368,12 @@ void QgsCompoundCurveV2::transform( const QgsCoordinateTransform& ct )
   }
 }
 
-void QgsCompoundCurveV2::mapToPixel( const QgsMapToPixel& mtp )
+void QgsCompoundCurveV2::transform( const QTransform& t )
 {
   QList< QgsCurveV2* >::iterator it = mCurves.begin();
   for ( ; it != mCurves.end(); ++it )
   {
-    ( *it )->mapToPixel( mtp );
-  }
-}
-
-void QgsCompoundCurveV2::translate( double dx, double dy, double dz, double dm )
-{
-  QList< QgsCurveV2* >::iterator it = mCurves.begin();
-  for ( ; it != mCurves.end(); ++it )
-  {
-    ( *it )->translate( dx, dy, dz, dm );
+    ( *it )->transform( t );
   }
 }
 

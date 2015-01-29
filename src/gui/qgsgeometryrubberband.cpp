@@ -56,7 +56,7 @@ void QgsGeometryRubberBand::paint( QPainter* painter )
 
   QgsAbstractGeometryV2* paintGeom = mGeometry->clone();
 
-  paintGeom->mapToPixel( *( mMapCanvas->getCoordinateTransform() ) );
+  paintGeom->transform( mMapCanvas->getCoordinateTransform()->transform() );
   paintGeom->draw( *painter );
 
   //draw vertices

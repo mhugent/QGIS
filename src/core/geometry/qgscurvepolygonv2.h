@@ -64,9 +64,8 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
     bool removeInteriorRing( int nr );
 
     virtual void draw( QPainter& p ) const;
-    void mapToPixel( const QgsMapToPixel& mtp );
     void transform( const QgsCoordinateTransform& ct );
-    void translate( double dx, double dy, double dz = 0.0, double dm = 0.0 );
+    void transform( const QTransform& t );
 
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );

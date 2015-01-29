@@ -330,34 +330,9 @@ void QgsLineStringV2::transform( const QgsCoordinateTransform& ct )
   ct.transformPolygon( mCoords );
 }
 
-void QgsLineStringV2::mapToPixel( const QgsMapToPixel& mtp )
+void QgsLineStringV2::transform( const QTransform& t )
 {
-  int nVertices = mCoords.size();
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    mtp.transformInPlace( mCoords[i].rx(), mCoords[i].ry() );
-  }
-}
-
-void QgsLineStringV2::translate( double dx, double dy, double dz, double dm )
-{
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-  int nVertices = mCoords.size();
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    QPointF& pt = mCoords[i];
-    pt.rx() += dx;
-    pt.ry() += dy;
-    if ( hasZ )
-    {
-      mZ[i] += dz;
-    }
-    if ( hasM )
-    {
-      mM[i] += dm;
-    }
-  }
+  mCoords = t.map( mCoords );
 }
 
 bool QgsLineStringV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )

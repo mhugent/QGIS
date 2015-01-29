@@ -15,7 +15,9 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include "qgsabstractgeometryv2.h"
 #include "qgsgeos.h"
+#include "qgsmaptopixel.h"
 #include <limits>
+#include <QTransform>
 
 QgsAbstractGeometryV2::QgsAbstractGeometryV2(): mWkbType( QgsWKBTypes::Unknown )
 {
@@ -164,3 +166,8 @@ int QgsAbstractGeometryV2::nCoordinates() const
 
   return nCoords;
 }
+
+/*void QgsAbstractGeometryV2::mapToPixel( const QgsMapToPixel& mtp )
+{
+    transform( mtp.transform() );
+}*/
