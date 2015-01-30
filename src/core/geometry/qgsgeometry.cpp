@@ -1337,9 +1337,8 @@ int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > 
   {
     delete d->geometry;
     d->geometry = diffGeom;
-    return 0;
   }
-  return 3;
+  return 0;
 }
 
 void QgsGeometry::validateGeometry( QList<Error> &errors )
