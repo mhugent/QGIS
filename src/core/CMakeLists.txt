@@ -268,7 +268,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgscurvepolygonv2.cpp
   geometry/qgsgeometry.cpp
   geometry/qgsgeometrycollectionv2.cpp
-  geometry/qgsgeometryeditor.cpp
+  geometry/qgsgeometryeditutils.cpp
   geometry/qgsgeometryimport.cpp
   geometry/qgsgeometryutils.cpp
   geometry/qgsgeos.cpp

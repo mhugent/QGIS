@@ -20,7 +20,7 @@ email                : morb at ozemail dot com dot au
 
 #include "qgis.h"
 #include "qgsgeometry.h"
-#include "qgsgeometryeditor.h"
+#include "qgsgeometryeditutils.h"
 #include "qgsgeometryimport.h"
 #include "qgsgeometryutils.h"
 #include "qgsgeos.h"
@@ -482,9 +482,7 @@ int QgsGeometry::addRing( const QList<QgsPoint>& ring )
   QList< QgsPointV2 > ringPoints;
   convertPointList( ring, ringPoints );
   ringLine->setPoints( ringPoints );
-
-  QgsGeometryEditor geomEditor( d->geometry );
-  return geomEditor.addRing( ringLine );
+  return QgsGeometryEditUtils::addRing( d->geometry, ringLine );
 }
 
 int QgsGeometry::addPart( const QList<QgsPoint> &points, QGis::GeometryType geomType )
@@ -507,8 +505,7 @@ int QgsGeometry::addPart( const QList<QgsPoint> &points, QGis::GeometryType geom
     ringLine->setPoints( partPoints );
     partGeom = ringLine;
   }
-  QgsGeometryEditor geomEditor( d->geometry );
-  return geomEditor.addPart( partGeom );
+  return QgsGeometryEditUtils::addPart( d->geometry, partGeom );
 }
 
 int QgsGeometry::addPart( QgsGeometry *newPart )
@@ -519,8 +516,7 @@ int QgsGeometry::addPart( QgsGeometry *newPart )
   }
 
   QgsAbstractGeometryV2* geom = newPart->d->geometry->clone();
-  QgsGeometryEditor geomEditor( d->geometry );
-  return geomEditor.addPart( geom );
+  return QgsGeometryEditUtils::addPart( d->geometry, geom );
 }
 
 int QgsGeometry::addPart( GEOSGeometry *newPart )
@@ -531,8 +527,7 @@ int QgsGeometry::addPart( GEOSGeometry *newPart )
   }
 
   QgsAbstractGeometryV2* geom = QgsGeos::fromGeos( newPart );
-  QgsGeometryEditor geomEditor( d->geometry );
-  return geomEditor.addPart( geom );
+  return QgsGeometryEditUtils::addPart( d->geometry, geom );
 }
 
 int QgsGeometry::translate( double dx, double dy )
@@ -1317,8 +1312,7 @@ bool QgsGeometry::deleteRing( int ringNum, int partNum )
     return false;
   }
 
-  QgsGeometryEditor ge( d->geometry );
-  return ge.deleteRing( ringNum, partNum );
+  return QgsGeometryEditUtils::deleteRing( d->geometry, ringNum, partNum );
 }
 
 bool QgsGeometry::deletePart( int partNum )
@@ -1328,88 +1322,24 @@ bool QgsGeometry::deletePart( int partNum )
     return false;
   }
 
-  QgsGeometryEditor ge( d->geometry );
-  return ge.deletePart( partNum );
+  return QgsGeometryEditUtils::deletePart( d->geometry, partNum );
 }
 
 int QgsGeometry::avoidIntersections( QMap<QgsVectorLayer*, QSet< QgsFeatureId > > ignoreFeatures )
 {
   if ( !d || !d->geometry )
   {
-    return 0;
-  }
-
-#if 0
-  QgsGeometryEditor ge( d->geometry );
-  return ge.avoidIntersections( ignoreFeatures );
-#endif //0
-
-  QgsGeos geos( d->geometry );
-
-  //check if g has polygon type
-  if ( type() != QGis::Polygon )
     return 1;
-
-  QGis::WkbType geomTypeBeforeModification = wkbType();
-
-  //read avoid intersections list from project properties
-  bool listReadOk;
-  QStringList avoidIntersectionsList = QgsProject::instance()->readListEntry( "Digitizing", "/AvoidIntersectionsList", QStringList(), &listReadOk );
-  if ( !listReadOk )
-    return 0; //no intersections stored in project does not mean error
-
-  QList< const QgsAbstractGeometryV2* > nearGeometries;
-
-  //go through list, convert each layer to vector layer and call QgsVectorLayer::removePolygonIntersections for each
-  QgsVectorLayer* currentLayer = 0;
-  QStringList::const_iterator aIt = avoidIntersectionsList.constBegin();
-  for ( ; aIt != avoidIntersectionsList.constEnd(); ++aIt )
-  {
-    currentLayer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( *aIt ) );
-    if ( currentLayer )
-    {
-      QgsFeatureIds ignoreIds;
-      QMap<QgsVectorLayer*, QSet<qint64> >::const_iterator ignoreIt = ignoreFeatures.find( currentLayer );
-      if ( ignoreIt != ignoreFeatures.constEnd() )
-        ignoreIds = ignoreIt.value();
-
-      QgsFeatureIterator fi = currentLayer->getFeatures( QgsFeatureRequest( boundingBox() )
-                              .setFlags( QgsFeatureRequest::ExactIntersect )
-                              .setSubsetOfAttributes( QgsAttributeList() ) );
-      QgsFeature f;
-      while ( fi.nextFeature( f ) )
-      {
-        if ( ignoreIds.contains( f.id() ) )
-          continue;
-
-        if ( !f.geometry() )
-          continue;
-
-        nearGeometries << f.geometry()->geometry()->clone();
-      }
-    }
   }
 
-  if ( nearGeometries.isEmpty() )
+  QgsAbstractGeometryV2* diffGeom = QgsGeometryEditUtils::avoidIntersections( *( d->geometry ), ignoreFeatures );
+  if ( diffGeom )
+  {
+    delete d->geometry;
+    d->geometry = diffGeom;
     return 0;
-
-  QgsAbstractGeometryV2* combinedGeometries = geos.combine( nearGeometries );
-  qDeleteAll( nearGeometries );
-  if ( !combinedGeometries )
-  {
-    return 3;
   }
-
-  detach( false );
-  delete d->geometry;
-  d->geometry = geos.difference( *combinedGeometries );
-  delete combinedGeometries;
-
-  //make sure the geometry still has the same type (e.g. no change from polygon to multipolygon)
-  if ( wkbType() != geomTypeBeforeModification )
-    return 2;
-
-  return 0;
+  return 3;
 }
 
 void QgsGeometry::validateGeometry( QList<Error> &errors )

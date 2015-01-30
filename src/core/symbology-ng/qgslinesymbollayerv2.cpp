@@ -17,13 +17,13 @@
 #include "qgsdxfexport.h"
 #include "qgssymbollayerv2utils.h"
 #include "qgsexpression.h"
+#include "qgsgeometryeditutils.h"
 #include "qgslinestringv2.h"
 #include "qgsmulticurvev2.h"
 #include "qgsrendercontext.h"
 #include "qgslogger.h"
 #include "qgsvectorlayer.h"
 #include "qgsgeometrysimplifier.h"
-#include "qgsgeometryeditor.h"
 #include "qgsgeometryengine.h"
 
 #include <QPainter>
@@ -331,7 +331,7 @@ void QgsSimpleLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
   else
   {
     double scaledOffset = offset * QgsSymbolLayerV2Utils::lineWidthScaleFactor( context.renderContext(), mOffsetUnit, mOffsetMapUnitScale );
-    QgsGeometryEngine* geos = QgsGeometryEditor::createGeometryEngine( geom->geometry() );
+    QgsGeometryEngine* geos = QgsGeometryEditUtils::createGeometryEngine( geom->geometry() );
     if ( geos )
     {
       QgsAbstractGeometryV2* offsetGeometry = geos->offsetCurve( scaledOffset, 8, 0, 5 );
