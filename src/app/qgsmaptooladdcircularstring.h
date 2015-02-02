@@ -16,14 +16,15 @@
 #ifndef QGSMAPTOOLADDCIRCULARSTRING_H
 #define QGSMAPTOOLADDCIRCULARSTRING_H
 
-#include "qgsmaptooladdfeature.h"
+#include "qgsmaptoolcapture.h"
 
 class QgsGeometryRubberBand;
 
 class QgsMapToolAddCircularString: public QgsMapToolCapture
 {
+    Q_OBJECT
   public:
-    QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas, CaptureMode mode = CaptureLine );
+    QgsMapToolAddCircularString( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode = CaptureLine );
     ~QgsMapToolAddCircularString();
 
     void canvasReleaseEvent( QMouseEvent * e );
@@ -31,10 +32,13 @@ class QgsMapToolAddCircularString: public QgsMapToolCapture
 
     void deactivate();
 
+  private slots:
+    void setParentTool( QgsMapTool* newTool, QgsMapTool* oldTool );
+
   private:
     QgsMapToolAddCircularString( QgsMapCanvas* canvas = 0 ); //forbidden
 
-    QgsMapToolAddFeature* mParentTool;
+    QgsMapToolCapture* mParentTool;
     QList< QgsPointV2 > mPoints;
     QgsGeometryRubberBand* mRubberBand;
 };

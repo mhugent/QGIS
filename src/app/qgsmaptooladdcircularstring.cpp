@@ -21,20 +21,35 @@
 #include "qgspointv2.h"
 #include <QMouseEvent>
 
-QgsMapToolAddCircularString::QgsMapToolAddCircularString( QgsMapToolAddFeature* parentTool, QgsMapCanvas* canvas, CaptureMode mode ): QgsMapToolCapture( canvas, mode ),
+QgsMapToolAddCircularString::QgsMapToolAddCircularString( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode ): QgsMapToolCapture( canvas, mode ),
     mParentTool( parentTool ), mRubberBand( 0 )
 {
-
+  if ( mCanvas )
+  {
+    connect( mCanvas, SIGNAL( mapToolSet( QgsMapTool*, QgsMapTool* ) ), this, SLOT( setParentTool( QgsMapTool*, QgsMapTool* ) ) );
+  }
 }
 
 QgsMapToolAddCircularString::QgsMapToolAddCircularString( QgsMapCanvas* canvas ): QgsMapToolCapture( canvas ), mParentTool( 0 )
 {
-
+  if ( mCanvas )
+  {
+    connect( mCanvas, SIGNAL( mapToolSet( QgsMapTool*, QgsMapTool* ) ), this, SLOT( setParentTool( QgsMapTool*, QgsMapTool* ) ) );
+  }
 }
 
 QgsMapToolAddCircularString::~QgsMapToolAddCircularString()
 {
   delete mRubberBand;
+}
+
+void QgsMapToolAddCircularString::setParentTool( QgsMapTool* newTool, QgsMapTool* oldTool )
+{
+  QgsMapToolCapture* tool = dynamic_cast<QgsMapToolCapture*>( oldTool );
+  if ( tool && newTool == this )
+  {
+    mParentTool = tool;
+  }
 }
 
 void QgsMapToolAddCircularString::canvasMoveEvent( QMouseEvent * e )

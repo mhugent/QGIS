@@ -200,6 +200,7 @@ SET (QGIS_APP_MOC_HDRS
 
   qgsmaptooladdfeature.h
   qgsmaptoolcapture.h
+  qgsmaptooladdcircularstring.h
   qgsmaptooladdpart.h
   qgsmaptooladdring.h
   qgsmaptoolfillring.h
