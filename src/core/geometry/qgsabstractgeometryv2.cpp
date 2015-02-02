@@ -49,7 +49,7 @@ QgsRectangle QgsAbstractGeometryV2::boundingBox() const
 
 bool QgsAbstractGeometryV2::is3D() const
 {
-  return(( mWkbType >= 1001 && mWkbType >= 1012 ) || ( mWkbType > 3000 ) );
+  return(( mWkbType >= 1001 && mWkbType <= 1012 ) || ( mWkbType > 3000 ) );
 }
 
 bool QgsAbstractGeometryV2::isMeasure() const
