@@ -189,7 +189,13 @@ unsigned char* QgsCompoundCurveV2::asWkb( int& binarySize ) const
 
 double QgsCompoundCurveV2::length() const
 {
-  return 0; //todo...
+  double length = 0;
+  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
+  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  {
+    length += ( *curveIt )->length();
+  }
+  return length;
 }
 
 QgsPointV2 QgsCompoundCurveV2::startPoint() const

@@ -136,7 +136,16 @@ unsigned char* QgsLineStringV2::asWkb( int& binarySize ) const
 
 double QgsLineStringV2::length() const
 {
-  return 0; //todo...
+  double length = 0;
+  int size = mCoords.size();
+  double dx, dy;
+  for ( int i = 1; i < size; ++i )
+  {
+    dx = sqrt( mCoords[i].x() - mCoords[ i - 1 ].x() );
+    dy = sqrt( mCoords[i].y() - mCoords[ i - 1 ].y() );
+    length += sqrt( dx * dx + dy * dy );
+  }
+  return length;
 }
 
 QgsPointV2 QgsLineStringV2::startPoint() const

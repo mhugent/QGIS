@@ -264,3 +264,40 @@ bool QgsGeometryUtils::angleOnCircle( double angle, double angle1, double angle2
   bool clockwise = circleClockwise( angle1, angle2, angle3 );
   return circleAngleBetween( angle, angle1, angle3, clockwise );
 }
+
+double QgsGeometryUtils::circleLength( double x1, double y1, double x2, double y2, double x3, double y3 )
+{
+  double centerX, centerY, radius;
+  circleCenterRadius( QgsPointV2( x1, y1 ), QgsPointV2( x2, y2 ), QgsPointV2( x3, y3 ), radius, centerX, centerY );
+  return M_PI / 180.0 * radius * sweepAngle( centerX, centerY, x1, y1, x2, y2, x3, y3 );
+}
+
+double QgsGeometryUtils::sweepAngle( double centerX, double centerY, double x1, double y1, double x2, double y2, double x3, double y3 )
+{
+  double p1Angle = QgsGeometryUtils::ccwAngle( y1 - centerY, x1 - centerX );
+  double p2Angle = QgsGeometryUtils::ccwAngle( y2 - centerY, x2 - centerX );
+  double p3Angle = QgsGeometryUtils::ccwAngle( y3 - centerY, x3 - centerX );
+
+  if ( p3Angle >= p1Angle )
+  {
+    if ( p2Angle > p1Angle && p2Angle < p3Angle )
+    {
+      return( p3Angle - p1Angle );
+    }
+    else
+    {
+      return ( - ( p1Angle + ( 360 - p3Angle ) ) );
+    }
+  }
+  else
+  {
+    if ( p2Angle < p1Angle && p2Angle > p3Angle )
+    {
+      return( -( p1Angle - p3Angle ) );
+    }
+    else
+    {
+      return( p3Angle + ( 360 - p1Angle ) );
+    }
+  }
+}

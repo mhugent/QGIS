@@ -105,17 +105,17 @@ QgsRectangle QgsCircularStringV2::segmentBoundingBox( const QgsPointV2& pt1, con
   double centerX, centerY, radius;
   QgsGeometryUtils::circleCenterRadius( pt1, pt2, pt3, radius, centerX, centerY );
 
-  double p1Angle = QgsGeometryUtils::ccwAngle( pt1.y() - centerY, pt1.x() - centerX ) + 90;
+  double p1Angle = QgsGeometryUtils::ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
   if ( p1Angle > 360 )
   {
     p1Angle -= 360;
   }
-  double p2Angle = QgsGeometryUtils::ccwAngle( pt2.y() - centerY, pt2.x() - centerX ) + 90;
+  double p2Angle = QgsGeometryUtils::ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
   if ( p2Angle > 360 )
   {
     p2Angle -= 360;
   }
-  double p3Angle = QgsGeometryUtils::ccwAngle( pt3.y() - centerY, pt3.x() - centerX ) + 90;
+  double p3Angle = QgsGeometryUtils::ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
   if ( p3Angle > 360 )
   {
     p3Angle -= 360;
@@ -149,31 +149,31 @@ QList<QgsPointV2> QgsCircularStringV2::compassPointsOnSegment( double p1Angle, d
     {
       if ( p1Angle <= 90 && p3Angle >= 90 )
       {
-        pointList.append( ePoint );
+        pointList.append( nPoint );
       }
       if ( p1Angle <= 180 && p3Angle >= 180 )
       {
-        pointList.append( sPoint );
+        pointList.append( wPoint );
       }
       if ( p1Angle <= 270 && p3Angle >= 270 )
       {
-        pointList.append( wPoint );
+        pointList.append( sPoint );
       }
     }
     else
     {
-      pointList.append( nPoint );
+      pointList.append( ePoint );
       if ( p1Angle >= 90 || p3Angle <= 90 )
       {
-        pointList.append( ePoint );
+        pointList.append( nPoint );
       }
       if ( p1Angle >= 180 || p3Angle <= 180 )
       {
-        pointList.append( ePoint );
+        pointList.append( wPoint );
       }
       if ( p1Angle >= 270 || p3Angle <= 270 )
       {
-        pointList.append( ePoint );
+        pointList.append( sPoint );
       }
     }
   }
@@ -183,31 +183,31 @@ QList<QgsPointV2> QgsCircularStringV2::compassPointsOnSegment( double p1Angle, d
     {
       if ( p1Angle >= 270 && p3Angle <= 270 )
       {
-        pointList.append( wPoint );
+        pointList.append( sPoint );
       }
       if ( p1Angle >= 180 && p3Angle <= 180 )
       {
-        pointList.append( sPoint );
+        pointList.append( wPoint );
       }
       if ( p1Angle >= 90 && p3Angle <= 90 )
       {
-        pointList.append( ePoint );
+        pointList.append( nPoint );
       }
     }
     else
     {
-      pointList.append( nPoint );
+      pointList.append( ePoint );
       if ( p1Angle <= 270 || p3Angle >= 270 )
-      {
-        pointList.append( wPoint );
-      }
-      if ( p1Angle <= 180 || p3Angle >= 180 )
       {
         pointList.append( sPoint );
       }
+      if ( p1Angle <= 180 || p3Angle >= 180 )
+      {
+        pointList.append( wPoint );
+      }
       if ( p1Angle <= 90 || p3Angle >= 90 )
       {
-        pointList.append( ePoint );
+        pointList.append( nPoint );
       }
     }
   }
@@ -294,7 +294,13 @@ unsigned char* QgsCircularStringV2::asWkb( int& binarySize ) const
 //curve interface
 double QgsCircularStringV2::length() const
 {
-  return 0; //soon...
+  int nPoints = numPoints();
+  double length = 0;
+  for ( int i = 0; i < ( nPoints - 2 ) ; i += 2 )
+  {
+    length += QgsGeometryUtils::circleLength( mX[i], mY[i], mX[i + 1], mY[i + 1], mX[i + 2], mY[i + 2] );
+  }
+  return length;
 }
 
 QgsPointV2 QgsCircularStringV2::startPoint() const
@@ -621,33 +627,7 @@ void QgsCircularStringV2::arcTo( QPainterPath& path, const QPointF& pt1, const Q
                                         radius, centerX, centerY );
 
   double p1Angle = QgsGeometryUtils::ccwAngle( pt1.y() - centerY, pt1.x() - centerX );
-  double p2Angle = QgsGeometryUtils::ccwAngle( pt2.y() - centerY, pt2.x() - centerX );
-  double p3Angle = QgsGeometryUtils::ccwAngle( pt3.y() - centerY, pt3.x() - centerX );
-
-  //clockwise or counterclockwise?
-  double sweepAngle = 0;
-  if ( p3Angle >= p1Angle )
-  {
-    if ( p2Angle > p1Angle && p2Angle < p3Angle )
-    {
-      sweepAngle = p3Angle - p1Angle;
-    }
-    else
-    {
-      sweepAngle = - ( p1Angle + ( 360 - p3Angle ) );
-    }
-  }
-  else
-  {
-    if ( p2Angle < p1Angle && p2Angle > p3Angle )
-    {
-      sweepAngle = -( p1Angle - p3Angle );
-    }
-    else
-    {
-      sweepAngle = p3Angle + ( 360 - p1Angle );
-    }
-  }
+  double sweepAngle = QgsGeometryUtils::sweepAngle( centerX, centerY, pt1.x(), pt1.y(), pt2.x(), pt2.y(), pt3.x(), pt3.y() );
 
   double diameter = 2 * radius;
   path.arcTo( centerX - radius, centerY - radius, diameter, diameter, p1Angle, sweepAngle );

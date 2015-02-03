@@ -50,6 +50,12 @@ class QgsGeometryUtils
 
     static bool angleOnCircle( double angle, double angle1, double angle2, double angle3 );
 
+    /**Length of a circular string segment defined by pt1, pt2, pt3*/
+    static double circleLength( double x1, double y1, double x2, double y2, double x3, double y3 );
+
+    /**Calculates angle of a circular string part defined by pt1, pt2, pt3*/
+    static double sweepAngle( double centerX, double centerY, double x1, double y1, double x2, double y2, double x3, double y3 );
+
     enum componentType
     {
       VERTEX,

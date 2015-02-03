@@ -24,6 +24,11 @@ class TestQgsCircularStringV2: public QObject
   private slots:
     void testBoundingBox_data();
     void testBoundingBox();
+    void testLength_data();
+    void testLength();
+
+  private:
+    QgsCircularStringV2 circularString( QList<QVariant>& pointList );
 };
 
 void TestQgsCircularStringV2::testBoundingBox_data()
@@ -53,7 +58,34 @@ void TestQgsCircularStringV2::testBoundingBox()
   QFETCH( double, resultXMax );
   QFETCH( double, resultYMax );
 
-  //convert points
+  QgsCircularStringV2 cs = circularString( pointList );
+  QgsRectangle bbox = cs.calculateBoundingBox();
+  QVERIFY( qgsDoubleNear( bbox.xMinimum(), resultXMin ) );
+  QVERIFY( qgsDoubleNear( bbox.yMinimum(), resultYMin ) );
+  QVERIFY( qgsDoubleNear( bbox.xMaximum(), resultXMax ) );
+  QVERIFY( qgsDoubleNear( bbox.yMaximum(), resultYMax ) );
+}
+
+void TestQgsCircularStringV2::testLength_data()
+{
+  QTest::addColumn<QList<QVariant> >( "pointList" );
+  QTest::addColumn<double>( "length" );
+  QList<QVariant> pointList;
+  pointList << QPointF( 1.0, 0.0 ) << QPointF( 0.0, 1.0 ) << QPointF( -1.0, 0.0 );
+  QTest::newRow( "testLength1" ) << pointList << M_PI;
+}
+
+void TestQgsCircularStringV2::testLength()
+{
+  QFETCH( QList<QVariant>, pointList );
+  QFETCH( double, length );
+
+  QgsCircularStringV2 c = circularString( pointList );
+  QVERIFY( qgsDoubleNear( c.length(), length ) );
+}
+
+QgsCircularStringV2 TestQgsCircularStringV2::circularString( QList<QVariant>& pointList )
+{
   QList<QgsPointV2> points;
   QList<QVariant>::const_iterator it = pointList.constBegin();
   for ( ; it != pointList.constEnd(); ++it )
@@ -64,11 +96,7 @@ void TestQgsCircularStringV2::testBoundingBox()
 
   QgsCircularStringV2 cs;
   cs.setPoints( points );
-  QgsRectangle bbox = cs.calculateBoundingBox();
-  QVERIFY( qgsDoubleNear( bbox.xMinimum(), resultXMin ) );
-  QVERIFY( qgsDoubleNear( bbox.yMinimum(), resultYMin ) );
-  QVERIFY( qgsDoubleNear( bbox.xMaximum(), resultXMax ) );
-  QVERIFY( qgsDoubleNear( bbox.yMaximum(), resultYMax ) );
+  return cs;
 }
 
 QTEST_MAIN( TestQgsCircularStringV2 )
