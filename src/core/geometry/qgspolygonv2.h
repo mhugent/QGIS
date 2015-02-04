@@ -23,18 +23,19 @@
 class QgsPolygonV2: public QgsCurvePolygonV2
 {
   public:
-    QgsPolygonV2();
-    ~QgsPolygonV2();
-
-    virtual void fromWkb( const unsigned char* wkb );
-    virtual unsigned char* asBinary( int& binarySize ) const;
-
-    virtual int wkbSize() const;
-
     virtual QString geometryType() const { return "Polygon"; }
+    virtual QgsPolygonV2* clone() const;
 
-  private:
-    static int ringWkbSize( const QgsCurveV2* ring );
-    static void ringWkb( unsigned char** wkb, QgsCurveV2* ring );
+    virtual bool fromWkb( const unsigned char* wkb );
+    // inherited: bool fromWkt( const QString &wkt );
+
+    int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    // inherited: QString asWkt( int precision = 17 ) const;
+    // inherited: QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    // inherited: QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    // inherited: QString asJSON( int precision = 17 ) const;
+
+    QgsPolygonV2* surfaceToPolygon() const;
 };
 #endif // QGSPOLYGONV2_H

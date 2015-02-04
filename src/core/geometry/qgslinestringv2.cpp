@@ -23,6 +23,7 @@
 #include "qgswkbptr.h"
 #include <QPainter>
 #include <limits>
+#include <QDomDocument>
 
 QgsLineStringV2::QgsLineStringV2(): QgsCurveV2()
 {
@@ -31,107 +32,107 @@ QgsLineStringV2::QgsLineStringV2(): QgsCurveV2()
 QgsLineStringV2::~QgsLineStringV2()
 {}
 
-QgsAbstractGeometryV2* QgsLineStringV2::clone() const
+QgsLineStringV2 *QgsLineStringV2::clone() const
 {
   return new QgsLineStringV2( *this );
 }
 
-void QgsLineStringV2::fromWkb( const unsigned char* wkb )
+void QgsLineStringV2::clear()
 {
-  if ( !wkb )
-  {
-    return;
-  }
+  mCoords.clear();
+  mZ.clear();
+  mM.clear();
+  mWkbType = QgsWKBTypes::Unknown;
+}
 
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
+bool QgsLineStringV2::fromWkb( const unsigned char* wkb )
+{
+  clear();
 
-  //type
-  wkbPtr >> mWkbType;
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-  importVerticesFromWkb( wkbPtr );
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::LineString ) )
+    return false;
+
+  setPoints( pointsFromWKB( wkbPtr, is3D(), isMeasure(), endianSwap ) );
+  return true;
+}
+
+bool QgsLineStringV2::fromWkt( const QString& wkt )
+{
+  clear();
+
+  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+    return false;
+  mWkbType = parts.first;
+
+  setPoints( pointsFromWKT( parts.second, is3D(), isMeasure() ) );
+  return true;
 }
 
 int QgsLineStringV2::wkbSize() const
 {
-  int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );
-  if ( is3D() )
-  {
-    binarySize += ( mZ.size() * sizeof( double ) );
-  }
-  if ( isMeasure() )
-  {
-    binarySize += ( mM.size() * sizeof( double ) );
-  }
-  return binarySize;
-}
-
-void QgsLineStringV2::fromWkt( const QString& wkt )
-{
-  //todo...
-}
-
-QString QgsLineStringV2::asWkt( int precision ) const
-{
-  QString wkt( "LINESTRING(" );
-
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-
-  int nPoints = numPoints();
-  for ( int i = 0; i < nPoints; ++i )
-  {
-    if ( i > 0 )
-    {
-      wkt.append( "," );
-    }
-    wkt.append( qgsDoubleToString( mCoords[i].x(), precision ) );
-    wkt.append( " " );
-    wkt.append( qgsDoubleToString( mCoords[i].y(), precision ) );
-    wkt.append( " " );
-    if ( hasZ )
-    {
-      wkt.append( qgsDoubleToString( mZ[i], precision ) );
-      wkt.append( " " );
-    }
-    if ( hasM )
-    {
-      wkt.append( qgsDoubleToString( mM[i], precision ) );
-    }
-  }
-
-  wkt.append( ")" );
-  return wkt;
+  int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
+  size += numPoints() * ( 2 + is3D() + isMeasure() ) * sizeof( double );
+  return size;
 }
 
 unsigned char* QgsLineStringV2::asWkb( int& binarySize ) const
 {
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-
-  int nVertices = mCoords.size();
   binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
-  char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-  wkb << nVertices;
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    wkb << mCoords.at( i ).x();
-    wkb << mCoords.at( i ).y();
-    if ( hasZ )
-    {
-      wkb << mZ.at( i );
-    }
-    if ( hasM )
-    {
-      wkb << mM.at( i );
-    }
-  }
-
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
+  QList<QgsPointV2> pts;
+  points( pts );
+  pointsToWKB( wkb, pts, is3D(), isMeasure() );
   return geomPtr;
+}
+
+QString QgsLineStringV2::asWkt( int precision ) const
+{
+  QString wkt = wktTypeStr() + " ";
+  QList<QgsPointV2> pts;
+  points( pts );
+  wkt += pointsToWKT( pts, precision, is3D(), isMeasure() );
+  return wkt;
+}
+
+QDomElement QgsLineStringV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QList<QgsPointV2> pts;
+  points( pts );
+
+  QDomElement elemLineString = doc.createElementNS( ns, "LineString" );
+  elemLineString.appendChild( pointsToGML2( pts, doc, precision, ns ) );
+
+  return elemLineString;
+}
+
+QDomElement QgsLineStringV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QList<QgsPointV2> pts;
+  points( pts );
+
+  QDomElement elemCurve = doc.createElementNS( ns, "Curve" );
+  QDomElement elemSegments = doc.createElementNS( ns, "segments" );
+  QDomElement elemArcString = doc.createElementNS( ns, "LineString" );
+  elemArcString.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+  elemSegments.appendChild( elemArcString );
+  elemCurve.appendChild( elemSegments );
+
+  return elemCurve;
+}
+
+QString QgsLineStringV2::asJSON( int precision ) const
+{
+  QList<QgsPointV2> pts;
+  points( pts );
+
+  return "{\"type\": \"LineString\", \"coordinates\": " + pointsToJSON( pts, precision ) + "}";
 }
 
 double QgsLineStringV2::length() const
@@ -168,7 +169,7 @@ QgsPointV2 QgsLineStringV2::endPoint() const
 
 QgsLineStringV2* QgsLineStringV2::curveToLine() const
 {
-  return dynamic_cast<QgsLineStringV2*>( clone() );
+  return static_cast<QgsLineStringV2*>( clone() );
 }
 
 int QgsLineStringV2::numPoints() const
@@ -192,7 +193,7 @@ QgsPointV2 QgsLineStringV2::pointN( int i ) const
   }
   else if ( hasZ && hasM )
   {
-    return QgsPointV2( pt.x(), pt.x(), mZ.at( i ), mM.at( i ) );
+    return QgsPointV2( pt.x(), pt.y(), mZ.at( i ), mM.at( i ) );
   }
   else
   {
@@ -276,33 +277,7 @@ void QgsLineStringV2::append( const QgsLineStringV2* line )
 void QgsLineStringV2::fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb )
 {
   mWkbType = type;
-  importVerticesFromWkb( wkb );
-}
-
-void QgsLineStringV2::importVerticesFromWkb( const QgsConstWkbPtr& wkb )
-{
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-
-  int nVertices = 0;
-  wkb >> nVertices;
-  mCoords.resize( nVertices );
-  hasZ ? mZ.resize( nVertices ) : mZ.clear();
-  hasM ? mM.resize( nVertices ) : mM.clear();
-
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    wkb >> mCoords[i].rx();
-    wkb >> mCoords[i].ry();
-    if ( hasZ )
-    {
-      wkb >> mZ[i];
-    }
-    if ( hasM )
-    {
-      wkb >> mM[i];
-    }
-  }
+  setPoints( pointsFromWKB( wkb, is3D(), isMeasure(), false ) );
 }
 
 void QgsLineStringV2::draw( QPainter& p ) const

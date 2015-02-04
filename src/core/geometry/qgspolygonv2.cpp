@@ -20,151 +20,85 @@
 #include "qgslinestringv2.h"
 #include "qgswkbptr.h"
 
-QgsPolygonV2::QgsPolygonV2(): QgsCurvePolygonV2()
+QgsPolygonV2* QgsPolygonV2::clone() const
 {
-
+  return new QgsPolygonV2( *this );
 }
 
-QgsPolygonV2::~QgsPolygonV2()
+bool QgsPolygonV2::fromWkb( const unsigned char* wkb )
 {
+  clear();
 
-}
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::Polygon ) )
+    return false;
 
-void QgsPolygonV2::fromWkb( const unsigned char* wkb )
-{
-  removeRings();
-  if ( !wkb )
-  {
-    return;
-  }
-
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
-
-  //type
-  wkbPtr >> mWkbType;
-  int nRings;
+  quint32 nRings;
   wkbPtr >> nRings;
+  if ( endianSwap )
+    QgsApplication::endian_swap( nRings );
 
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-  double x, y, z, m;
-
-  int nPoints = 0;
-  for ( int i = 0; i < nRings; ++i )
+  if ( nRings <= 0 )
   {
-    QgsLineStringV2* line = new QgsLineStringV2();
-    line->fromWkbPoints( mWkbType, wkbPtr );
-
-    if ( i == 0 )
-    {
-      mExteriorRing = line;
-    }
-    else
-    {
-      mInteriorRings.append( line );
-    }
-  }
-}
-
-unsigned char* QgsPolygonV2::asBinary( int& binarySize ) const
-{
-  binarySize = wkbSize();
-  unsigned char* geomPtr = new unsigned char[wkbSize()];
-  char byteOrder = QgsApplication::endian();
-  QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-
-  int nRings = 0;
-  if ( mExteriorRing )
-  {
-    nRings = mInteriorRings.size() + 1;
-  }
-  else
-  {
-    delete[] geomPtr;
-    return 0;
+    clear();
+    return false;
   }
 
-  wkb << nRings;
-  unsigned char* ringWkbPtr = wkb;
-  ringWkb( &ringWkbPtr, mExteriorRing );
-  QList<QgsCurveV2*>::const_iterator ringIt = mInteriorRings.constBegin();
-  for ( ; ringIt != mInteriorRings.constEnd(); ++ringIt )
+  mInteriorRings.reserve( nRings );
+
+  for ( quint32 i = 0; i < nRings; ++i )
   {
-    ringWkb( &ringWkbPtr, ( *ringIt ) );
+    mInteriorRings.append( new QgsLineStringV2() );
+    static_cast<QgsLineStringV2*>( mInteriorRings.back() )->setPoints( pointsFromWKB( wkbPtr, is3D(), isMeasure(), endianSwap ) );
   }
 
-  return geomPtr;
+  mExteriorRing = mInteriorRings.first();
+  mInteriorRings.removeFirst();
+
+  return true;
 }
 
 int QgsPolygonV2::wkbSize() const
 {
-  int size = 1 + 2 * sizeof( int );
+  int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
   if ( mExteriorRing )
   {
-    size += ringWkbSize( mExteriorRing );
+    // Endianness and WkbType is not stored for LinearRings
+    size += mExteriorRing->wkbSize() - ( sizeof( char ) + sizeof( quint32 ) );
   }
-
-  QList<QgsCurveV2*>::const_iterator ringIt = mInteriorRings.constBegin();
-  for ( ; ringIt != mInteriorRings.constEnd(); ++ringIt )
+  foreach ( const QgsCurveV2* curve, mInteriorRings )
   {
-    size += ringWkbSize( *ringIt );
-  }
-
-  return size;
-}
-
-int QgsPolygonV2::ringWkbSize( const QgsCurveV2* ring )
-{
-  int size = 0;
-  const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( ring );
-  if ( !ring )
-  {
-    return size;
-  }
-
-  size = sizeof( int );
-  size += 2 * sizeof( double ) * line->numPoints();
-  if ( line->is3D() )
-  {
-    size += sizeof( double ) * line->numPoints();
-  }
-  if ( line->isMeasure() )
-  {
-    size += sizeof( double ) * line->numPoints();
+    // Endianness and WkbType is not stored for LinearRings
+    size += curve->wkbSize() - ( sizeof( char ) + sizeof( quint32 ) );
   }
   return size;
 }
 
-void QgsPolygonV2::ringWkb( unsigned char** wkb, QgsCurveV2* ring )
+unsigned char* QgsPolygonV2::asWkb( int& binarySize ) const
 {
-  const QgsLineStringV2* line = dynamic_cast<const QgsLineStringV2*>( ring );
-  if ( !ring )
+  binarySize = wkbSize();
+  unsigned char* geomPtr = new unsigned char[binarySize];
+  QgsWkbPtr wkb( geomPtr );
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
+  wkb << static_cast<quint32>(( mExteriorRing != 0 ) + mInteriorRings.size() );
+  if ( mExteriorRing )
   {
-    return;
+    QList<QgsPointV2> pts;
+    mExteriorRing->points( pts );
+    pointsToWKB( wkb, pts, mExteriorRing->is3D(), mExteriorRing->isMeasure() );
   }
-
-  bool hasZ = line->is3D();
-  bool hasM = line->isMeasure();
-
-  int nPoints = line->numPoints();
-
-  QgsWkbPtr wkbPtr( *wkb );
-  wkbPtr << nPoints;
-  for ( int i = 0; i < nPoints; ++i )
+  foreach ( const QgsCurveV2* curve, mInteriorRings )
   {
-    QgsPointV2 pt = line->pointN( i );
-    wkbPtr << pt.x();
-    wkbPtr << pt.y();
-    if ( hasZ )
-    {
-      wkbPtr << pt.z();
-    }
-    if ( hasM )
-    {
-      wkbPtr << pt.m();
-    }
+    QList<QgsPointV2> pts;
+    curve->points( pts );
+    pointsToWKB( wkb, pts, curve->is3D(), curve->isMeasure() );
   }
-  *wkb = wkbPtr;
+  return geomPtr;
+}
+
+QgsPolygonV2* QgsPolygonV2::surfaceToPolygon() const
+{
+  return clone();
 }

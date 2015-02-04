@@ -21,17 +21,19 @@ email                : marco.hugentobler at sourcepole dot com
 class QgsMultiCurveV2: public QgsGeometryCollectionV2
 {
   public:
-    QgsMultiCurveV2();
-    ~QgsMultiCurveV2();
-
     virtual QString geometryType() const { return "MultiCurve"; }
+    QgsMultiCurveV2* clone() const;
 
-    void fromWkt( const QString& wkt );
+    bool fromWkb( const unsigned char * wkb );
+    bool fromWkt( const QString& wkt );
 
-    QString asWkt( int precision = 17 ) const;
-    QString asGML() const;
+    // inherited: int wkbSize() const;
+    // inherited: unsigned char* asWkb( int& binarySize ) const;
+    // inherited: QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
-    QgsAbstractGeometryV2* clone() const;
 
     /**Adds a geometry and takes ownership. Returns true in case of success*/
     virtual bool addGeometry( QgsAbstractGeometryV2* g );

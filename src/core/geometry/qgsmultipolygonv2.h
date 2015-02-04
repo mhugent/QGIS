@@ -1,5 +1,5 @@
 /***************************************************************************
-                        qgsmultisurfacev2.h
+                        qgsmultipolygonv2.h
   -------------------------------------------------------------------
 Date                 : 28 Oct 2014
 Copyright            : (C) 2014 by Marco Hugentobler
@@ -13,16 +13,16 @@ email                : marco.hugentobler at sourcepole dot com
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSMULTISURFACEV2_H
-#define QGSMULTISURFACEV2_H
+#ifndef QGSMULTIPOLYGONV2_H
+#define QGSMULTIPOLYGONV2_H
 
 #include "qgsgeometrycollectionv2.h"
 
-class QgsMultiSurfaceV2: public QgsGeometryCollectionV2
+class QgsMultiPolygonV2: public QgsGeometryCollectionV2
 {
   public:
-    virtual QString geometryType() const { return "MultiSurface"; }
-    QgsMultiSurfaceV2* clone() const;
+    virtual QString geometryType() const { return "MultiPolygon"; }
+    QgsMultiPolygonV2* clone() const;
 
     bool fromWkb( const unsigned char * wkb );
     bool fromWkt( const QString& wkt );
@@ -39,4 +39,4 @@ class QgsMultiSurfaceV2: public QgsGeometryCollectionV2
     virtual bool addGeometry( QgsAbstractGeometryV2* g );
 };
 
-#endif // QGSMULTISURFACEV2_H
+#endif // QGSMULTIPOLYGONV2_H

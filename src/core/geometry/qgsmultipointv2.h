@@ -21,16 +21,19 @@ email                : marco.hugentobler at sourcepole dot com
 class QgsMultiPointV2: public QgsGeometryCollectionV2
 {
   public:
-    QgsMultiPointV2();
-    ~QgsMultiPointV2();
-
     virtual QString geometryType() const { return "MultiPoint"; }
-    void fromWkt( const QString& wkt );
+    QgsMultiPointV2* clone() const;
 
-    QString asWkt( int precision = 17 ) const;
-    QString asGML() const;
+    bool fromWkb( const unsigned char * wkb );
+    bool fromWkt( const QString& wkt );
 
-    QgsAbstractGeometryV2* clone() const;
+    // inherited: int wkbSize() const;
+    // inherited: unsigned char* asWkb( int& binarySize ) const;
+    // inherited: QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
+
 
     /**Adds a geometry and takes ownership. Returns true in case of success*/
     virtual bool addGeometry( QgsAbstractGeometryV2* g );

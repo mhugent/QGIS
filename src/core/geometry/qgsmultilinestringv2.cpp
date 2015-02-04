@@ -1,5 +1,5 @@
 /***************************************************************************
-                        qgsmulticurvev2.cpp
+                        qgsmultilinestringv2.cpp
   -------------------------------------------------------------------
 Date                 : 28 Oct 2014
 Copyright            : (C) 2014 by Marco Hugentobler
@@ -13,40 +13,36 @@ email                : marco.hugentobler at sourcepole dot com
  *                                                                         *
  ***************************************************************************/
 
-#include "qgsmulticurvev2.h"
+#include "qgsmultilinestringv2.h"
 #include "qgsapplication.h"
 #include "qgscurvev2.h"
 #include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
 #include "qgslinestringv2.h"
 
-QgsMultiCurveV2 *QgsMultiCurveV2::clone() const
+QgsMultiLineStringV2* QgsMultiLineStringV2::clone() const
 {
-  return new QgsMultiCurveV2( *this );
+  return new QgsMultiLineStringV2( *this );
 }
 
-bool QgsMultiCurveV2::fromWkb( const unsigned char * wkb )
+bool QgsMultiLineStringV2::fromWkb( const unsigned char * wkb )
 {
-  return fromCollectionWkb( wkb,
-                            QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2 << new QgsCircularStringV2 << new QgsCompoundCurveV2 );
+  return fromCollectionWkb( wkb, QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2 );
 }
 
-bool QgsMultiCurveV2::fromWkt( const QString& wkt )
+bool QgsMultiLineStringV2::fromWkt( const QString& wkt )
 {
-  return fromCollectionWkt( wkt,
-                            QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2 << new QgsCircularStringV2 << new QgsCompoundCurveV2,
-                            "LineString" );
+  return fromCollectionWkt( wkt, QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2, "LineString" );
 }
 
-QDomElement QgsMultiCurveV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+QDomElement QgsMultiLineStringV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
 {
-  // GML2 does not support curves
   QDomElement elemMultiLineString = doc.createElementNS( ns, "MultiLineString" );
   foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
-    if ( dynamic_cast<const QgsCurveV2*>( geom ) )
+    if ( dynamic_cast<const QgsLineStringV2*>( geom ) )
     {
-      QgsLineStringV2* lineString = static_cast<const QgsCurveV2*>( geom )->curveToLine();
+      const QgsLineStringV2* lineString = static_cast<const QgsLineStringV2*>( geom );
 
       QDomElement elemLineStringMember = doc.createElementNS( ns, "lineStringMember" );
       elemLineStringMember.appendChild( lineString->asGML2( doc, precision, ns ) );
@@ -59,17 +55,17 @@ QDomElement QgsMultiCurveV2::asGML2( QDomDocument& doc, int precision, const QSt
   return elemMultiLineString;
 }
 
-QDomElement QgsMultiCurveV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+QDomElement QgsMultiLineStringV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
 {
-  QDomElement elemMultiCurve = doc.createElementNS( ns, "MultiCurve" );
+  QDomElement elemMultiCurve = doc.createElementNS( ns, "MultiLineString" );
   foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
-    if ( dynamic_cast<const QgsCurveV2*>( geom ) )
+    if ( dynamic_cast<const QgsLineStringV2*>( geom ) )
     {
-      const QgsCurveV2* curve = static_cast<const QgsCurveV2*>( geom );
+      const QgsLineStringV2* lineString = static_cast<const QgsLineStringV2*>( geom );
 
       QDomElement elemCurveMember = doc.createElementNS( ns, "curveMember" );
-      elemCurveMember.appendChild( curve->asGML3( doc, precision, ns ) );
+      elemCurveMember.appendChild( lineString->asGML3( doc, precision, ns ) );
       elemMultiCurve.appendChild( elemCurveMember );
     }
   }
@@ -77,19 +73,17 @@ QDomElement QgsMultiCurveV2::asGML3( QDomDocument& doc, int precision, const QSt
   return elemMultiCurve;
 }
 
-QString QgsMultiCurveV2::asJSON( int precision ) const
+QString QgsMultiLineStringV2::asJSON( int precision ) const
 {
-  // GeoJSON does not support curves
   QString json = "{\"type\": \"MultiLineString\", \"coordinates\": [";
   foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
     if ( dynamic_cast<const QgsCurveV2*>( geom ) )
     {
-      QgsLineStringV2* lineString = static_cast<const QgsCurveV2*>( geom )->curveToLine();
+      const QgsLineStringV2* lineString = static_cast<const QgsLineStringV2*>( geom );
       QList<QgsPointV2> pts;
       lineString->points( pts );
       json += pointsToJSON( pts, precision ) + ", ";
-      delete lineString;
     }
   }
   if ( json.endsWith( ", " ) )
@@ -100,14 +94,14 @@ QString QgsMultiCurveV2::asJSON( int precision ) const
   return json;
 }
 
-bool QgsMultiCurveV2::addGeometry( QgsAbstractGeometryV2* g )
+bool QgsMultiLineStringV2::addGeometry( QgsAbstractGeometryV2* g )
 {
-  if ( !dynamic_cast<QgsCurveV2*>( g ) )
+  if ( !dynamic_cast<QgsLineStringV2*>( g ) )
   {
     delete g;
     return false;
   }
 
-  setZMTypeFromSubGeometry( g, QgsWKBTypes::MultiCurve );
+  setZMTypeFromSubGeometry( g, QgsWKBTypes::MultiLineString );
   return QgsGeometryCollectionV2::addGeometry( g );
 }

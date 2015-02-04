@@ -38,7 +38,7 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb 
   memcpy( &type, wkb + 1, sizeof( int ) );
   QgsAbstractGeometryV2* geom = 0;
 
-  type = QgsWKBTypes::instance()->flatType( QgsWKBTypes::Type( type ) );
+  type = QgsWKBTypes::flatType( QgsWKBTypes::Type( type ) );
   switch ( type )
   {
     case QgsWKBTypes::Point:

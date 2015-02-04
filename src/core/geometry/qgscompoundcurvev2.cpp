@@ -32,15 +32,14 @@ QgsCompoundCurveV2::QgsCompoundCurveV2(): QgsCurveV2()
 
 QgsCompoundCurveV2::~QgsCompoundCurveV2()
 {
-  removeCurves();
+  clear();
 }
 
 QgsCompoundCurveV2::QgsCompoundCurveV2( const QgsCompoundCurveV2& curve ): QgsCurveV2( curve )
 {
-  int nC = curve.nCurves();
-  for ( int i = 0; i < nC; ++i )
+  foreach ( const QgsCurveV2* c, curve.mCurves )
   {
-    mCurves.append( dynamic_cast<QgsCurveV2*>( curve.curveAt( i )->clone() ) );
+    mCurves.append( static_cast<QgsCurveV2*>( c->clone() ) );
   }
 }
 
@@ -49,70 +48,24 @@ QgsCompoundCurveV2& QgsCompoundCurveV2::operator=( const QgsCompoundCurveV2 & cu
   if ( &curve != this )
   {
     QgsCurveV2::operator=( curve );
-    removeCurves();
-    int nC = curve.nCurves();
-    for ( int i = 0; i < nC; ++i )
+    foreach ( const QgsCurveV2* c, curve.mCurves )
     {
-      mCurves.append( dynamic_cast<QgsCurveV2*>( curve.curveAt( i )->clone() ) );
+      mCurves.append( static_cast<QgsCurveV2*>( c->clone() ) );
     }
   }
   return *this;
 }
 
-QgsAbstractGeometryV2* QgsCompoundCurveV2::clone() const
+QgsCompoundCurveV2 *QgsCompoundCurveV2::clone() const
 {
   return new QgsCompoundCurveV2( *this );
 }
 
-void QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
+void QgsCompoundCurveV2::clear()
 {
-  removeCurves();
-  if ( !wkb )
-  {
-    return;
-  }
-
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
-
-  //type
-  wkbPtr >> mWkbType;
-  int nCurves;
-  wkbPtr >> nCurves;
-
-  QgsCurveV2* currentCurve = 0;
-  int currentCurveSize = 0;
-
-  for ( int i = 0; i < nCurves; ++i )
-  {
-    wkbPtr += 1; //skip endian
-    QgsWKBTypes::Type curveType;
-    wkbPtr >> curveType;
-    wkbPtr -= ( 1  + sizeof( int ) );
-
-    if ( curveType == QgsWKBTypes::LineString || curveType == QgsWKBTypes::LineStringZ || curveType == QgsWKBTypes::LineStringM ||
-         curveType == QgsWKBTypes::LineStringZM || curveType == QgsWKBTypes::LineString25D )
-    {
-      currentCurve = new QgsLineStringV2();
-    }
-    else if ( curveType == QgsWKBTypes::CircularString || curveType == QgsWKBTypes::CircularStringZ || curveType == QgsWKBTypes::CircularStringZM ||
-              curveType == QgsWKBTypes::CircularStringM )
-    {
-      currentCurve = new QgsCircularStringV2();
-    }
-    else
-    {
-      return;
-    }
-
-    currentCurve->fromWkb( wkbPtr );
-    currentCurveSize = currentCurve->wkbSize();
-    mCurves.append( currentCurve );
-    wkbPtr += currentCurveSize;
-  }
-}
-
-void QgsCompoundCurveV2::fromWkt( const QString& wkt )
-{
+  qDeleteAll( mCurves );
+  mCurves.clear();
+  mWkbType = QgsWKBTypes::Unknown;
 }
 
 QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
@@ -131,60 +84,174 @@ QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
   return bbox;
 }
 
-int QgsCompoundCurveV2::wkbSize() const
+bool QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
 {
-  int size = 0;
-  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
-  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  clear();
+
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::CompoundCurve ) )
+    return false;
+
+  quint32 nCurves;
+  wkbPtr >> nCurves;
+  if ( endianSwap )
+    QgsApplication::endian_swap( nCurves );
+  mCurves.reserve( nCurves );
+
+  for ( quint32 i = 0; i < nCurves; ++i )
   {
-    size += ( *curveIt )->wkbSize();
+    QgsWKBTypes::Type curveType = static_cast<QgsWKBTypes::Type>( *reinterpret_cast<const quint32*>( static_cast<const unsigned char*>( wkbPtr ) + sizeof( char ) ) );
+    if ( QgsWKBTypes::flatType( curveType ) == QgsWKBTypes::LineString )
+      mCurves.append( new QgsLineStringV2() );
+    else if ( QgsWKBTypes::flatType( curveType ) == QgsWKBTypes::CircularString )
+      mCurves.append( new QgsCircularStringV2() );
+    else
+    {
+      clear();
+      return false;
+    }
+    if ( !mCurves.back()->fromWkb( wkbPtr ) )
+    {
+      clear();
+      return false;
+    }
+    wkbPtr += mCurves.back()->wkbSize();
   }
-  size += ( 1 + 2 * sizeof( int ) );
-  return size;
+  return true;
 }
 
-QString QgsCompoundCurveV2::asWkt( int precision ) const
+bool QgsCompoundCurveV2::fromWkt( const QString& wkt )
 {
-  QString wkt( "COMPOUNDCURVE(" );
-  for ( int i = 0; i < mCurves.size(); ++i )
+  clear();
+
+  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+    return false;
+  mWkbType = parts.first;
+
+  QString defaultChildWkbType = QString( "LineString%1%2" ).arg( is3D() ? "Z" : "" ).arg( isMeasure() ? "M" : "" );
+
+  foreach ( const QString& childWkt, wktGetChildBlocks( parts.second, defaultChildWkbType ) )
   {
-    if ( i > 0 )
+    QPair<QgsWKBTypes::Type, QString> childParts = wktReadBlock( childWkt );
+
+    if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::LineString )
+      mCurves.append( new QgsLineStringV2() );
+    else if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::CircularString )
+      mCurves.append( new QgsCircularStringV2() );
+    else
     {
-      wkt.append( "," );
+      clear();
+      return false;
     }
-    wkt.append( mCurves[i]->asWkt( precision ) );
+    if ( !mCurves.back()->fromWkt( childWkt ) )
+    {
+      clear();
+      return false;
+    }
   }
-  wkt.append( ")" );
-  return wkt;
+  return true;
+}
+
+int QgsCompoundCurveV2::wkbSize() const
+{
+  int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
+  foreach ( const QgsCurveV2 *curve, mCurves )
+  {
+    size += curve->wkbSize();
+  }
+  return size;
 }
 
 unsigned char* QgsCompoundCurveV2::asWkb( int& binarySize ) const
 {
-  QList< QPair< unsigned char*, int > > curveWkb;
-  int currentCurveWkbSize = 0;
-  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
-  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
-  {
-    curveWkb.push_back( qMakePair(( *curveIt )->asWkb( currentCurveWkbSize ), currentCurveWkbSize ) );
-  }
-
   binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
-  char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-  wkb << mCurves.size();
-
-  QList< QPair< unsigned char*, int > >::const_iterator wkbIt = curveWkb.constBegin();
-  for ( ; wkbIt != curveWkb.constEnd(); ++wkbIt )
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
+  wkb << static_cast<quint32>( mCurves.size() );
+  foreach ( const QgsCurveV2* curve, mCurves )
   {
-    memcpy( wkb, wkbIt->first, wkbIt->second );
-    wkb += wkbIt->second;
-    delete wkbIt->first;
+    int curveWkbLen = 0;
+    unsigned char* curveWkb = curve->asWkb( curveWkbLen );
+    memcpy( wkb, curveWkb, curveWkbLen );
+    wkb += curveWkbLen;
+    delete[] curveWkb;
   }
-
   return geomPtr;
+}
+
+QString QgsCompoundCurveV2::asWkt( int precision ) const
+{
+  QString wkt = wktTypeStr() + " (";
+  foreach ( const QgsCurveV2* curve, mCurves )
+  {
+    QString childWkt = curve->asWkt( precision );
+    if ( dynamic_cast<const QgsLineStringV2*>( curve ) )
+    {
+      // Type names of linear geometries are omitted
+      childWkt = childWkt.mid( childWkt.indexOf( "(" ) );
+    }
+    wkt += childWkt + ",";
+  }
+  if ( wkt.endsWith( "," ) )
+  {
+    wkt.chop( 1 );
+  }
+  wkt += ")";
+  return wkt;
+}
+
+QDomElement QgsCompoundCurveV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  // GML2 does not support curves
+  QgsLineStringV2* line = curveToLine();
+  QDomElement gml = line->asGML2( doc, precision, ns );
+  delete line;
+  return gml;
+}
+
+QDomElement QgsCompoundCurveV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemCurve = doc.createElementNS( ns, "Curve" );
+
+  QDomElement elemSegments = doc.createElementNS( ns, "segments" );
+
+  foreach ( const QgsCurveV2* curve, mCurves )
+  {
+    if ( dynamic_cast<const QgsLineStringV2*>( curve ) )
+    {
+      QList<QgsPointV2> pts;
+      curve->points( pts );
+
+      QDomElement elemLineStringSegment = doc.createElementNS( ns, "LineStringSegment" );
+      elemLineStringSegment.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+      elemSegments.appendChild( elemLineStringSegment );
+    }
+    else if ( dynamic_cast<const QgsCircularStringV2*>( curve ) )
+    {
+      QList<QgsPointV2> pts;
+      curve->points( pts );
+
+      QDomElement elemArcString = doc.createElementNS( ns, "ArcString" );
+      elemArcString.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+      elemSegments.appendChild( elemArcString );
+    }
+  }
+  elemCurve.appendChild( elemSegments );
+  return elemCurve;
+}
+
+QString QgsCompoundCurveV2::asJSON( int precision ) const
+{
+  // GeoJSON does not support curves
+  QgsLineStringV2* line = curveToLine();
+  QString json = line->asJSON( precision );
+  delete line;
+  return json;
 }
 
 double QgsCompoundCurveV2::length() const
@@ -348,12 +415,6 @@ void QgsCompoundCurveV2::close()
     return;
   }
   addVertex( startPoint() );
-}
-
-void QgsCompoundCurveV2::removeCurves()
-{
-  qDeleteAll( mCurves );
-  mCurves.clear();
 }
 
 void QgsCompoundCurveV2::draw( QPainter& p ) const

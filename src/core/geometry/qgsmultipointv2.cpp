@@ -14,50 +14,79 @@ email                : marco.hugentobler at sourcepole dot com
  ***************************************************************************/
 
 #include "qgsmultipointv2.h"
+#include "qgsapplication.h"
+#include "qgspointv2.h"
+#include "qgswkbptr.h"
 
-QgsMultiPointV2::QgsMultiPointV2(): QgsGeometryCollectionV2()
+QgsMultiPointV2 *QgsMultiPointV2::clone() const
 {
-
+  return new QgsMultiPointV2( *this );
 }
 
-QgsMultiPointV2::~QgsMultiPointV2()
+bool QgsMultiPointV2::fromWkb( const unsigned char * wkb )
 {
-
+  return fromCollectionWkb( wkb, QList<QgsAbstractGeometryV2*>() << new QgsPointV2 );
 }
 
-void QgsMultiPointV2::fromWkt( const QString& wkt )
+bool QgsMultiPointV2::fromWkt( const QString& wkt )
 {
-  //todo...
+  return fromCollectionWkt( wkt, QList<QgsAbstractGeometryV2*>() << new QgsPointV2, "Point" );
 }
 
-QString QgsMultiPointV2::asWkt( int precision ) const
+QDomElement QgsMultiPointV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
 {
-  return QString();
-}
-
-QString QgsMultiPointV2::asGML() const
-{
-  return QString();
-}
-
-QgsAbstractGeometryV2* QgsMultiPointV2::clone() const
-{
-  int nGeometries = mGeometries.size();
-  QgsMultiPointV2* geom = new QgsMultiPointV2();
-  geom->mGeometries.resize( nGeometries );
-
-  for ( int i = 0; i < nGeometries; ++i )
+  QDomElement elemMultiPoint = doc.createElementNS( ns, "MultiPoint" );
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
-    geom->mGeometries[i] = mGeometries[i]->clone();
+    if ( dynamic_cast<const QgsPointV2*>( geom ) )
+    {
+      QDomElement elemPointMember = doc.createElementNS( ns, "pointMember" );
+      elemPointMember.appendChild( geom->asGML2( doc, precision, ns ) );
+      elemMultiPoint.appendChild( elemPointMember );
+    }
   }
 
-  geom->mWkbType = mWkbType;
-  return geom;
+  return elemMultiPoint;
+}
+
+QDomElement QgsMultiPointV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemMultiPoint = doc.createElementNS( ns, "MultiPoint" );
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
+  {
+    if ( dynamic_cast<const QgsPointV2*>( geom ) )
+    {
+      QDomElement elemPointMember = doc.createElementNS( ns, "pointMember" );
+      elemPointMember.appendChild( geom->asGML3( doc, precision, ns ) );
+      elemMultiPoint.appendChild( elemPointMember );
+    }
+  }
+
+  return elemMultiPoint;
+}
+
+QString QgsMultiPointV2::asJSON( int precision ) const
+{
+  QString json = "{\"type\": \"MultiPoint\", \"coordinates\": [";
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
+  {
+    if ( dynamic_cast<const QgsPointV2*>( geom ) )
+    {
+      const QgsPointV2* point = static_cast<const QgsPointV2*>( geom );
+      json += pointsToJSON( QList<QgsPointV2>() << *point, precision ) + ", ";
+    }
+  }
+  if ( json.endsWith( ", " ) )
+  {
+    json.chop( 2 ); // Remove last ", "
+  }
+  json += "] }";
+  return json;
 }
 
 bool QgsMultiPointV2::addGeometry( QgsAbstractGeometryV2* g )
 {
-  if ( !g || g->geometryType() != "Point" )
+  if ( !dynamic_cast<QgsPointV2*>( g ) )
   {
     delete g;
     return false;

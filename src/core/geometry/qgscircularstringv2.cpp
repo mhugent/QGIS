@@ -36,49 +36,18 @@ QgsCircularStringV2::~QgsCircularStringV2()
 
 }
 
-QgsAbstractGeometryV2* QgsCircularStringV2::clone() const
+QgsCircularStringV2 *QgsCircularStringV2::clone() const
 {
   return new QgsCircularStringV2( *this );
 }
 
-void QgsCircularStringV2::fromWkb( const unsigned char* wkb )
+void QgsCircularStringV2::clear()
 {
-  if ( !wkb )
-  {
-    return;
-  }
-
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
-
-  //type
-  wkbPtr >> mWkbType;
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-
-  int nVertices = 0;
-  wkbPtr >> nVertices;
-  mX.resize( nVertices );
-  mY.resize( nVertices );
-  hasZ ? mZ.resize( nVertices ) : mZ.clear();
-  hasM ? mM.resize( nVertices ) : mM.clear();
-
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    wkbPtr >> mX[i];
-    wkbPtr >> mY[i];
-    if ( hasZ )
-    {
-      wkbPtr >> mZ[i];
-    }
-    if ( hasM )
-    {
-      wkbPtr >> mM[i];
-    }
-  }
-}
-
-void QgsCircularStringV2::fromWkt( const QString& wkt )
-{
+  mX.clear();
+  mY.clear();
+  mZ.clear();
+  mM.clear();
+  mWkbType = QgsWKBTypes::Unknown;
 }
 
 QgsRectangle QgsCircularStringV2::calculateBoundingBox() const
@@ -214,81 +183,92 @@ QList<QgsPointV2> QgsCircularStringV2::compassPointsOnSegment( double p1Angle, d
   return pointList;
 }
 
-int QgsCircularStringV2::wkbSize() const
+bool QgsCircularStringV2::fromWkb( const unsigned char* wkb )
 {
-  int binarySize = 1 + 2 * sizeof( int ) + numPoints() * 2 * sizeof( double );
-  if ( is3D() )
-  {
-    binarySize += ( mZ.size() * sizeof( double ) );
-  }
-  if ( isMeasure() )
-  {
-    binarySize += ( mM.size() * sizeof( double ) );
-  }
-  return binarySize;
+  clear();
+
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::CircularString ) )
+    return false;
+
+  setPoints( pointsFromWKB( wkbPtr, is3D(), isMeasure(), endianSwap ) );
+  return true;
 }
 
-QString QgsCircularStringV2::asWkt( int precision ) const
+bool QgsCircularStringV2::fromWkt( const QString& wkt )
 {
-  QString wkt( "CIRCULARSTRING(" );
+  clear();
 
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
+  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
 
-  int nPoints = numPoints();
-  for ( int i = 0; i < nPoints; ++i )
-  {
-    if ( i > 0 )
-    {
-      wkt.append( "," );
-    }
-    wkt.append( qgsDoubleToString( mX[i], precision ) );
-    wkt.append( " " );
-    wkt.append( qgsDoubleToString( mY[i], precision ) );
-    wkt.append( " " );
-    if ( hasZ )
-    {
-      wkt.append( qgsDoubleToString( mZ[i], precision ) );
-      wkt.append( " " );
-    }
-    if ( hasM )
-    {
-      wkt.append( qgsDoubleToString( mM[i], precision ) );
-    }
-  }
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+    return false;
+  mWkbType = parts.first;
 
-  wkt.append( ")" );
-  return wkt;
+  setPoints( pointsFromWKT( parts.second, is3D(), isMeasure() ) );
+  return true;
+}
+
+int QgsCircularStringV2::wkbSize() const
+{
+  int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
+  size += numPoints() * ( 2 + is3D() + isMeasure() ) * sizeof( double );
+  return size;
 }
 
 unsigned char* QgsCircularStringV2::asWkb( int& binarySize ) const
 {
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-
-  int nVertices = qMin( mX.size(), mY.size() );
   binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
-  char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-  wkb << nVertices;
-  for ( int i = 0; i < nVertices; ++i )
-  {
-    wkb << mX.at( i );
-    wkb << mY.at( i );
-    if ( hasZ )
-    {
-      wkb << mZ.at( i );
-    }
-    if ( hasM )
-    {
-      wkb << mM.at( i );
-    }
-  }
-
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
+  QList<QgsPointV2> pts;
+  points( pts );
+  pointsToWKB( wkb, pts, is3D(), isMeasure() );
   return geomPtr;
+}
+
+QString QgsCircularStringV2::asWkt( int precision ) const
+{
+  QString wkt = wktTypeStr() + " ";
+  QList<QgsPointV2> pts;
+  points( pts );
+  wkt += pointsToWKT( pts, precision, is3D(), isMeasure() );
+  return wkt;
+}
+
+QDomElement QgsCircularStringV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  // GML2 does not support curves
+  QgsLineStringV2* line = curveToLine();
+  QDomElement gml = line->asGML2( doc, precision, ns );
+  delete line;
+  return gml;
+}
+
+QDomElement QgsCircularStringV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QList<QgsPointV2> pts;
+  points( pts );
+
+  QDomElement elemCurve = doc.createElementNS( ns, "Curve" );
+  QDomElement elemSegments = doc.createElementNS( ns, "segments" );
+  QDomElement elemArcString = doc.createElementNS( ns, "ArcString" );
+  elemArcString.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+  elemSegments.appendChild( elemArcString );
+  elemCurve.appendChild( elemSegments );
+  return elemCurve;
+}
+
+QString QgsCircularStringV2::asJSON( int precision ) const
+{
+  // GeoJSON does not support curves
+  QgsLineStringV2* line = curveToLine();
+  QString json = line->asJSON( precision );
+  delete line;
+  return json;
 }
 
 //curve interface

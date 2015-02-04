@@ -26,11 +26,11 @@ class QgsPointV2: public QgsAbstractGeometryV2
     QgsPointV2( double x = 0.0, double y = 0.0 );
     QgsPointV2( double x, double y, double mz, bool hasM );
     QgsPointV2( double x, double y, double z, double m );
-    ~QgsPointV2();
 
     bool operator==( const QgsPointV2& pt ) const;
 
-    virtual QgsAbstractGeometryV2* clone() const;
+    virtual QgsPointV2* clone() const;
+    void clear();
 
     double x() const { return mX; }
     double y() const { return mY; }
@@ -48,13 +48,15 @@ class QgsPointV2: public QgsAbstractGeometryV2
     virtual int dimension() const { return 0; }
 
 
-    virtual void fromWkb( const unsigned char* wkb );
-    virtual void fromWkt( const QString& wkt );
+    virtual bool fromWkb( const unsigned char* wkb );
+    virtual bool fromWkt( const QString& wkt );
 
-
-    virtual QString asWkt( int precision = 17 ) const;
-    virtual unsigned char* asWkb( int& binarySize ) const;
-    virtual int wkbSize() const;
+    int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
     virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle( mX, mY, mX, mY );}
 
@@ -77,9 +79,6 @@ class QgsPointV2: public QgsAbstractGeometryV2
     double mY;
     double mZ;
     double mM;
-
-    //sets wkbtype to unknown and coords to 0
-    void reset();
 };
 
 #endif // QGSPOINTV2_H
