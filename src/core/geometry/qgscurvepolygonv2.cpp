@@ -108,6 +108,8 @@ bool QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
       mInteriorRings.append( new QgsLineStringV2() );
     else if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::CircularString )
       mInteriorRings.append( new QgsCircularStringV2() );
+    else if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::CompoundCurve )
+      mInteriorRings.append( new QgsCompoundCurveV2() );
     else
     {
       clear();
@@ -419,7 +421,10 @@ void QgsCurvePolygonV2::draw( QPainter& p ) const
 {
   if ( mInteriorRings.size() < 1 )
   {
-    mExteriorRing->drawAsPolygon( p );
+      if( mExteriorRing )
+      {
+        mExteriorRing->drawAsPolygon( p );
+      }
   }
   else
   {
