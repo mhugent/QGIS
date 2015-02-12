@@ -109,32 +109,32 @@ class CORE_EXPORT QGis
 
     static WkbType singleType( WkbType type )
     {
-      return ( WkbType )( QgsWKBTypes::instance()->singleType(( QgsWKBTypes::Type ) type ) );
+      return ( WkbType )( QgsWKBTypes::singleType(( QgsWKBTypes::Type ) type ) );
     }
 
     static WkbType multiType( WkbType type )
     {
-      return ( WkbType )( QgsWKBTypes::instance()->multiType(( QgsWKBTypes::Type ) type ) );
+      return ( WkbType )( QgsWKBTypes::multiType(( QgsWKBTypes::Type ) type ) );
     }
 
     static WkbType flatType( WkbType type )
     {
-      return ( WkbType )( QgsWKBTypes::instance()->flatType(( QgsWKBTypes::Type ) type ) );
+      return ( WkbType )( QgsWKBTypes::flatType(( QgsWKBTypes::Type ) type ) );
     }
 
     static bool isSingleType( WkbType type )
     {
-      return QgsWKBTypes::instance()->isSingleType(( QgsWKBTypes::Type ) type );
+      return QgsWKBTypes::isSingleType(( QgsWKBTypes::Type ) type );
     }
 
     static bool isMultiType( WkbType type )
     {
-      return QgsWKBTypes::instance()->isMultiType(( QgsWKBTypes::Type ) type );
+      return QgsWKBTypes::isMultiType(( QgsWKBTypes::Type ) type );
     }
 
     static int wkbDimensions( WkbType type )
     {
-      return QgsWKBTypes::instance()->wkbDimensions(( QgsWKBTypes::Type ) type );
+      return QgsWKBTypes::wkbDimensions(( QgsWKBTypes::Type ) type );
     }
 
     //This enum has been moved to qgswkbtypes.h. The copy here is only for API compatibility.

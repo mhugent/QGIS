@@ -39,118 +39,80 @@ QgsPointV2::QgsPointV2( double x, double y, double z, double m ): QgsAbstractGeo
   mWkbType = QgsWKBTypes::PointZM;
 }
 
-QgsPointV2::~QgsPointV2()
-{}
-
 bool QgsPointV2::operator==( const QgsPointV2& pt ) const
 {
   return ( pt.wkbType() == wkbType() && qgsDoubleNear( pt.x(), mX ) && qgsDoubleNear( pt.y(), mY ) &&
            qgsDoubleNear( pt.z(), mZ ) && qgsDoubleNear( pt.m(), mM ) );
 }
 
-QgsAbstractGeometryV2* QgsPointV2::clone() const
+QgsPointV2* QgsPointV2::clone() const
 {
   return new QgsPointV2( *this );
 }
 
-int QgsPointV2::wkbSize() const
+bool QgsPointV2::fromWkb( const unsigned char* wkb )
 {
-  int binarySize = 1 + sizeof( int ) + 2 * sizeof( double );
-  if ( is3D() > 2 )
-  {
-    binarySize += sizeof( double );
-  }
-  if ( isMeasure() )
-  {
-    binarySize += sizeof( double );
-  }
-  return binarySize;
-}
+  clear();
 
-void QgsPointV2::fromWkb( const unsigned char* wkb )
-{
-  reset();
-  if ( !wkb )
-  {
-    return;
-  }
-
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
-  wkbPtr >> mWkbType;
-
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::Point ) )
+    return false;
 
   wkbPtr >> mX;
   wkbPtr >> mY;
   if ( is3D() )
-  {
     wkbPtr >> mZ;
-  }
   if ( isMeasure() )
-  {
     wkbPtr >> mM;
-  }
+
+  return true;
 }
 
-void QgsPointV2::fromWkt( const QString& wkt )
+bool QgsPointV2::fromWkt( const QString& wkt )
 {
-  reset();
+  clear();
 
-  //todo: better with regexp
-  QString text = wkt;
-  text.remove( "POINT(" );
-  text.chop( 1 );
-  QStringList coords = text.split( " ", QString::SkipEmptyParts );
-  if ( coords.size() < 2 )
-  {
-    return;
-  }
-  mX = coords.at( 0 ).toDouble();
-  mY = coords.at( 1 ).toDouble();
+  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
 
-  if ( coords.size() > 2 )
-  {
-    mWkbType = QgsWKBTypes::PointZ;
-    mZ = coords.at( 2 ).toDouble();
-  }
-  if ( coords.size() > 3 )
-  {
-    mWkbType = QgsWKBTypes::PointZM;
-    mM = coords.at( 3 ).toDouble();
-  }
-  else
-  {
-    mWkbType = QgsWKBTypes::Point;
-  }
-}
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+    return false;
+  mWkbType = parts.first;
 
-QString QgsPointV2::asWkt( int precision ) const
-{
-  QString wkt = "POINT(" + qgsDoubleToString( mX, precision ) + " " + qgsDoubleToString( mY, precision );
+  QStringList coordinates = parts.second.split( " ", QString::SkipEmptyParts );
+  if ( coordinates.size() < 2 + is3D() + isMeasure() )
+  {
+    clear();
+    return false;
+  }
+
+  int idx = 0;
+  mX = coordinates[idx++].toDouble();
+  mY = coordinates[idx++].toDouble();
   if ( is3D() )
-  {
-    wkt.append( "" );
-    wkt.append( qgsDoubleToString( mZ, precision ) );
-  }
+    mZ = coordinates[idx++].toDouble();
   if ( isMeasure() )
-  {
-    wkt.append( "" );
-    wkt.append( qgsDoubleToString( mM, precision ) );
-  }
-  wkt.append( ")" );
-  return wkt;
+    mM = coordinates[idx++].toDouble();
+
+  return true;
+}
+
+int QgsPointV2::wkbSize() const
+{
+  int size = sizeof( char ) + sizeof( quint32 );
+  size += ( 2 + is3D() + isMeasure() ) * sizeof( double );
+  return size;
 }
 
 unsigned char* QgsPointV2::asWkb( int& binarySize ) const
 {
   binarySize = wkbSize();
-  char byteOrder = QgsApplication::endian();
   unsigned char* geomPtr = new unsigned char[binarySize];
   QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
   wkb << mX << mY;
-  if ( is3D() > 2 )
+  if ( is3D() )
   {
     wkb << mZ;
   }
@@ -158,14 +120,56 @@ unsigned char* QgsPointV2::asWkb( int& binarySize ) const
   {
     wkb << mM;
   }
-
   return geomPtr;
 }
 
-void QgsPointV2::reset()
+QString QgsPointV2::asWkt( int precision ) const
+{
+  QString wkt = wktTypeStr() + " (";
+  wkt += qgsDoubleToString( mX, precision ) + " " + qgsDoubleToString( mY, precision );
+  if ( is3D() )
+    wkt += " " + qgsDoubleToString( mZ, precision );
+  if ( isMeasure() )
+    wkt += " " + qgsDoubleToString( mM, precision );
+  wkt += ")";
+  return wkt;
+}
+
+QDomElement QgsPointV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemPoint = doc.createElementNS( ns, "Point" );
+  QDomElement elemCoordinates = doc.createElementNS( ns, "coordinates" );
+  QString strCoordinates = qgsDoubleToString( mX, precision ) + "," + qgsDoubleToString( mY, precision );
+  elemCoordinates.appendChild( doc.createTextNode( strCoordinates ) );
+  elemPoint.appendChild( elemCoordinates );
+  return elemPoint;
+}
+
+QDomElement QgsPointV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemPoint = doc.createElementNS( ns, "Point" );
+  QDomElement elemPosList = doc.createElementNS( ns, "posList" );
+  elemPosList.setAttribute( "srsDimension", is3D() ? 3 : 2 );
+  QString strCoordinates = qgsDoubleToString( mX, precision ) + " " + qgsDoubleToString( mY, precision );
+  if ( is3D() )
+    strCoordinates += " " + qgsDoubleToString( mZ, precision );
+
+  elemPosList.appendChild( doc.createTextNode( strCoordinates ) );
+  elemPoint.appendChild( elemPosList );
+  return elemPoint;
+}
+
+QString QgsPointV2::asJSON( int precision ) const
+{
+  return "{\"type\": \"Point\", \"coordinates\": ["
+         + qgsDoubleToString( mX, precision ) + ", " + qgsDoubleToString( mY, precision )
+         + "]}";
+}
+
+void QgsPointV2::clear()
 {
   mWkbType = QgsWKBTypes::Unknown;
-  mX = 0; mY = 0; mZ = 0; mM = 0;
+  mX = mY = mZ = mM = 0.;
 }
 
 void QgsPointV2::transform( const QgsCoordinateTransform& ct )

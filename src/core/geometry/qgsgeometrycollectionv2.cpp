@@ -17,7 +17,9 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsapplication.h"
 #include "qgsgeometryimport.h"
 #include "qgsgeometryutils.h"
+#include "qgslinestringv2.h"
 #include "qgspointv2.h"
+#include "qgspolygonv2.h"
 #include "qgswkbptr.h"
 
 QgsGeometryCollectionV2::QgsGeometryCollectionV2(): QgsAbstractGeometryV2()
@@ -40,7 +42,6 @@ QgsGeometryCollectionV2& QgsGeometryCollectionV2::operator=( const QgsGeometryCo
   if ( &c != this )
   {
     QgsAbstractGeometryV2::operator=( c );
-    removeGeometries();
     int nGeoms = c.mGeometries.size();
     mGeometries.resize( nGeoms );
     for ( int i = 0; i < nGeoms; ++i )
@@ -53,17 +54,14 @@ QgsGeometryCollectionV2& QgsGeometryCollectionV2::operator=( const QgsGeometryCo
 
 QgsGeometryCollectionV2::~QgsGeometryCollectionV2()
 {
-  removeGeometries();
+  clear();
 }
 
-void QgsGeometryCollectionV2::removeGeometries()
+void QgsGeometryCollectionV2::clear()
 {
-  QVector< QgsAbstractGeometryV2* >::const_iterator it = mGeometries.constBegin();
-  for ( ; it != mGeometries.constEnd(); ++it )
-  {
-    delete *it;
-  }
+  qDeleteAll( mGeometries );
   mGeometries.clear();
+  mWkbType = QgsWKBTypes::Unknown;
 }
 
 int QgsGeometryCollectionV2::numGeometries() const
@@ -161,69 +159,95 @@ void QgsGeometryCollectionV2::draw( QPainter& p ) const
   }
 }
 
-void QgsGeometryCollectionV2::fromWkb( const unsigned char * wkb )
+int QgsGeometryCollectionV2::wkbSize() const
 {
-  if ( !wkb )
+  int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
-    return;
+    size += geom->wkbSize();
   }
-
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
-
-  //type
-  wkbPtr >> mWkbType;
-
-  int nGeometries = 0;
-  wkbPtr >> nGeometries;
-  mGeometries.resize( nGeometries );
-
-  for ( int i = 0; i < nGeometries; ++i )
-  {
-    QgsAbstractGeometryV2* geom = QgsGeometryImport::geomFromWkb( wkbPtr );
-    mGeometries[i] = geom;
-    wkbPtr += geom->wkbSize();
-  }
+  return size;
 }
 
 unsigned char* QgsGeometryCollectionV2::asWkb( int& binarySize ) const
 {
-  QList< QPair< unsigned char*, int > > geometryWkb;
-  int currentGeomWkbSize = 0;
-  QVector< QgsAbstractGeometryV2* >::const_iterator geomIt = mGeometries.constBegin();
-  for ( ; geomIt != mGeometries.constEnd(); ++geomIt )
-  {
-    geometryWkb.push_back( qMakePair(( *geomIt )->asWkb( currentGeomWkbSize ), currentGeomWkbSize ) );
-  }
-
   binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
-  char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-  wkb << mGeometries.size();
-
-  QList< QPair< unsigned char*, int > >::const_iterator wkbIt = geometryWkb.constBegin();
-  for ( ; wkbIt != geometryWkb.constEnd(); ++wkbIt )
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
+  wkb << static_cast<quint32>( mGeometries.size() );
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
-    memcpy( wkb, wkbIt->first, wkbIt->second );
-    wkb += wkbIt->second;
-    delete wkbIt->first;
+    int geomWkbLen = 0;
+    unsigned char* geomWkb = geom->asWkb( geomWkbLen );
+    memcpy( wkb, geomWkb, geomWkbLen );
+    wkb += geomWkbLen;
+    delete[] geomWkb;
   }
-
   return geomPtr;
 }
 
-int QgsGeometryCollectionV2::wkbSize() const
+QString QgsGeometryCollectionV2::asWkt( int precision ) const
 {
-  int size = 0;
-  QVector< QgsAbstractGeometryV2* >::const_iterator geomIt = mGeometries.constBegin();
-  for ( ; geomIt != mGeometries.constEnd(); ++geomIt )
+  QString wkt = wktTypeStr() + " (";
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
-    size += ( *geomIt )->wkbSize();
+    QString childWkt = geom->asWkt( precision );
+    if ( dynamic_cast<const QgsPointV2*>( geom ) ||
+         dynamic_cast<const QgsLineStringV2*>( geom ) ||
+         dynamic_cast<const QgsPolygonV2*>( geom ) )
+    {
+      // Type names of linear geometries are omitted
+      childWkt = childWkt.mid( childWkt.indexOf( "(" ) );
+    }
+    wkt += childWkt + ",";
   }
-  size += ( 1 + 2 * sizeof( int ) );
-  return size;
+  if ( wkt.endsWith( "," ) )
+  {
+    wkt.chop( 1 ); // Remove last ","
+  }
+  wkt += ")";
+  return wkt;
+}
+
+QDomElement QgsGeometryCollectionV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemMultiGeometry = doc.createElementNS( ns, "MultiGeometry" );
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
+  {
+    QDomElement elemGeometryMember = doc.createElementNS( ns, "geometryMember" );
+    elemGeometryMember.appendChild( geom->asGML2( doc, precision, ns ) );
+    elemMultiGeometry.appendChild( elemGeometryMember );
+  }
+  return elemMultiGeometry;
+}
+
+QDomElement QgsGeometryCollectionV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemMultiGeometry = doc.createElementNS( ns, "MultiGeometry" );
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
+  {
+    QDomElement elemGeometryMember = doc.createElementNS( ns, "geometryMember" );
+    elemGeometryMember.appendChild( geom->asGML3( doc, precision, ns ) );
+    elemMultiGeometry.appendChild( elemGeometryMember );
+  }
+  return elemMultiGeometry;
+}
+
+QString QgsGeometryCollectionV2::asJSON( int precision ) const
+{
+  QString json = "{\"type\": \"GeometryCollection\", \"geometries\": [";
+  foreach ( const QgsAbstractGeometryV2 *geom, mGeometries )
+  {
+    json += geom->asJSON( precision ) + ", ";
+  }
+  if ( json.endsWith( ", " ) )
+  {
+    json.chop( 2 ); // Remove last ", "
+  }
+  json += "] }";
+  return json;
 }
 
 QgsRectangle QgsGeometryCollectionV2::calculateBoundingBox() const
@@ -311,4 +335,87 @@ bool QgsGeometryCollectionV2::deleteVertex( const QgsVertexId& position )
   }
 
   return mGeometries[position.part]->deleteVertex( position );
+}
+
+bool QgsGeometryCollectionV2::fromCollectionWkb( const unsigned char *wkb, const QList<QgsAbstractGeometryV2 *> &subtypes )
+{
+  clear();
+
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::parseType( geometryType() ) ) )
+    return false;
+
+  quint32 nChilds;
+  wkbPtr >> nChilds;
+  if ( endianSwap )
+    QgsApplication::endian_swap( nChilds );
+  mGeometries.reserve( nChilds );
+
+  for ( quint32 i = 0; i < nChilds; ++i )
+  {
+    QgsWKBTypes::Type childType = static_cast<QgsWKBTypes::Type>( *reinterpret_cast<const quint32*>( static_cast<const unsigned char*>( wkbPtr ) + sizeof( char ) ) );
+
+    bool success = false;
+    foreach ( const QgsAbstractGeometryV2* geom, subtypes )
+    {
+      if ( QgsWKBTypes::flatType( childType ) == QgsWKBTypes::parseType( geom->geometryType() ) )
+      {
+        mGeometries.append( geom->clone() );
+        if ( mGeometries.back()->fromWkb( wkbPtr ) )
+        {
+          success = true;
+          break;
+        }
+      }
+    }
+    if ( !success )
+    {
+      clear();
+      qDeleteAll( subtypes );
+      return false;
+    }
+    wkbPtr += mGeometries.back()->wkbSize();
+  }
+  return true;
+}
+
+bool QgsGeometryCollectionV2::fromCollectionWkt( const QString &wkt, const QList<QgsAbstractGeometryV2*>& subtypes, const QString& defaultChildWkbType )
+{
+  clear();
+
+  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+    return false;
+  mWkbType = parts.first;
+
+  QString defChildWkbType = QString( "%1%2%3 " ).arg( defaultChildWkbType ).arg( is3D() ? "Z" : "" ).arg( isMeasure() ? "M" : "" );
+
+  foreach ( const QString& childWkt, wktGetChildBlocks( parts.second, defChildWkbType ) )
+  {
+    QPair<QgsWKBTypes::Type, QString> childParts = wktReadBlock( childWkt );
+
+    bool success = false;
+    foreach ( const QgsAbstractGeometryV2* geom, subtypes )
+    {
+      if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::parseType( geom->geometryType() ) )
+      {
+        mGeometries.append( geom->clone() );
+        if ( mGeometries.back()->fromWkt( childWkt ) )
+        {
+          success = true;
+          break;
+        }
+      }
+    }
+    if ( !success )
+    {
+      clear();
+      qDeleteAll( subtypes );
+      return false;
+    }
+  }
+  qDeleteAll( subtypes );
+  return true;
 }

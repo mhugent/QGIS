@@ -29,16 +29,20 @@ class QgsCircularStringV2: public QgsCurveV2
 
     virtual QString geometryType() const { return "CircularString"; }
     virtual int dimension() const { return 1; }
-    virtual QgsAbstractGeometryV2* clone() const;
-
-    virtual void fromWkb( const unsigned char * wkb );
-    virtual void fromWkt( const QString& wkt );
+    virtual QgsCircularStringV2* clone() const;
+    virtual void clear();
 
     virtual QgsRectangle calculateBoundingBox() const;
 
-    virtual QString asWkt( int precision = 17 ) const;
-    virtual unsigned char* asWkb( int& binarySize ) const;
-    virtual int wkbSize() const;
+    virtual bool fromWkb( const unsigned char * wkb );
+    virtual bool fromWkt( const QString& wkt );
+
+    int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
     int numPoints() const;
     QgsPointV2 pointN( int i ) const;

@@ -303,7 +303,7 @@ QGis::GeometryType QgsGeometry::type() const
   {
     return QGis::UnknownGeometry;
   }
-  return ( QGis::GeometryType )( QgsWKBTypes::instance()->geometryType( d->geometry->wkbType() ) );
+  return ( QGis::GeometryType )( QgsWKBTypes::geometryType( d->geometry->wkbType() ) );
 }
 
 bool QgsGeometry::isMultipart() const
@@ -1150,7 +1150,7 @@ QgsGeometry* QgsGeometry::centroid()
   bool ok = geos.centroid( centroid );
   if ( !ok )
   {
-    return false;
+    return 0;
   }
   return new QgsGeometry( centroid.clone() );
 }

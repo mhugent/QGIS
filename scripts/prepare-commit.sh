@@ -15,7 +15,7 @@
 ###########################################################################
 
 
-PATH=$PATH:$(dirname $0)
+PATH=$PATH:$(git rev-parse --show-toplevel)/scripts
 
 if ! type -p astyle.sh >/dev/null; then
 	echo astyle.sh not found

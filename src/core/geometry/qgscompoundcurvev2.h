@@ -30,16 +30,20 @@ class QgsCompoundCurveV2: public QgsCurveV2
 
     virtual QString geometryType() const { return "CompoundCurve"; }
     virtual int dimension() const { return 1; }
-    virtual QgsAbstractGeometryV2* clone() const;
-
-    virtual void fromWkb( const unsigned char* wkb );
-    virtual void fromWkt( const QString& wkt );
+    virtual QgsCompoundCurveV2* clone() const;
+    virtual void clear();
 
     virtual QgsRectangle calculateBoundingBox() const;
 
-    virtual QString asWkt( int precision = 17 ) const;
-    virtual unsigned char* asWkb( int& binarySize ) const;
-    virtual int wkbSize() const;
+    virtual bool fromWkb( const unsigned char* wkb );
+    virtual bool fromWkt( const QString& wkt );
+
+    int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
     //curve interface
     virtual double length() const;
@@ -76,8 +80,6 @@ class QgsCompoundCurveV2: public QgsCurveV2
     /**Turns a vertex id for the compound curve into one or more ids for the subcurves
         @return the index of the subcurve or -1 in case of error*/
     QList< QPair<int, QgsVertexId> > curveVertexId( const QgsVertexId& id ) const;
-
-    void removeCurves();
 };
 
 #endif // QGSCOMPOUNDCURVEV2_H

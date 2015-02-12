@@ -26,6 +26,8 @@ class QgsCurveV2;
 class QgsMultiCurveV2;
 class QgsMultiPointV2;
 class QgsPointV2;
+class QgsConstWkbPtr;
+class QgsWkbPtr;
 class QPainter;
 
 struct QgsVertexId
@@ -47,6 +49,7 @@ class QgsAbstractGeometryV2
     virtual QgsAbstractGeometryV2& operator=( const QgsAbstractGeometryV2& geom );
 
     virtual QgsAbstractGeometryV2* clone() const = 0;
+    virtual void clear() = 0;
 
     QgsRectangle boundingBox() const;
 
@@ -55,6 +58,7 @@ class QgsAbstractGeometryV2
     //virtual int coordDim() const { return mCoordDimension; }
     virtual QString geometryType() const = 0;
     QgsWKBTypes::Type wkbType() const { return mWkbType; }
+    QString wktTypeStr() const;
     bool is3D() const;
     bool isMeasure() const;
 
@@ -67,17 +71,17 @@ class QgsAbstractGeometryV2
     virtual QgsCurveV2* boundary() const = 0;
     virtual QgsRectangle envelope() const = 0;*/
 
-    //export
-    virtual QString asWkt( int precision = 17 ) const = 0;
-    virtual unsigned char* asWkb( int& binarySize ) const = 0;
-    virtual int wkbSize() const = 0;
-    virtual QString asGML2( int precision = 17 ) const { return QString(); } //todo...
-    virtual QString asGML3( int precision = 17 ) const { return QString(); } //todo...
-    virtual QString asJSON( int precision = 17 ) const { return QString(); } //todo...
+    //import
+    virtual bool fromWkb( const unsigned char * wkb ) = 0;
+    virtual bool fromWkt( const QString& wkt ) = 0;
 
-    //virtual import methods
-    virtual void fromWkb( const unsigned char * wkb ) = 0;
-    virtual void fromWkt( const QString& wkt ) = 0;
+    //export
+    virtual int wkbSize() const = 0;
+    virtual unsigned char* asWkb( int& binarySize ) const = 0;
+    virtual QString asWkt( int precision = 17 ) const = 0;
+    virtual QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const = 0;
+    virtual QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const = 0;
+    virtual QString asJSON( int precision = 17 ) const = 0;
 
     virtual QgsRectangle calculateBoundingBox() const;
 
@@ -107,6 +111,26 @@ class QgsAbstractGeometryV2
     mutable QgsRectangle mBoundingBox;
 
     void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QgsWKBTypes::Type baseGeomType );
+
+    /** Serialization and deserialization of a point list */
+    static QList<QgsPointV2> pointsFromWKB( const QgsConstWkbPtr &wkb, bool is3D, bool isMeasure, bool endianSwap );
+    static QList<QgsPointV2> pointsFromWKT( const QString& wktCoordinateList, bool is3D, bool isMeasure );
+    // Returns a LinearRing { uint32 numPoints; Point points[numPoints]; }
+    static void pointsToWKB( QgsWkbPtr &wkb, const QList<QgsPointV2>& points, bool is3D, bool isMeasure );
+    // Returns a WKT coordinate list
+    static QString pointsToWKT( const QList<QgsPointV2>& points, int precision, bool is3D, bool isMeasure );
+    // Returns a gml::coordinates DOM element
+    static QDomElement pointsToGML2( const QList<QgsPointV2>& points, QDomDocument &doc, int precision, const QString& ns );
+    // Returns a gml::posList DOM element
+    static QDomElement pointsToGML3( const QList<QgsPointV2>& points, QDomDocument &doc, int precision, const QString& ns, bool is3D );
+    // Returns a geoJSON coordinates string
+    static QString pointsToJSON( const QList<QgsPointV2>& points, int precision );
+
+    // "TYPE (contents)" -> Pair(wkbType, "contents")
+    static QPair<QgsWKBTypes::Type, QString> wktReadBlock( const QString& wkt );
+    // "TYPE1 (contents1), TYPE2 (TYPE3 (contents3), TYPE4 (contents4))" -> List("TYPE1 (contents1)", "TYPE2 (TYPE3 (contents3), TYPE4 (contents4))")
+    static QStringList wktGetChildBlocks( const QString& wkt , const QString &defaultType = "" );
+    static bool readWkbHeader( QgsConstWkbPtr& wkbPtr, QgsWKBTypes::Type& wkbType, bool& endianSwap, QgsWKBTypes::Type expectedType );
 };
 
 #endif //QGSABSTRACTGEOMETRYV2

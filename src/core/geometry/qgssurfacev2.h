@@ -21,15 +21,16 @@
 #include "qgsabstractgeometryv2.h"
 #include "qgspointv2.h"
 
+class QgsPolygonV2;
+
 class QgsSurfaceV2: public QgsAbstractGeometryV2
 {
   public:
-    QgsSurfaceV2() : QgsAbstractGeometryV2() {}
-    virtual ~QgsSurfaceV2() {}
     virtual double area() const = 0;
     virtual double perimeter() const = 0;
     virtual QgsPointV2 centroid() const = 0;
     virtual QgsPointV2 pointOnSurface() const = 0;
+    virtual QgsPolygonV2* surfaceToPolygon() const = 0;
 };
 
 #endif // QGSSURFACEV2_H

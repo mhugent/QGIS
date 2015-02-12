@@ -34,6 +34,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     //methods inherited from QgsAbstractGeometry
     virtual int dimension() const;
     virtual QString geometryType() const { return "GeometryCollection"; }
+    virtual void clear();
 
     /**Adds a geometry and takes ownership. Returns true in case of success*/
     virtual bool addGeometry( QgsAbstractGeometryV2* g );
@@ -44,9 +45,12 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual void clip( const QgsRectangle& rect );
     virtual void draw( QPainter& p ) const;
 
-    void fromWkb( const unsigned char * wkb );
-    unsigned char* asWkb( int& binarySize ) const;
     int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
     virtual QgsRectangle calculateBoundingBox() const;
 
@@ -62,6 +66,10 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
   protected:
     QVector< QgsAbstractGeometryV2* > mGeometries;
     void removeGeometries();
+
+    bool fromCollectionWkb( const unsigned char * wkb, const QList<QgsAbstractGeometryV2*>& subtypes );
+    bool fromCollectionWkt( const QString &wkt, const QList<QgsAbstractGeometryV2*>& subtypes, const QString& defaultChildWkbType = QString() );
+
 };
 
 #endif // QGSGEOMETRYCOLLECTIONV2_H

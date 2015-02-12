@@ -194,7 +194,7 @@ QgsAbstractGeometryV2* QgsGeometryEditUtils::avoidIntersections( const QgsAbstra
 
 
   //check if g has polygon type
-  if ( QgsWKBTypes::instance()->geometryType( geomTypeBeforeModification ) != QgsWKBTypes::PolygonGeometry )
+  if ( QgsWKBTypes::geometryType( geomTypeBeforeModification ) != QgsWKBTypes::PolygonGeometry )
   {
     return 0;
   }

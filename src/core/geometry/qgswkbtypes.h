@@ -103,24 +103,18 @@ class QgsWKBTypes
       GeometryType mGeometryType;
     };
 
-    //! Returns the instance pointer, creating the object on the first call
-    static QgsWKBTypes* instance();
-    ~QgsWKBTypes();
-
-    Type singleType( Type type ) const;
-    Type multiType( Type type ) const;
-    Type flatType( Type type ) const;
-    bool isSingleType( Type type ) const;
-    bool isMultiType( Type type ) const;
-    int wkbDimensions( Type type ) const;
-    GeometryType geometryType( Type type ) const;
+    static Type singleType( Type type );
+    static Type multiType( Type type );
+    static Type flatType( Type type );
+    static Type parseType( const QString& wktStr );
+    static bool isSingleType( Type type );
+    static bool isMultiType( Type type );
+    static int wkbDimensions( Type type );
+    static GeometryType geometryType( Type type );
 
   private:
-    QMap < Type, wkbEntry > mEntries;
-    static QgsWKBTypes* mInstance;
-
-    QgsWKBTypes();
-    void registerTypes();
+    static QMap<Type, wkbEntry> registerTypes();
+    static QMap<Type, wkbEntry>* entries();
 };
 
 #endif // QGSWKBTYPES_H

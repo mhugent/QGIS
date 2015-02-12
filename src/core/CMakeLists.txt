@@ -180,7 +180,7 @@ SET(QGIS_CORE_SRCS
   composer/qgscomposermapgrid.cpp
   composer/qgscomposermapoverview.cpp
   composer/qgscomposertable.cpp
-  composer/qgscomposertablecolumn.cpp  
+  composer/qgscomposertablecolumn.cpp
   composer/qgscomposerattributetable.cpp
   composer/qgscomposerattributetablemodel.cpp
   composer/qgscomposertexttable.cpp
@@ -201,7 +201,7 @@ SET(QGIS_CORE_SRCS
   composer/qgscomposermultiframe.cpp
   composer/qgscomposermodel.cpp
   composer/qgscomposition.cpp
-  
+
   dxf/qgsdxfexport.cpp
   dxf/qgsdxfpaintdevice.cpp
   dxf/qgsdxfpaintengine.cpp
@@ -260,7 +260,7 @@ SET(QGIS_CORE_SRCS
   raster/qgssinglebandpseudocolorrenderer.cpp
   raster/qgsbrightnesscontrastfilter.cpp
   raster/qgshuesaturationfilter.cpp
-  
+
   geometry/qgsabstractgeometryv2.cpp
   geometry/qgscircularstringv2.cpp
   geometry/qgscompoundcurvev2.cpp
@@ -276,7 +276,9 @@ SET(QGIS_CORE_SRCS
   geometry/qgspolygonv2.cpp
   geometry/qgslinestringv2.cpp
   geometry/qgsmulticurvev2.cpp
+  geometry/qgsmultilinestringv2.cpp
   geometry/qgsmultipointv2.cpp
+  geometry/qgsmultipolygonv2.cpp
   geometry/qgsmultisurfacev2.cpp
   geometry/qgswkbtypes.cpp
 )
@@ -397,12 +399,12 @@ SET(QGIS_CORE_MOC_HDRS
   composer/qgscomposerobject.h
   composer/qgscomposeritem.h
   composer/qgscomposeritemgroup.h
-  composer/qgscomposermousehandles.h  
+  composer/qgscomposermousehandles.h
   composer/qgscomposerlabel.h
   composer/qgscomposershape.h
   composer/qgscomposerattributetable.h
-  composer/qgscomposerattributetablemodel.h  
-  composer/qgscomposertable.h  
+  composer/qgscomposerattributetablemodel.h
+  composer/qgscomposertable.h
   composer/qgscomposertablecolumn.h
   composer/qgscomposerhtml.h
   composer/qgscomposermultiframe.h
@@ -661,7 +663,7 @@ SET(QGIS_CORE_HDRS
   layertree/qgslayertreenode.h
   layertree/qgslayertreeregistrybridge.h
   layertree/qgslayertreeutils.h
-  
+
   geometry/qgsgeometry.h
 )
 

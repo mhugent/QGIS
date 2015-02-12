@@ -33,93 +33,132 @@ QgsCurvePolygonV2::QgsCurvePolygonV2(): QgsSurfaceV2(), mExteriorRing( 0 )
 
 QgsCurvePolygonV2::~QgsCurvePolygonV2()
 {
-  removeRings();
+  clear();
 }
 
-QgsCurvePolygonV2::QgsCurvePolygonV2( const QgsCurvePolygonV2& p ): mExteriorRing( 0 )
+QgsCurvePolygonV2::QgsCurvePolygonV2( const QgsCurvePolygonV2& p ) : mExteriorRing( 0 )
 {
-  *this = p;
+  if ( p.mExteriorRing )
+  {
+    mExteriorRing = static_cast<QgsCurveV2*>( p.mExteriorRing->clone() );
+  }
+
+  foreach ( const QgsCurveV2* ring, p.mInteriorRings )
+  {
+    mInteriorRings.push_back( static_cast<QgsCurveV2*>( ring->clone() ) );
+  }
 }
 
 QgsCurvePolygonV2& QgsCurvePolygonV2::operator=( const QgsCurvePolygonV2 & p )
 {
   QgsSurfaceV2::operator=( p );
-  removeRings();
   if ( p.mExteriorRing )
   {
-    mExteriorRing = dynamic_cast<QgsCurveV2*>( p.mExteriorRing->clone() );
+    mExteriorRing = static_cast<QgsCurveV2*>( p.mExteriorRing->clone() );
   }
 
-  int nInteriorRings = p.mInteriorRings.size();
-  for ( int i = 0; i < nInteriorRings; ++i )
+  foreach ( const QgsCurveV2* ring, p.mInteriorRings )
   {
-    mInteriorRings.push_back( dynamic_cast<QgsCurveV2*>( p.mInteriorRings[i]->clone() ) );
+    mInteriorRings.push_back( static_cast<QgsCurveV2*>( ring->clone() ) );
   }
   return *this;
 }
 
-QgsAbstractGeometryV2* QgsCurvePolygonV2::clone() const
+QgsCurvePolygonV2* QgsCurvePolygonV2::clone() const
 {
   return new QgsCurvePolygonV2( *this );
 }
 
-void QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
+void QgsCurvePolygonV2::clear()
 {
-  removeRings();
-  if ( !wkb )
-  {
-    return;
-  }
-
-  QgsConstWkbPtr wkbPtr( wkb + 1 );
-
-  //type
-  wkbPtr >> mWkbType;
-  int nRings;
-  wkbPtr >> nRings;
-
-  QgsCurveV2* currentCurve = 0;
-  int currentCurveSize = 0;
-
-  for ( int i = 0; i < nRings; ++i )
-  {
-    wkbPtr += 1; //skip endian
-    QgsWKBTypes::Type curveType;
-    wkbPtr >> curveType;
-    wkbPtr -= ( 1  + sizeof( int ) );
-
-    if ( curveType == QgsWKBTypes::LineString || curveType == QgsWKBTypes::LineStringZ || curveType == QgsWKBTypes::LineStringM ||
-         curveType == QgsWKBTypes::LineStringZM || curveType == QgsWKBTypes::LineString25D )
-    {
-      currentCurve = new QgsLineStringV2();
-    }
-    else if ( curveType == QgsWKBTypes::CircularString || curveType == QgsWKBTypes::CircularStringZ || curveType == QgsWKBTypes::CircularStringZM ||
-              curveType == QgsWKBTypes::CircularStringM )
-    {
-      currentCurve = new QgsCircularStringV2();
-    }
-    else if ( curveType == QgsWKBTypes::CompoundCurve || curveType == QgsWKBTypes::CompoundCurveZ || curveType == QgsWKBTypes::CompoundCurveZM )
-    {
-      currentCurve = new QgsCompoundCurveV2();
-    }
-
-    currentCurve->fromWkb( wkbPtr );
-    currentCurveSize = currentCurve->wkbSize();
-    if ( i == 0 )
-    {
-      mExteriorRing = currentCurve;
-    }
-    else
-    {
-      mInteriorRings.append( currentCurve );
-    }
-    wkbPtr += currentCurveSize;
-  }
+  delete mExteriorRing;
+  mExteriorRing = 0;
+  qDeleteAll( mInteriorRings );
+  mInteriorRings.clear();
+  mWkbType = QgsWKBTypes::Unknown;
 }
 
-void QgsCurvePolygonV2::fromWkt( const QString& wkt )
-{
 
+bool QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
+{
+  clear();
+
+  QgsConstWkbPtr wkbPtr( wkb );
+  bool endianSwap;
+  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::CurvePolygon ) )
+    return false;
+
+  quint32 nRings;
+  wkbPtr >> nRings;
+  if ( endianSwap )
+    QgsApplication::endian_swap( nRings );
+
+  if ( nRings <= 0 )
+  {
+    clear();
+    return false;
+  }
+
+  mInteriorRings.reserve( nRings );
+
+  for ( quint32 i = 0; i < nRings; ++i )
+  {
+    QgsWKBTypes::Type ringType = static_cast<QgsWKBTypes::Type>( *reinterpret_cast<const quint32*>( static_cast<const unsigned char*>( wkbPtr ) + sizeof( char ) ) );
+    if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::LineString )
+      mInteriorRings.append( new QgsLineStringV2() );
+    else if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::CircularString )
+      mInteriorRings.append( new QgsCircularStringV2() );
+    else
+    {
+      clear();
+      return false;
+    }
+    mInteriorRings.back()->fromWkb( wkbPtr );
+    wkbPtr += mInteriorRings.back()->wkbSize();
+  }
+
+  mExteriorRing = mInteriorRings.first();
+  mInteriorRings.removeFirst();
+
+  return true;
+}
+
+bool QgsCurvePolygonV2::fromWkt( const QString& wkt )
+{
+  clear();
+
+  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+    return false;
+  mWkbType = parts.first;
+
+  QString defaultChildWkbType = QString( "LineString%1%2" ).arg( is3D() ? "Z" : "" ).arg( isMeasure() ? "M" : "" );
+
+  foreach ( const QString& childWkt, wktGetChildBlocks( parts.second, defaultChildWkbType ) )
+  {
+    QPair<QgsWKBTypes::Type, QString> childParts = wktReadBlock( childWkt );
+
+    if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::LineString )
+      mInteriorRings.append( new QgsLineStringV2() );
+    else if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::CircularString )
+      mInteriorRings.append( new QgsCircularStringV2() );
+    else
+    {
+      clear();
+      return false;
+    }
+    if ( !mInteriorRings.back()->fromWkt( childWkt ) )
+    {
+      clear();
+      return false;
+    }
+  }
+
+  mExteriorRing = mInteriorRings.first();
+  mInteriorRings.removeFirst();
+
+  return true;
 }
 
 QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
@@ -131,79 +170,136 @@ QgsRectangle QgsCurvePolygonV2::calculateBoundingBox() const
   return QgsRectangle();
 }
 
-QString QgsCurvePolygonV2::asWkt( int precision ) const
+int QgsCurvePolygonV2::wkbSize() const
 {
-  QString wkt( "CURVEPOLYGON(" );
+  int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
   if ( mExteriorRing )
   {
-    wkt.append( mExteriorRing->asWkt( precision ) );
+    size += mExteriorRing->wkbSize();
   }
-  for ( int i = 0; i < mInteriorRings.size(); ++i )
+  foreach ( const QgsCurveV2* curve, mInteriorRings )
   {
-    wkt.append( "," );
-    wkt.append( mInteriorRings[i]->asWkt( precision ) );
+    size += curve->wkbSize();
   }
-  wkt.append( ")" );
-  return wkt;
+  return size;
 }
 
 unsigned char* QgsCurvePolygonV2::asWkb( int& binarySize ) const
 {
   binarySize = wkbSize();
   unsigned char* geomPtr = new unsigned char[binarySize];
-  char byteOrder = QgsApplication::endian();
   QgsWkbPtr wkb( geomPtr );
-  wkb << byteOrder;
-  wkb << wkbType();
-  wkb << mInteriorRings.size() + 1;
-  unsigned char* currentWkbPtr = wkb;
-
+  wkb << static_cast<char>( QgsApplication::endian() );
+  wkb << static_cast<quint32>( wkbType() );
+  wkb << static_cast<quint32>(( mExteriorRing != 0 ) + mInteriorRings.size() );
   if ( mExteriorRing )
   {
-    addRingWkb( &currentWkbPtr, mExteriorRing );
+    int curveWkbLen = 0;
+    unsigned char* ringWkb = mExteriorRing->asWkb( curveWkbLen );
+    memcpy( wkb, ringWkb, curveWkbLen );
+    wkb += curveWkbLen;
   }
-
-  QList<QgsCurveV2*>::const_iterator ringIt = mInteriorRings.constBegin();
-  for ( ; ringIt != mInteriorRings.constEnd(); ++ringIt )
+  foreach ( const QgsCurveV2* curve, mInteriorRings )
   {
-    addRingWkb( &currentWkbPtr, ( *ringIt ) );
+    int curveWkbLen = 0;
+    unsigned char* ringWkb = curve->asWkb( curveWkbLen );
+    memcpy( wkb, ringWkb, curveWkbLen );
+    wkb += curveWkbLen;
   }
-
   return geomPtr;
 }
 
-void QgsCurvePolygonV2::addRingWkb( unsigned char** wkb, const QgsCurveV2* ring ) const
+QString QgsCurvePolygonV2::asWkt( int precision ) const
 {
-  if ( !ring )
-  {
-    return;
-  }
-
-  int ringWkbSize = 0;
-  unsigned char* ringWkb = ring->asWkb( ringWkbSize );
-  if ( ringWkbSize > 5 )
-  {
-    memcpy( *wkb, ringWkb + 5, ringWkbSize - 5 );
-    *wkb += ringWkbSize;
-  }
-  delete[] ringWkb;
-}
-
-int QgsCurvePolygonV2::wkbSize() const
-{
-  int size = 0;
+  QString wkt = wktTypeStr() + " (";
   if ( mExteriorRing )
   {
-    size += mExteriorRing->wkbSize();
+    QString childWkt = mExteriorRing->asWkt( precision );
+    if ( dynamic_cast<QgsLineStringV2*>( mExteriorRing ) )
+    {
+      // Type names of linear geometries are omitted
+      childWkt = childWkt.mid( childWkt.indexOf( "(" ) );
+    }
+    wkt += childWkt + ",";
   }
-  QList<QgsCurveV2*>::const_iterator ringIt = mInteriorRings.constBegin();
-  for ( ; ringIt != mInteriorRings.constEnd(); ++ringIt )
+  foreach ( const QgsCurveV2* curve, mInteriorRings )
   {
-    size += ( *ringIt )->wkbSize();
+    QString childWkt = curve->asWkt( precision );
+    if ( dynamic_cast<const QgsLineStringV2*>( curve ) )
+    {
+      // Type names of linear geometries are omitted
+      childWkt = childWkt.mid( childWkt.indexOf( "(" ) );
+    }
+    wkt += childWkt + ",";
   }
+  if ( wkt.endsWith( "," ) )
+  {
+    wkt.chop( 1 ); // Remove last ","
+  }
+  wkt += ")";
+  return wkt;
+}
 
-  size += ( 1 + 2 * sizeof( int ) );
-  return size;
+QDomElement QgsCurvePolygonV2::asGML2( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  // GML2 does not support curves
+  QDomElement elemPolygon = doc.createElementNS( ns, "Polygon" );
+  QDomElement elemOuterBoundaryIs = doc.createElementNS( ns, "outerBoundaryIs" );
+  QgsLineStringV2* exteriorLineString = exteriorRing()->curveToLine();
+  elemOuterBoundaryIs.appendChild( exteriorLineString->asGML2( doc, precision, ns ) );
+  delete exteriorLineString;
+  elemPolygon.appendChild( elemOuterBoundaryIs );
+  QDomElement elemInnerBoundaryIs = doc.createElementNS( ns, "innerBoundaryIs" );
+  for ( int i = 0, n = numInteriorRings(); i < n; ++i )
+  {
+    QgsLineStringV2* interiorLineString = interiorRing( i )->curveToLine();
+    elemInnerBoundaryIs.appendChild( interiorLineString->asGML2( doc, precision, ns ) );
+    delete interiorLineString;
+  }
+  elemPolygon.appendChild( elemInnerBoundaryIs );
+  return elemPolygon;
+}
+
+QDomElement QgsCurvePolygonV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
+{
+  QDomElement elemCurvePolygon = doc.createElementNS( ns, "Polygon" );
+  QDomElement elemExterior = doc.createElementNS( ns, "exterior" );
+  elemExterior.appendChild( exteriorRing()->asGML2( doc, precision, ns ) );
+  elemCurvePolygon.appendChild( elemExterior );
+  QDomElement elemInterior = doc.createElementNS( ns, "interior" );
+  for ( int i = 0, n = numInteriorRings(); i < n; ++i )
+  {
+    elemInterior.appendChild( interiorRing( i )->asGML2( doc, precision, ns ) );
+  }
+  elemCurvePolygon.appendChild( elemInterior );
+  return elemCurvePolygon;
+}
+
+QString QgsCurvePolygonV2::asJSON( int precision ) const
+{
+  // GeoJSON does not support curves
+  QString json = "{\"type\": \"Polygon\", \"coordinates\": [";
+
+  QgsLineStringV2* exteriorLineString = exteriorRing()->curveToLine();
+  QList<QgsPointV2> exteriorPts;
+  exteriorLineString->points( exteriorPts );
+  json += pointsToJSON( exteriorPts, precision ) + ", ";
+  delete exteriorLineString;
+
+  for ( int i = 0, n = numInteriorRings(); i < n; ++i )
+  {
+    QgsLineStringV2* interiorLineString = interiorRing( i )->curveToLine();
+    QList<QgsPointV2> interiorPts;
+    interiorLineString->points( interiorPts );
+    json += pointsToJSON( interiorPts, precision ) + ", ";
+    delete interiorLineString;
+  }
+  if ( json.endsWith( ", " ) )
+  {
+    json.chop( 2 ); // Remove last ", "
+  }
+  json += "] }";
+  return json;
 }
 
 double QgsCurvePolygonV2::area() const
@@ -226,12 +322,17 @@ QgsPointV2 QgsCurvePolygonV2::pointOnSurface() const
   return QgsPointV2( 0, 0 );
 }
 
-void QgsCurvePolygonV2::removeRings()
+QgsPolygonV2* QgsCurvePolygonV2::surfaceToPolygon() const
 {
-  delete mExteriorRing;
-  mExteriorRing = 0;
-  qDeleteAll( mInteriorRings );
-  mInteriorRings.clear();
+  QgsPolygonV2* polygon = new QgsPolygonV2();
+  polygon->setExteriorRing( exteriorRing()->curveToLine() );
+  QList<QgsCurveV2*> interiors;
+  for ( int i = 0, n = numInteriorRings(); i < n; ++i )
+  {
+    interiors.append( interiorRing( i )->curveToLine() );
+  }
+  polygon->setInteriorRings( interiors );
+  return polygon;
 }
 
 QgsPolygonV2* QgsCurvePolygonV2::toPolygon() const

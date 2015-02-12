@@ -30,14 +30,18 @@ class QgsLineStringV2: public QgsCurveV2
 
     virtual QString geometryType() const { return "LineString"; }
     virtual int dimension() const { return 1; }
-    virtual QgsAbstractGeometryV2* clone() const;
+    virtual QgsLineStringV2* clone() const;
+    virtual void clear();
 
-    virtual void fromWkb( const unsigned char* wkb );
-    virtual void fromWkt( const QString& wkt );
+    virtual bool fromWkb( const unsigned char* wkb );
+    virtual bool fromWkt( const QString& wkt );
 
-    virtual QString asWkt( int precision = 17 ) const;
-    virtual unsigned char* asWkb( int& binarySize ) const;
-    virtual int wkbSize() const;
+    int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
     //curve interface
     virtual double length() const;
@@ -72,8 +76,6 @@ class QgsLineStringV2: public QgsCurveV2
     bool pointAt( int i, QgsPointV2& vertex ) const;
 
   private:
-    void importVerticesFromWkb( const QgsConstWkbPtr& wkb );
-
     QPolygonF mCoords;
     QVector<double> mZ;
     QVector<double> mM;

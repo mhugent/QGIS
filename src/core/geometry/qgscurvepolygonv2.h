@@ -32,22 +32,27 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 
     virtual QString geometryType() const { return "CurvePolygon"; }
     virtual int dimension() const { return 2; }
-    virtual QgsAbstractGeometryV2* clone() const;
+    virtual QgsCurvePolygonV2* clone() const;
+    void clear();
 
-    virtual void fromWkb( const unsigned char* wkb );
-    virtual void fromWkt( const QString& wkt );
 
     virtual QgsRectangle calculateBoundingBox() const;
+    virtual bool fromWkb( const unsigned char* wkb );
+    virtual bool fromWkt( const QString& wkt );
 
-    virtual QString asWkt( int precision = 17 ) const;
-    virtual unsigned char* asWkb( int& binarySize ) const;
-    virtual int wkbSize() const;
+    int wkbSize() const;
+    unsigned char* asWkb( int& binarySize ) const;
+    QString asWkt( int precision = 17 ) const;
+    QDomElement asGML2( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
+    QString asJSON( int precision = 17 ) const;
 
     //surface interface
     virtual double area() const;
     virtual double perimeter() const;
     QgsPointV2 centroid() const;
     QgsPointV2 pointOnSurface() const;
+    QgsPolygonV2* surfaceToPolygon() const;
 
     //curve polygon interface
     int numInteriorRings() const;
@@ -79,9 +84,6 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 
     QgsCurveV2* mExteriorRing;
     QList<QgsCurveV2*> mInteriorRings;
-
-    void removeRings();
-    void addRingWkb( unsigned char** wkb, const QgsCurveV2* ring ) const;
 
     /**Returns two vertices in case of start/endpoint*/
     QList< QgsVertexId > ringVertexIds( const QgsVertexId& id ) const;
