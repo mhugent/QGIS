@@ -29,12 +29,12 @@ struct QgsVertexId;
 
 class QgsGeometryRubberBand: public QgsMapCanvasItem
 {
-    public:
-        enum IconType
-        {
-        /**
-       * No icon is used
-       */
+  public:
+    enum IconType
+    {
+      /**
+      * No icon is used
+      */
       ICON_NONE,
       /**
        * A cross is used to highlight points (+)
@@ -58,32 +58,32 @@ class QgsGeometryRubberBand: public QgsMapCanvasItem
       ICON_FULL_BOX
     };
 
-        QgsGeometryRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geomType = QGis::Line );
-        ~QgsGeometryRubberBand();
+    QgsGeometryRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geomType = QGis::Line );
+    ~QgsGeometryRubberBand();
 
-        /**Sets geometry (takes ownership)*/
-        void setGeometry( QgsAbstractGeometryV2* geom );
-        const QgsAbstractGeometryV2* geometry();
+    /**Sets geometry (takes ownership)*/
+    void setGeometry( QgsAbstractGeometryV2* geom );
+    const QgsAbstractGeometryV2* geometry() { return mGeometry; }
 
-        void moveVertex( const QgsVertexId& id, const QgsPointV2& newPos );
+    void moveVertex( const QgsVertexId& id, const QgsPointV2& newPos );
 
-        void setFillColor( const QColor& c );
-        void setOutlineColor( const QColor& c );
-        void setLineStyle( Qt::PenStyle penStyle );
-        void setBrushStyle( Qt::BrushStyle brushStyle );
+    void setFillColor( const QColor& c );
+    void setOutlineColor( const QColor& c );
+    void setLineStyle( Qt::PenStyle penStyle );
+    void setBrushStyle( Qt::BrushStyle brushStyle );
 
-    protected:
-        virtual void paint( QPainter* painter );
+  protected:
+    virtual void paint( QPainter* painter );
 
-    private:
-        QgsAbstractGeometryV2* mGeometry;
-        QBrush mBrush;
-        QPen mPen;
-        int mIconSize;
-        IconType mIconType;
-        QGis::GeometryType mGeometryType;
+  private:
+    QgsAbstractGeometryV2* mGeometry;
+    QBrush mBrush;
+    QPen mPen;
+    int mIconSize;
+    IconType mIconType;
+    QGis::GeometryType mGeometryType;
 
-        void drawVertex( QPainter* p, double x, double y );
+    void drawVertex( QPainter* p, double x, double y );
 };
 
 #endif // QGSGEOMETRYRUBBERBAND_H

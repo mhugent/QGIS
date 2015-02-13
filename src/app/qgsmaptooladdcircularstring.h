@@ -30,6 +30,9 @@ class QgsMapToolAddCircularString: public QgsMapToolCapture
     void canvasReleaseEvent( QMouseEvent * e );
     void canvasMoveEvent( QMouseEvent * e );
 
+    void keyPressEvent( QKeyEvent* e );
+    void keyReleaseEvent( QKeyEvent* e );
+
     void deactivate();
 
   private slots:
@@ -41,6 +44,14 @@ class QgsMapToolAddCircularString: public QgsMapToolCapture
     QgsMapToolCapture* mParentTool;
     QList< QgsPointV2 > mPoints;
     QgsGeometryRubberBand* mRubberBand;
+
+    //center point rubber band
+    bool mShowCenterPointRubberBand;
+    QgsGeometryRubberBand* mCenterPointRubberBand;
+
+    void createCenterPointRubberBand();
+    void updateCenterPointRubberBand( const QgsPointV2& pt );
+    void removeCenterPointRubberBand();
 };
 
 #endif // QGSMAPTOOLADDCIRCULARSTRING_H
