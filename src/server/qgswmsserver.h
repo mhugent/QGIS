@@ -134,18 +134,12 @@ class QgsWMSServer: public QgsOWSServer
     set to the layer and style names according to the SLD
     @return 0 in case of success*/
     int initializeSLDParser( QStringList& layersList, QStringList& stylesList );
-    /**Calculates the location of a feature info point in layer coordinates
-     @param i pixel x-coordinate
-    @param j pixel y-coordinate
-    @param layerCoords calculated layer coordinates are assigned to this point
-    @return 0 in case of success*/
-    int infoPointToLayerCoordinates( int i, int j, QgsPoint* layerCoords, QgsMapRenderer* mapRender,
-                                     QgsMapLayer* layer ) const;
+    static QgsPoint infoPointToMapCoordinates( int i, int j, QgsMapRenderer* mapRenderer );
     /**Appends feature info xml for the layer to the layer element of the feature info dom document
     @param featureBBox the bounding box of the selected features in output CRS
     @return 0 in case of success*/
     int featureInfoFromVectorLayer( QgsVectorLayer* layer,
-                                    const QgsPoint* infoPoint,
+                                    const QgsPoint& infoPoint,
                                     int nFeatures,
                                     QDomDocument& infoDocument,
                                     QDomElement& layerElement,
@@ -258,6 +252,9 @@ class QgsWMSServer: public QgsOWSServer
 
     /** Return precision to use for GetFeatureInfo request */
     int getWMSPrecision( int defaultValue ) const;
+
+    /**Gets layer search rectangle (depending on request parameter, layer type, map and layer crs)*/
+    QgsRectangle featureInfoSearchRect( QgsVectorLayer* ml, QgsMapRenderer* mr, const QgsRenderContext& rct, const QgsPoint& infoPoint ) const;
 };
 
 #endif
