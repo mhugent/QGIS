@@ -3132,7 +3132,7 @@ QgsRectangle QgsWMSServer::featureInfoSearchRect( QgsVectorLayer* ml, QgsMapRend
   double mapUnitTolerance = 0.0;
   if ( ml->geometryType() == QGis::Polygon )
   {
-    QMap<QString, QString>::const_iterator tolIt = mParameters.find( "POLYGON_TOLERANCE" );
+    QMap<QString, QString>::const_iterator tolIt = mParameters.find( "FI_POLYGON_TOLERANCE" );
     if ( tolIt != mParameters.constEnd() )
     {
       mapUnitTolerance = tolIt.value().toInt() * rct.mapToPixel().mapUnitsPerPixel();
@@ -3144,7 +3144,7 @@ QgsRectangle QgsWMSServer::featureInfoSearchRect( QgsVectorLayer* ml, QgsMapRend
   }
   else if ( ml->geometryType() == QGis::Line )
   {
-    QMap<QString, QString>::const_iterator tolIt = mParameters.find( "LINE_TOLERANCE" );
+    QMap<QString, QString>::const_iterator tolIt = mParameters.find( "FI_LINE_TOLERANCE" );
     if ( tolIt != mParameters.constEnd() )
     {
       mapUnitTolerance = tolIt.value().toInt() * rct.mapToPixel().mapUnitsPerPixel();
@@ -3156,7 +3156,7 @@ QgsRectangle QgsWMSServer::featureInfoSearchRect( QgsVectorLayer* ml, QgsMapRend
   }
   else //points
   {
-    QMap<QString, QString>::const_iterator tolIt = mParameters.find( "POINT_TOLERANCE" );
+    QMap<QString, QString>::const_iterator tolIt = mParameters.find( "FI_POINT_TOLERANCE" );
     if ( tolIt != mParameters.constEnd() )
     {
       mapUnitTolerance = tolIt.value().toInt() * rct.mapToPixel().mapUnitsPerPixel();
