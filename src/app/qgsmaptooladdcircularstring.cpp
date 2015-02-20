@@ -1,5 +1,5 @@
 /***************************************************************************
-    qgsmaptooladdcirularstring.h  -  map tool for adding circular strings
+    qgsmaptooladdcircularstring.h  -  map tool for adding circular strings
     ---------------------
     begin                : December 2014
     copyright            : (C) 2014 by Marco Hugentobler

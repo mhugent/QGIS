@@ -301,3 +301,29 @@ double QgsGeometryUtils::sweepAngle( double centerX, double centerY, double x1, 
     }
   }
 }
+
+bool QgsGeometryUtils::segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& p2, QgsPointV2& result,
+                                        double radius, bool left )
+{
+  QgsPointV2 midPoint(( p1.x() + p2.x() ) / 2.0, ( p1.y() + p2.y() ) / 2.0 );
+  double midDist = sqrt( sqrDistance2D( p1, midPoint ) );
+  if ( radius < midDist )
+  {
+    return false;
+  }
+  double centerMidDist = sqrt( radius * radius - midDist * midDist );
+  double dist = radius - centerMidDist;
+
+  double midDx = midPoint.x() - p1.x();
+  double midDy = midPoint.y() - p1.y();
+
+  if ( left )
+  {
+    result = pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() - midDy, midPoint.y() + midDx ), dist );
+  }
+  else //right
+  {
+    result = pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() + midDy, midPoint.y() - midDx ), dist );
+  }
+  return true;
+}

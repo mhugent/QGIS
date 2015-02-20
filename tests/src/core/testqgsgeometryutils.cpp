@@ -27,6 +27,8 @@ class TestQgsGeometryUtils: public QObject
     void testAngleOnCircle();
     void testLeftOfLine_data();
     void testLeftOfLine();
+    void testSegmentMidPoint_data();
+    void testSegmentMidPoint();
 };
 
 void TestQgsGeometryUtils::testLeftOfLine_data()
@@ -104,6 +106,41 @@ void TestQgsGeometryUtils::testAngleOnCircle()
 
   QCOMPARE( QgsGeometryUtils::angleOnCircle( angle, angle1, angle2, angle3 ), expectedResult );
 }
+
+void TestQgsGeometryUtils::testSegmentMidPoint_data()
+{
+  QTest::addColumn<double>( "pt1x" );
+  QTest::addColumn<double>( "pt1y" );
+  QTest::addColumn<double>( "pt2x" );
+  QTest::addColumn<double>( "pt2y" );
+  QTest::addColumn<double>( "radius" );
+  QTest::addColumn<bool>( "left" );
+  QTest::addColumn<double>( "expectedX" );
+  QTest::addColumn<double>( "expectedY" );
+
+  QTest::newRow( "testSegmentMidPoint1" ) << 0.0 << 0.0 << 1.0 << 0.0 << 0.5 << true << 0.5 << 0.5;
+}
+
+void TestQgsGeometryUtils::testSegmentMidPoint()
+{
+  QFETCH( double, pt1x );
+  QFETCH( double, pt1y );
+  QFETCH( double, pt2x );
+  QFETCH( double, pt2y );
+  QFETCH( double, radius );
+  QFETCH( bool, left );
+  QFETCH( double, expectedX );
+  QFETCH( double, expectedY );
+
+  QgsPointV2 midPoint;
+  bool ok = QgsGeometryUtils::segmentMidPoint( QgsPointV2( pt1x, pt1y ), QgsPointV2( pt2x, pt2y ),
+            midPoint, radius, left );
+
+  QVERIFY( ok );
+  QVERIFY( qgsDoubleNear( midPoint.x(), expectedX ) );
+  QVERIFY( qgsDoubleNear( midPoint.y(), expectedY ) );
+}
+
 
 QTEST_MAIN( TestQgsGeometryUtils )
 #include "moc_testqgsgeometryutils.cxx"

@@ -229,6 +229,7 @@
 // Map tools
 //
 #include "qgsmaptooladdcircularstring.h"
+#include "qgsmaptoolcircularstringradius.h"
 #include "qgsmaptooladdfeature.h"
 #include "qgsmaptooladdpart.h"
 #include "qgsmaptooladdring.h"
@@ -894,6 +895,7 @@ QgisApp::~QgisApp()
 #endif
   delete mMapTools.mAddFeature;
   delete mMapTools.mAddCircularString;
+  delete mMapTools.mCircularStringRadius;
   delete mMapTools.mAddPart;
   delete mMapTools.mAddRing;
   delete mMapTools.mFillRing;
@@ -1080,6 +1082,7 @@ void QgisApp::createActions()
   connect( mActionPasteStyle, SIGNAL( triggered() ), this, SLOT( pasteStyle() ) );
   connect( mActionAddFeature, SIGNAL( triggered() ), this, SLOT( addFeature() ) );
   connect( mActionAddCircularString, SIGNAL( triggered() ), this, SLOT( addCircularString() ) );
+  connect( mActionCircularStringRadius, SIGNAL( triggered() ), this, SLOT( circularStringRadius() ) );
   connect( mActionMoveFeature, SIGNAL( triggered() ), this, SLOT( moveFeature() ) );
   connect( mActionRotateFeature, SIGNAL( triggered() ), this, SLOT( rotateFeature() ) );
 
@@ -1349,6 +1352,7 @@ void QgisApp::createActionGroups()
   mMapToolGroup->addAction( mActionMeasureArea );
   mMapToolGroup->addAction( mActionMeasureAngle );
   mMapToolGroup->addAction( mActionAddCircularString );
+  mMapToolGroup->addAction( mActionCircularStringRadius );
   mMapToolGroup->addAction( mActionAddFeature );
   mMapToolGroup->addAction( mActionMoveFeature );
   mMapToolGroup->addAction( mActionRotateFeature );
@@ -2137,6 +2141,8 @@ void QgisApp::createCanvasTools()
   mMapTools.mAddFeature->setAction( mActionAddFeature );
   mMapTools.mAddCircularString = new QgsMapToolAddCircularString( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
   mMapTools.mAddCircularString->setAction( mActionAddCircularString );
+  mMapTools.mCircularStringRadius = new QgsMapToolCircularStringRadius( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
+  mMapTools.mCircularStringRadius->setAction( mActionCircularStringRadius );
   mMapTools.mMoveFeature = new QgsMapToolMoveFeature( mMapCanvas );
   mMapTools.mMoveFeature->setAction( mActionMoveFeature );
   mMapTools.mRotateFeature = new QgsMapToolRotateFeature( mMapCanvas );
@@ -5713,6 +5719,11 @@ void QgisApp::addFeature()
 void QgisApp::addCircularString()
 {
   mMapCanvas->setMapTool( mMapTools.mAddCircularString );
+}
+
+void QgisApp::circularStringRadius()
+{
+  mMapCanvas->setMapTool( mMapTools.mCircularStringRadius );
 }
 
 void QgisApp::selectFeatures()

@@ -47,6 +47,7 @@ SET(QGIS_APP_SRCS
   qgsguivectorlayertools.cpp
 
   qgsmaptooladdcircularstring.cpp
+  qgsmaptoolcircularstringradius.cpp
   qgsmaptooladdfeature.cpp
   qgsmaptooladdpart.cpp
   qgsmaptooladdring.cpp
@@ -201,6 +202,7 @@ SET (QGIS_APP_MOC_HDRS
   qgsmaptooladdfeature.h
   qgsmaptoolcapture.h
   qgsmaptooladdcircularstring.h
+  qgsmaptoolcircularstringradius.h
   qgsmaptooladdpart.h
   qgsmaptooladdring.h
   qgsmaptoolfillring.h

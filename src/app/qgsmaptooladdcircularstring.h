@@ -1,5 +1,5 @@
 /***************************************************************************
-    qgsmaptooladdcirularstring.h  -  map tool for adding circular strings
+    qgsmaptooladdcircularstring.h  -  map tool for adding circular strings
     ---------------------
     begin                : December 2014
     copyright            : (C) 2014 by Marco Hugentobler
@@ -27,8 +27,8 @@ class QgsMapToolAddCircularString: public QgsMapToolCapture
     QgsMapToolAddCircularString( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode = CaptureLine );
     ~QgsMapToolAddCircularString();
 
-    void canvasReleaseEvent( QMouseEvent * e );
-    void canvasMoveEvent( QMouseEvent * e );
+    virtual void canvasReleaseEvent( QMouseEvent * e );
+    virtual void canvasMoveEvent( QMouseEvent * e );
 
     void keyPressEvent( QKeyEvent* e );
     void keyReleaseEvent( QKeyEvent* e );
@@ -38,7 +38,7 @@ class QgsMapToolAddCircularString: public QgsMapToolCapture
   private slots:
     void setParentTool( QgsMapTool* newTool, QgsMapTool* oldTool );
 
-  private:
+  protected:
     QgsMapToolAddCircularString( QgsMapCanvas* canvas = 0 ); //forbidden
 
     QgsMapToolCapture* mParentTool;

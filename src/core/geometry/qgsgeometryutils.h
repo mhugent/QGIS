@@ -56,6 +56,9 @@ class QgsGeometryUtils
     /**Calculates angle of a circular string part defined by pt1, pt2, pt3*/
     static double sweepAngle( double centerX, double centerY, double x1, double y1, double x2, double y2, double x3, double y3 );
 
+    /**calculates midpoint on circle passing through p1 and p2 with given radius (left side or right side*/
+    static bool segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& p2, QgsPointV2& result, double radius, bool left );
+
     enum componentType
     {
       VERTEX,

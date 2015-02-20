@@ -965,6 +965,8 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     void addFeature();
     //! activates the add circular string tool
     void addCircularString();
+    //! activates add circular string by radius tool
+    void circularStringRadius();
     //! activates the move feature tool
     void moveFeature();
     //! activates the offset curve tool
@@ -1427,6 +1429,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
         QgsMapTool* mMeasureAngle;
         QgsMapTool* mAddFeature;
         QgsMapTool* mAddCircularString;
+        QgsMapTool* mCircularStringRadius;
         QgsMapTool* mMoveFeature;
         QgsMapTool* mOffsetCurve;
         QgsMapTool* mReshapeFeatures;
