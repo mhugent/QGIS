@@ -51,7 +51,12 @@ QgsMapToolAddCircularString::~QgsMapToolAddCircularString()
 void QgsMapToolAddCircularString::setParentTool( QgsMapTool* newTool, QgsMapTool* oldTool )
 {
   QgsMapToolCapture* tool = dynamic_cast<QgsMapToolCapture*>( oldTool );
-  if ( tool && newTool == this )
+  QgsMapToolAddCircularString* csTool = dynamic_cast<QgsMapToolAddCircularString*>( oldTool );
+  if ( csTool && newTool == this )
+  {
+    mParentTool = csTool->mParentTool;
+  }
+  else if ( tool && newTool == this )
   {
     mParentTool = tool;
   }

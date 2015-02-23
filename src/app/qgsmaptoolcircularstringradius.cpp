@@ -47,15 +47,12 @@ void QgsMapToolCircularStringRadius::canvasReleaseEvent( QMouseEvent * e )
     {
       //get first point from parent tool if there. Todo: move to upper class
       const QgsCompoundCurveV2* compoundCurve = mParentTool->geometry();
-      if ( compoundCurve )
+      if ( compoundCurve && compoundCurve->nCurves() > 0 )
       {
-        if ( compoundCurve->nCurves() > 0 )
+        const QgsCurveV2* curve = compoundCurve->curveAt( compoundCurve->nCurves() - 1 );
+        if ( curve )
         {
-          const QgsCurveV2* curve = compoundCurve->curveAt( compoundCurve->nCurves() - 1 );
-          if ( curve )
-          {
-            mPoints.append( curve->endPoint() );
-          }
+          mPoints.append( curve->endPoint() );
         }
       }
       else
@@ -76,6 +73,7 @@ void QgsMapToolCircularStringRadius::canvasReleaseEvent( QMouseEvent * e )
 
         //initial radius is distance( tempPoint - mPoints.last ) / 2.0
         mRadius = sqrt( QgsGeometryUtils::sqrDistance2D( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ) ) ) / 2.0;
+        mRadius += mRadius / 10.0;
         recalculateCircularString();
         createRadiusSpinBox();
       }

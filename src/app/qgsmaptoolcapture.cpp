@@ -16,6 +16,7 @@
 #include "qgsmaptoolcapture.h"
 
 #include "qgisapp.h"
+#include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
 #include "qgscursors.h"
 #include "qgscurvepolygonv2.h"
@@ -199,12 +200,6 @@ void QgsMapToolCapture::setCurve( QgsCurveV2* c )
   if ( !mGeometry )
   {
     return;
-  }
-
-  int nCurves = mGeometry->nCurves();
-  if ( nCurves > 0 && mGeometry->curveAt( nCurves - 1 )->geometryType() == "CircularString" )
-  {
-    mGeometry->removeCurve( nCurves - 1 );
   }
 
   mGeometry->addCurve( c );
