@@ -228,8 +228,8 @@
 //
 // Map tools
 //
-#include "qgsmaptooladdcircularstring.h"
 #include "qgsmaptoolcircularstringradius.h"
+#include "qgsmaptoolcircularstringthreepoints.h"
 #include "qgsmaptooladdfeature.h"
 #include "qgsmaptooladdpart.h"
 #include "qgsmaptooladdring.h"
@@ -2139,7 +2139,7 @@ void QgisApp::createCanvasTools()
   mMapTools.mAnnotation->setAction( mActionAnnotation );
   mMapTools.mAddFeature = new QgsMapToolAddFeature( mMapCanvas );
   mMapTools.mAddFeature->setAction( mActionAddFeature );
-  mMapTools.mAddCircularString = new QgsMapToolAddCircularString( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
+  mMapTools.mAddCircularString = new QgsMapToolCircularStringThreePoints( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
   mMapTools.mAddCircularString->setAction( mActionAddCircularString );
   mMapTools.mCircularStringRadius = new QgsMapToolCircularStringRadius( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
   mMapTools.mCircularStringRadius->setAction( mActionCircularStringRadius );

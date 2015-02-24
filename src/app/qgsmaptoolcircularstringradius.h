@@ -1,5 +1,6 @@
 /***************************************************************************
     qgsmaptoolcircularstringradius.h  -  map tool for adding circular strings
+    by two points and radius
     ---------------------
     begin                : Feb 2015
     copyright            : (C) 2015 by Marco Hugentobler
@@ -40,7 +41,6 @@ class QgsMapToolCircularStringRadius: public QgsMapToolAddCircularString
     //is circle left or right from line connecting the points?
     bool mLeft;
     QDoubleSpinBox* mRadiusSpinBox;
-    QgsGeometryRubberBand* mRubberBand;
 
     //recalculate circular string and rubber band depending on mRadius/mLeft and endpoints
     void recalculateCircularString();

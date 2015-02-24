@@ -26,7 +26,7 @@
 
 QgsMapToolCircularStringRadius::QgsMapToolCircularStringRadius( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode ) :
     QgsMapToolAddCircularString( parentTool, canvas, mode ), mTemporaryEndPointX( 0.0 ), mTemporaryEndPointY( 0.0 ), mRadiusMode( false ), mRadius( 0.0 ), mLeft( true ),
-    mRadiusSpinBox( 0 ), mRubberBand( 0 )
+    mRadiusSpinBox( 0 )
 {
 
 }
@@ -137,7 +137,7 @@ void QgsMapToolCircularStringRadius::recalculateCircularString()
   QgsCircularStringV2* cString = new QgsCircularStringV2();
   cString->setPoints( rubberBandPoints );
   delete mRubberBand;
-  mRubberBand = new QgsGeometryRubberBand( mCanvas );
+  mRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
   mRubberBand->setGeometry( cString );
   mRubberBand->show();
 }

@@ -48,6 +48,7 @@ SET(QGIS_APP_SRCS
 
   qgsmaptooladdcircularstring.cpp
   qgsmaptoolcircularstringradius.cpp
+  qgsmaptoolcircularstringthreepoints.cpp
   qgsmaptooladdfeature.cpp
   qgsmaptooladdpart.cpp
   qgsmaptooladdring.cpp
