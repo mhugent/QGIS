@@ -214,5 +214,5 @@ bool QgsPointV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
 
 void QgsPointV2::transform( const QTransform& t )
 {
-  //todo...
+  t.map( mX, mY, &mX, &mY );
 }
