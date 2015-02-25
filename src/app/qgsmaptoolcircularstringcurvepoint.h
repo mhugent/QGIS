@@ -1,6 +1,6 @@
 /***************************************************************************
-    qgsmaptoolcircularstringthreepoints.h  -  map tool for adding circular
-    strings with three points per segment
+    qgsmaptoolcircularstringcurvepoint.h  -  map tool for adding circular
+    strings by start / curve / endpoint
     ---------------------
     begin                : Feb 2015
     copyright            : (C) 2015 by Marco Hugentobler
@@ -14,19 +14,19 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef QGSMAPTOOLCIRCULARSTRINGTHREEPOINTS_H
-#define QGSMAPTOOLCIRCULARSTRINGTHREEPOINTS_H
+#ifndef QGSMAPTOOLCIRCULARSTRINGCURVEPOINT_H
+#define QGSMAPTOOLCIRCULARSTRINGCURVEPOINT_H
 
 #include "qgsmaptooladdcircularstring.h"
 
-class QgsMapToolCircularStringThreePoints: public QgsMapToolAddCircularString
+class QgsMapToolCircularStringCurvePoint: public QgsMapToolAddCircularString
 {
-    public:
-        QgsMapToolCircularStringThreePoints( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode = CaptureLine );
-        ~QgsMapToolCircularStringThreePoints();
+  public:
+    QgsMapToolCircularStringCurvePoint( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode = CaptureLine );
+    ~QgsMapToolCircularStringCurvePoint();
 
-        void canvasReleaseEvent( QMouseEvent * e );
-        void canvasMoveEvent( QMouseEvent * e );
+    void canvasReleaseEvent( QMouseEvent * e );
+    void canvasMoveEvent( QMouseEvent * e );
 };
 
-#endif // QGSMAPTOOLCIRCULARSTRINGTHREEPOINTS_H
+#endif // QGSMAPTOOLCIRCULARSTRINGCURVEPOINT_H

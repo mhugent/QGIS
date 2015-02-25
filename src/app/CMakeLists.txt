@@ -47,8 +47,8 @@ SET(QGIS_APP_SRCS
   qgsguivectorlayertools.cpp
 
   qgsmaptooladdcircularstring.cpp
+  qgsmaptoolcircularstringcurvepoint.cpp
   qgsmaptoolcircularstringradius.cpp
-  qgsmaptoolcircularstringthreepoints.cpp
   qgsmaptooladdfeature.cpp
   qgsmaptooladdpart.cpp
   qgsmaptooladdring.cpp

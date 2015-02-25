@@ -1,21 +1,21 @@
-#include "qgsmaptoolcircularstringthreepoints.h"
+#include "qgsmaptoolcircularstringcurvepoint.h"
 #include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
 #include "qgsgeometryrubberband.h"
 #include "qgspointv2.h"
 #include <QMouseEvent>
 
-QgsMapToolCircularStringThreePoints::QgsMapToolCircularStringThreePoints( QgsMapToolCapture* parentTool,
+QgsMapToolCircularStringCurvePoint::QgsMapToolCircularStringCurvePoint( QgsMapToolCapture* parentTool,
     QgsMapCanvas* canvas, CaptureMode mode ): QgsMapToolAddCircularString( parentTool, canvas, mode )
 {
 
 }
 
-QgsMapToolCircularStringThreePoints::~QgsMapToolCircularStringThreePoints()
+QgsMapToolCircularStringCurvePoint::~QgsMapToolCircularStringCurvePoint()
 {
 }
 
-void QgsMapToolCircularStringThreePoints::canvasReleaseEvent( QMouseEvent * e )
+void QgsMapToolCircularStringCurvePoint::canvasReleaseEvent( QMouseEvent * e )
 {
   QgsPoint layerPoint;
   QgsPoint mapPoint;
@@ -73,7 +73,7 @@ void QgsMapToolCircularStringThreePoints::canvasReleaseEvent( QMouseEvent * e )
   }
 }
 
-void QgsMapToolCircularStringThreePoints::canvasMoveEvent( QMouseEvent * e )
+void QgsMapToolCircularStringCurvePoint::canvasMoveEvent( QMouseEvent * e )
 {
   if ( mRubberBand )
   {

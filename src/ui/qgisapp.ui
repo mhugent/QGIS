@@ -330,7 +330,7 @@
    <addaction name="mActionToggleEditing"/>
    <addaction name="mActionSaveLayerEdits"/>
    <addaction name="mActionAddFeature"/>
-   <addaction name="mActionAddCircularString"/>
+   <addaction name="mActionCircularStringCurvePoint"/>
    <addaction name="mActionCircularStringRadius"/>
    <addaction name="mActionMoveFeature"/>
    <addaction name="mActionNodeTool"/>
@@ -2236,12 +2236,12 @@ Acts on currently active editable layer</string>
     <string>Set Scale Visibility of Layer(s)</string>
    </property>
   </action>
-  <action name="mActionAddCircularString">
+  <action name="mActionCircularStringCurvePoint">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Add circular string</string>
+    <string>Add circular string by curve point</string>
    </property>
    <property name="toolTip">
     <string>Add circular string</string>

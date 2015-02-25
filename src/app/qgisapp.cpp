@@ -228,8 +228,8 @@
 //
 // Map tools
 //
+#include "qgsmaptoolcircularstringcurvepoint.h"
 #include "qgsmaptoolcircularstringradius.h"
-#include "qgsmaptoolcircularstringthreepoints.h"
 #include "qgsmaptooladdfeature.h"
 #include "qgsmaptooladdpart.h"
 #include "qgsmaptooladdring.h"
@@ -894,7 +894,7 @@ QgisApp::~QgisApp()
   delete mMapTools.mTouch;
 #endif
   delete mMapTools.mAddFeature;
-  delete mMapTools.mAddCircularString;
+  delete mMapTools.mCircularStringCurvePoint;
   delete mMapTools.mCircularStringRadius;
   delete mMapTools.mAddPart;
   delete mMapTools.mAddRing;
@@ -1081,7 +1081,7 @@ void QgisApp::createActions()
   connect( mActionCopyStyle, SIGNAL( triggered() ), this, SLOT( copyStyle() ) );
   connect( mActionPasteStyle, SIGNAL( triggered() ), this, SLOT( pasteStyle() ) );
   connect( mActionAddFeature, SIGNAL( triggered() ), this, SLOT( addFeature() ) );
-  connect( mActionAddCircularString, SIGNAL( triggered() ), this, SLOT( addCircularString() ) );
+  connect( mActionCircularStringCurvePoint, SIGNAL( triggered() ), this, SLOT( circularStringCurvePoint() ) );
   connect( mActionCircularStringRadius, SIGNAL( triggered() ), this, SLOT( circularStringRadius() ) );
   connect( mActionMoveFeature, SIGNAL( triggered() ), this, SLOT( moveFeature() ) );
   connect( mActionRotateFeature, SIGNAL( triggered() ), this, SLOT( rotateFeature() ) );
@@ -1351,7 +1351,7 @@ void QgisApp::createActionGroups()
   mMapToolGroup->addAction( mActionMeasure );
   mMapToolGroup->addAction( mActionMeasureArea );
   mMapToolGroup->addAction( mActionMeasureAngle );
-  mMapToolGroup->addAction( mActionAddCircularString );
+  mMapToolGroup->addAction( mActionCircularStringCurvePoint );
   mMapToolGroup->addAction( mActionCircularStringRadius );
   mMapToolGroup->addAction( mActionAddFeature );
   mMapToolGroup->addAction( mActionMoveFeature );
@@ -2139,8 +2139,8 @@ void QgisApp::createCanvasTools()
   mMapTools.mAnnotation->setAction( mActionAnnotation );
   mMapTools.mAddFeature = new QgsMapToolAddFeature( mMapCanvas );
   mMapTools.mAddFeature->setAction( mActionAddFeature );
-  mMapTools.mAddCircularString = new QgsMapToolCircularStringThreePoints( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
-  mMapTools.mAddCircularString->setAction( mActionAddCircularString );
+  mMapTools.mCircularStringCurvePoint = new QgsMapToolCircularStringCurvePoint( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
+  mMapTools.mCircularStringCurvePoint->setAction( mActionCircularStringCurvePoint );
   mMapTools.mCircularStringRadius = new QgsMapToolCircularStringRadius( dynamic_cast<QgsMapToolAddFeature*>( mMapTools.mAddFeature ), mMapCanvas );
   mMapTools.mCircularStringRadius->setAction( mActionCircularStringRadius );
   mMapTools.mMoveFeature = new QgsMapToolMoveFeature( mMapCanvas );
@@ -5716,9 +5716,9 @@ void QgisApp::addFeature()
   mMapCanvas->setMapTool( mMapTools.mAddFeature );
 }
 
-void QgisApp::addCircularString()
+void QgisApp::circularStringCurvePoint()
 {
-  mMapCanvas->setMapTool( mMapTools.mAddCircularString );
+  mMapCanvas->setMapTool( mMapTools.mCircularStringCurvePoint );
 }
 
 void QgisApp::circularStringRadius()
