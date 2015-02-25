@@ -419,7 +419,7 @@ QgsPoint QgsGeometry::vertexAt( int atVertex )
 
   QgsVertexId vId;
   vertexIdFromVertexNr( atVertex, vId );
-  QgsPointV2 pt = d->geometry->pointAt( vId );
+  QgsPointV2 pt = d->geometry->vertexAt( vId );
   return QgsPoint( pt.x(), pt.y() );
 }
 

@@ -120,7 +120,7 @@ void QgsMapToolAddCircularString::createCenterPointRubberBand()
     if ( rubberBandGeom )
     {
       QgsVertexId idx; idx.part = 0; idx.ring = 0; idx.vertex = mPoints.size();
-      QgsPointV2 pt = rubberBandGeom->pointAt( idx );
+      QgsPointV2 pt = rubberBandGeom->vertexAt( idx );
       updateCenterPointRubberBand( pt );
     }
   }

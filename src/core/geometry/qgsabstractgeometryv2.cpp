@@ -95,40 +95,27 @@ QgsRectangle QgsAbstractGeometryV2::calculateBoundingBox() const
   double xmax = -std::numeric_limits<double>::max();
   double ymax = -std::numeric_limits<double>::max();
 
-  QList< QList< QList< QgsPointV2 > > > coordinates;
-  coordinateSequence( coordinates );
+  QgsVertexId id;
+  QgsPointV2 vertex;
   double x, y;
-
-  QList< QList< QList< QgsPointV2 > > >::const_iterator fIt = coordinates.constBegin();
-  for ( ; fIt != coordinates.constEnd(); ++fIt )
+  while ( nextVertex( id, vertex ) )
   {
-    const QList< QList< QgsPointV2 > >& feature = *fIt;
-    QList< QList< QgsPointV2 > >::const_iterator ringIt = feature.constBegin();
-    for ( ; ringIt != feature.constEnd(); ++ringIt )
-    {
-      const QList< QgsPointV2 >& ring = *ringIt;
-      QList< QgsPointV2 >::const_iterator ringIt = ring.constBegin();
-      for ( ; ringIt != ring.constEnd(); ++ringIt )
-      {
-        x = ringIt->x();
-        y = ringIt->y();
-
-        if ( x < xmin )
-          xmin = x;
-        if ( x > xmax )
-          xmax = x;
-        if ( y < ymin )
-          ymin = y;
-        if ( y > ymax )
-          ymax = y;
-      }
-    }
+    x = vertex.x();
+    y = vertex.y();
+    if ( x < xmin )
+      xmin = x;
+    if ( x > xmax )
+      xmax = x;
+    if ( y < ymin )
+      ymin = y;
+    if ( y > ymax )
+      ymax = y;
   }
 
   return QgsRectangle( xmin, ymin, xmax, ymax );
 }
 
-QgsPointV2 QgsAbstractGeometryV2::pointAt( const QgsVertexId& id ) const
+QgsPointV2 QgsAbstractGeometryV2::vertexAt( const QgsVertexId& id ) const
 {
   QList< QList< QList< QgsPointV2 > > > coordinates;
   coordinateSequence( coordinates );
@@ -169,11 +156,6 @@ int QgsAbstractGeometryV2::nCoordinates() const
 
   return nCoords;
 }
-
-/*void QgsAbstractGeometryV2::mapToPixel( const QgsMapToPixel& mtp )
-{
-    transform( mtp.transform() );
-}*/
 
 QString QgsAbstractGeometryV2::wktTypeStr() const
 {
