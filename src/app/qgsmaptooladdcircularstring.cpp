@@ -93,12 +93,19 @@ void QgsMapToolAddCircularString::keyReleaseEvent( QKeyEvent* e )
 
 void QgsMapToolAddCircularString::deactivate()
 {
-  if ( mParentTool && mPoints.size() > 0 )
+  if ( !mParentTool || mPoints.size() < 3 )
   {
-    QgsCircularStringV2* c = new QgsCircularStringV2();
-    c->setPoints( mPoints );
-    mParentTool->setCurve( c );
+    return;
   }
+
+  if ( mPoints.size() % 2 == 0 ) //a valid circularstring needs to have an odd number of vertices
+  {
+    mPoints.removeLast();
+  }
+
+  QgsCircularStringV2* c = new QgsCircularStringV2();
+  c->setPoints( mPoints );
+  mParentTool->setCurve( c );
   mPoints.clear();
   delete mRubberBand; mRubberBand = 0;
   removeCenterPointRubberBand();
