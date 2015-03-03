@@ -81,7 +81,7 @@ void QgsMapToolCapture::deactivate()
 {
   delete mSnappingMarker;
   mSnappingMarker = 0;
-
+  setGeometryToRubberBand();
   QgsMapToolEdit::deactivate();
 }
 
