@@ -18,6 +18,7 @@
 #define QGSMAPTOOLCIRCULARSTRINGRADIUS_H
 
 #include "qgsmaptooladdcircularstring.h"
+#include "qgspointv2.h"
 class QDoubleSpinBox;
 
 class QgsMapToolCircularStringRadius: public QgsMapToolAddCircularString
@@ -38,8 +39,7 @@ class QgsMapToolCircularStringRadius: public QgsMapToolAddCircularString
     double mTemporaryEndPointY;
     bool mRadiusMode;
     double mRadius;
-    //is circle left or right from line connecting the points?
-    bool mLeft;
+    QgsPointV2 mLastMouseMapPos;
     QDoubleSpinBox* mRadiusSpinBox;
 
     //recalculate circular string and rubber band depending on mRadius/mLeft and endpoints

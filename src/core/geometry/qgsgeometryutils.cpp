@@ -302,8 +302,7 @@ double QgsGeometryUtils::sweepAngle( double centerX, double centerY, double x1, 
   }
 }
 
-bool QgsGeometryUtils::segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& p2, QgsPointV2& result,
-                                        double radius, bool left )
+bool QgsGeometryUtils::segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& p2, QgsPointV2& result, double radius, const QgsPointV2& mousePos )
 {
   QgsPointV2 midPoint(( p1.x() + p2.x() ) / 2.0, ( p1.y() + p2.y() ) / 2.0 );
   double midDist = sqrt( sqrDistance2D( p1, midPoint ) );
@@ -317,13 +316,31 @@ bool QgsGeometryUtils::segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& 
   double midDx = midPoint.x() - p1.x();
   double midDy = midPoint.y() - p1.y();
 
-  if ( left )
+  //get the four possible midpoints
+  QList<QgsPointV2> possibleMidPoints;
+  possibleMidPoints.append( pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() - midDy, midPoint.y() + midDx ), dist ) );
+  possibleMidPoints.append( pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() - midDy, midPoint.y() + midDx ), 2 * radius - dist ) );
+  possibleMidPoints.append( pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() + midDy, midPoint.y() - midDx ), dist ) );
+  possibleMidPoints.append( pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() + midDy, midPoint.y() - midDx ), 2 * radius - dist ) );
+
+  //take the closest one
+  double minDist = std::numeric_limits<double>::max();
+  int minDistIndex = -1;
+  for ( int i = 0; i < possibleMidPoints.size(); ++i )
   {
-    result = pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() - midDy, midPoint.y() + midDx ), dist );
+    double currentDist = sqrDistance2D( mousePos, possibleMidPoints.at( i ) );
+    if ( currentDist < minDist )
+    {
+      minDistIndex = i;
+      minDist = currentDist;
+    }
   }
-  else //right
+
+  if ( minDistIndex == -1 )
   {
-    result = pointOnLineWithDistance( midPoint, QgsPointV2( midPoint.x() + midDy, midPoint.y() - midDx ), dist );
+    return false;
   }
+
+  result = possibleMidPoints.at( minDistIndex );
   return true;
 }

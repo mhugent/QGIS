@@ -25,7 +25,7 @@
 #include <cmath>
 
 QgsMapToolCircularStringRadius::QgsMapToolCircularStringRadius( QgsMapToolCapture* parentTool, QgsMapCanvas* canvas, CaptureMode mode ) :
-    QgsMapToolAddCircularString( parentTool, canvas, mode ), mTemporaryEndPointX( 0.0 ), mTemporaryEndPointY( 0.0 ), mRadiusMode( false ), mRadius( 0.0 ), mLeft( true ),
+    QgsMapToolAddCircularString( parentTool, canvas, mode ), mTemporaryEndPointX( 0.0 ), mTemporaryEndPointY( 0.0 ), mRadiusMode( false ), mRadius( 0.0 ),
     mRadiusSpinBox( 0 )
 {
 
@@ -84,8 +84,7 @@ void QgsMapToolCircularStringRadius::canvasReleaseEvent( QMouseEvent * e )
       else
       {
         QgsPointV2 result;
-        if ( QgsGeometryUtils::segmentMidPoint( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ),
-                                                result, mRadius, mLeft ) )
+        if ( QgsGeometryUtils::segmentMidPoint( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ), result, mRadius, QgsPointV2( mapPoint.x(), mapPoint.y() ) ) )
         {
           mPoints.append( result );
           mPoints.append( QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ) );
@@ -113,16 +112,12 @@ void QgsMapToolCircularStringRadius::canvasMoveEvent( QMouseEvent * e )
 {
   if ( mPoints.size() > 0 && mRadiusMode )
   {
-    //adjust mLeft depening on mouse position
     QgsPoint layerPoint;
     QgsPoint mapPoint;
     nextPoint( e->pos(), layerPoint, mapPoint );
-    bool bk_left = mLeft;
-    mLeft = QgsGeometryUtils::leftOfLine( mapPoint.x(), mapPoint.y(), mPoints.last().x(), mPoints.last().y(), mTemporaryEndPointX, mTemporaryEndPointY ) < 0;
-    if ( bk_left != mLeft )
-    {
-      recalculateCircularString();
-    }
+    mLastMouseMapPos.setX( mapPoint.x() );
+    mLastMouseMapPos.setY( mapPoint.y() );
+    recalculateCircularString();
   }
   else
   {
@@ -135,8 +130,8 @@ void QgsMapToolCircularStringRadius::recalculateCircularString()
 {
   //new midpoint on circle segment
   QgsPointV2 midPoint;
-  if ( !QgsGeometryUtils::segmentMidPoint( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ),
-       midPoint, mRadius, mLeft ) )
+  if ( !QgsGeometryUtils::segmentMidPoint( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ), midPoint, mRadius,
+       mLastMouseMapPos ) )
   {
     return;
   }
