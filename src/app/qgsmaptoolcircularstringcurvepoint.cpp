@@ -75,14 +75,15 @@ void QgsMapToolCircularStringCurvePoint::canvasReleaseEvent( QMouseEvent * e )
 
 void QgsMapToolCircularStringCurvePoint::canvasMoveEvent( QMouseEvent * e )
 {
-  if ( mRubberBand )
+  QList<QgsSnappingResult> snapResults;
+  if ( backgroundSnap( snapResults, e->pos() ) )
   {
-    QgsPoint layerPoint;
-    QgsPoint mapPoint;
-    nextPoint( e->pos(), layerPoint, mapPoint );
-
+    QgsPoint mapPoint = snapPointFromResults( snapResults, e->pos() );
     QgsVertexId idx; idx.part = 0; idx.ring = 0; idx.vertex = mPoints.size();
-    mRubberBand->moveVertex( idx, QgsPointV2( layerPoint.x(), layerPoint.y() ) );
-    updateCenterPointRubberBand( QgsPointV2( layerPoint.x(), layerPoint.y() ) );
+    if ( mRubberBand )
+    {
+      mRubberBand->moveVertex( idx, QgsPointV2( mapPoint.x(), mapPoint.y() ) );
+      updateCenterPointRubberBand( QgsPointV2( mapPoint.x(), mapPoint.y() ) );
+    }
   }
 }

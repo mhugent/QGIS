@@ -45,7 +45,6 @@ QgsMapToolCapture::QgsMapToolCapture( QgsMapCanvas* canvas, enum CaptureMode too
     , mSnappingMarker( 0 )
     , mGeometry( 0 )
     , mGeometryRubberBand( 0 )
-    , mTempGeometryRubberBand( 0 )
     , mCurrentRubberBandVertex( -1 )
 {
   mCaptureModeFromLayer = tool == CaptureNone;
@@ -74,7 +73,6 @@ QgsMapToolCapture::~QgsMapToolCapture()
 
   delete mGeometry;
   delete mGeometryRubberBand;
-  delete mTempGeometryRubberBand;
 }
 
 void QgsMapToolCapture::deactivate()
@@ -116,45 +114,55 @@ void QgsMapToolCapture::currentLayerChanged( QgsMapLayer *layer )
   }
 }
 
+bool QgsMapToolCapture::backgroundSnap( QList<QgsSnappingResult>& snapResults, const QPoint& pos )
+{
+  if ( !mSnapper.snapToBackgroundLayers( pos, snapResults ) == 0 )
+  {
+    return false;
+  }
+
+  if ( snapResults.isEmpty() )
+  {
+    delete mSnappingMarker;
+    mSnappingMarker = 0;
+  }
+  else
+  {
+    if ( !mSnappingMarker )
+    {
+      mSnappingMarker = new QgsVertexMarker( mCanvas );
+      mSnappingMarker->setIconType( QgsVertexMarker::ICON_CROSS );
+      mSnappingMarker->setColor( Qt::magenta );
+      mSnappingMarker->setPenWidth( 3 );
+    }
+    mSnappingMarker->setCenter( snapResults.constBegin()->snappedVertex );
+  }
+  return true;
+}
+
 void QgsMapToolCapture::canvasMoveEvent( QMouseEvent * e )
 {
-  QgsPoint mapPoint;
   QList<QgsSnappingResult> snapResults;
-  if ( mSnapper.snapToBackgroundLayers( e->pos(), snapResults ) == 0 )
+  if ( !backgroundSnap( snapResults, e->pos() ) )
   {
-    if ( snapResults.isEmpty() )
-    {
-      delete mSnappingMarker;
-      mSnappingMarker = 0;
-    }
-    else
-    {
-      if ( !mSnappingMarker )
-      {
-        mSnappingMarker = new QgsVertexMarker( mCanvas );
-        mSnappingMarker->setIconType( QgsVertexMarker::ICON_CROSS );
-        mSnappingMarker->setColor( Qt::magenta );
-        mSnappingMarker->setPenWidth( 3 );
-      }
-      mSnappingMarker->setCenter( snapResults.constBegin()->snappedVertex );
-    }
-
-    if ( mCaptureMode != CapturePoint && mGeometryRubberBand && mCapturing )
-    {
-      mapPoint = snapPointFromResults( snapResults, e->pos() );
-      if ( mCurrentRubberBandVertex < 0 )
-      {
-        QgsCompoundCurveV2* rubberBandGeom = dynamic_cast<QgsCompoundCurveV2*>( mGeometry->clone() );
-        rubberBandGeom->addVertex( QgsPointV2( mapPoint.x(), mapPoint.y() ) );
-        mGeometryRubberBand->setGeometry( rubberBandGeom );
-        mCurrentRubberBandVertex = rubberBandGeom->numPoints() - 1;
-      }
-
-      QgsVertexId vId; vId.part = 0; vId.ring = 0; vId.vertex = mCurrentRubberBandVertex;
-      mGeometryRubberBand->moveVertex( vId, QgsPointV2( mapPoint.x(), mapPoint.y() ) );
-    }
+    return;
   }
-} // mouseMoveEvent
+
+  if ( mCaptureMode != CapturePoint && mGeometryRubberBand && mCapturing )
+  {
+    QgsPoint mapPoint = snapPointFromResults( snapResults, e->pos() );
+    if ( mCurrentRubberBandVertex < 0 )
+    {
+      QgsCompoundCurveV2* rubberBandGeom = dynamic_cast<QgsCompoundCurveV2*>( mGeometry->clone() );
+      rubberBandGeom->addVertex( QgsPointV2( mapPoint.x(), mapPoint.y() ) );
+      mGeometryRubberBand->setGeometry( rubberBandGeom );
+      mCurrentRubberBandVertex = rubberBandGeom->numPoints() - 1;
+    }
+
+    QgsVertexId vId; vId.part = 0; vId.ring = 0; vId.vertex = mCurrentRubberBandVertex;
+    mGeometryRubberBand->moveVertex( vId, QgsPointV2( mapPoint.x(), mapPoint.y() ) );
+  }
+}
 
 
 void QgsMapToolCapture::canvasPressEvent( QMouseEvent *e )
@@ -243,10 +251,6 @@ void QgsMapToolCapture::setGeometryToRubberBand()
   if ( !mGeometryRubberBand )
   {
     mGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
-  }
-  if ( !mTempGeometryRubberBand )
-  {
-    mTempGeometryRubberBand = createGeometryRubberBand(( mCaptureMode == CapturePolygon ) ? QGis::Polygon : QGis::Line );
   }
 
   QgsCompoundCurveV2* rubberBandGeom = dynamic_cast<QgsCompoundCurveV2*>( mGeometry->clone() );

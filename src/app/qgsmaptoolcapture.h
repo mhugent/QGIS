@@ -99,6 +99,8 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
     void closePolygon();
     void setGeometryToRubberBand();
 
+    bool backgroundSnap( QList<QgsSnappingResult>& snapResults, const QPoint& pos );
+
     /** which capturing tool is being used */
     enum CaptureMode mCaptureMode;
 
@@ -122,7 +124,6 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
 
     QgsCompoundCurveV2* mGeometry;
     QgsGeometryRubberBand* mGeometryRubberBand;
-    QgsGeometryRubberBand* mTempGeometryRubberBand;
     int mCurrentRubberBandVertex; //last vertex in temp rubber band
 };
 

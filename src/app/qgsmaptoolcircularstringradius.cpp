@@ -103,12 +103,7 @@ void QgsMapToolCircularStringRadius::canvasReleaseEvent( QMouseEvent * e )
 
 void QgsMapToolCircularStringRadius::canvasMoveEvent( QMouseEvent * e )
 {
-  if ( mPoints.size() < 1 )
-  {
-    return;
-  }
-
-  if ( mRadiusMode )
+  if ( mPoints.size() > 0 && mRadiusMode )
   {
     //adjust mLeft depening on mouse position
     QgsPoint layerPoint;
@@ -120,6 +115,11 @@ void QgsMapToolCircularStringRadius::canvasMoveEvent( QMouseEvent * e )
     {
       recalculateCircularString();
     }
+  }
+  else
+  {
+    QList<QgsSnappingResult> snapResults;
+    backgroundSnap( snapResults, e->pos() );
   }
 }
 
