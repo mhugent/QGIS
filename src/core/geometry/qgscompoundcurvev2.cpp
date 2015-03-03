@@ -304,10 +304,14 @@ void QgsCompoundCurveV2::points( QList<QgsPointV2>& pts ) const
 int QgsCompoundCurveV2::numPoints() const
 {
   int nPoints = 0;
-  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
-  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  int nCurves = mCurves.size();
+  for ( int i = 0; i < nCurves; ++i )
   {
-    nPoints += ( *curveIt )->numPoints();
+    nPoints += mCurves.at( i )->numPoints();
+    if ( i > 0 && mCurves.at( i )->startPoint() == mCurves.at( i - 1 )->endPoint() )
+    {
+      nPoints -= 1;
+    }
   }
   return nPoints;
 }
