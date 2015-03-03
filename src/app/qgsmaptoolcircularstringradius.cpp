@@ -72,10 +72,14 @@ void QgsMapToolCircularStringRadius::canvasReleaseEvent( QMouseEvent * e )
         mRadiusMode = true;
 
         //initial radius is distance( tempPoint - mPoints.last ) / 2.0
-        mRadius = sqrt( QgsGeometryUtils::sqrDistance2D( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ) ) ) / 2.0;
-        mRadius += mRadius / 10.0;
+        double minRadius = sqrt( QgsGeometryUtils::sqrDistance2D( mPoints.last(), QgsPointV2( mTemporaryEndPointX, mTemporaryEndPointY ) ) ) / 2.0;
+        mRadius = minRadius + minRadius / 10.0;
         recalculateCircularString();
         createRadiusSpinBox();
+        if ( mRadiusSpinBox )
+        {
+          mRadiusSpinBox->setMinimum( minRadius );
+        }
       }
       else
       {
