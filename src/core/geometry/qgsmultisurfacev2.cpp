@@ -26,12 +26,6 @@ QgsMultiSurfaceV2 *QgsMultiSurfaceV2::clone() const
   return new QgsMultiSurfaceV2( *this );
 }
 
-bool QgsMultiSurfaceV2::fromWkb( const unsigned char * wkb )
-{
-  return fromCollectionWkb( wkb,
-                            QList<QgsAbstractGeometryV2*>() << new QgsPolygonV2 << new QgsCurvePolygonV2 );
-}
-
 bool QgsMultiSurfaceV2::fromWkt( const QString& wkt )
 {
   return fromCollectionWkt( wkt,

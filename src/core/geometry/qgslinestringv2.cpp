@@ -47,15 +47,25 @@ void QgsLineStringV2::clear()
 
 bool QgsLineStringV2::fromWkb( const unsigned char* wkb )
 {
-  clear();
-
-  QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::LineString ) )
+  if ( !wkb )
+  {
     return false;
-
-  setPoints( pointsFromWKB( wkbPtr, is3D(), isMeasure(), endianSwap ) );
+  }
+  QgsConstWkbPtr wkbPtr( wkb );
+  QgsWKBTypes::Type type = wkbPtr.readHeader();
+  if ( QgsWKBTypes::flatType( type ) != QgsWKBTypes::LineString )
+  {
+    return false;
+  }
+  mWkbType = type;
+  importVerticesFromWkb( wkbPtr );
   return true;
+}
+
+void QgsLineStringV2::fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb )
+{
+  mWkbType = type;
+  importVerticesFromWkb( wkb );
 }
 
 bool QgsLineStringV2::fromWkt( const QString& wkt )
@@ -274,12 +284,6 @@ void QgsLineStringV2::append( const QgsLineStringV2* line )
   mM += line->mM;
 }
 
-void QgsLineStringV2::fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb )
-{
-  mWkbType = type;
-  setPoints( pointsFromWKB( wkb, is3D(), isMeasure(), false ) );
-}
-
 void QgsLineStringV2::draw( QPainter& p ) const
 {
   p.drawPolyline( mCoords );
@@ -428,4 +432,28 @@ bool QgsLineStringV2::pointAt( int i, QgsPointV2& vertex ) const
   }
   vertex = pointN( i );
   return true;
+}
+
+void QgsLineStringV2::importVerticesFromWkb( const QgsConstWkbPtr& wkb )
+{
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+  int nVertices = 0;
+  wkb >> nVertices;
+  mCoords.resize( nVertices );
+  hasZ ? mZ.resize( nVertices ) : mZ.clear();
+  hasM ? mM.resize( nVertices ) : mM.clear();
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    wkb >> mCoords[i].rx();
+    wkb >> mCoords[i].ry();
+    if ( hasZ )
+    {
+      wkb >> mZ[i];
+    }
+    if ( hasM )
+    {
+      wkb >> mM[i];
+    }
+  }
 }

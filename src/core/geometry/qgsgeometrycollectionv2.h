@@ -45,6 +45,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual void clip( const QgsRectangle& rect );
     virtual void draw( QPainter& p ) const;
 
+    bool fromWkb( const unsigned char * wkb );
     int wkbSize() const;
     unsigned char* asWkb( int& binarySize ) const;
     QString asWkt( int precision = 17 ) const;
@@ -67,7 +68,6 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     QVector< QgsAbstractGeometryV2* > mGeometries;
     void removeGeometries();
 
-    bool fromCollectionWkb( const unsigned char * wkb, const QList<QgsAbstractGeometryV2*>& subtypes );
     bool fromCollectionWkt( const QString &wkt, const QList<QgsAbstractGeometryV2*>& subtypes, const QString& defaultChildWkbType = QString() );
 
 };

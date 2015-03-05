@@ -28,33 +28,38 @@ QgsPolygonV2* QgsPolygonV2::clone() const
 bool QgsPolygonV2::fromWkb( const unsigned char* wkb )
 {
   clear();
+  if ( !wkb )
+  {
+    return false;
+  }
 
   QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::Polygon ) )
+  QgsWKBTypes::Type type = wkbPtr.readHeader();
+  if ( QgsWKBTypes::flatType( type ) != QgsWKBTypes::Polygon )
+  {
     return false;
+  }
+  mWkbType = type;
 
-  quint32 nRings;
+  int nRings;
   wkbPtr >> nRings;
-  if ( endianSwap )
-    QgsApplication::endian_swap( nRings );
-
-  if ( nRings <= 0 )
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+  double x, y, z, m;
+  int nPoints = 0;
+  for ( int i = 0; i < nRings; ++i )
   {
-    clear();
-    return false;
+    QgsLineStringV2* line = new QgsLineStringV2();
+    line->fromWkbPoints( mWkbType, wkbPtr );
+    if ( i == 0 )
+    {
+      mExteriorRing = line;
+    }
+    else
+    {
+      mInteriorRings.append( line );
+    }
   }
-
-  mInteriorRings.reserve( nRings );
-
-  for ( quint32 i = 0; i < nRings; ++i )
-  {
-    mInteriorRings.append( new QgsLineStringV2() );
-    static_cast<QgsLineStringV2*>( mInteriorRings.back() )->setPoints( pointsFromWKB( wkbPtr, is3D(), isMeasure(), endianSwap ) );
-  }
-
-  mExteriorRing = mInteriorRings.first();
-  mInteriorRings.removeFirst();
 
   return true;
 }

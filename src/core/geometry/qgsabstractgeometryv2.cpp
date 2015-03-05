@@ -167,48 +167,6 @@ QString QgsAbstractGeometryV2::wktTypeStr() const
   return wkt;
 }
 
-QList<QgsPointV2> QgsAbstractGeometryV2::pointsFromWKB( const QgsConstWkbPtr &wkb, bool is3D, bool isMeasure, bool endianSwap )
-{
-  quint32 count;
-  wkb >> count;
-  if ( endianSwap )
-    QgsApplication::endian_swap( count );
-  QList<QgsPointV2> points;
-  points.reserve( count );
-  for ( quint32 i = 0; i < count; ++i )
-  {
-    double x, y, z = 0., m = 0.;
-    wkb >> x;
-    wkb >> y;
-    if ( is3D )
-      wkb >> z;
-    if ( isMeasure )
-      wkb >> m;
-    if ( endianSwap )
-    {
-      QgsApplication::endian_swap( x );
-      QgsApplication::endian_swap( y );
-      QgsApplication::endian_swap( z );
-      QgsApplication::endian_swap( m );
-    }
-    if ( is3D )
-    {
-      if ( isMeasure )
-        points.append( QgsPointV2( x, y, z, m ) );
-      else
-        points.append( QgsPointV2( x, y, z, false ) );
-    }
-    else
-    {
-      if ( isMeasure )
-        points.append( QgsPointV2( x, y, m, true ) );
-      else
-        points.append( QgsPointV2( x, y ) );
-    }
-  }
-  return points;
-}
-
 QList<QgsPointV2> QgsAbstractGeometryV2::pointsFromWKT( const QString &wktCoordinateList, bool is3D, bool isMeasure )
 {
   int dim = 2 + is3D + isMeasure;

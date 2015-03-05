@@ -113,7 +113,6 @@ class QgsAbstractGeometryV2
     void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QgsWKBTypes::Type baseGeomType );
 
     /** Serialization and deserialization of a point list */
-    static QList<QgsPointV2> pointsFromWKB( const QgsConstWkbPtr &wkb, bool is3D, bool isMeasure, bool endianSwap );
     static QList<QgsPointV2> pointsFromWKT( const QString& wktCoordinateList, bool is3D, bool isMeasure );
     // Returns a LinearRing { uint32 numPoints; Point points[numPoints]; }
     static void pointsToWKB( QgsWkbPtr &wkb, const QList<QgsPointV2>& points, bool is3D, bool isMeasure );

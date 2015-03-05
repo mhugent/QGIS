@@ -25,11 +25,6 @@ QgsMultiPolygonV2 *QgsMultiPolygonV2::clone() const
   return new QgsMultiPolygonV2( *this );
 }
 
-bool QgsMultiPolygonV2::fromWkb( const unsigned char * wkb )
-{
-  return fromCollectionWkb( wkb, QList<QgsAbstractGeometryV2*>() << new QgsPolygonV2 );
-}
-
 bool QgsMultiPolygonV2::fromWkt( const QString& wkt )
 {
   return fromCollectionWkt( wkt, QList<QgsAbstractGeometryV2*>() << new QgsPolygonV2, "Polygon" );

@@ -21,7 +21,6 @@ email                : morb at ozemail dot com dot au
 #include <QDomDocument>
 
 #include "qgis.h"
-#include "qgswkbptr.h"
 
 #include <geos_c.h>
 
@@ -75,7 +74,6 @@ class QgsRectangle;
  * @author Brendan Morley
  */
 class QgsConstWkbPtr;
-class QgsWkbPtr;
 
 struct QgsGeometryData;
 

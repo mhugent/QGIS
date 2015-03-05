@@ -25,12 +25,6 @@ QgsMultiCurveV2 *QgsMultiCurveV2::clone() const
   return new QgsMultiCurveV2( *this );
 }
 
-bool QgsMultiCurveV2::fromWkb( const unsigned char * wkb )
-{
-  return fromCollectionWkb( wkb,
-                            QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2 << new QgsCircularStringV2 << new QgsCompoundCurveV2 );
-}
-
 bool QgsMultiCurveV2::fromWkt( const QString& wkt )
 {
   return fromCollectionWkt( wkt,

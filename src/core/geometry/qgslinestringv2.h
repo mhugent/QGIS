@@ -34,6 +34,7 @@ class QgsLineStringV2: public QgsCurveV2
     virtual void clear();
 
     virtual bool fromWkb( const unsigned char* wkb );
+    void fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb );
     virtual bool fromWkt( const QString& wkt );
 
     int wkbSize() const;
@@ -56,8 +57,6 @@ class QgsLineStringV2: public QgsCurveV2
     void setPoints( const QList<QgsPointV2>& points );
     void append( const QgsLineStringV2* line );
 
-    void fromWkbPoints( QgsWKBTypes::Type type, const QgsConstWkbPtr& wkb );
-
     void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );
     void transform( const QTransform& t );
@@ -79,6 +78,8 @@ class QgsLineStringV2: public QgsCurveV2
     QPolygonF mCoords;
     QVector<double> mZ;
     QVector<double> mM;
+
+    void importVerticesFromWkb( const QgsConstWkbPtr& wkb );
 };
 
 #endif // QGSLINESTRINGV2_H

@@ -24,7 +24,6 @@ class QgsMultiPolygonV2: public QgsGeometryCollectionV2
     virtual QString geometryType() const { return "MultiPolygon"; }
     QgsMultiPolygonV2* clone() const;
 
-    bool fromWkb( const unsigned char * wkb );
     bool fromWkt( const QString& wkt );
 
     // inherited: int wkbSize() const;

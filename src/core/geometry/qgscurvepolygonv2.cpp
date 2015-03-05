@@ -82,45 +82,54 @@ void QgsCurvePolygonV2::clear()
 bool QgsCurvePolygonV2::fromWkb( const unsigned char* wkb )
 {
   clear();
-
-  QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::CurvePolygon ) )
-    return false;
-
-  quint32 nRings;
-  wkbPtr >> nRings;
-  if ( endianSwap )
-    QgsApplication::endian_swap( nRings );
-
-  if ( nRings <= 0 )
+  if ( !wkb )
   {
-    clear();
     return false;
   }
-
-  mInteriorRings.reserve( nRings );
-
-  for ( quint32 i = 0; i < nRings; ++i )
+  QgsConstWkbPtr wkbPtr( wkb );
+  QgsWKBTypes::Type type = wkbPtr.readHeader();
+  if ( QgsWKBTypes::flatType( type ) != QgsWKBTypes::CurvePolygon )
   {
-    QgsWKBTypes::Type ringType = static_cast<QgsWKBTypes::Type>( *reinterpret_cast<const quint32*>( static_cast<const unsigned char*>( wkbPtr ) + sizeof( char ) ) );
-    if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::LineString )
-      mInteriorRings.append( new QgsLineStringV2() );
-    else if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::CircularString )
-      mInteriorRings.append( new QgsCircularStringV2() );
-    else if ( QgsWKBTypes::flatType( ringType ) == QgsWKBTypes::CompoundCurve )
-      mInteriorRings.append( new QgsCompoundCurveV2() );
+    return false;
+  }
+  mWkbType = type;
+
+  int nRings;
+  wkbPtr >> nRings;
+  QgsCurveV2* currentCurve = 0;
+  int currentCurveSize = 0;
+  for ( int i = 0; i < nRings; ++i )
+  {
+    wkbPtr += 1; //skip endian
+    QgsWKBTypes::Type curveType;
+    wkbPtr >> curveType;
+    wkbPtr -= ( 1 + sizeof( int ) );
+    if ( curveType == QgsWKBTypes::LineString || curveType == QgsWKBTypes::LineStringZ || curveType == QgsWKBTypes::LineStringM ||
+         curveType == QgsWKBTypes::LineStringZM || curveType == QgsWKBTypes::LineString25D )
+    {
+      currentCurve = new QgsLineStringV2();
+    }
+    else if ( curveType == QgsWKBTypes::CircularString || curveType == QgsWKBTypes::CircularStringZ || curveType == QgsWKBTypes::CircularStringZM ||
+              curveType == QgsWKBTypes::CircularStringM )
+    {
+      currentCurve = new QgsCircularStringV2();
+    }
+    else if ( curveType == QgsWKBTypes::CompoundCurve || curveType == QgsWKBTypes::CompoundCurveZ || curveType == QgsWKBTypes::CompoundCurveZM )
+    {
+      currentCurve = new QgsCompoundCurveV2();
+    }
+    currentCurve->fromWkb( wkbPtr );
+    currentCurveSize = currentCurve->wkbSize();
+    if ( i == 0 )
+    {
+      mExteriorRing = currentCurve;
+    }
     else
     {
-      clear();
-      return false;
+      mInteriorRings.append( currentCurve );
     }
-    mInteriorRings.back()->fromWkb( wkbPtr );
-    wkbPtr += mInteriorRings.back()->wkbSize();
+    wkbPtr += currentCurveSize;
   }
-
-  mExteriorRing = mInteriorRings.first();
-  mInteriorRings.removeFirst();
 
   return true;
 }
@@ -421,10 +430,10 @@ void QgsCurvePolygonV2::draw( QPainter& p ) const
 {
   if ( mInteriorRings.size() < 1 )
   {
-      if( mExteriorRing )
-      {
-        mExteriorRing->drawAsPolygon( p );
-      }
+    if ( mExteriorRing )
+    {
+      mExteriorRing->drawAsPolygon( p );
+    }
   }
   else
   {

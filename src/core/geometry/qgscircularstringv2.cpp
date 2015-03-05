@@ -185,14 +185,42 @@ QList<QgsPointV2> QgsCircularStringV2::compassPointsOnSegment( double p1Angle, d
 
 bool QgsCircularStringV2::fromWkb( const unsigned char* wkb )
 {
-  clear();
+  if ( !wkb )
+  {
+    return false;
+  }
 
   QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::CircularString ) )
+  QgsWKBTypes::Type type = wkbPtr.readHeader();
+  if ( QgsWKBTypes::flatType( type ) != QgsWKBTypes::CircularString )
+  {
     return false;
+  }
+  mWkbType = type;
 
-  setPoints( pointsFromWKB( wkbPtr, is3D(), isMeasure(), endianSwap ) );
+  //type
+  bool hasZ = is3D();
+  bool hasM = isMeasure();
+  int nVertices = 0;
+  wkbPtr >> nVertices;
+  mX.resize( nVertices );
+  mY.resize( nVertices );
+  hasZ ? mZ.resize( nVertices ) : mZ.clear();
+  hasM ? mM.resize( nVertices ) : mM.clear();
+  for ( int i = 0; i < nVertices; ++i )
+  {
+    wkbPtr >> mX[i];
+    wkbPtr >> mY[i];
+    if ( hasZ )
+    {
+      wkbPtr >> mZ[i];
+    }
+    if ( hasM )
+    {
+      wkbPtr >> mM[i];
+    }
+  }
+
   return true;
 }
 

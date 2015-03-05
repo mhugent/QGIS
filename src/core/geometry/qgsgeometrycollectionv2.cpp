@@ -159,6 +159,27 @@ void QgsGeometryCollectionV2::draw( QPainter& p ) const
   }
 }
 
+bool QgsGeometryCollectionV2::fromWkb( const unsigned char * wkb )
+{
+  if ( !wkb )
+  {
+    return false;
+  }
+  QgsConstWkbPtr wkbPtr( wkb + 1 );
+  //type
+  wkbPtr >> mWkbType;
+  int nGeometries = 0;
+  wkbPtr >> nGeometries;
+  mGeometries.resize( nGeometries );
+  for ( int i = 0; i < nGeometries; ++i )
+  {
+    QgsAbstractGeometryV2* geom = QgsGeometryImport::geomFromWkb( wkbPtr );
+    mGeometries[i] = geom;
+    wkbPtr += geom->wkbSize();
+  }
+  return true;
+}
+
 int QgsGeometryCollectionV2::wkbSize() const
 {
   int size = sizeof( char ) + sizeof( quint32 ) + sizeof( quint32 );
@@ -335,49 +356,6 @@ bool QgsGeometryCollectionV2::deleteVertex( const QgsVertexId& position )
   }
 
   return mGeometries[position.part]->deleteVertex( position );
-}
-
-bool QgsGeometryCollectionV2::fromCollectionWkb( const unsigned char *wkb, const QList<QgsAbstractGeometryV2 *> &subtypes )
-{
-  clear();
-
-  QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::parseType( geometryType() ) ) )
-    return false;
-
-  quint32 nChilds;
-  wkbPtr >> nChilds;
-  if ( endianSwap )
-    QgsApplication::endian_swap( nChilds );
-  mGeometries.reserve( nChilds );
-
-  for ( quint32 i = 0; i < nChilds; ++i )
-  {
-    QgsWKBTypes::Type childType = static_cast<QgsWKBTypes::Type>( *reinterpret_cast<const quint32*>( static_cast<const unsigned char*>( wkbPtr ) + sizeof( char ) ) );
-
-    bool success = false;
-    foreach ( const QgsAbstractGeometryV2* geom, subtypes )
-    {
-      if ( QgsWKBTypes::flatType( childType ) == QgsWKBTypes::parseType( geom->geometryType() ) )
-      {
-        mGeometries.append( geom->clone() );
-        if ( mGeometries.back()->fromWkb( wkbPtr ) )
-        {
-          success = true;
-          break;
-        }
-      }
-    }
-    if ( !success )
-    {
-      clear();
-      qDeleteAll( subtypes );
-      return false;
-    }
-    wkbPtr += mGeometries.back()->wkbSize();
-  }
-  return true;
 }
 
 bool QgsGeometryCollectionV2::fromCollectionWkt( const QString &wkt, const QList<QgsAbstractGeometryV2*>& subtypes, const QString& defaultChildWkbType )

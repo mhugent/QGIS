@@ -280,6 +280,7 @@ SET(QGIS_CORE_SRCS
   geometry/qgsmultipointv2.cpp
   geometry/qgsmultipolygonv2.cpp
   geometry/qgsmultisurfacev2.cpp
+  geometry/qgswkbptr.cpp
   geometry/qgswkbtypes.cpp
 )
 

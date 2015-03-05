@@ -23,11 +23,6 @@ QgsMultiPointV2 *QgsMultiPointV2::clone() const
   return new QgsMultiPointV2( *this );
 }
 
-bool QgsMultiPointV2::fromWkb( const unsigned char * wkb )
-{
-  return fromCollectionWkb( wkb, QList<QgsAbstractGeometryV2*>() << new QgsPointV2 );
-}
-
 bool QgsMultiPointV2::fromWkt( const QString& wkt )
 {
   return fromCollectionWkt( wkt, QList<QgsAbstractGeometryV2*>() << new QgsPointV2, "Point" );

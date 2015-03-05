@@ -25,11 +25,6 @@ QgsMultiLineStringV2* QgsMultiLineStringV2::clone() const
   return new QgsMultiLineStringV2( *this );
 }
 
-bool QgsMultiLineStringV2::fromWkb( const unsigned char * wkb )
-{
-  return fromCollectionWkb( wkb, QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2 );
-}
-
 bool QgsMultiLineStringV2::fromWkt( const QString& wkt )
 {
   return fromCollectionWkt( wkt, QList<QgsAbstractGeometryV2*>() << new QgsLineStringV2, "LineString" );
