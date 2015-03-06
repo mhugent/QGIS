@@ -484,37 +484,40 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
 
   double x, y, z, m;
   points.append( p1 );
-  for ( double angle = a1 + increment; clockwise ? angle > a3 : angle < a3; angle += increment )
+  if ( p2 != p3 && p1 != p2 ) //draw straight line segment if two points have the same position
   {
-    x = centerX + radius * cos( angle );
-    y = centerY + radius * sin( angle );
+    for ( double angle = a1 + increment; clockwise ? angle > a3 : angle < a3; angle += increment )
+    {
+      x = centerX + radius * cos( angle );
+      y = centerY + radius * sin( angle );
 
-    if ( !hasZ && !hasM )
-    {
-      points.append( QgsPointV2( x, y ) );
-      continue;
-    }
+      if ( !hasZ && !hasM )
+      {
+        points.append( QgsPointV2( x, y ) );
+        continue;
+      }
 
-    if ( hasZ )
-    {
-      z = interpolateArc( angle, a1, a2, a3, p1.z(), p2.z(), p3.z() );
-    }
-    if ( hasM )
-    {
-      m = interpolateArc( angle, a1, a2, a3, p1.m(), p2.m(), p3.m() );
-    }
+      if ( hasZ )
+      {
+        z = interpolateArc( angle, a1, a2, a3, p1.z(), p2.z(), p3.z() );
+      }
+      if ( hasM )
+      {
+        m = interpolateArc( angle, a1, a2, a3, p1.m(), p2.m(), p3.m() );
+      }
 
-    if ( hasZ && hasM )
-    {
-      points.append( QgsPointV2( x, y, z, m ) );
-    }
-    else if ( hasZ )
-    {
-      points.append( QgsPointV2( x, y, z, false ) );
-    }
-    else
-    {
-      points.append( QgsPointV2( x, y, m, true ) );
+      if ( hasZ && hasM )
+      {
+        points.append( QgsPointV2( x, y, z, m ) );
+      }
+      else if ( hasZ )
+      {
+        points.append( QgsPointV2( x, y, z, false ) );
+      }
+      else
+      {
+        points.append( QgsPointV2( x, y, m, true ) );
+      }
     }
   }
   points.append( p3 );

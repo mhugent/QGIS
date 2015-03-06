@@ -45,6 +45,11 @@ bool QgsPointV2::operator==( const QgsPointV2& pt ) const
            qgsDoubleNear( pt.z(), mZ ) && qgsDoubleNear( pt.m(), mM ) );
 }
 
+bool QgsPointV2::operator!=( const QgsPointV2& pt ) const
+{
+  return !operator==( pt );
+}
+
 QgsPointV2* QgsPointV2::clone() const
 {
   return new QgsPointV2( *this );
