@@ -125,11 +125,11 @@ void QgsGeometryRubberBand::setGeometry( QgsAbstractGeometryV2* geom )
   mGeometry = geom;
 
   qreal scale = mMapCanvas->mapUnitsPerPixel();
-  qreal s = ( mIconSize - 1 ) / 2 * scale;
+  qreal s = ( mIconSize - 1 ) / 2.0 * scale;
   qreal p = mPen.width() * scale;
 
   QgsRectangle geomBox = mGeometry->boundingBox();
-  setRect( QgsRectangle( geomBox.xMinimum() - s - p, geomBox.yMinimum() - s - p, geomBox.xMaximum() + s + p, geomBox.yMaximum() + s + p ) );
+  setRect( rubberBandRectangle() );
 }
 
 void QgsGeometryRubberBand::moveVertex( const QgsVertexId& id, const QgsPointV2& newPos )
@@ -138,7 +138,7 @@ void QgsGeometryRubberBand::moveVertex( const QgsVertexId& id, const QgsPointV2&
   {
     mGeometry->moveVertex( id, newPos );
   }
-  setRect( mGeometry->boundingBox() );
+  setRect( rubberBandRectangle() );
 }
 
 void QgsGeometryRubberBand::setFillColor( const QColor& c )
@@ -159,4 +159,13 @@ void QgsGeometryRubberBand::setLineStyle( Qt::PenStyle penStyle )
 void QgsGeometryRubberBand::setBrushStyle( Qt::BrushStyle brushStyle )
 {
   mBrush.setStyle( brushStyle );
+}
+
+QgsRectangle QgsGeometryRubberBand::rubberBandRectangle() const
+{
+  qreal scale = mMapCanvas->mapUnitsPerPixel();
+  qreal s = ( mIconSize - 1 ) / 2.0 * scale;
+  qreal p = mPen.width() * scale;
+  QgsRectangle geomBox = mGeometry->boundingBox();
+  return QgsRectangle( geomBox.xMinimum() - s - p, geomBox.yMinimum() - s - p, geomBox.xMaximum() + s + p, geomBox.yMaximum() + s + p );
 }

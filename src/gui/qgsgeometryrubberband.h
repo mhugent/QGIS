@@ -84,6 +84,7 @@ class QgsGeometryRubberBand: public QgsMapCanvasItem
     QGis::GeometryType mGeometryType;
 
     void drawVertex( QPainter* p, double x, double y );
+    QgsRectangle rubberBandRectangle() const;
 };
 
 #endif // QGSGEOMETRYRUBBERBAND_H
