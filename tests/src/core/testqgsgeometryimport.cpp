@@ -28,6 +28,9 @@ class TestQgsGeometryImport: public QObject
     Q_OBJECT
 
   private slots:
+
+    void initTestCase();
+
     void pointWkt_data();
     void pointWkt();
 
@@ -49,6 +52,11 @@ class TestQgsGeometryImport: public QObject
   private:
     bool compareLineStrings( const QgsPolyline& polyline, QVariantList& line );
 };
+
+void TestQgsGeometryImport::initTestCase()
+{
+  initGEOS( 0, 0 );
+}
 
 void TestQgsGeometryImport::pointWkt_data()
 {

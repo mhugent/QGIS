@@ -313,7 +313,7 @@ bool QgsGeometry::isMultipart() const
 
 void QgsGeometry::fromGeos( GEOSGeometry *geos )
 {
-  if ( d && d->geometry )
+  if ( d )
   {
     detach( false );
     delete d->geometry;
