@@ -15,6 +15,7 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include "qgsmultipolygonv2.h"
 #include "qgsapplication.h"
+#include "qgsgeometryutils.h"
 #include "qgssurfacev2.h"
 #include "qgslinestringv2.h"
 #include "qgspolygonv2.h"
@@ -78,7 +79,7 @@ QString QgsMultiPolygonV2::asJSON( int precision ) const
       QgsLineStringV2* exteriorLineString = polygon->exteriorRing()->curveToLine();
       QList<QgsPointV2> exteriorPts;
       exteriorLineString->points( exteriorPts );
-      json += pointsToJSON( exteriorPts, precision ) + ", ";
+      json += QgsGeometryUtils::pointsToJSON( exteriorPts, precision ) + ", ";
       delete exteriorLineString;
 
       for ( int i = 0, n = polygon->numInteriorRings(); i < n; ++i )
@@ -86,7 +87,7 @@ QString QgsMultiPolygonV2::asJSON( int precision ) const
         QgsLineStringV2* interiorLineString = polygon->interiorRing( i )->curveToLine();
         QList<QgsPointV2> interiorPts;
         interiorLineString->points( interiorPts );
-        json += pointsToJSON( interiorPts, precision ) + ", ";
+        json += QgsGeometryUtils::pointsToJSON( interiorPts, precision ) + ", ";
         delete interiorLineString;
       }
       if ( json.endsWith( ", " ) )

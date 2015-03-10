@@ -18,6 +18,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgscurvev2.h"
 #include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
+#include "qgsgeometryutils.h"
 #include "qgslinestringv2.h"
 
 QgsMultiCurveV2 *QgsMultiCurveV2::clone() const
@@ -82,7 +83,7 @@ QString QgsMultiCurveV2::asJSON( int precision ) const
       QgsLineStringV2* lineString = static_cast<const QgsCurveV2*>( geom )->curveToLine();
       QList<QgsPointV2> pts;
       lineString->points( pts );
-      json += pointsToJSON( pts, precision ) + ", ";
+      json += QgsGeometryUtils::pointsToJSON( pts, precision ) + ", ";
       delete lineString;
     }
   }

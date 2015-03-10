@@ -72,13 +72,13 @@ bool QgsLineStringV2::fromWkt( const QString& wkt )
 {
   clear();
 
-  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+  QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
   if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
     return false;
   mWkbType = parts.first;
 
-  setPoints( pointsFromWKT( parts.second, is3D(), isMeasure() ) );
+  setPoints( QgsGeometryUtils::pointsFromWKT( parts.second, is3D(), isMeasure() ) );
   return true;
 }
 
@@ -98,7 +98,7 @@ unsigned char* QgsLineStringV2::asWkb( int& binarySize ) const
   wkb << static_cast<quint32>( wkbType() );
   QList<QgsPointV2> pts;
   points( pts );
-  pointsToWKB( wkb, pts, is3D(), isMeasure() );
+  QgsGeometryUtils::pointsToWKB( wkb, pts, is3D(), isMeasure() );
   return geomPtr;
 }
 
@@ -107,7 +107,7 @@ QString QgsLineStringV2::asWkt( int precision ) const
   QString wkt = wktTypeStr() + " ";
   QList<QgsPointV2> pts;
   points( pts );
-  wkt += pointsToWKT( pts, precision, is3D(), isMeasure() );
+  wkt += QgsGeometryUtils::pointsToWKT( pts, precision, is3D(), isMeasure() );
   return wkt;
 }
 
@@ -117,7 +117,7 @@ QDomElement QgsLineStringV2::asGML2( QDomDocument& doc, int precision, const QSt
   points( pts );
 
   QDomElement elemLineString = doc.createElementNS( ns, "LineString" );
-  elemLineString.appendChild( pointsToGML2( pts, doc, precision, ns ) );
+  elemLineString.appendChild( QgsGeometryUtils::pointsToGML2( pts, doc, precision, ns ) );
 
   return elemLineString;
 }
@@ -130,7 +130,7 @@ QDomElement QgsLineStringV2::asGML3( QDomDocument& doc, int precision, const QSt
   QDomElement elemCurve = doc.createElementNS( ns, "Curve" );
   QDomElement elemSegments = doc.createElementNS( ns, "segments" );
   QDomElement elemArcString = doc.createElementNS( ns, "LineString" );
-  elemArcString.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+  elemArcString.appendChild( QgsGeometryUtils::pointsToGML3( pts, doc, precision, ns, is3D() ) );
   elemSegments.appendChild( elemArcString );
   elemCurve.appendChild( elemSegments );
 
@@ -142,7 +142,7 @@ QString QgsLineStringV2::asJSON( int precision ) const
   QList<QgsPointV2> pts;
   points( pts );
 
-  return "{\"type\": \"LineString\", \"coordinates\": " + pointsToJSON( pts, precision ) + "}";
+  return "{\"type\": \"LineString\", \"coordinates\": " + QgsGeometryUtils::pointsToJSON( pts, precision ) + "}";
 }
 
 double QgsLineStringV2::length() const

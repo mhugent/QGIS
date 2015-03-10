@@ -57,12 +57,13 @@ QgsPointV2* QgsPointV2::clone() const
 
 bool QgsPointV2::fromWkb( const unsigned char* wkb )
 {
-  clear();
-
   QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::Point ) )
+  QgsWKBTypes::Type type = wkbPtr.readHeader();
+  if ( QgsWKBTypes::flatType( type ) != QgsWKBTypes::Point )
+  {
     return false;
+  }
+  mWkbType = type;
 
   wkbPtr >> mX;
   wkbPtr >> mY;
@@ -78,7 +79,7 @@ bool QgsPointV2::fromWkt( const QString& wkt )
 {
   clear();
 
-  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+  QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
   if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
     return false;

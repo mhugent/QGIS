@@ -138,7 +138,7 @@ bool QgsCurvePolygonV2::fromWkt( const QString& wkt )
 {
   clear();
 
-  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+  QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
   if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
     return false;
@@ -146,9 +146,9 @@ bool QgsCurvePolygonV2::fromWkt( const QString& wkt )
 
   QString defaultChildWkbType = QString( "LineString%1%2" ).arg( is3D() ? "Z" : "" ).arg( isMeasure() ? "M" : "" );
 
-  foreach ( const QString& childWkt, wktGetChildBlocks( parts.second, defaultChildWkbType ) )
+  foreach ( const QString& childWkt, QgsGeometryUtils::wktGetChildBlocks( parts.second, defaultChildWkbType ) )
   {
-    QPair<QgsWKBTypes::Type, QString> childParts = wktReadBlock( childWkt );
+    QPair<QgsWKBTypes::Type, QString> childParts = QgsGeometryUtils::wktReadBlock( childWkt );
 
     if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::LineString )
       mInteriorRings.append( new QgsLineStringV2() );
@@ -294,7 +294,7 @@ QString QgsCurvePolygonV2::asJSON( int precision ) const
   QgsLineStringV2* exteriorLineString = exteriorRing()->curveToLine();
   QList<QgsPointV2> exteriorPts;
   exteriorLineString->points( exteriorPts );
-  json += pointsToJSON( exteriorPts, precision ) + ", ";
+  json += QgsGeometryUtils::pointsToJSON( exteriorPts, precision ) + ", ";
   delete exteriorLineString;
 
   for ( int i = 0, n = numInteriorRings(); i < n; ++i )
@@ -302,7 +302,7 @@ QString QgsCurvePolygonV2::asJSON( int precision ) const
     QgsLineStringV2* interiorLineString = interiorRing( i )->curveToLine();
     QList<QgsPointV2> interiorPts;
     interiorLineString->points( interiorPts );
-    json += pointsToJSON( interiorPts, precision ) + ", ";
+    json += QgsGeometryUtils::pointsToJSON( interiorPts, precision ) + ", ";
     delete interiorLineString;
   }
   if ( json.endsWith( ", " ) )

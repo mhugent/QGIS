@@ -112,23 +112,6 @@ class QgsAbstractGeometryV2
 
     void setZMTypeFromSubGeometry( const QgsAbstractGeometryV2* subggeom, QgsWKBTypes::Type baseGeomType );
 
-    /** Serialization and deserialization of a point list */
-    static QList<QgsPointV2> pointsFromWKT( const QString& wktCoordinateList, bool is3D, bool isMeasure );
-    // Returns a LinearRing { uint32 numPoints; Point points[numPoints]; }
-    static void pointsToWKB( QgsWkbPtr &wkb, const QList<QgsPointV2>& points, bool is3D, bool isMeasure );
-    // Returns a WKT coordinate list
-    static QString pointsToWKT( const QList<QgsPointV2>& points, int precision, bool is3D, bool isMeasure );
-    // Returns a gml::coordinates DOM element
-    static QDomElement pointsToGML2( const QList<QgsPointV2>& points, QDomDocument &doc, int precision, const QString& ns );
-    // Returns a gml::posList DOM element
-    static QDomElement pointsToGML3( const QList<QgsPointV2>& points, QDomDocument &doc, int precision, const QString& ns, bool is3D );
-    // Returns a geoJSON coordinates string
-    static QString pointsToJSON( const QList<QgsPointV2>& points, int precision );
-
-    // "TYPE (contents)" -> Pair(wkbType, "contents")
-    static QPair<QgsWKBTypes::Type, QString> wktReadBlock( const QString& wkt );
-    // "TYPE1 (contents1), TYPE2 (TYPE3 (contents3), TYPE4 (contents4))" -> List("TYPE1 (contents1)", "TYPE2 (TYPE3 (contents3), TYPE4 (contents4))")
-    static QStringList wktGetChildBlocks( const QString& wkt , const QString &defaultType = "" );
     static bool readWkbHeader( QgsConstWkbPtr& wkbPtr, QgsWKBTypes::Type& wkbType, bool& endianSwap, QgsWKBTypes::Type expectedType );
 };
 

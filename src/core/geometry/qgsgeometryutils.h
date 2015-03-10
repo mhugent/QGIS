@@ -23,6 +23,8 @@ class QgsGeometryUtils
 {
   public:
 
+
+
     static QgsPointV2 closestVertex( const QgsAbstractGeometryV2& geom, const QgsPointV2& pt, QgsVertexId& id );
     static void adjacentVertices( const QgsAbstractGeometryV2& geom, const QgsVertexId& atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex );
 
@@ -58,6 +60,23 @@ class QgsGeometryUtils
 
     /**calculates midpoint on circle passing through p1 and p2, closest to given coordinate*/
     static bool segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& p2, QgsPointV2& result, double radius, const QgsPointV2& mousePos );
+
+    static QList<QgsPointV2> pointsFromWKT( const QString& wktCoordinateList, bool is3D, bool isMeasure );
+    // Returns a LinearRing { uint32 numPoints; Point points[numPoints]; }
+    static void pointsToWKB( QgsWkbPtr &wkb, const QList<QgsPointV2>& points, bool is3D, bool isMeasure );
+    // Returns a WKT coordinate list
+    static QString pointsToWKT( const QList<QgsPointV2>& points, int precision, bool is3D, bool isMeasure );
+    // Returns a gml::coordinates DOM element
+    static QDomElement pointsToGML2( const QList<QgsPointV2>& points, QDomDocument &doc, int precision, const QString& ns );
+    // Returns a gml::posList DOM element
+    static QDomElement pointsToGML3( const QList<QgsPointV2>& points, QDomDocument &doc, int precision, const QString& ns, bool is3D );
+    // Returns a geoJSON coordinates string
+    static QString pointsToJSON( const QList<QgsPointV2>& points, int precision );
+
+    // "TYPE (contents)" -> Pair(wkbType, "contents")
+    static QPair<QgsWKBTypes::Type, QString> wktReadBlock( const QString& wkt );
+    // "TYPE1 (contents1), TYPE2 (TYPE3 (contents3), TYPE4 (contents4))" -> List("TYPE1 (contents1)", "TYPE2 (TYPE3 (contents3), TYPE4 (contents4))")
+    static QStringList wktGetChildBlocks( const QString& wkt , const QString &defaultType = "" );
 
     enum componentType
     {

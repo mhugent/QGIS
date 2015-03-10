@@ -87,45 +87,53 @@ QgsRectangle QgsCompoundCurveV2::calculateBoundingBox() const
 bool QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
 {
   clear();
+  if ( !wkb )
+  {
+    return false;
+  }
 
   QgsConstWkbPtr wkbPtr( wkb );
-  bool endianSwap;
-  if ( !readWkbHeader( wkbPtr, mWkbType, endianSwap, QgsWKBTypes::CompoundCurve ) )
-    return false;
-
-  quint32 nCurves;
-  wkbPtr >> nCurves;
-  if ( endianSwap )
-    QgsApplication::endian_swap( nCurves );
-  mCurves.reserve( nCurves );
-
-  for ( quint32 i = 0; i < nCurves; ++i )
+  QgsWKBTypes::Type type = wkbPtr.readHeader();
+  if ( QgsWKBTypes::flatType( type ) != QgsWKBTypes::CompoundCurve )
   {
-    QgsWKBTypes::Type curveType = static_cast<QgsWKBTypes::Type>( *reinterpret_cast<const quint32*>( static_cast<const unsigned char*>( wkbPtr ) + sizeof( char ) ) );
+    return false;
+  }
+  mWkbType = type;
+
+  int nCurves;
+  wkbPtr >> nCurves;
+  QgsCurveV2* currentCurve = 0;
+  int currentCurveSize = 0;
+  for ( int i = 0; i < nCurves; ++i )
+  {
+    wkbPtr += 1; //skip endian
+    QgsWKBTypes::Type curveType;
+    wkbPtr >> curveType;
+    wkbPtr -= ( 1 + sizeof( int ) );
     if ( QgsWKBTypes::flatType( curveType ) == QgsWKBTypes::LineString )
-      mCurves.append( new QgsLineStringV2() );
+    {
+      currentCurve = new QgsLineStringV2();
+    }
     else if ( QgsWKBTypes::flatType( curveType ) == QgsWKBTypes::CircularString )
-      mCurves.append( new QgsCircularStringV2() );
+    {
+      currentCurve = new QgsCircularStringV2();
+    }
     else
     {
-      clear();
       return false;
     }
-    if ( !mCurves.back()->fromWkb( wkbPtr ) )
-    {
-      clear();
-      return false;
-    }
-    wkbPtr += mCurves.back()->wkbSize();
+    currentCurve->fromWkb( wkbPtr );
+    currentCurveSize = currentCurve->wkbSize();
+    mCurves.append( currentCurve );
+    wkbPtr += currentCurveSize;
   }
-  return true;
 }
 
 bool QgsCompoundCurveV2::fromWkt( const QString& wkt )
 {
   clear();
 
-  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+  QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
   if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
     return false;
@@ -133,9 +141,9 @@ bool QgsCompoundCurveV2::fromWkt( const QString& wkt )
 
   QString defaultChildWkbType = QString( "LineString%1%2" ).arg( is3D() ? "Z" : "" ).arg( isMeasure() ? "M" : "" );
 
-  foreach ( const QString& childWkt, wktGetChildBlocks( parts.second, defaultChildWkbType ) )
+  foreach ( const QString& childWkt, QgsGeometryUtils::wktGetChildBlocks( parts.second, defaultChildWkbType ) )
   {
-    QPair<QgsWKBTypes::Type, QString> childParts = wktReadBlock( childWkt );
+    QPair<QgsWKBTypes::Type, QString> childParts = QgsGeometryUtils::wktReadBlock( childWkt );
 
     if ( QgsWKBTypes::flatType( childParts.first ) == QgsWKBTypes::LineString )
       mCurves.append( new QgsLineStringV2() );
@@ -228,7 +236,7 @@ QDomElement QgsCompoundCurveV2::asGML3( QDomDocument& doc, int precision, const 
       curve->points( pts );
 
       QDomElement elemLineStringSegment = doc.createElementNS( ns, "LineStringSegment" );
-      elemLineStringSegment.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+      elemLineStringSegment.appendChild( QgsGeometryUtils::pointsToGML3( pts, doc, precision, ns, is3D() ) );
       elemSegments.appendChild( elemLineStringSegment );
     }
     else if ( dynamic_cast<const QgsCircularStringV2*>( curve ) )
@@ -237,7 +245,7 @@ QDomElement QgsCompoundCurveV2::asGML3( QDomDocument& doc, int precision, const 
       curve->points( pts );
 
       QDomElement elemArcString = doc.createElementNS( ns, "ArcString" );
-      elemArcString.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+      elemArcString.appendChild( QgsGeometryUtils::pointsToGML3( pts, doc, precision, ns, is3D() ) );
       elemSegments.appendChild( elemArcString );
     }
   }

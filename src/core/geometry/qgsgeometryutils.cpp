@@ -14,6 +14,8 @@ email                : marco.hugentobler at sourcepole dot com
  ***************************************************************************/
 
 #include "qgsgeometryutils.h"
+#include "qgswkbptr.h"
+#include <QStringList>
 
 QgsPointV2 QgsGeometryUtils::closestVertex( const QgsAbstractGeometryV2& geom, const QgsPointV2& pt, QgsVertexId& id )
 {
@@ -343,4 +345,166 @@ bool QgsGeometryUtils::segmentMidPoint( const QgsPointV2& p1, const QgsPointV2& 
 
   result = possibleMidPoints.at( minDistIndex );
   return true;
+}
+
+QList<QgsPointV2> QgsGeometryUtils::pointsFromWKT( const QString &wktCoordinateList, bool is3D, bool isMeasure )
+{
+  int dim = 2 + is3D + isMeasure;
+  QList<QgsPointV2> points;
+  foreach ( const QString& pointCoordinates, wktCoordinateList.split( ",", QString::SkipEmptyParts ) )
+  {
+    QStringList coordinates = pointCoordinates.split( " ", QString::SkipEmptyParts );
+    if ( coordinates.size() != dim )
+      continue;
+
+    int idx = 0;
+    double x = coordinates[idx++].toDouble();
+    double y = coordinates[idx++].toDouble();
+    double z = is3D ? coordinates[idx++].toDouble() : 0.;
+    double m = isMeasure ? coordinates[idx++].toDouble() : 0.;
+
+    if ( is3D )
+    {
+      if ( isMeasure )
+        points.append( QgsPointV2( x, y, z, m ) );
+      else
+        points.append( QgsPointV2( x, y, z, false ) );
+    }
+    else
+    {
+      if ( isMeasure )
+        points.append( QgsPointV2( x, y, m, true ) );
+      else
+        points.append( QgsPointV2( x, y ) );
+    }
+  }
+  return points;
+}
+
+void QgsGeometryUtils::pointsToWKB( QgsWkbPtr& wkb, const QList<QgsPointV2> &points, bool is3D, bool isMeasure )
+{
+  wkb << static_cast<quint32>( points.size() );
+  foreach ( const QgsPointV2& point, points )
+  {
+    wkb << point.x() << point.y();
+    if ( is3D )
+    {
+      wkb << point.z();
+    }
+    if ( isMeasure )
+    {
+      wkb << point.m();
+    }
+  }
+}
+
+QString QgsGeometryUtils::pointsToWKT( const QList<QgsPointV2>& points, int precision, bool is3D, bool isMeasure )
+{
+  QString wkt = "(";
+  foreach ( const QgsPointV2& p, points )
+  {
+    wkt += qgsDoubleToString( p.x(), precision );
+    wkt += " " + qgsDoubleToString( p.y(), precision );
+    if ( is3D )
+      wkt += " " + qgsDoubleToString( p.z(), precision );
+    if ( isMeasure )
+      wkt += " " + qgsDoubleToString( p.m(), precision );
+    wkt += ", ";
+  }
+  if ( wkt.endsWith( ", " ) )
+    wkt.chop( 2 ); // Remove last ", "
+  wkt += ")";
+  return wkt;
+}
+
+QDomElement QgsGeometryUtils::pointsToGML2( const QList<QgsPointV2>& points, QDomDocument& doc, int precision, const QString &ns )
+{
+  QDomElement elemCoordinates = doc.createElementNS( ns, "coordinates" );
+
+  QString strCoordinates;
+
+  foreach ( const QgsPointV2& p, points )
+    strCoordinates += qgsDoubleToString( p.x(), precision ) + "," + qgsDoubleToString( p.y(), precision ) + " ";
+
+  if ( strCoordinates.endsWith( " " ) )
+    strCoordinates.chop( 1 ); // Remove trailing space
+
+  elemCoordinates.appendChild( doc.createTextNode( strCoordinates ) );
+  return elemCoordinates;
+}
+
+QDomElement QgsGeometryUtils::pointsToGML3( const QList<QgsPointV2>& points, QDomDocument& doc, int precision, const QString &ns, bool is3D )
+{
+  QDomElement elemPosList = doc.createElementNS( ns, "posList" );
+  elemPosList.setAttribute( "srsDimension", is3D ? 3 : 2 );
+
+  QString strCoordinates;
+  foreach ( const QgsPointV2& p, points )
+  {
+    strCoordinates += qgsDoubleToString( p.x(), precision ) + " " + qgsDoubleToString( p.y(), precision ) + " ";
+    if ( is3D )
+      strCoordinates += qgsDoubleToString( p.z(), precision ) + " ";
+  }
+  if ( strCoordinates.endsWith( " " ) )
+    strCoordinates.chop( 1 ); // Remove trailing space
+
+  elemPosList.appendChild( doc.createTextNode( strCoordinates ) );
+  return elemPosList;
+}
+
+QString QgsGeometryUtils::pointsToJSON( const QList<QgsPointV2>& points, int precision )
+{
+  QString json = "[ ";
+  foreach ( const QgsPointV2& p, points )
+  {
+    json += "[" + qgsDoubleToString( p.x(), precision ) + ", " + qgsDoubleToString( p.y(), precision ) + "], ";
+  }
+  if ( json.endsWith( ", " ) )
+  {
+    json.chop( 2 ); // Remove last ", "
+  }
+  json += "]";
+  return json;
+}
+
+QPair<QgsWKBTypes::Type, QString> QgsGeometryUtils::wktReadBlock( const QString &wkt )
+{
+  QgsWKBTypes::Type wkbType = QgsWKBTypes::parseType( wkt );
+
+  QRegExp cooRegEx( "^[^\\(]*\\((.*)\\)[^\\)]*$" );
+  QString contents = cooRegEx.indexIn( wkt ) >= 0 ? cooRegEx.cap( 1 ) : QString();
+  return qMakePair( wkbType, contents );
+}
+
+QStringList QgsGeometryUtils::wktGetChildBlocks( const QString &wkt, const QString& defaultType )
+{
+  int level = 0;
+  QString block;
+  QStringList blocks;
+  for ( int i = 0, n = wkt.length(); i < n; ++i )
+  {
+    if ( wkt[i] == ',' && level == 0 )
+    {
+      if ( !block.isEmpty() )
+      {
+        if ( block.startsWith( "(" ) && !defaultType.isEmpty() )
+          block.prepend( defaultType + " " );
+        blocks.append( block );
+      }
+      block.clear();
+      continue;
+    }
+    if ( wkt[i] == '(' )
+      ++level;
+    else if ( wkt[i] == ')' )
+      --level;
+    block += wkt[i];
+  }
+  if ( !block.isEmpty() )
+  {
+    if ( block.startsWith( "(" ) && !defaultType.isEmpty() )
+      block.prepend( defaultType + " " );
+    blocks.append( block );
+  }
+  return blocks;
 }

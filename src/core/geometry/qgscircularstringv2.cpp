@@ -228,13 +228,13 @@ bool QgsCircularStringV2::fromWkt( const QString& wkt )
 {
   clear();
 
-  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+  QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
   if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
     return false;
   mWkbType = parts.first;
 
-  setPoints( pointsFromWKT( parts.second, is3D(), isMeasure() ) );
+  setPoints( QgsGeometryUtils::pointsFromWKT( parts.second, is3D(), isMeasure() ) );
   return true;
 }
 
@@ -254,7 +254,7 @@ unsigned char* QgsCircularStringV2::asWkb( int& binarySize ) const
   wkb << static_cast<quint32>( wkbType() );
   QList<QgsPointV2> pts;
   points( pts );
-  pointsToWKB( wkb, pts, is3D(), isMeasure() );
+  QgsGeometryUtils::pointsToWKB( wkb, pts, is3D(), isMeasure() );
   return geomPtr;
 }
 
@@ -263,7 +263,7 @@ QString QgsCircularStringV2::asWkt( int precision ) const
   QString wkt = wktTypeStr() + " ";
   QList<QgsPointV2> pts;
   points( pts );
-  wkt += pointsToWKT( pts, precision, is3D(), isMeasure() );
+  wkt += QgsGeometryUtils::pointsToWKT( pts, precision, is3D(), isMeasure() );
   return wkt;
 }
 
@@ -284,7 +284,7 @@ QDomElement QgsCircularStringV2::asGML3( QDomDocument& doc, int precision, const
   QDomElement elemCurve = doc.createElementNS( ns, "Curve" );
   QDomElement elemSegments = doc.createElementNS( ns, "segments" );
   QDomElement elemArcString = doc.createElementNS( ns, "ArcString" );
-  elemArcString.appendChild( pointsToGML3( pts, doc, precision, ns, is3D() ) );
+  elemArcString.appendChild( QgsGeometryUtils::pointsToGML3( pts, doc, precision, ns, is3D() ) );
   elemSegments.appendChild( elemArcString );
   elemCurve.appendChild( elemSegments );
   return elemCurve;

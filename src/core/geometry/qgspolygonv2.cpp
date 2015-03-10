@@ -17,6 +17,7 @@
 
 #include "qgspolygonv2.h"
 #include "qgsapplication.h"
+#include "qgsgeometryutils.h"
 #include "qgslinestringv2.h"
 #include "qgswkbptr.h"
 
@@ -92,13 +93,13 @@ unsigned char* QgsPolygonV2::asWkb( int& binarySize ) const
   {
     QList<QgsPointV2> pts;
     mExteriorRing->points( pts );
-    pointsToWKB( wkb, pts, mExteriorRing->is3D(), mExteriorRing->isMeasure() );
+    QgsGeometryUtils::pointsToWKB( wkb, pts, mExteriorRing->is3D(), mExteriorRing->isMeasure() );
   }
   foreach ( const QgsCurveV2* curve, mInteriorRings )
   {
     QList<QgsPointV2> pts;
     curve->points( pts );
-    pointsToWKB( wkb, pts, curve->is3D(), curve->isMeasure() );
+    QgsGeometryUtils::pointsToWKB( wkb, pts, curve->is3D(), curve->isMeasure() );
   }
   return geomPtr;
 }

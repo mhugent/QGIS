@@ -362,7 +362,7 @@ bool QgsGeometryCollectionV2::fromCollectionWkt( const QString &wkt, const QList
 {
   clear();
 
-  QPair<QgsWKBTypes::Type, QString> parts = wktReadBlock( wkt );
+  QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
   if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
     return false;
@@ -370,9 +370,9 @@ bool QgsGeometryCollectionV2::fromCollectionWkt( const QString &wkt, const QList
 
   QString defChildWkbType = QString( "%1%2%3 " ).arg( defaultChildWkbType ).arg( is3D() ? "Z" : "" ).arg( isMeasure() ? "M" : "" );
 
-  foreach ( const QString& childWkt, wktGetChildBlocks( parts.second, defChildWkbType ) )
+  foreach ( const QString& childWkt, QgsGeometryUtils::wktGetChildBlocks( parts.second, defChildWkbType ) )
   {
-    QPair<QgsWKBTypes::Type, QString> childParts = wktReadBlock( childWkt );
+    QPair<QgsWKBTypes::Type, QString> childParts = QgsGeometryUtils::wktReadBlock( childWkt );
 
     bool success = false;
     foreach ( const QgsAbstractGeometryV2* geom, subtypes )

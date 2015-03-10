@@ -15,6 +15,7 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include "qgsmultipointv2.h"
 #include "qgsapplication.h"
+#include "qgsgeometryutils.h"
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
 
@@ -68,7 +69,7 @@ QString QgsMultiPointV2::asJSON( int precision ) const
     if ( dynamic_cast<const QgsPointV2*>( geom ) )
     {
       const QgsPointV2* point = static_cast<const QgsPointV2*>( geom );
-      json += pointsToJSON( QList<QgsPointV2>() << *point, precision ) + ", ";
+      json += QgsGeometryUtils::pointsToJSON( QList<QgsPointV2>() << *point, precision ) + ", ";
     }
   }
   if ( json.endsWith( ", " ) )
