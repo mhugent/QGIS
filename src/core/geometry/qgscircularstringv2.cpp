@@ -603,7 +603,7 @@ void QgsCircularStringV2::transform( const QTransform& t )
 
 void QgsCircularStringV2::clip( const QgsRectangle& rect )
 {
-
+  //todo...
 }
 
 void QgsCircularStringV2::addToPainterPath( QPainterPath& path ) const
@@ -743,6 +743,7 @@ void QgsCircularStringV2::deleteVertex( int i )
 
 double QgsCircularStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
+  Q_UNUSED( epsilon );
   double minDist = std::numeric_limits<double>::max();
   QgsPointV2 minDistSegmentPoint;
   QgsVertexId minDistVertexAfter;
@@ -819,7 +820,13 @@ double QgsCircularStringV2::closestPointOnArc( double x1, double y1, double x2, 
   }
 
   double sqrDistance = QgsGeometryUtils::sqrDistance2D( segmentPt, pt );
-
+  //prevent rounding errors if the point is directly on the segment
+  if ( qgsDoubleNear( sqrDistance, 0.0, epsilon ) )
+  {
+    segmentPt.setX( pt.x() );
+    segmentPt.setY( pt.y() );
+    sqrDistance = 0.0;
+  }
 
   if ( leftOf )
   {

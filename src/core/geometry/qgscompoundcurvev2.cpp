@@ -127,6 +127,7 @@ bool QgsCompoundCurveV2::fromWkb( const unsigned char* wkb )
     mCurves.append( currentCurve );
     wkbPtr += currentCurveSize;
   }
+  return true;
 }
 
 bool QgsCompoundCurveV2::fromWkt( const QString& wkt )
@@ -487,6 +488,7 @@ bool QgsCompoundCurveV2::insertVertex( const QgsVertexId& position, const QgsPoi
     //return after first result
     return mCurves[idIt->first]->insertVertex( idIt->second, vertex );
   }
+  return false;
 }
 
 bool QgsCompoundCurveV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )

@@ -44,10 +44,6 @@ bool QgsPolygonV2::fromWkb( const unsigned char* wkb )
 
   int nRings;
   wkbPtr >> nRings;
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
-  double x, y, z, m;
-  int nPoints = 0;
   for ( int i = 0; i < nRings; ++i )
   {
     QgsLineStringV2* line = new QgsLineStringV2();

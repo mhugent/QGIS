@@ -61,16 +61,16 @@ class QgsPointV2: public QgsAbstractGeometryV2
 
     virtual QgsRectangle calculateBoundingBox() const { return QgsRectangle( mX, mY, mX, mY );}
 
-    void draw( QPainter& p ) const {}
+    void draw( QPainter& p ) const;
     void transform( const QgsCoordinateTransform& ct );
     void transform( const QTransform& t );
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
 
     //low-level editing
-    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) { return false; }
-    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { *this = newPos; return true; }
-    virtual bool deleteVertex( const QgsVertexId& position ) { return false; }
+    virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) { Q_UNUSED( position ); Q_UNUSED( vertex ); return false; }
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { Q_UNUSED( position ); *this = newPos; return true; }
+    virtual bool deleteVertex( const QgsVertexId& position ) { Q_UNUSED( position ); return false; }
 
     double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
     bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const;

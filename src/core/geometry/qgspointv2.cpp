@@ -22,6 +22,7 @@
 #include "qgsgeometryutils.h"
 #include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
+#include <QPainter>
 
 QgsPointV2::QgsPointV2( double x, double y ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( 0.0 ), mM( 0.0 )
 {
@@ -172,6 +173,11 @@ QString QgsPointV2::asJSON( int precision ) const
          + "]}";
 }
 
+void QgsPointV2::draw( QPainter& p ) const
+{
+  p.drawRect( mX - 2, mY - 2, 4, 4 );
+}
+
 void QgsPointV2::clear()
 {
   mWkbType = QgsWKBTypes::Unknown;
@@ -193,6 +199,7 @@ void QgsPointV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coor
 
 double QgsPointV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
+  Q_UNUSED( segmentPt ); Q_UNUSED( vertexAfter ); Q_UNUSED( leftOf ); Q_UNUSED( leftOf ); Q_UNUSED( epsilon );
   return QgsGeometryUtils::sqrDistance2D( *this, pt );
 }
 
