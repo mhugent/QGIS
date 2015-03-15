@@ -72,8 +72,9 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     return 3;
   }
 
-  outputPointFields.append( QgsField( "bearing", QVariant::Double ) ); //add bearing attribute for lines
-  QgsVectorFileWriter outputLineWriter( mOutputLineLayer, "utf-8", outputPointFields, QGis::WKBLineString,
+  QgsFields outputLineFields = outputPointFields;
+  outputLineFields.append( QgsField( "bearing", QVariant::Double ) ); //add bearing attribute for lines
+  QgsVectorFileWriter outputLineWriter( mOutputLineLayer, "utf-8", outputLineFields, QGis::WKBLineString,
                                         &( mStrataLayer->crs() ) );
   if ( outputLineWriter.hasError() != QgsVectorFileWriter::NoError )
   {
@@ -89,13 +90,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
   {
     return 5;
   }
-
-  //debug: write clipped buffer bounds with stratum id to same directory as out_point
-  QFileInfo outputPointInfo( mOutputPointLayer );
-  QString bufferClipLineOutput = outputPointInfo.absolutePath() + "/out_buffer_clip_line.shp";
-  QgsFields bufferClipLineFields;
-  bufferClipLineFields.append( QgsField( "id", stratumIdType ) );
-  QgsVectorFileWriter bufferClipLineWriter( bufferClipLineOutput, "utf-8", bufferClipLineFields, QGis::WKBLineString, &( mStrataLayer->crs() ) );
 
   //configure distanceArea depending on minDistance units and output CRS
   QgsDistanceArea distanceArea;
@@ -177,7 +171,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
     }
 
     //save clipped baseline to file
-    QgsFeature blFeature;
+    QgsFeature blFeature( usedBaselineFields );
     blFeature.setGeometry( *clippedBaseline );
     blFeature.setAttribute( "stratum_id", strataId );
     blFeature.setAttribute( "ok", "f" );
@@ -204,7 +198,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       QgsPoint sampleQgsPoint = samplePoint->asPoint();
       QgsPoint latLongSamplePoint = toLatLongTransform.transform( sampleQgsPoint );
 
-      QgsFeature samplePointFeature;
+      QgsFeature samplePointFeature( outputPointFields );
       samplePointFeature.setGeometry( samplePoint );
       samplePointFeature.setAttribute( "id", nTotalTransects + 1 );
       samplePointFeature.setAttribute( "station_id", nCreatedTransects + 1 );
@@ -273,7 +267,7 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       }
 
       QgsFeatureId fid( nCreatedTransects );
-      QgsFeature sampleLineFeature( fid );
+      QgsFeature sampleLineFeature( outputLineFields, fid );
       sampleLineFeature.setGeometry( lineClipStratum );
       sampleLineFeature.setAttribute( "id", nTotalTransects + 1 );
       sampleLineFeature.setAttribute( "station_id", nCreatedTransects + 1 );
@@ -296,12 +290,6 @@ int QgsTransectSample::createSample( QProgressDialog* pd )
       ++nCreatedTransects;
     }
     delete clippedBaseline;
-
-    QgsFeature bufferClipFeature;
-    bufferClipFeature.setGeometry( bufferLineClipped );
-    bufferClipFeature.setAttribute( "id", strataId );
-    bufferClipLineWriter.addFeature( bufferClipFeature );
-    //delete bufferLineClipped;
 
     //delete all line geometries in spatial index
     QMap< QgsFeatureId, QgsGeometry* >::iterator featureMapIt = lineFeatureMap.begin();
@@ -549,18 +537,11 @@ QgsGeometry* QgsTransectSample::clipBufferLine( QgsGeometry* stratumGeom, QgsGeo
   QgsGeometry* usedBaseline = clippedBaseline;
   if ( mBaselineSimplificationTolerance >= 0 )
   {
-    //int verticesBefore = usedBaseline->asMultiPolyline().count();
     usedBaseline = clippedBaseline->simplify( mBaselineSimplificationTolerance );
     if ( !usedBaseline )
     {
       return 0;
     }
-    //int verticesAfter = usedBaseline->asMultiPolyline().count();
-
-    //debug: write to file
-    /*QgsVectorFileWriter debugWriter( "/tmp/debug.shp", "utf-8", QgsFields(), QGis::WKBLineString, &( mStrataLayer->crs() ) );
-    QgsFeature debugFeature; debugFeature.setGeometry( usedBaseline );
-    debugWriter.addFeature( debugFeature );*/
   }
 
   double currentBufferDist = tolerance;
