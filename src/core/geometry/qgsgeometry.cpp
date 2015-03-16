@@ -1055,6 +1055,7 @@ double QgsGeometry::length()
   QgsGeos g( d->geometry );
   return g.length();
 }
+
 double QgsGeometry::distance( QgsGeometry& geom )
 {
   if ( !d || !d->geometry || !geom.d || !geom.d->geometry )

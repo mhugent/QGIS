@@ -29,6 +29,8 @@ class TestQgsGeometryUtils: public QObject
     void testLeftOfLine();
     void testSegmentMidPoint_data();
     void testSegmentMidPoint();
+    void testCircleLength_data();
+    void testCircleLength();
 };
 
 void TestQgsGeometryUtils::testLeftOfLine_data()
@@ -139,6 +141,33 @@ void TestQgsGeometryUtils::testSegmentMidPoint()
   QVERIFY( ok );
   QVERIFY( qgsDoubleNear( midPoint.x(), expectedX ) );
   QVERIFY( qgsDoubleNear( midPoint.y(), expectedY ) );
+}
+
+void TestQgsGeometryUtils::testCircleLength_data()
+{
+  QTest::addColumn<double>( "x1" );
+  QTest::addColumn<double>( "y1" );
+  QTest::addColumn<double>( "x2" );
+  QTest::addColumn<double>( "y2" );
+  QTest::addColumn<double>( "x3" );
+  QTest::addColumn<double>( "y3" );
+  QTest::addColumn<double>( "expected" );
+
+  QTest::newRow( "circleLength1" ) << 1.0 << 0.0 << -1.0 << 0.0 << 0.0 << 1.0 << ( 2 * M_PI * 0.75 );
+  QTest::newRow( "circleLength2" ) << 0.0 << 1.0 << -1.0 << 0.0 << 1.0 << 0.0 << ( 2 * M_PI * 0.75 );
+}
+
+void TestQgsGeometryUtils::testCircleLength()
+{
+  QFETCH( double, x1 );
+  QFETCH( double, y1 );
+  QFETCH( double, x2 );
+  QFETCH( double, y2 );
+  QFETCH( double, x3 );
+  QFETCH( double, y3 );
+  QFETCH( double, expected );
+
+  QVERIFY( qgsDoubleNear( expected, QgsGeometryUtils::circleLength( x1, y1, x2, y2, x3, y3 ) ) );
 }
 
 

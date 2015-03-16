@@ -271,7 +271,12 @@ double QgsGeometryUtils::circleLength( double x1, double y1, double x2, double y
 {
   double centerX, centerY, radius;
   circleCenterRadius( QgsPointV2( x1, y1 ), QgsPointV2( x2, y2 ), QgsPointV2( x3, y3 ), radius, centerX, centerY );
-  return M_PI / 180.0 * radius * sweepAngle( centerX, centerY, x1, y1, x2, y2, x3, y3 );
+  double length = M_PI / 180.0 * radius * sweepAngle( centerX, centerY, x1, y1, x2, y2, x3, y3 );
+  if ( length < 0 )
+  {
+    length = -length;
+  }
+  return length;
 }
 
 double QgsGeometryUtils::sweepAngle( double centerX, double centerY, double x1, double y1, double x2, double y2, double x3, double y3 )
