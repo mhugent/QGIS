@@ -1043,6 +1043,16 @@ double QgsGeometry::area()
     return -1.0;
   }
   QgsGeos g( d->geometry );
+
+  //debug: compare geos area with calculation in QGIS
+  double geosArea = g.area();
+  double qgisArea = 0;
+  QgsSurfaceV2* surface = dynamic_cast<QgsSurfaceV2*>( d->geometry );
+  if ( surface )
+  {
+    qgisArea = surface->area();
+  }
+
   return g.area();
 }
 

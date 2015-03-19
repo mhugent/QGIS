@@ -559,3 +559,12 @@ bool QgsCompoundCurveV2::pointAt( int i, QgsPointV2& vertex ) const
   return false;
 }
 
+void QgsCompoundCurveV2::sumUpArea( double& sum ) const
+{
+  QList< QgsCurveV2* >::const_iterator curveIt = mCurves.constBegin();
+  for ( ; curveIt != mCurves.constEnd(); ++curveIt )
+  {
+    ( *curveIt )->sumUpArea( sum );
+  }
+}
+

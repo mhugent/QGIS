@@ -315,7 +315,18 @@ QString QgsCurvePolygonV2::asJSON( int precision ) const
 
 double QgsCurvePolygonV2::area() const
 {
-  return 0.0;
+  if ( !mExteriorRing )
+  {
+    return 0.0;
+  }
+
+  double area = mExteriorRing->area();
+  QList<QgsCurveV2*>::const_iterator ringIt = mInteriorRings.constBegin();
+  for ( ; ringIt != mInteriorRings.constEnd(); ++ringIt )
+  {
+    area -= ( *ringIt )->area();
+  }
+  return area;
 }
 
 double QgsCurvePolygonV2::perimeter() const

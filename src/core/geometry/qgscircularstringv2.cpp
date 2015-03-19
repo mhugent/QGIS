@@ -787,6 +787,58 @@ bool QgsCircularStringV2::pointAt( int i, QgsPointV2& vertex ) const
   return true;
 }
 
+void QgsCircularStringV2::sumUpArea( double& sum ) const
+{
+  int maxIndex = numPoints() - 1;
+
+  for ( int i = 0; i < maxIndex; i += 2 )
+  {
+    //todo: handle the case of a full circle (point[i] == point[i+2], point[i+1] = radius)
+
+    sum += 0.5 * ( mX[i] * mY[i+2] - mY[i] * mX[i+2] );
+
+    //calculate area between circle and chord, then sum / subtract from total area
+    double midPointX = ( mX[i] + mX[i+2] ) / 2.0;
+    double midPointY = ( mY[i] + mY[i+2] ) / 2.0;
+
+    double radius, centerX, centerY;
+    QgsGeometryUtils::circleCenterRadius( QgsPointV2( mX[i], mY[i] ), QgsPointV2( mX[i + 1], mY[i + 1] ),
+                                          QgsPointV2( mX[i + 2], mY[i + 2] ), radius, centerX, centerY );
+
+    double d = sqrt( QgsGeometryUtils::sqrDistance2D( QgsPointV2( centerX, centerY ), QgsPointV2( midPointX, midPointY ) ) );
+    double r2 = radius * radius;
+
+    if ( d > radius )
+    {
+      //d cannot be greater than radius, something must be wrong...
+      continue;
+    }
+
+    bool circlePointLeftOfLine = QgsGeometryUtils::leftOfLine( mX[i+1], mY[i+1], mX[i], mY[i], mX[i+2], mY[i+2] ) < 0;
+    bool centerPointLeftOfLine = QgsGeometryUtils::leftOfLine( centerX, centerY, mX[i], mY[i], mX[i+2], mY[i+2] ) < 0;
+
+    double cov = 0.5 - d * sqrt( r2 - d * d ) / ( M_PI * r2 ) - 1 / M_PI * asin( d / radius );
+    double circleChordArea = 0;
+    if ( circlePointLeftOfLine == centerPointLeftOfLine )
+    {
+      circleChordArea = M_PI * r2 * ( 1 - cov );
+    }
+    else
+    {
+      circleChordArea = M_PI * r2 * cov;
+    }
+
+    if ( !circlePointLeftOfLine )
+    {
+      sum += circleChordArea;
+    }
+    else
+    {
+      sum -= circleChordArea;
+    }
+  }
+}
+
 double QgsCircularStringV2::closestPointOnArc( double x1, double y1, double x2, double y2, double x3, double y3,
     const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon )
 {

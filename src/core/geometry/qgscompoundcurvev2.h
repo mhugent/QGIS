@@ -75,6 +75,8 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
     bool pointAt( int i, QgsPointV2& vertex ) const;
 
+    void sumUpArea( double& sum ) const;
+
   private:
     QList< QgsCurveV2* > mCurves;
     /**Turns a vertex id for the compound curve into one or more ids for the subcurves

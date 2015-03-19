@@ -260,6 +260,7 @@ double QgsDistanceArea::measure( QgsGeometry* geometry )
   if ( !geometry )
     return 0.0;
 
+  geometry->convertToStraightSegment();
   const unsigned char* wkb = geometry->asWkb();
   if ( !wkb )
     return 0.0;

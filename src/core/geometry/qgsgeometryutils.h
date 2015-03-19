@@ -32,7 +32,7 @@ class QgsGeometryUtils
 
     static double sqrDistToLine( double ptX, double ptY, double x1, double y1, double x2, double y2, double& minDistX, double& minDistY, double epsilon );
 
-    /**Returns < 0 if point(x/y) is left of the line x1,y1 -> x1,y2*/
+    /**Returns < 0 if point(x/y) is left of the line x1,y1 -> x2,y2*/
     static double leftOfLine( double x, double y, double x1, double y1, double x2, double y2 );
 
     static QgsPointV2 pointOnLineWithDistance( const QgsPointV2& startPoint, const QgsPointV2& directionPoint, double distance );

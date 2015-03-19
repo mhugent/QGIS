@@ -434,6 +434,15 @@ bool QgsLineStringV2::pointAt( int i, QgsPointV2& vertex ) const
   return true;
 }
 
+void QgsLineStringV2::sumUpArea( double& sum ) const
+{
+  int maxIndex = numPoints() - 1;
+  for ( int i = 0; i < maxIndex; ++i )
+  {
+    sum += 0.5 * ( mCoords[i].x() * mCoords[i+1].y() - mCoords[i].y() * mCoords[i+1].x() );
+  }
+}
+
 void QgsLineStringV2::importVerticesFromWkb( const QgsConstWkbPtr& wkb )
 {
   bool hasZ = is3D();

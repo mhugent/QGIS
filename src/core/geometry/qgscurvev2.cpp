@@ -67,3 +67,15 @@ bool QgsCurveV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
   }
   return pointAt( id.vertex, vertex );
 }
+
+double QgsCurveV2::area() const
+{
+  if ( !isClosed() )
+  {
+    return 0.0;
+  }
+
+  double area = 0.0;
+  sumUpArea( area );
+  return qAbs( area );
+}
