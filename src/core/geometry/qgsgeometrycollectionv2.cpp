@@ -358,6 +358,28 @@ bool QgsGeometryCollectionV2::deleteVertex( const QgsVertexId& position )
   return mGeometries[position.part]->deleteVertex( position );
 }
 
+double QgsGeometryCollectionV2::length() const
+{
+  double length = 0.0;
+  QVector< QgsAbstractGeometryV2* >::const_iterator geomIt = mGeometries.constBegin();
+  for ( ; geomIt != mGeometries.constEnd(); ++geomIt )
+  {
+    length += ( *geomIt )->length();
+  }
+  return length;
+}
+
+double QgsGeometryCollectionV2::area() const
+{
+  double area = 0.0;
+  QVector< QgsAbstractGeometryV2* >::const_iterator geomIt = mGeometries.constBegin();
+  for ( ; geomIt != mGeometries.constEnd(); ++geomIt )
+  {
+    area += ( *geomIt )->area();
+  }
+  return area;
+}
+
 bool QgsGeometryCollectionV2::fromCollectionWkt( const QString &wkt, const QList<QgsAbstractGeometryV2*>& subtypes, const QString& defaultChildWkbType )
 {
   clear();

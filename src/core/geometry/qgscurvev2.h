@@ -29,7 +29,6 @@ class QgsCurveV2: public QgsAbstractGeometryV2
   public:
     QgsCurveV2();
     virtual ~QgsCurveV2();
-    virtual double length() const = 0;
     virtual QgsPointV2 startPoint() const = 0;
     virtual QgsPointV2 endPoint() const = 0;
     virtual bool isClosed() const;
@@ -41,7 +40,7 @@ class QgsCurveV2: public QgsAbstractGeometryV2
     virtual void points( QList<QgsPointV2>& pt ) const = 0;
     virtual int numPoints() const = 0;
 
-    double area() const;
+    virtual double area() const;
     virtual void sumUpArea( double& sum ) const = 0;
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;

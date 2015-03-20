@@ -409,11 +409,25 @@ QMap< QString, QString > QgsMapToolIdentify::featureDerivedAttributes( QgsFeatur
     double perimeter = calc.measurePerimeter( feature->geometry() );
     QGis::UnitType myDisplayUnits;
     convertMeasurement( calc, area, myDisplayUnits, true );  // area and myDisplayUnits are out params
-    QString str = calc.textUnit( area, 3, myDisplayUnits, true );
+    QString str = calc.textUnit( area, 5, myDisplayUnits, true );
     derivedAttributes.insert( tr( "Area" ), str );
     convertMeasurement( calc, perimeter, myDisplayUnits, false );  // perimeter and myDisplayUnits are out params
-    str = calc.textUnit( perimeter, 3, myDisplayUnits, false );
+    str = calc.textUnit( perimeter, 5, myDisplayUnits, false );
     derivedAttributes.insert( tr( "Perimeter" ), str );
+
+    //debug
+    QgsGeometry* geom = feature->geometry();
+    geom->convertToStraightSegment();
+    double areaSegmentised = calc.measure( geom );
+    double perimeterSegmentised = calc.measurePerimeter( geom );
+
+    convertMeasurement( calc, areaSegmentised, myDisplayUnits, true );  // area and myDisplayUnits are out params
+    str = calc.textUnit( areaSegmentised, 5, myDisplayUnits, true );
+    derivedAttributes.insert( tr( "Area segmentized" ), str );
+
+    convertMeasurement( calc, perimeterSegmentised, myDisplayUnits, false );  // perimeter and myDisplayUnits are out params
+    str = calc.textUnit( perimeterSegmentised, 5, myDisplayUnits, true );
+    derivedAttributes.insert( tr( "Perimeter segmentized" ), str );
   }
   else if ( geometryType == QGis::Point &&
             ( wkbType == QGis::WKBPoint || wkbType == QGis::WKBPoint25D ) )

@@ -64,6 +64,9 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
     virtual bool deleteVertex( const QgsVertexId& position );
 
+    virtual double length() const;
+    virtual double area() const;
+
   protected:
     QVector< QgsAbstractGeometryV2* > mGeometries;
     void removeGeometries();

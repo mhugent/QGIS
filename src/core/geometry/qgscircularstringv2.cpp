@@ -793,17 +793,26 @@ void QgsCircularStringV2::sumUpArea( double& sum ) const
 
   for ( int i = 0; i < maxIndex; i += 2 )
   {
-    //todo: handle the case of a full circle (point[i] == point[i+2], point[i+1] = radius)
+    QgsPointV2 p1( mX[i], mY[i] );
+    QgsPointV2 p2( mX[i + 1], mY[i + 1] );
+    QgsPointV2 p3( mX[i + 2], mY[i + 2] );
+
+    //segment is a full circle, p2 is the center point
+    if ( p1 == p3 )
+    {
+      double r2 = QgsGeometryUtils::sqrDistance2D( p1, p2 );
+      sum += M_PI * r2;
+      continue;
+    }
 
     sum += 0.5 * ( mX[i] * mY[i+2] - mY[i] * mX[i+2] );
 
     //calculate area between circle and chord, then sum / subtract from total area
-    double midPointX = ( mX[i] + mX[i+2] ) / 2.0;
-    double midPointY = ( mY[i] + mY[i+2] ) / 2.0;
+    double midPointX = ( p1.x() + p3.x() ) / 2.0;
+    double midPointY = ( p1.y() + p3.y() ) / 2.0;
 
     double radius, centerX, centerY;
-    QgsGeometryUtils::circleCenterRadius( QgsPointV2( mX[i], mY[i] ), QgsPointV2( mX[i + 1], mY[i + 1] ),
-                                          QgsPointV2( mX[i + 2], mY[i + 2] ), radius, centerX, centerY );
+    QgsGeometryUtils::circleCenterRadius( p1, p2, p3, radius, centerX, centerY );
 
     double d = sqrt( QgsGeometryUtils::sqrDistance2D( QgsPointV2( centerX, centerY ), QgsPointV2( midPointX, midPointY ) ) );
     double r2 = radius * radius;
@@ -814,8 +823,8 @@ void QgsCircularStringV2::sumUpArea( double& sum ) const
       continue;
     }
 
-    bool circlePointLeftOfLine = QgsGeometryUtils::leftOfLine( mX[i+1], mY[i+1], mX[i], mY[i], mX[i+2], mY[i+2] ) < 0;
-    bool centerPointLeftOfLine = QgsGeometryUtils::leftOfLine( centerX, centerY, mX[i], mY[i], mX[i+2], mY[i+2] ) < 0;
+    bool circlePointLeftOfLine = QgsGeometryUtils::leftOfLine( p2.x(), p2.y(), p1.x(), p1.y(), p3.x(), p3.y() ) < 0;
+    bool centerPointLeftOfLine = QgsGeometryUtils::leftOfLine( centerX, centerY, p1.x(), p1.y(), p3.x(), p3.y() ) < 0;
 
     double cov = 0.5 - d * sqrt( r2 - d * d ) / ( M_PI * r2 ) - 1 / M_PI * asin( d / radius );
     double circleChordArea = 0;

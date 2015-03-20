@@ -152,8 +152,8 @@ double QgsLineStringV2::length() const
   double dx, dy;
   for ( int i = 1; i < size; ++i )
   {
-    dx = sqrt( mCoords[i].x() - mCoords[ i - 1 ].x() );
-    dy = sqrt( mCoords[i].y() - mCoords[ i - 1 ].y() );
+    dx = mCoords[i].x() - mCoords[ i - 1 ].x();
+    dy = mCoords[i].y() - mCoords[ i - 1 ].y();
     length += sqrt( dx * dx + dy * dy );
   }
   return length;

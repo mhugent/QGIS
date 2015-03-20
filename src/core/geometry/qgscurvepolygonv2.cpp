@@ -329,9 +329,16 @@ double QgsCurvePolygonV2::area() const
   return area;
 }
 
-double QgsCurvePolygonV2::perimeter() const
+double QgsCurvePolygonV2::length() const
 {
-  return 0.0;
+  //sum perimeter of rings
+  double length = mExteriorRing->length();
+  QList<QgsCurveV2*>::const_iterator ringIt = mInteriorRings.constBegin();
+  for ( ; ringIt != mInteriorRings.constEnd(); ++ringIt )
+  {
+    length += ( *ringIt )->length();
+  }
+  return length;
 }
 
 QgsPointV2 QgsCurvePolygonV2::centroid() const

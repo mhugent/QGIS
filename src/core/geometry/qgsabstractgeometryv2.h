@@ -105,6 +105,10 @@ class QgsAbstractGeometryV2
     virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) = 0;
     virtual bool deleteVertex( const QgsVertexId& position ) = 0;
 
+    /**Length for linear geometries,perimeter for area geometries*/
+    virtual double length() const { return 0.0; }
+    virtual double area() const { return 0.0; }
+
 
   protected:
     QgsWKBTypes::Type mWkbType;
