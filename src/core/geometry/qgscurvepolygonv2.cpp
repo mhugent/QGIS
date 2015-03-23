@@ -36,7 +36,7 @@ QgsCurvePolygonV2::~QgsCurvePolygonV2()
   clear();
 }
 
-QgsCurvePolygonV2::QgsCurvePolygonV2( const QgsCurvePolygonV2& p ) : mExteriorRing( 0 )
+QgsCurvePolygonV2::QgsCurvePolygonV2( const QgsCurvePolygonV2& p ) : QgsSurfaceV2( p ), mExteriorRing( 0 )
 {
   if ( p.mExteriorRing )
   {

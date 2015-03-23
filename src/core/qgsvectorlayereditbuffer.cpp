@@ -428,6 +428,19 @@ bool QgsVectorLayerEditBuffer::commitChanges( QStringList& commitErrors )
         QList<QgsFeatureId> ids = mAddedFeatures.keys();
         QgsFeatureList featuresToAdd = mAddedFeatures.values();
 
+        //segmentize circular arcs if provider does not support it
+        if ( !( provider->capabilities() & QgsVectorDataProvider::CircularGeometries ) )
+        {
+          QgsFeatureList::iterator fIt = featuresToAdd.begin();
+          for ( ; fIt != featuresToAdd.end(); ++fIt )
+          {
+            if ( fIt->geometry() )
+            {
+              fIt->geometry()->convertToStraightSegment();
+            }
+          }
+        }
+
         if ( provider->addFeatures( featuresToAdd ) )
         {
           commitErrors << tr( "SUCCESS: %n feature(s) added.", "added features count", featuresToAdd.size() );

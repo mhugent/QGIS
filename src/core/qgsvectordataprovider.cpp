@@ -206,6 +206,14 @@ QString QgsVectorDataProvider::capabilitiesString() const
     QgsDebugMsg( "Capability: Simplify Geometries before fetch the feature ensuring that the result is a valid geometry" );
   }
 
+  if ( abilities & QgsVectorDataProvider::CircularGeometries )
+  {
+    abilitiesList += tr( "Circular Geometries" );
+    QgsDebugMsg( "Capability: Support circular geometries" );
+  }
+
+  //CircularGeometries =          1 << 16
+
   return abilitiesList.join( ", " );
 
 }

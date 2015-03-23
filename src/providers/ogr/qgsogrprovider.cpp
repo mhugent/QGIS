@@ -1553,6 +1553,14 @@ int QgsOgrProvider::capabilities() const
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1900
     ability |= QgsVectorDataProvider::SimplifyGeometriesWithTopologicalValidation;
 #endif
+
+    //circular geometries
+#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 2000
+    if ( OGR_L_TestCapability( mLayer, "OLCCurveGeometries" ) )
+    {
+      ability |= QgsVectorDataProvider::CircularGeometries;
+    }
+#endif
   }
 
   return ability;

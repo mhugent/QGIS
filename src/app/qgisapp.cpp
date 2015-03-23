@@ -5901,6 +5901,8 @@ void QgisApp::editPaste( QgsMapLayer *destinationLayer )
       }
       if ( destType != QGis::UnknownGeometry )
       {
+        //todo: fix convertToType function
+#if 0
         QgsGeometry* newGeometry = featureIt->geometry()->convertToType( destType, destIsMulti );
         if ( !newGeometry )
         {
@@ -5908,6 +5910,8 @@ void QgisApp::editPaste( QgsMapLayer *destinationLayer )
           continue;
         }
         featureIt->setGeometry( newGeometry );
+#endif //0
+        featureIt->setGeometry( *( featureIt->geometry() ) );
       }
       // avoid intersection if enabled in digitize settings
       featureIt->geometry()->avoidIntersections();
