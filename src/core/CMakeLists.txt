@@ -172,6 +172,7 @@ SET(QGIS_CORE_SRCS
   qgsvectorlayerrenderer.cpp
   qgsvectorlayerundocommand.cpp
   qgsvectorsimplifymethod.cpp
+  qgsxmldata.cpp
   qgsxmlutils.cpp
 
   composer/qgsaddremoveitemcommand.cpp
@@ -375,6 +376,7 @@ SET(QGIS_CORE_MOC_HDRS
   qgsvectorlayercache.h
   qgsvectorlayerjoinbuffer.h
   qgsgeometryvalidator.h
+  qgsxmldata.h
 
   composer/qgsaddremoveitemcommand.h
   composer/qgscomposerlegend.h
