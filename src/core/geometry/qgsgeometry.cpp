@@ -1416,11 +1416,8 @@ void QgsGeometry::convertToStraightSegment()
   }
 
   detach();
-  QgsWKBTypes::Type geomType = d->geometry->wkbType();
-  if ( geomType == QgsWKBTypes::CompoundCurve || geomType == QgsWKBTypes::CompoundCurveZ ||
-       geomType == QgsWKBTypes::CompoundCurveM || geomType == QgsWKBTypes::CompoundCurveZM ||
-       geomType == QgsWKBTypes::CircularString || geomType == QgsWKBTypes::CircularStringZ ||
-       geomType == QgsWKBTypes::CircularStringM || geomType == QgsWKBTypes::CircularStringZM )
+  QgsWKBTypes::Type flatGeomType = QgsWKBTypes::flatType( d->geometry->wkbType() );
+  if ( flatGeomType == QgsWKBTypes::CompoundCurve || flatGeomType == QgsWKBTypes::CircularString )
   {
     QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( d->geometry );
     if ( !curve )
@@ -1430,8 +1427,7 @@ void QgsGeometry::convertToStraightSegment()
     d->geometry = curve->curveToLine();
     delete curve;
   }
-  else if ( geomType == QgsWKBTypes::CurvePolygon || geomType == QgsWKBTypes::CurvePolygonZ ||
-            geomType == QgsWKBTypes::CurvePolygonM || geomType == QgsWKBTypes::CurvePolygonZM )
+  else if ( flatGeomType == QgsWKBTypes::CurvePolygon )
   {
     QgsCurvePolygonV2* curvePolygon = dynamic_cast<QgsCurvePolygonV2*>( d->geometry );
     if ( !curvePolygon )

@@ -1698,6 +1698,15 @@ OGRFeatureH QgsVectorFileWriter::createFeature( QgsFeature& feature )
     // build geometry from WKB
     QgsGeometry *geom = feature.geometry();
 
+#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 2000
+    if ( geom && !OGR_L_TestCapability( mLayer, "OLCCurveGeometries" ) )
+#else
+    if ( geom )
+#endif
+    {
+      geom->convertToStraightSegment();
+    }
+
     // turn single geoemetry to multi geometry if needed
     if ( geom && geom->wkbType() != mWkbType && geom->wkbType() == QGis::singleType( mWkbType ) )
     {
