@@ -1916,6 +1916,8 @@ void QgisApp::setTheme( QString theThemeName )
   mActionCopyFeatures->setIcon( QgsApplication::getThemeIcon( "/mActionEditCopy.png" ) );
   mActionPasteFeatures->setIcon( QgsApplication::getThemeIcon( "/mActionEditPaste.png" ) );
   mActionAddFeature->setIcon( QgsApplication::getThemeIcon( "/mActionCapturePoint.png" ) );
+  mActionCircularStringCurvePoint->setIcon( QgsApplication::getThemeIcon( "/mActionCircularStringCurvePoint.png" ) );
+  mActionCircularStringRadius->setIcon( QgsApplication::getThemeIcon( "/mActionCircularStringRadius.png" ) );
   mActionMoveFeature->setIcon( QgsApplication::getThemeIcon( "/mActionMoveFeature.png" ) );
   mActionRotateFeature->setIcon( QgsApplication::getThemeIcon( "/mActionRotateFeature.png" ) );
   mActionReshapeFeatures->setIcon( QgsApplication::getThemeIcon( "/mActionReshape.png" ) );

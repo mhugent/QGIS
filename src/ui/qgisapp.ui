@@ -2240,6 +2240,11 @@ Acts on currently active editable layer</string>
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/themes/default/mActionCircularStringCurvePoint.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Add circular string by curve point</string>
    </property>
@@ -2250,6 +2255,11 @@ Acts on currently active editable layer</string>
   <action name="mActionCircularStringRadius">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normalon>:/images/themes/default/mActionCircularStringRadius.png</normalon>
+    </iconset>
    </property>
    <property name="text">
     <string>Add circular string by radius</string>
