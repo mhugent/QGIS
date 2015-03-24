@@ -154,9 +154,26 @@ void QgsMapToolCapture::canvasMoveEvent( QMouseEvent * e )
     if ( mCurrentRubberBandVertex < 0 )
     {
       QgsCompoundCurveV2* rubberBandGeom = dynamic_cast<QgsCompoundCurveV2*>( mGeometry->clone() );
+
+      QList<QgsPointV2> debugPoints;
+      rubberBandGeom->points( debugPoints );
+
       rubberBandGeom->addVertex( QgsPointV2( mapPoint.x(), mapPoint.y() ) );
-      mGeometryRubberBand->setGeometry( rubberBandGeom );
-      mCurrentRubberBandVertex = rubberBandGeom->numPoints() - 1;
+      if ( rubberBandGeom->numPoints() >= 3 && mCaptureMode == CapturePolygon )
+      {
+        rubberBandGeom->close();
+        QgsCurvePolygonV2* poly = new QgsCurvePolygonV2();
+        poly->setExteriorRing( rubberBandGeom );
+        mGeometryRubberBand->setGeometry( poly );
+        mCurrentRubberBandVertex = rubberBandGeom->numPoints() - 2;
+      }
+      else
+      {
+        mGeometryRubberBand->setGeometry( rubberBandGeom );
+        mCurrentRubberBandVertex = rubberBandGeom->numPoints() - 1;
+      }
+
+      rubberBandGeom->points( debugPoints );
     }
 
     QgsVertexId vId; vId.part = 0; vId.ring = 0; vId.vertex = mCurrentRubberBandVertex;
