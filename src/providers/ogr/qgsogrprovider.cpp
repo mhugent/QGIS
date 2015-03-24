@@ -1556,7 +1556,7 @@ int QgsOgrProvider::capabilities() const
 
     //circular geometries
 #if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 2000
-    if ( OGR_L_TestCapability( mLayer, "OLCCurveGeometries" ) )
+    if ( OGR_L_TestCapability( ogrLayer, "OLCCurveGeometries" ) )
     {
       ability |= QgsVectorDataProvider::CircularGeometries;
     }
