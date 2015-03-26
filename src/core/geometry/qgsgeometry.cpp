@@ -127,6 +127,7 @@ void QgsGeometry::detach( bool cloneGeom )
 void QgsGeometry::removeWkbGeos()
 {
   delete[] mWkb;
+  mWkb = 0;
   mWkbSize = 0;
   GEOSGeom_destroy( mGeos );
   mGeos = 0;
@@ -376,6 +377,22 @@ bool QgsGeometry::moveVertex( double x, double y, int atVertex )
   }
 
   return d->geometry->moveVertex( id, QgsPointV2( x, y ) );
+}
+
+bool QgsGeometry::moveVertex( const QgsPointV2& p, int atVertex )
+{
+  if ( !d || !d->geometry )
+  {
+    return false;
+  }
+
+  QgsVertexId id;
+  if ( !vertexIdFromVertexNr( atVertex, id ) )
+  {
+    return false;
+  }
+
+  return d->geometry->moveVertex( id, p );
 }
 
 bool QgsGeometry::deleteVertex( int atVertex )

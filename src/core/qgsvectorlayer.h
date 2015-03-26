@@ -51,6 +51,7 @@ class QgsGeometryCache;
 class QgsGeometryVertexIndex;
 class QgsLabel;
 class QgsMapToPixel;
+class QgsPointV2;
 class QgsRectangle;
 class QgsRectangle;
 class QgsRelation;
@@ -911,6 +912,12 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
      *  to the given coordinates
      */
     bool moveVertex( double x, double y, QgsFeatureId atFeatureId, int atVertex );
+
+    /** Moves the vertex at the given position number,
+     *  ring and item (first number is index 0), and feature
+     *  to the given coordinates
+     */
+    bool moveVertex( const QgsPointV2& p, QgsFeatureId atFeatureId, int atVertex );
 
     /** Deletes a vertex from a feature
      */

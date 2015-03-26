@@ -16,7 +16,7 @@
 #include "nodetool/qgsvertexentry.h"
 #include "qgsmaprenderer.h"
 
-QgsVertexEntry::QgsVertexEntry( QgsMapCanvas *canvas, QgsMapLayer *layer, QgsPoint p, QString tooltip, QgsVertexMarker::IconType type, int penWidth )
+QgsVertexEntry::QgsVertexEntry( QgsMapCanvas *canvas, QgsMapLayer *layer, const QgsPointV2 &p, QString tooltip, QgsVertexMarker::IconType type, int penWidth )
     : mSelected( false )
     , mEquals( -1 )
     , mInRubberBand( false )
@@ -40,12 +40,12 @@ QgsVertexEntry::~QgsVertexEntry()
   }
 }
 
-void QgsVertexEntry::setCenter( QgsPoint p )
+void QgsVertexEntry::setCenter( const QgsPointV2 &p )
 {
   mPoint = p;
-  p = mCanvas->mapSettings().layerToMapCoordinates( mLayer, p );
+  QgsPoint pm = mCanvas->mapSettings().layerToMapCoordinates( mLayer, pointV1() );
 
-  if ( mCanvas->extent().contains( p ) )
+  if ( mCanvas->extent().contains( pm ) )
   {
     if ( !mMarker )
     {
@@ -58,7 +58,7 @@ void QgsVertexEntry::setCenter( QgsPoint p )
         mMarker->setToolTip( mToolTip );
     }
 
-    mMarker->setCenter( p );
+    mMarker->setCenter( pm );
   }
   else if ( mMarker )
   {

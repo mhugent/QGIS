@@ -46,7 +46,6 @@ QgsPostgresProvider::QgsPostgresProvider( QString const & uri )
     , mPrimaryKeyType( pktUnknown )
     , mSpatialColType( sctNone )
     , mDetectedGeomType( QGis::WKBUnknown )
-    , mForce2d( false )
     , mRequestedGeomType( QGis::WKBUnknown )
     , mShared( new QgsPostgresSharedData )
     , mUseEstimatedMetadata( false )
@@ -2533,7 +2532,7 @@ bool QgsPostgresProvider::getGeometryDetails()
   if ( !schemaName.isEmpty() )
   {
     // check geometry columns
-    sql = QString( "SELECT upper(type),srid,coord_dimension FROM geometry_columns WHERE f_table_name=%1 AND f_geometry_column=%2 AND f_table_schema=%3" )
+    sql = QString( "SELECT upper(type),srid FROM geometry_columns WHERE f_table_name=%1 AND f_geometry_column=%2 AND f_table_schema=%3" )
           .arg( quotedValue( tableName ) )
           .arg( quotedValue( geomCol ) )
           .arg( quotedValue( schemaName ) );
@@ -2546,8 +2545,6 @@ bool QgsPostgresProvider::getGeometryDetails()
     {
       detectedType = result.PQgetvalue( 0, 0 );
       detectedSrid = result.PQgetvalue( 0, 1 );
-      if ( result.PQgetvalue( 0, 2 ).toInt() == 4 )
-        mForce2d = true;
       mSpatialColType = sctGeometry;
     }
     else
@@ -2664,7 +2661,6 @@ bool QgsPostgresProvider::getGeometryDetails()
     }
     layerProperty.geometryColName = mGeometryColumn;
     layerProperty.geometryColType = sctNone;
-    layerProperty.force2d         = false;
 
     QString delim = "";
 
@@ -2706,7 +2702,6 @@ bool QgsPostgresProvider::getGeometryDetails()
           // only what we requested is available
           mDetectedGeomType = layerProperty.types[ 0 ];
           mDetectedSrid     = QString::number( layerProperty.srids[ 0 ] );
-          mForce2d          = layerProperty.force2d;
         }
       }
       else
@@ -2721,25 +2716,12 @@ bool QgsPostgresProvider::getGeometryDetails()
   QgsDebugMsg( QString( "Requested SRID is %1" ).arg( mRequestedSrid ) );
   QgsDebugMsg( QString( "Detected type is %1" ).arg( mDetectedGeomType ) );
   QgsDebugMsg( QString( "Requested type is %1" ).arg( mRequestedGeomType ) );
-  QgsDebugMsg( QString( "Force to 2D %1" ).arg( mForce2d ? "Yes" : "No" ) );
 
   mValid = ( mDetectedGeomType != QGis::WKBUnknown || mRequestedGeomType != QGis::WKBUnknown )
            && ( !mDetectedSrid.isEmpty() || !mRequestedSrid.isEmpty() );
 
   if ( !mValid )
     return false;
-
-  // store whether the geometry includes measure value
-  if ( detectedType == "POINTM" || detectedType == "MULTIPOINTM" ||
-       detectedType == "LINESTRINGM" || detectedType == "MULTILINESTRINGM" ||
-       detectedType == "POLYGONM" || detectedType == "MULTIPOLYGONM" ||
-       mForce2d )
-  {
-    // explicitly disable adding new features and editing of geometries
-    // as this would lead to corruption of measures
-    QgsMessageLog::logMessage( tr( "Editing and adding disabled for 2D+ layer (%1; %2)" ).arg( mGeometryColumn ).arg( mQuery ) );
-    mEnabledCapabilities &= ~( QgsVectorDataProvider::ChangeGeometries | QgsVectorDataProvider::AddFeatures );
-  }
 
   QgsDebugMsg( QString( "Feature type name is %1" ).arg( QGis::featureType( geometryType() ) ) );
   QgsDebugMsg( QString( "Spatial column type is %1" ).arg( QgsPostgresConn::displayStringForGeomType( mSpatialColType ) ) );

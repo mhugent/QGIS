@@ -23,6 +23,7 @@ class QRubberBand;
 class QgsRubberBand;
 class QgsVertexEntry;
 class QgsSelectedFeature;
+class QgsNodeEditor;
 
 /**
  * Set representing set of vertex numbers
@@ -132,6 +133,9 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
 
     /** object containing selected feature and it's vertexes */
     QgsSelectedFeature *mSelectedFeature;
+
+    /** dock widget which allows to edit vertices */
+    QgsNodeEditor* mNodeEditor;
 
     /** flag if selection rectangle is active */
     bool mSelectionRectangle;

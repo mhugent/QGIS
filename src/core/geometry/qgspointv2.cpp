@@ -197,6 +197,23 @@ void QgsPointV2::coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coor
   coord.append( featureCoord );
 }
 
+bool QgsPointV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+{
+  Q_UNUSED( position );
+  mX = newPos.mX;
+  mY = newPos.mY;
+  if ( is3D() && newPos.is3D() )
+  {
+    mZ = newPos.mZ;
+  }
+  if ( isMeasure() && newPos.isMeasure() )
+  {
+    mM = newPos.mM;
+  }
+  *this = newPos;
+  return true;
+}
+
 double QgsPointV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
   Q_UNUSED( segmentPt ); Q_UNUSED( vertexAfter ); Q_UNUSED( leftOf ); Q_UNUSED( leftOf ); Q_UNUSED( epsilon );

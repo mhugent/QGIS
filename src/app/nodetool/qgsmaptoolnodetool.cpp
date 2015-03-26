@@ -17,6 +17,7 @@
 
 #include "nodetool/qgsselectedfeature.h"
 #include "nodetool/qgsvertexentry.h"
+#include "nodetool/qgsnodeeditor.h"
 
 #include "qgisapp.h"
 #include "qgslayertreeview.h"
@@ -32,6 +33,7 @@
 QgsMapToolNodeTool::QgsMapToolNodeTool( QgsMapCanvas* canvas )
     : QgsMapToolVertexEdit( canvas )
     , mSelectedFeature( 0 )
+    , mNodeEditor( 0 )
     , mMoving( true )
     , mClicked( false )
     , mCtrl( false )
@@ -90,7 +92,7 @@ void QgsMapToolNodeTool::createMovingRubberBands()
       int index = 0;
       if ( beforeVertex != -1 ) // adding first point which is not moving
       {
-        rb->addPoint( toMapCoordinates( vlayer, vertexMap[beforeVertex]->point() ), false );
+        rb->addPoint( toMapCoordinates( vlayer, vertexMap[beforeVertex]->pointV1() ), false );
         vertexMap[beforeVertex]->setRubberBandValues( true, lastRubberBand, index );
         index++;
       }
@@ -102,7 +104,7 @@ void QgsMapToolNodeTool::createMovingRubberBands()
           createTopologyRubberBands( vlayer, vertexMap, vertex );
         }
         // adding point which will be moved
-        rb->addPoint( toMapCoordinates( vlayer, vertexMap[vertex]->point() ), false );
+        rb->addPoint( toMapCoordinates( vlayer, vertexMap[vertex]->pointV1() ), false );
         // setting values about added vertex
         vertexMap[vertex]->setRubberBandValues( true, lastRubberBand, index );
         index++;
@@ -110,7 +112,7 @@ void QgsMapToolNodeTool::createMovingRubberBands()
       }
       if ( vertex != -1 && !vertexMap[vertex]->isSelected() ) // add last point not moving if exists
       {
-        rb->addPoint( toMapCoordinates( vlayer, vertexMap[vertex]->point() ), true );
+        rb->addPoint( toMapCoordinates( vlayer, vertexMap[vertex]->pointV1() ), true );
         vertexMap[vertex]->setRubberBandValues( true, lastRubberBand, index );
         index++;
       }
@@ -127,7 +129,7 @@ void QgsMapToolNodeTool::createTopologyRubberBands( QgsVectorLayer* vlayer, cons
 
   // snap from current vertex
   currentResultList.clear();
-  vlayer->snapWithContext( vertexMap[vertex]->point(), ZERO_TOLERANCE, currentResultList, QgsSnapper::SnapToVertex );
+  vlayer->snapWithContext( vertexMap[vertex]->pointV1(), ZERO_TOLERANCE, currentResultList, QgsSnapper::SnapToVertex );
   QMultiMap<double, QgsSnappingResult>::iterator resultIt =  currentResultList.begin();
 
   for ( ; resultIt != currentResultList.end(); ++resultIt )
@@ -248,7 +250,7 @@ void QgsMapToolNodeTool::canvasMoveEvent( QMouseEvent * e )
         {
           if ( vertexMap[i]->isSelected() )
           {
-            QgsRubberBand* rb = createRubberBandMarker( vertexMap[i]->point(), vlayer );
+            QgsRubberBand* rb = createRubberBandMarker( vertexMap[i]->pointV1(), vlayer );
             mRubberBands.append( rb );
           }
         }
@@ -297,7 +299,7 @@ void QgsMapToolNodeTool::canvasMoveEvent( QMouseEvent * e )
         if ( !vertexMap[i]->isSelected() )
           continue;
 
-        QgsPoint p = toMapCoordinates( vlayer, vertexMap[i]->point() ) + offset;
+        QgsPoint p = toMapCoordinates( vlayer, vertexMap[i]->pointV1() ) + offset;
 
         mRubberBands[vertexMap[i]->rubberBandNr()]->movePoint( vertexMap[i]->rubberBandIndex(), p );
 
@@ -374,6 +376,8 @@ void QgsMapToolNodeTool::canvasPressEvent( QMouseEvent * e )
     connect( mSelectedFeature, SIGNAL( destroyed() ), this, SLOT( selectedFeatureDestroyed() ) );
     connect( vlayer, SIGNAL( editingStopped() ), this, SLOT( editingToggled() ) );
     mIsPoint = vlayer->geometryType() == QGis::Point;
+    mNodeEditor = new QgsNodeEditor( vlayer, mSelectedFeature, &mRubberBands, mCanvas );
+    QgisApp::instance()->addDockWidget( Qt::LeftDockWidgetArea, mNodeEditor );
   }
   else
   {
@@ -582,7 +586,7 @@ void QgsMapToolNodeTool::canvasReleaseEvent( QMouseEvent * e )
 
       for ( int i = 0; i < vertexMap.size(); i++ )
       {
-        if ( r.contains( vertexMap[i]->point() ) )
+        if ( r.contains( vertexMap[i]->pointV1() ) )
         {
           // inverting selection is enough because all were deselected if ctrl is not pressed
           mSelectedFeature->invertVertexSelection( i, false );
@@ -663,6 +667,11 @@ void QgsMapToolNodeTool::cleanTool( bool deleteSelectedFeature )
 
     if ( deleteSelectedFeature ) delete mSelectedFeature;
     mSelectedFeature = 0;
+  }
+  if ( mNodeEditor )
+  {
+    delete mNodeEditor;
+    mNodeEditor = 0;
   }
 }
 

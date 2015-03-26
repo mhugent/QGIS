@@ -300,13 +300,6 @@ bool QgsPostgresFeatureIterator::declareCursor( const QString& whereClause )
     if ( mSource->mSpatialColType == sctGeography )
       geom += "::geometry";
 
-    if ( mSource->mForce2d )
-    {
-      geom = QString( "%1(%2)" )
-             .arg( mConn->majorVersion() < 2 ? "force_2d" : "st_force_2d" )
-             .arg( geom );
-    }
-
     if ( !mRequest.simplifyMethod().forceLocalOptimization() &&
          mRequest.simplifyMethod().methodType() != QgsSimplifyMethod::NoSimplification &&
          QGis::flatType( QGis::singleType( mSource->mRequestedGeomType != QGis::WKBUnknown
@@ -491,7 +484,6 @@ QgsPostgresFeatureSource::QgsPostgresFeatureSource( const QgsPostgresProvider* p
     , mSpatialColType( p->mSpatialColType )
     , mRequestedSrid( p->mRequestedSrid )
     , mDetectedSrid( p->mDetectedSrid )
-    , mForce2d( p->mForce2d )
     , mRequestedGeomType( p->mRequestedGeomType )
     , mDetectedGeomType( p->mDetectedGeomType )
     , mPrimaryKeyType( p->mPrimaryKeyType )

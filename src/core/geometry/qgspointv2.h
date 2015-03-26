@@ -69,7 +69,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
 
     //low-level editing
     virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex ) { Q_UNUSED( position ); Q_UNUSED( vertex ); return false; }
-    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos ) { Q_UNUSED( position ); *this = newPos; return true; }
+    virtual bool moveVertex( const QgsVertexId& position, const QgsPointV2& newPos );
     virtual bool deleteVertex( const QgsVertexId& position ) { Q_UNUSED( position ); return false; }
 
     double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
