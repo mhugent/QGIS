@@ -24,6 +24,7 @@ email                : sherman at mrcc.com
 #include <QVector>
 #include <QSet>
 
+class QgsAbstractGeometryV2;
 class QgsGeometry;
 class QgsRectangle;
 class QgsFeature;
@@ -181,6 +182,10 @@ class CORE_EXPORT QgsFeature
      * Set the validity of the feature.
      */
     void setValid( bool validity );
+    /**Access to new geometry class*/
+    const QgsAbstractGeometryV2* geometryV2() const;
+    /**Sets geometry (takes ownership)*/
+    void setGeometryV2( QgsAbstractGeometryV2* geom );
 
     /**
      * Get the geometry object associated with this feature

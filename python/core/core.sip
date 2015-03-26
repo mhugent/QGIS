@@ -246,3 +246,8 @@
 %Include symbology-ng/qgssymbologyv2conversion.sip
 
 %Include dxf/qgsdxfexport.sip
+
+%Include geometry/qgsabstractgeometryv2.sip
+%Include geometry/qgscurvev2.sip
+%Include geometry/qgswkbtypes.sip
+%Include geometry/qgspointv2.sip

@@ -299,6 +299,9 @@ class QgsFeature
      */
     void setValid( bool validity );
 
+    const QgsAbstractGeometryV2* geometryV2() const;
+    void setGeometryV2( QgsAbstractGeometryV2* geom );
+
     /**
      * Get the geometry object associated with this feature
      */

@@ -109,6 +109,20 @@ void QgsFeature::deleteAttribute( int field )
   mAttributes.remove( field );
 }
 
+const QgsAbstractGeometryV2* QgsFeature::geometryV2() const
+{
+    if( !mGeometry )
+    {
+        return 0;
+    }
+    return mGeometry->geometry();
+}
+
+void QgsFeature::setGeometryV2( QgsAbstractGeometryV2* geom )
+{
+    delete mGeometry;
+    mGeometry = new QgsGeometry( geom );
+}
 
 QgsGeometry *QgsFeature::geometry() const
 {
