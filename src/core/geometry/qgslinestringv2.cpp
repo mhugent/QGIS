@@ -349,11 +349,11 @@ bool QgsLineStringV2::moveVertex( const QgsVertexId& position, const QgsPointV2&
   }
   mCoords[position.vertex].rx() = newPos.x();
   mCoords[position.vertex].ry() = newPos.y();
-  if ( is3D() )
+  if ( is3D() && newPos.is3D() )
   {
     mZ[position.vertex] = newPos.z();
   }
-  if ( isMeasure() )
+  if ( isMeasure() && newPos.isMeasure() )
   {
     mM[position.vertex] = newPos.m();
   }

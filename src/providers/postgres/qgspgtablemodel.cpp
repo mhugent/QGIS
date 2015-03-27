@@ -229,29 +229,17 @@ void QgsPgTableModel::setSql( const QModelIndex &index, const QString &sql )
 
 QIcon QgsPgTableModel::iconForWkbType( QGis::WkbType type )
 {
-  switch ( type )
-  {
-    case QGis::WKBPoint:
-    case QGis::WKBPoint25D:
-    case QGis::WKBMultiPoint:
-    case QGis::WKBMultiPoint25D:
-      return QgsApplication::getThemeIcon( "/mIconPointLayer.svg" );
-    case QGis::WKBLineString:
-    case QGis::WKBLineString25D:
-    case QGis::WKBMultiLineString:
-    case QGis::WKBMultiLineString25D:
-      return QgsApplication::getThemeIcon( "/mIconLineLayer.svg" );
-    case QGis::WKBPolygon:
-    case QGis::WKBPolygon25D:
-    case QGis::WKBMultiPolygon:
-    case QGis::WKBMultiPolygon25D:
-      return QgsApplication::getThemeIcon( "/mIconPolygonLayer.svg" );
-    case QGis::WKBNoGeometry:
-      return QgsApplication::getThemeIcon( "/mIconTableLayer.png" );
-    case QGis::WKBUnknown:
-      break;
-  }
-  return QgsApplication::getThemeIcon( "/mIconLayer.png" );
+  type = QGis::flatType( QGis::singleType( type ) );
+  if ( type == QGis::WKBPoint )
+    return QgsApplication::getThemeIcon( "/mIconPointLayer.svg" );
+  else if ( type == QGis::WKBLineString )
+    return QgsApplication::getThemeIcon( "/mIconLineLayer.svg" );
+  else if ( type == QGis::WKBPolygon )
+    return QgsApplication::getThemeIcon( "/mIconPolygonLayer.svg" );
+  else if ( type == QGis::WKBNoGeometry )
+    return QgsApplication::getThemeIcon( "/mIconPolygonLayer.svg" );
+  else
+    return QgsApplication::getThemeIcon( "/mIconLayer.png" );
 }
 
 bool QgsPgTableModel::setData( const QModelIndex &idx, const QVariant &value, int role )

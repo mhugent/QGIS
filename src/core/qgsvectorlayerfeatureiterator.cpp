@@ -329,9 +329,10 @@ bool QgsVectorLayerFeatureIterator::fetchNextChangedGeomFeature( QgsFeature& f )
 
     mFetchConsidered << fid;
 
-    if ( !mFetchChangedGeomIt->intersects( mRequest.filterRect() ) )
-      // skip changed geometries not in rectangle and don't check again
-      continue;
+    // TODO WHY?
+//    if ( !mFetchChangedGeomIt->intersects( mRequest.filterRect() ) )
+    // skip changed geometries not in rectangle and don't check again
+//      continue;
 
     useChangedAttributeFeature( fid, *mFetchChangedGeomIt, f );
 
@@ -502,7 +503,7 @@ void QgsVectorLayerFeatureIterator::prepareExpressions()
         if ( mRequest.flags() & QgsFeatureRequest::SubsetOfAttributes )
         {
           QgsAttributeList attrs;
-          Q_FOREACH ( const QString& col, exp->referencedColumns() )
+          Q_FOREACH( const QString& col, exp->referencedColumns() )
           {
             attrs.append( mSource->mFields.fieldNameIndex( col ) );
           }

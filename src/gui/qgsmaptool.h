@@ -175,16 +175,16 @@ class GUI_EXPORT QgsMapTool : public QObject
     QgsPoint toLayerCoordinates( QgsMapLayer* layer, const QPoint& point );
 
     //! transformation from map coordinates to layer's coordinates
-    QgsPoint toLayerCoordinates( QgsMapLayer* layer, const QgsPoint& point );
+    QgsPoint toLayerCoordinates( QgsMapLayer* layer, const QgsPoint &point );
 
     //!transformation from layer's coordinates to map coordinates (which is different in case reprojection is used)
-    QgsPoint toMapCoordinates( QgsMapLayer* layer, const QgsPoint& point );
+    QgsPoint toMapCoordinates( QgsMapLayer* layer, const QgsPoint &point );
 
     //! trnasformation of the rect from map coordinates to layer's coordinates
     QgsRectangle toLayerCoordinates( QgsMapLayer* layer, const QgsRectangle& rect );
 
     //! transformation from map coordinates to screen coordinates
-    QPoint toCanvasCoordinates( const QgsPoint& point );
+    QPoint toCanvasCoordinates( const QgsPoint &point );
 
     //! pointer to map canvas
     QgsMapCanvas* mCanvas;

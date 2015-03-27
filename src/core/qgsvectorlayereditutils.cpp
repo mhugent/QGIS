@@ -73,6 +73,29 @@ bool QgsVectorLayerEditUtils::moveVertex( double x, double y, QgsFeatureId atFea
 }
 
 
+bool QgsVectorLayerEditUtils::moveVertex( const QgsPointV2& p, QgsFeatureId atFeatureId, int atVertex )
+{
+  if ( !L->hasGeometryType() )
+    return false;
+
+  QgsGeometry geometry;
+  if ( !cache()->geometry( atFeatureId, geometry ) )
+  {
+    // it's not in cache: let's fetch it from layer
+    QgsFeature f;
+    if ( !L->getFeatures( QgsFeatureRequest().setFilterFid( atFeatureId ).setSubsetOfAttributes( QgsAttributeList() ) ).nextFeature( f ) || !f.geometry() )
+      return false; // geometry not found
+
+    geometry = *f.geometry();
+  }
+
+  geometry.moveVertex( p, atVertex );
+
+  L->editBuffer()->changeGeometry( atFeatureId, &geometry );
+  return true;
+}
+
+
 bool QgsVectorLayerEditUtils::deleteVertex( QgsFeatureId atFeatureId, int atVertex )
 {
   if ( !L->hasGeometryType() )

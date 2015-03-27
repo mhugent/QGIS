@@ -134,6 +134,10 @@ class QgsSelectedFeature: public QObject
     void beginGeometryChange();
     void endGeometryChange();
 
+  signals:
+    void selectionChanged();
+    void vertexMapChanged();
+
   public slots:
     /*
      * geometry validation found a problem
@@ -186,6 +190,7 @@ class QgsSelectedFeature: public QObject
      */
     void createVertexMap();
 
+#if 0
     /**
      *  Creates vertex map for polygon type feature
      */
@@ -200,6 +205,7 @@ class QgsSelectedFeature: public QObject
      *  Creates vertex map for ppint type feature
      */
     void createVertexMapPoint();
+#endif
 
     /**
      * Updates stored geometry to actual one loaded from layer

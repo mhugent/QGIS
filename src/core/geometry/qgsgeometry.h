@@ -221,6 +221,14 @@ class CORE_EXPORT QgsGeometry
      */
     bool moveVertex( double x, double y, int atVertex );
 
+    /** Moves the vertex at the given position number
+     *  and item (first number is index 0)
+     *  to the given coordinates.
+    //     *  Returns false if atVertex does not correspond to a valid vertex
+     *  on this geometry
+     */
+    bool moveVertex( const QgsPointV2& p, int atVertex );
+
     /** Deletes the vertex at the given position number and item
      *  (first number is index 0)
      *  Returns false if atVertex does not correspond to a valid vertex

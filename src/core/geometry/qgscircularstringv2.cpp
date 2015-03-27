@@ -688,11 +688,11 @@ bool QgsCircularStringV2::moveVertex( const QgsVertexId& position, const QgsPoin
 
   mX[position.vertex] = newPos.x();
   mY[position.vertex] = newPos.y();
-  if ( is3D() )
+  if ( is3D() && newPos.is3D() )
   {
     mZ[position.vertex] = newPos.z();
   }
-  if ( isMeasure() )
+  if ( isMeasure() && newPos.isMeasure() )
   {
     mM[position.vertex] = newPos.m();
   }

@@ -26,7 +26,7 @@ QMap<QgsWKBTypes::Type, QgsWKBTypes::wkbEntry>* QgsWKBTypes::entries()
 QgsWKBTypes::Type QgsWKBTypes::singleType( Type type )
 {
   QMap< Type, wkbEntry >::const_iterator it = entries()->find( type );
-  if ( it == entries()->constEnd() || it.key() != Unknown )
+  if ( it == entries()->constEnd() || it.key() == Unknown )
   {
     return Unknown;
   }
@@ -36,7 +36,7 @@ QgsWKBTypes::Type QgsWKBTypes::singleType( Type type )
 QgsWKBTypes::Type QgsWKBTypes::multiType( Type type )
 {
   QMap< Type, wkbEntry >::const_iterator it = entries()->find( type );
-  if ( it == entries()->constEnd() )
+  if ( it == entries()->constEnd() || it.key() == Unknown )
   {
     return Unknown;
   }
@@ -46,7 +46,7 @@ QgsWKBTypes::Type QgsWKBTypes::multiType( Type type )
 QgsWKBTypes::Type QgsWKBTypes::flatType( Type type )
 {
   QMap< Type, wkbEntry >::const_iterator it = entries()->find( type );
-  if ( it == entries()->constEnd() )
+  if ( it == entries()->constEnd() || it.key() == Unknown )
   {
     return Unknown;
   }
