@@ -249,5 +249,6 @@
 
 %Include geometry/qgsabstractgeometryv2.sip
 %Include geometry/qgscurvev2.sip
-%Include geometry/qgswkbtypes.sip
+%Include geometry/qgslinestringv2.sip
 %Include geometry/qgspointv2.sip
+%Include geometry/qgswkbtypes.sip

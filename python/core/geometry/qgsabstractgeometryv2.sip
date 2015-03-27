@@ -14,7 +14,18 @@ class QgsAbstractGeometryV2
 {
 %TypeHeaderCode
 #include <qgsabstractgeometryv2.h>
+#include <qgslinestringv2.h>
 %End
+
+%ConvertToSubClassCode
+      if (dynamic_cast<QgsPointV2*>(sipCpp) != NULL)
+        sipClass = sipClass_QgsPointV2;
+      else if (dynamic_cast<QgsLineStringV2*>(sipCpp) != NULL )
+        sipClass = sipClass_QgsLineStringV2;
+      else
+        sipClass = 0;
+%End
+
     public:
 
     QgsAbstractGeometryV2();
@@ -60,7 +71,7 @@ class QgsAbstractGeometryV2
     @return false if at end*/
     virtual bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const = 0;
 
-    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
+    //virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
     int nCoordinates() const;
     QgsPointV2 vertexAt( const QgsVertexId& id ) const;
     virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const = 0;

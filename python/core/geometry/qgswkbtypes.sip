@@ -71,7 +71,7 @@ class QgsWKBTypes
       NullGeometry
     };
 
-    struct wkbEntry
+    /*struct wkbEntry
     {
       wkbEntry( QString name, bool isMultiType, Type multiType, Type singleType, Type flatType, GeometryType geometryType );
       QString mName;
@@ -80,7 +80,7 @@ class QgsWKBTypes
       Type mSingleType;
       Type mFlatType;
       GeometryType mGeometryType;
-    };
+    };*/
 
     static Type singleType( Type type );
     static Type multiType( Type type );
