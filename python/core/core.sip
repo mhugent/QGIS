@@ -37,7 +37,6 @@
 %Include qgsfeatureiterator.sip
 %Include qgsfeaturerequest.sip
 %Include qgsfield.sip
-%Include qgsgeometry.sip
 %Include qgsgeometryvalidator.sip
 %Include qgsgeometrysimplifier.sip
 %Include qgsmaptopixelgeometrysimplifier.sip
@@ -247,6 +246,7 @@
 
 %Include dxf/qgsdxfexport.sip
 
+%Include geometry/qgsgeometry.sip
 %Include geometry/qgsabstractgeometryv2.sip
 %Include geometry/qgscurvev2.sip
 %Include geometry/qgslinestringv2.sip

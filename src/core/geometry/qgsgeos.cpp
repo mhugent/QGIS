@@ -880,7 +880,9 @@ QgsPointV2 QgsGeos::coordSeqPoint( const GEOSCoordSequence* cs, int i, bool hasZ
     return QgsPointV2();
   }
 
-  double x, y, z, m;
+  double x, y;
+  double z = 0;
+  double m = 0;
   GEOSCoordSeq_getX_r( geosinit.ctxt, cs, i, &x );
   GEOSCoordSeq_getY_r( geosinit.ctxt, cs, i, &y );
   if ( hasZ )
@@ -892,19 +894,20 @@ QgsPointV2 QgsGeos::coordSeqPoint( const GEOSCoordSequence* cs, int i, bool hasZ
     GEOSCoordSeq_getOrdinate_r( geosinit.ctxt, cs, i, 3, &m );
   }
 
+  QgsWKBTypes::Type t = QgsWKBTypes::Point;
   if ( hasZ && hasM )
   {
-    return QgsPointV2( x, y, z, m );
+    t = QgsWKBTypes::PointZM;
   }
   else if ( hasZ )
   {
-    return QgsPointV2( x, y, z, false );
+    t = QgsWKBTypes::PointZ;
   }
   else if ( hasM )
   {
-    return QgsPointV2( x, y, m, true );
+    t = QgsWKBTypes::PointM;
   }
-  return QgsPointV2( x, y );
+  return QgsPointV2( t, x, y, z, m );
 }
 
 GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )

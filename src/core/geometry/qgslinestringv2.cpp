@@ -27,6 +27,7 @@
 
 QgsLineStringV2::QgsLineStringV2(): QgsCurveV2()
 {
+  mWkbType = QgsWKBTypes::LineString;
 }
 
 QgsLineStringV2::~QgsLineStringV2()
@@ -195,20 +196,34 @@ QgsPointV2 QgsLineStringV2::pointN( int i ) const
   }
 
   const QPointF& pt = mCoords.at( i );
+  double z = 0;
+  double m = 0;
+
   bool hasZ = is3D();
+  if ( hasZ )
+  {
+    z = mZ.at( i );
+  }
   bool hasM = isMeasure();
-  if ( !hasZ && !hasM )
+  if ( hasM )
   {
-    return QgsPointV2( pt.x(), pt.y() );
+    m = mM.at( i );
   }
-  else if ( hasZ && hasM )
+
+  QgsWKBTypes::Type t = QgsWKBTypes::Point;
+  if ( hasZ && hasM )
   {
-    return QgsPointV2( pt.x(), pt.y(), mZ.at( i ), mM.at( i ) );
+    t = QgsWKBTypes::PointZM;
   }
-  else
+  else if ( hasZ )
   {
-    return QgsPointV2( pt.x(), pt.y(), hasM ? mM.at( i ) : mZ.at( i ), hasM );
+    t = QgsWKBTypes::PointZ;
   }
+  else if ( hasM )
+  {
+    t = QgsWKBTypes::PointM;
+  }
+  return QgsPointV2( t, pt.x(), pt.y(), z, m );
 }
 
 void QgsLineStringV2::points( QList<QgsPointV2>& pts ) const

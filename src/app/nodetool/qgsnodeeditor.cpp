@@ -131,7 +131,7 @@ void QgsNodeEditor::tableValueChanged( int row, int /*col*/ )
   double y = mTableWidget->item( row, 2 )->data( Qt::EditRole ).toDouble();
   double z = mTableWidget->item( row, 3 )->data( Qt::EditRole ).toDouble();
   double m = mTableWidget->item( row, 4 )->data( Qt::EditRole ).toDouble();
-  QgsPointV2 p( x, y, z, m );
+  QgsPointV2 p( QgsWKBTypes::PointZM, x, y, z, m );
 
   mLayer->beginEditCommand( QObject::tr( "Moved vertices" ) );
   mLayer->moveVertex( p, mSelectedFeature->featureId(), nodeIdx );

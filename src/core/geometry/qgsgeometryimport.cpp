@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsgeometryimport.h"
+#include "qgscircularstringv2.h"
 #include "qgscompoundcurvev2.h"
 #include "qgscurvepolygonv2.h"
 #include "qgspointv2.h"
@@ -48,6 +49,9 @@ QgsAbstractGeometryV2* QgsGeometryImport::geomFromWkb( const unsigned char* wkb 
       break;
     case QgsWKBTypes::LineString:
       geom = new QgsLineStringV2();
+      break;
+    case QgsWKBTypes::CircularString:
+      geom = new QgsCircularStringV2();
       break;
     case QgsWKBTypes::CompoundCurve:
       geom = new QgsCompoundCurveV2();

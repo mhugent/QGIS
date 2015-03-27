@@ -6,8 +6,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
 
     public:
       QgsPointV2( double x = 0.0, double y = 0.0 );
-      QgsPointV2( double x, double y, double mz, bool hasM );
-      //QgsPointV2( double x, double y, double z, double m );
+      QgsPointV2( QgsWKBTypes::Type type, double x = 0.0, double y = 0.0, double z = 0.0, double m = 0.0 );
 
       bool operator==( const QgsPointV2& pt ) const;
       bool operator!=( const QgsPointV2& pt ) const;

@@ -356,21 +356,34 @@ QgsPointV2 QgsCircularStringV2::pointN( int i ) const
     return QgsPointV2();
   }
 
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
+  double x = mX.at( i );
+  double y = mY.at( i );
+  double z = 0;
+  double m = 0;
 
-  if ( !hasZ && !hasM )
+  if ( is3D() )
   {
-    return QgsPointV2( mX.at( i ), mY.at( i ) );
+    z = mZ.at( i );
   }
-  else if ( hasZ && hasM )
+  if ( isMeasure() )
   {
-    return QgsPointV2( mX.at( i ), mY.at( i ), mZ.at( i ), mM.at( i ) );
+    m = mM.at( i );
   }
-  else
+
+  QgsWKBTypes::Type t = QgsWKBTypes::Point;
+  if ( is3D() && isMeasure() )
   {
-    return QgsPointV2( mX.at( i ), mY.at( i ), hasM ? mM.at( i ) : mZ.at( i ), hasM );
+    t = QgsWKBTypes::PointZM;
   }
+  else if ( is3D() )
+  {
+    t = QgsWKBTypes::PointZ;
+  }
+  else if ( isMeasure() )
+  {
+    t = QgsWKBTypes::PointM;
+  }
+  return QgsPointV2( mWkbType, x, y, z, m );
 }
 
 void QgsCircularStringV2::points( QList<QgsPointV2>& pts ) const
@@ -482,7 +495,9 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
   bool hasZ = is3D();
   bool hasM = isMeasure();
 
-  double x, y, z, m;
+  double x, y;
+  double z = 0;
+  double m = 0;
   points.append( p1 );
   if ( p2 != p3 && p1 != p2 ) //draw straight line segment if two points have the same position
   {
@@ -506,18 +521,7 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
         m = interpolateArc( angle, a1, a2, a3, p1.m(), p2.m(), p3.m() );
       }
 
-      if ( hasZ && hasM )
-      {
-        points.append( QgsPointV2( x, y, z, m ) );
-      }
-      else if ( hasZ )
-      {
-        points.append( QgsPointV2( x, y, z, false ) );
-      }
-      else
-      {
-        points.append( QgsPointV2( x, y, m, true ) );
-      }
+      points.append( QgsPointV2( mWkbType, x, y, z, m ) );
     }
   }
   points.append( p3 );

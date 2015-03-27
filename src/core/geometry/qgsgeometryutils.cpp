@@ -365,23 +365,27 @@ QList<QgsPointV2> QgsGeometryUtils::pointsFromWKT( const QString &wktCoordinateL
     int idx = 0;
     double x = coordinates[idx++].toDouble();
     double y = coordinates[idx++].toDouble();
+
     double z = is3D ? coordinates[idx++].toDouble() : 0.;
     double m = isMeasure ? coordinates[idx++].toDouble() : 0.;
 
+    QgsWKBTypes::Type t = QgsWKBTypes::Point;
     if ( is3D )
     {
       if ( isMeasure )
-        points.append( QgsPointV2( x, y, z, m ) );
+        t = QgsWKBTypes::PointZM;
       else
-        points.append( QgsPointV2( x, y, z, false ) );
+        t = QgsWKBTypes::PointZ;
     }
     else
     {
       if ( isMeasure )
-        points.append( QgsPointV2( x, y, m, true ) );
+        t = QgsWKBTypes::PointM;
       else
-        points.append( QgsPointV2( x, y ) );
+        t = QgsWKBTypes::Point;
     }
+
+    points.append( QgsPointV2( t, x, y, z, m ) );
   }
   return points;
 }

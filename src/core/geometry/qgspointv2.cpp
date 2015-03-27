@@ -29,15 +29,9 @@ QgsPointV2::QgsPointV2( double x, double y ): QgsAbstractGeometryV2(), mX( x ), 
   mWkbType = QgsWKBTypes::Point;
 }
 
-QgsPointV2::QgsPointV2( double x, double y, double mz, bool hasM ): QgsAbstractGeometryV2(),
-    mX( x ), mY( y ), mZ( hasM ? 0.0 : mz ), mM( hasM ? mz : 0.0 )
+QgsPointV2::QgsPointV2( QgsWKBTypes::Type type, double x, double y, double z, double m ): mX( x ), mY( y ), mZ( z ), mM( m )
 {
-  mWkbType = hasM ? QgsWKBTypes::PointM : QgsWKBTypes::PointZ;
-}
-
-QgsPointV2::QgsPointV2( double x, double y, double z, double m ): QgsAbstractGeometryV2(), mX( x ), mY( y ), mZ( z ), mM( m )
-{
-  mWkbType = QgsWKBTypes::PointZM;
+  mWkbType = type;
 }
 
 bool QgsPointV2::operator==( const QgsPointV2& pt ) const
