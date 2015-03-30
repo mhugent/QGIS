@@ -190,23 +190,6 @@ class QgsSelectedFeature: public QObject
      */
     void createVertexMap();
 
-#if 0
-    /**
-     *  Creates vertex map for polygon type feature
-     */
-    void createVertexMapPolygon();
-
-    /**
-     *  Creates vertex map for line type feature
-     */
-    void createVertexMapLine();
-
-    /**
-     *  Creates vertex map for ppint type feature
-     */
-    void createVertexMapPoint();
-#endif
-
     /**
      * Updates stored geometry to actual one loaded from layer
      * (or already available geometry)

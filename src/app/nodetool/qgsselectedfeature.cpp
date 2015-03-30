@@ -412,98 +412,6 @@ QgsGeometry *QgsSelectedFeature::geometry()
   Q_ASSERT( mGeometry );
   return mGeometry;
 }
-#if 0
-void QgsSelectedFeature::createVertexMapPolygon()
-{
-  int y = 0;
-  QgsPolygon polygon = mGeometry->asPolygon();
-  if ( !polygon.empty() )
-  {
-    // polygon
-    for ( int i2 = 0; i2 < polygon.size(); i2++ )
-    {
-      const QgsPolyline& poly = polygon[i2];
-      for ( int i = 0; i < poly.size(); i++ )
-      {
-        mVertexMap.insert( y + i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "ring %1, vertex %2" ).arg( i2 ).arg( i ) ) );
-      }
-      mVertexMap[y + poly.size() - 1 ]->setEqual( y );
-      mVertexMap[y]->setEqual( y + poly.size() - 1 );
-      y += poly.size();
-    }
-  }
-  else // multipolygon
-  {
-    QgsMultiPolygon multiPolygon = mGeometry->asMultiPolygon();
-    for ( int i2 = 0; i2 < multiPolygon.size(); i2++ )
-    {
-      // iterating through polygons
-      const QgsPolygon& poly2 = multiPolygon[i2];
-      for ( int i3 = 0; i3 < poly2.size(); i3++ )
-      {
-        // iterating through polygon rings
-        const QgsPolyline& poly = poly2[i3];
-        for ( int i = 0; i < poly.size(); i++ )
-        {
-          mVertexMap.insert( y + i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "polygon %1, ring %2, vertex %3" ).arg( i2 ).arg( i3 ).arg( i ) ) );
-        }
-        mVertexMap[y + poly.size() - 1]->setEqual( y );
-        mVertexMap[y]->setEqual( y + poly.size() - 1 );
-        y += poly.size();
-      }
-    }
-  }
-}
-
-void QgsSelectedFeature::createVertexMapLine()
-{
-  Q_ASSERT( mGeometry );
-
-  if ( mGeometry->isMultipart() )
-  {
-    int y = 0;
-    QgsMultiPolyline mLine = mGeometry->asMultiPolyline();
-    for ( int i2 = 0; i2 < mLine.size(); i2++ )
-    {
-      // iterating through polylines
-      QgsPolyline poly = mLine[i2];
-      for ( int i = 0; i < poly.size(); i++ )
-      {
-        mVertexMap.insert( y + i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "polyline %1, vertex %2" ).arg( i2 ).arg( i ) ) );
-      }
-      y += poly.size();
-    }
-  }
-  else
-  {
-    QgsPolyline poly = mGeometry->asPolyline();
-    for ( int i = 0; i < poly.size(); i++ )
-    {
-      mVertexMap.insert( i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "vertex %1" ).arg( i ) ) );
-    }
-  }
-}
-
-void QgsSelectedFeature::createVertexMapPoint()
-{
-  Q_ASSERT( mGeometry );
-
-  if ( mGeometry->isMultipart() )
-  {
-    // multipoint
-    QgsMultiPoint poly = mGeometry->asMultiPoint();
-    for ( int i = 0; i < poly.size(); i++ )
-    {
-      mVertexMap.insert( i, new QgsVertexEntry( mCanvas, mVlayer, poly[i], tr( "point %1" ).arg( i ) ) );
-    }
-  }
-  else
-  {
-    // single point
-    mVertexMap.insert( 1, new QgsVertexEntry( mCanvas, mVlayer, mGeometry->asPoint(), tr( "single point" ) ) );
-  }
-}
-#endif
 
 void QgsSelectedFeature::createVertexMap()
 {
@@ -531,25 +439,6 @@ void QgsSelectedFeature::createVertexMap()
   {
     mVertexMap.append( new QgsVertexEntry( mCanvas, mVlayer, pt, tr( "ring %1, vertex %2" ).arg( vertexId.ring ).arg( vertexId.vertex ) ) );
   }
-
-#if 0
-  QList< QList< QList< QgsPointV2 > > > coords;
-  geom->coordinateSequence( coords );
-
-  for ( int feature = 0; feature < coords.size(); ++feature )
-  {
-    const QList< QList< QgsPointV2 > >& featureCoords = coords.at( feature );
-    for ( int ring = 0; ring < featureCoords.size(); ++ring )
-    {
-      const QList< QgsPointV2 >& ringCoords = featureCoords.at( ring );
-      for ( int vertex = 0; vertex < ringCoords.size(); ++vertex )
-      {
-        const QgsPointV2& pt = ringCoords.at( vertex );
-        mVertexMap.append( new QgsVertexEntry( mCanvas, mVlayer, QgsPoint( pt.x(), pt.y() ), tr( "ring %1, vertex %2" ).arg( ring ).arg( vertex ) ) );
-      }
-    }
-  }
-#endif //0
 }
 
 void QgsSelectedFeature::selectVertex( int vertexNr )
