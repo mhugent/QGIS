@@ -33,13 +33,11 @@ class QgsNodeEditor : public QDockWidget
   public:
     QgsNodeEditor( QgsVectorLayer* layer,
                    QgsSelectedFeature* selectedFeature,
-                   QList<QgsRubberBand*>* rubberBands,
                    QgsMapCanvas* canvas );
 
   public:
     QgsVectorLayer* mLayer;
     QgsSelectedFeature* mSelectedFeature;
-    QList<QgsRubberBand*>* mRubberBands;
     QgsMapCanvas* mCanvas;
     QTableWidget* mTableWidget;
 

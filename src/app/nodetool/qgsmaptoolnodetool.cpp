@@ -376,7 +376,7 @@ void QgsMapToolNodeTool::canvasPressEvent( QMouseEvent * e )
     connect( mSelectedFeature, SIGNAL( destroyed() ), this, SLOT( selectedFeatureDestroyed() ) );
     connect( vlayer, SIGNAL( editingStopped() ), this, SLOT( editingToggled() ) );
     mIsPoint = vlayer->geometryType() == QGis::Point;
-    mNodeEditor = new QgsNodeEditor( vlayer, mSelectedFeature, &mRubberBands, mCanvas );
+    mNodeEditor = new QgsNodeEditor( vlayer, mSelectedFeature, mCanvas );
     QgisApp::instance()->addDockWidget( Qt::LeftDockWidgetArea, mNodeEditor );
   }
   else

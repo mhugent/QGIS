@@ -18,7 +18,6 @@
 
 #include "qgsnodeeditor.h"
 #include "qgsmapcanvas.h"
-#include "qgsrubberband.h"
 #include "qgsselectedfeature.h"
 #include "qgsvertexentry.h"
 #include "qgsvectorlayer.h"
@@ -50,7 +49,6 @@ class CoordinateItemDelegate : public QStyledItemDelegate
 QgsNodeEditor::QgsNodeEditor(
   QgsVectorLayer *layer,
   QgsSelectedFeature *selectedFeature,
-  QList<QgsRubberBand *> *rubberBands,
   QgsMapCanvas *canvas )
 {
   setWindowTitle( tr( "Vertex editor" ) );
@@ -58,7 +56,6 @@ QgsNodeEditor::QgsNodeEditor(
 
   mLayer = layer;
   mSelectedFeature = selectedFeature;
-  mRubberBands = rubberBands;
   mCanvas = canvas;
 
   mTableWidget = new QTableWidget( 0, 5, this );
