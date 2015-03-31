@@ -1,35 +1,17 @@
-/***************************************************************************
-                         qgscompoundcurvev2.h
-                         ---------------------
-    begin                : September 2014
-    copyright            : (C) 2014 by Marco Hugentobler
-    email                : marco at sourcepole dot ch
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-
-#ifndef QGSCOMPOUNDCURVEV2_H
-#define QGSCOMPOUNDCURVEV2_H
-
-#include "qgscurvev2.h"
-
 class QgsCompoundCurveV2: public QgsCurveV2
 {
+%TypeHeaderCode
+#include <qgscompoundcurvev2.h>
+%End
+
   public:
     QgsCompoundCurveV2();
     QgsCompoundCurveV2( const QgsCompoundCurveV2& curve );
-    QgsCompoundCurveV2& operator=( const QgsCompoundCurveV2& curve );
+    //QgsCompoundCurveV2 &operator=( const QgsCompoundCurveV2 & curve );
     ~QgsCompoundCurveV2();
 
-    virtual QString geometryType() const { return "CompoundCurve"; }
-    virtual int dimension() const { return 1; }
+    virtual QString geometryType() const;
+    virtual int dimension() const;
     virtual QgsAbstractGeometryV2* clone() const;
     virtual void clear();
 
@@ -52,7 +34,7 @@ class QgsCompoundCurveV2: public QgsCurveV2
     virtual void points( QList<QgsPointV2>& pts ) const;
     virtual int numPoints() const;
     virtual QgsLineStringV2* curveToLine() const;
-    int nCurves() const { return mCurves.size(); }
+    int nCurves() const;
     const QgsCurveV2* curveAt( int i ) const;
 
     /**Adds curve (takes ownership)*/
@@ -76,12 +58,4 @@ class QgsCompoundCurveV2: public QgsCurveV2
     bool pointAt( int i, QgsPointV2& vertex ) const;
 
     void sumUpArea( double& sum ) const;
-
-  private:
-    QList< QgsCurveV2* > mCurves;
-    /**Turns a vertex id for the compound curve into one or more ids for the subcurves
-        @return the index of the subcurve or -1 in case of error*/
-    QList< QPair<int, QgsVertexId> > curveVertexId( const QgsVertexId& id ) const;
 };
-
-#endif // QGSCOMPOUNDCURVEV2_H

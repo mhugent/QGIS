@@ -11,7 +11,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
       bool operator==( const QgsPointV2& pt ) const;
       bool operator!=( const QgsPointV2& pt ) const;
 
-      virtual QgsPointV2* clone() const;
+      virtual QgsAbstractGeometryV2* clone() const;
       void clear();
 
       double x() const;
@@ -46,7 +46,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
       void transform( const QgsCoordinateTransform& ct );
       void transform( const QTransform& t );
 
-      //virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
+      virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord /Out/ ) const;
 
       //low-level editing
       virtual bool insertVertex( const QgsVertexId& position, const QgsPointV2& vertex );

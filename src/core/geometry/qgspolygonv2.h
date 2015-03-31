@@ -24,7 +24,7 @@ class QgsPolygonV2: public QgsCurvePolygonV2
 {
   public:
     virtual QString geometryType() const { return "Polygon"; }
-    virtual QgsPolygonV2* clone() const;
+    virtual QgsAbstractGeometryV2* clone() const;
 
     virtual bool fromWkb( const unsigned char* wkb );
     // inherited: bool fromWkt( const QString &wkt );

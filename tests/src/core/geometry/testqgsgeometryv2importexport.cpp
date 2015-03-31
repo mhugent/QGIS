@@ -567,11 +567,11 @@ void TestQgsGeometryV2ImportExport::testMultiPolygon_data()
   QgsLineStringV2* lineString1 = new QgsLineStringV2();
   lineString1->setPoints( QList<QgsPointV2>() << QgsPointV2( 0.1, 0.2 ) << QgsPointV2( 1.3, 0.4 ) << QgsPointV2( 1.5, 1.6 ) << QgsPointV2( 0.1, 0.2 ) );
   polygon1->setExteriorRing( lineString1 );
-  polygon2->setExteriorRing( lineString1->clone() );
+  polygon2->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1->clone() ) );
   QgsLineStringV2* lineString2 = new QgsLineStringV2();
   lineString2->setPoints( QList<QgsPointV2>() << QgsPointV2( 1.5, 1.6 ) << QgsPointV2( 6.7, 6.6 ) << QgsPointV2( 2.2, 9.4 ) << QgsPointV2( 5.3, 6.3 ) << QgsPointV2( 1.5, 1.6 ) );
   polygon1->addInteriorRing( lineString2 );
-  polygon2->addInteriorRing( lineString2->clone() );
+  polygon2->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2->clone() ) );
   multiPolygon->addGeometry( polygon1 );
   multiPolygon->addGeometry( polygon2 );
   QTest::newRow( "MultiPolygon" ) << "MultiPolygon (((0.1 0.2, 1.3 0.4, 1.5 1.6, 0.1 0.2),(1.5 1.6, 6.7 6.6, 2.2 9.4, 5.3 6.3, 1.5 1.6)),((0.1 0.2, 1.3 0.4, 1.5 1.6, 0.1 0.2),(1.5 1.6, 6.7 6.6, 2.2 9.4, 5.3 6.3, 1.5 1.6)))"
@@ -585,11 +585,11 @@ void TestQgsGeometryV2ImportExport::testMultiPolygon_data()
   QgsLineStringV2* lineString1Z = new QgsLineStringV2();
   lineString1Z->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZ, 0.1, 0.2, 6.3 ) << QgsPointV2( QgsWKBTypes::PointZ, 1.3, 0.4, 6.2 ) << QgsPointV2( QgsWKBTypes::PointZ, 1.5, 1.6, 3.6 ) << QgsPointV2( QgsWKBTypes::PointZ, 0.1, 0.2, 6.3, false ) );
   polygon1Z->setExteriorRing( lineString1Z );
-  polygon2Z->setExteriorRing( lineString1Z->clone() );
+  polygon2Z->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1Z->clone() ) );
   QgsLineStringV2* lineString2Z = new QgsLineStringV2();
   lineString2Z->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZ, 1.5, 1.6, 3.6 ) << QgsPointV2( QgsWKBTypes::PointZ, 6.7, 6.6, 3.1 ) << QgsPointV2( QgsWKBTypes::PointZ, 2.2, 9.4, 4.3 ) << QgsPointV2( QgsWKBTypes::PointZ, 5.3, 6.3, 9.3 ) << QgsPointV2( QgsWKBTypes::PointZ, 1.5, 1.6, 3.6 ) );
   polygon1Z->addInteriorRing( lineString2Z );
-  polygon2Z->addInteriorRing( lineString2Z->clone() );
+  polygon2Z->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2Z->clone() ) );
   multiPolygonZ->addGeometry( polygon1Z );
   multiPolygonZ->addGeometry( polygon2Z );
   QTest::newRow( "MultiPolygonZ" ) << "MultiPolygonZ (((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)),((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)))"
@@ -603,11 +603,11 @@ void TestQgsGeometryV2ImportExport::testMultiPolygon_data()
   QgsLineStringV2* lineString1M = new QgsLineStringV2();
   lineString1M->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointM, 0.1, 0.2, 0.0, 6.3 ) << QgsPointV2( QgsWKBTypes::PointM, 1.3, 0.4, 0.0, 6.2 ) << QgsPointV2( QgsWKBTypes::PointM, 1.5, 1.6, 0.0, 3.6 ) << QgsPointV2( QgsWKBTypes::PointM, 0.1, 0.2, 0.0, 6.3 ) );
   polygon1M->setExteriorRing( lineString1M );
-  polygon2M->setExteriorRing( lineString1M->clone() );
+  polygon2M->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1M->clone() ) );
   QgsLineStringV2* lineString2M = new QgsLineStringV2();
   lineString2M->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointM, 1.5, 1.6, 0.0, 3.6 ) << QgsPointV2( QgsWKBTypes::PointM, 6.7, 6.6, 0.0, 3.1 ) << QgsPointV2( QgsWKBTypes::PointM, 2.2, 9.4, 0.0, 4.3 ) << QgsPointV2( QgsWKBTypes::PointM, 5.3, 6.3, 0.0, 9.3 ) << QgsPointV2( QgsWKBTypes::PointM, 1.5, 1.6, 0.0, 3.6 ) );
   polygon1M->addInteriorRing( lineString2M );
-  polygon2M->addInteriorRing( lineString2M->clone() );
+  polygon2M->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2M->clone() ) );
   multiPolygonM->addGeometry( polygon1M );
   multiPolygonM->addGeometry( polygon2M );
   QTest::newRow( "MultiPolygonM" ) << "MultiPolygonM (((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)),((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)))"
@@ -621,11 +621,11 @@ void TestQgsGeometryV2ImportExport::testMultiPolygon_data()
   QgsLineStringV2* lineString1ZM = new QgsLineStringV2();
   lineString1ZM->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZM, 0.1, 0.2, 6.3, 2.3 ) << QgsPointV2( QgsWKBTypes::PointZM, 1.3, 0.4, 6.2, 1.5 ) << QgsPointV2( QgsWKBTypes::PointZM, 1.5, 1.6, 3.6, 7.3 ) << QgsPointV2( QgsWKBTypes::PointZM, 0.1, 0.2, 6.3, 2.3 ) );
   polygon1ZM->setExteriorRing( lineString1ZM );
-  polygon2ZM->setExteriorRing( lineString1ZM->clone() );
+  polygon2ZM->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1ZM->clone() ) );
   QgsLineStringV2* lineString2ZM = new QgsLineStringV2();
   lineString2ZM->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZM, 1.5, 1.6, 3.6, 7.3 ) << QgsPointV2( QgsWKBTypes::PointZM, 6.7, 6.6, 3.1, 2.6 ) << QgsPointV2( QgsWKBTypes::PointZM, 2.2, 9.4, 4.3, 8.5 ) << QgsPointV2( QgsWKBTypes::PointZM, 5.3, 6.3, 9.3, 2.1 ) << QgsPointV2( QgsWKBTypes::PointZM, 1.5, 1.6, 3.6, 7.3 ) );
   polygon1ZM->addInteriorRing( lineString2ZM );
-  polygon2ZM->addInteriorRing( lineString2ZM->clone() );
+  polygon2ZM->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2ZM->clone() ) );
   multiPolygonZM->addGeometry( polygon1ZM );
   multiPolygonZM->addGeometry( polygon2ZM );
   QTest::newRow( "MultiPolygonZM" ) << "MultiPolygonZM (((0.1 0.2 6.3 2.3, 1.3 0.4 6.2 1.5, 1.5 1.6 3.6 7.3, 0.1 0.2 6.3 2.3),(1.5 1.6 3.6 7.3, 6.7 6.6 3.1 2.6, 2.2 9.4 4.3 8.5, 5.3 6.3 9.3 2.1, 1.5 1.6 3.6 7.3)),((0.1 0.2 6.3 2.3, 1.3 0.4 6.2 1.5, 1.5 1.6 3.6 7.3, 0.1 0.2 6.3 2.3),(1.5 1.6 3.6 7.3, 6.7 6.6 3.1 2.6, 2.2 9.4 4.3 8.5, 5.3 6.3 9.3 2.1, 1.5 1.6 3.6 7.3)))"
@@ -646,11 +646,11 @@ void TestQgsGeometryV2ImportExport::testMultiSurface_data()
   QgsLineStringV2* lineString1 = new QgsLineStringV2();
   lineString1->setPoints( QList<QgsPointV2>() << QgsPointV2( 0.1, 0.2 ) << QgsPointV2( 1.3, 0.4 ) << QgsPointV2( 1.5, 1.6 ) << QgsPointV2( 0.1, 0.2 ) );
   polygon->setExteriorRing( lineString1 );
-  curvePolygon->setExteriorRing( lineString1->clone() );
+  curvePolygon->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1->clone() ) );
   QgsLineStringV2* lineString2 = new QgsLineStringV2();
   lineString2->setPoints( QList<QgsPointV2>() << QgsPointV2( 1.5, 1.6 ) << QgsPointV2( 6.7, 6.6 ) << QgsPointV2( 2.2, 9.4 ) << QgsPointV2( 5.3, 6.3 ) << QgsPointV2( 1.5, 1.6 ) );
   polygon->addInteriorRing( lineString2 );
-  curvePolygon->addInteriorRing( lineString2->clone() );
+  curvePolygon->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2->clone() ) );
   multiSurface->addGeometry( polygon );
   multiSurface->addGeometry( curvePolygon );
   QTest::newRow( "MultiSurface" ) << "MultiSurface (((0.1 0.2, 1.3 0.4, 1.5 1.6, 0.1 0.2),(1.5 1.6, 6.7 6.6, 2.2 9.4, 5.3 6.3, 1.5 1.6)),CurvePolygon ((0.1 0.2, 1.3 0.4, 1.5 1.6, 0.1 0.2),(1.5 1.6, 6.7 6.6, 2.2 9.4, 5.3 6.3, 1.5 1.6)))"
@@ -664,11 +664,11 @@ void TestQgsGeometryV2ImportExport::testMultiSurface_data()
   QgsLineStringV2* lineString1Z = new QgsLineStringV2();
   lineString1Z->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZ, 0.1, 0.2, 6.3 ) << QgsPointV2( QgsWKBTypes::PointZ, 1.3, 0.4, 6.2 ) << QgsPointV2( QgsWKBTypes::PointZ, 1.5, 1.6, 3.6 ) << QgsPointV2( QgsWKBTypes::PointZ, 0.1, 0.2, 6.3 ) );
   polygonZ->setExteriorRing( lineString1Z );
-  curvePolygonZ->setExteriorRing( lineString1Z->clone() );
+  curvePolygonZ->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1Z->clone() ) );
   QgsLineStringV2* lineString2Z = new QgsLineStringV2();
   lineString2Z->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZ, 1.5, 1.6, 3.6 ) << QgsPointV2( QgsWKBTypes::PointZ, 6.7, 6.6, 3.1 ) << QgsPointV2( QgsWKBTypes::PointZ, 2.2, 9.4, 4.3 ) << QgsPointV2( QgsWKBTypes::PointZ, 5.3, 6.3, 9.3 ) << QgsPointV2( QgsWKBTypes::PointZ, 1.5, 1.6, 3.6 ) );
   polygonZ->addInteriorRing( lineString2Z );
-  curvePolygonZ->addInteriorRing( lineString2Z->clone() );
+  curvePolygonZ->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2Z->clone() ) );
   multiSurfaceZ->addGeometry( polygonZ );
   multiSurfaceZ->addGeometry( curvePolygonZ );
   QTest::newRow( "MultiSurfaceZ" ) << "MultiSurfaceZ (((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)),CurvePolygonZ ((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)))"
@@ -682,11 +682,11 @@ void TestQgsGeometryV2ImportExport::testMultiSurface_data()
   QgsLineStringV2* lineString1M = new QgsLineStringV2();
   lineString1M->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointM, 0.1, 0.2, 0.0, 6.3 ) << QgsPointV2( QgsWKBTypes::PointM, 1.3, 0.4, 0.0, 6.2 ) << QgsPointV2( QgsWKBTypes::PointM, 1.5, 1.6, 0.0, 3.6 ) << QgsPointV2( QgsWKBTypes::PointM, 0.1, 0.2, 0.0, 6.3 ) );
   polygonM->setExteriorRing( lineString1M );
-  curvePolygonM->setExteriorRing( lineString1M->clone() );
+  curvePolygonM->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1M->clone() ) );
   QgsLineStringV2* lineString2M = new QgsLineStringV2();
   lineString2M->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointM, 1.5, 1.6, 0.0, 3.6 ) << QgsPointV2( QgsWKBTypes::PointM, 6.7, 6.6, 0.0, 3.1 ) << QgsPointV2( QgsWKBTypes::PointM, 2.2, 9.4, 0.0, 4.3 ) << QgsPointV2( QgsWKBTypes::PointM, 5.3, 6.3, 0.0, 9.3 ) << QgsPointV2( QgsWKBTypes::PointM, 1.5, 1.6, 0.0, 3.6 ) );
   polygonM->addInteriorRing( lineString2M );
-  curvePolygonM->addInteriorRing( lineString2M->clone() );
+  curvePolygonM->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2M->clone() ) );
   multiSurfaceM->addGeometry( polygonM );
   multiSurfaceM->addGeometry( curvePolygonM );
   QTest::newRow( "MultiSurfaceM" ) << "MultiSurfaceM (((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)),CurvePolygonM ((0.1 0.2 6.3, 1.3 0.4 6.2, 1.5 1.6 3.6, 0.1 0.2 6.3),(1.5 1.6 3.6, 6.7 6.6 3.1, 2.2 9.4 4.3, 5.3 6.3 9.3, 1.5 1.6 3.6)))"
@@ -700,11 +700,11 @@ void TestQgsGeometryV2ImportExport::testMultiSurface_data()
   QgsLineStringV2* lineString1ZM = new QgsLineStringV2();
   lineString1ZM->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZM, 0.1, 0.2, 6.3, 2.3 ) << QgsPointV2( QgsWKBTypes::PointZM, 1.3, 0.4, 6.2, 1.5 ) << QgsPointV2( QgsWKBTypes::PointZM, 1.5, 1.6, 3.6, 7.3 ) << QgsPointV2( QgsWKBTypes::PointZM, 0.1, 0.2, 6.3, 2.3 ) );
   polygonZM->setExteriorRing( lineString1ZM );
-  curvePolygonZM->setExteriorRing( lineString1ZM->clone() );
+  curvePolygonZM->setExteriorRing( dynamic_cast<QgsLineStringV2*>( lineString1ZM->clone() ) );
   QgsLineStringV2* lineString2ZM = new QgsLineStringV2();
   lineString2ZM->setPoints( QList<QgsPointV2>() << QgsPointV2( QgsWKBTypes::PointZM, 1.5, 1.6, 3.6, 7.3 ) << QgsPointV2( QgsWKBTypes::PointZM, 6.7, 6.6, 3.1, 2.6 ) << QgsPointV2( QgsWKBTypes::PointZM, 2.2, 9.4, 4.3, 8.5 ) << QgsPointV2( QgsWKBTypes::PointZM, 5.3, 6.3, 9.3, 2.1 ) << QgsPointV2( QgsWKBTypes::PointZM, 1.5, 1.6, 3.6, 7.3 ) );
   polygonZM->addInteriorRing( lineString2ZM );
-  curvePolygonZM->addInteriorRing( lineString2ZM->clone() );
+  curvePolygonZM->addInteriorRing( dynamic_cast<QgsLineStringV2*>( lineString2ZM->clone() ) );
   multiSurfaceZM->addGeometry( polygonZM );
   multiSurfaceZM->addGeometry( curvePolygonZM );
   QTest::newRow( "MultiSurfaceZM" ) << "MultiSurfaceZM (((0.1 0.2 6.3 2.3, 1.3 0.4 6.2 1.5, 1.5 1.6 3.6 7.3, 0.1 0.2 6.3 2.3),(1.5 1.6 3.6 7.3, 6.7 6.6 3.1 2.6, 2.2 9.4 4.3 8.5, 5.3 6.3 9.3 2.1, 1.5 1.6 3.6 7.3)),CurvePolygonZM ((0.1 0.2 6.3 2.3, 1.3 0.4 6.2 1.5, 1.5 1.6 3.6 7.3, 0.1 0.2 6.3 2.3),(1.5 1.6 3.6 7.3, 6.7 6.6 3.1 2.6, 2.2 9.4 4.3 8.5, 5.3 6.3 9.3 2.1, 1.5 1.6 3.6 7.3)))"

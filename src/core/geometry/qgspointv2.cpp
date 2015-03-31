@@ -45,7 +45,7 @@ bool QgsPointV2::operator!=( const QgsPointV2& pt ) const
   return !operator==( pt );
 }
 
-QgsPointV2* QgsPointV2::clone() const
+QgsAbstractGeometryV2* QgsPointV2::clone() const
 {
   return new QgsPointV2( *this );
 }

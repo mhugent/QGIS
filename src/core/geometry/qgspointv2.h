@@ -29,7 +29,7 @@ class QgsPointV2: public QgsAbstractGeometryV2
     bool operator==( const QgsPointV2& pt ) const;
     bool operator!=( const QgsPointV2& pt ) const;
 
-    virtual QgsPointV2* clone() const;
+    virtual QgsAbstractGeometryV2* clone() const;
     void clear();
 
     double x() const { return mX; }

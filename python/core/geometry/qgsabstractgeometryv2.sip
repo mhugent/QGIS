@@ -22,6 +22,10 @@ class QgsAbstractGeometryV2
         sipClass = sipClass_QgsPointV2;
       else if (dynamic_cast<QgsLineStringV2*>(sipCpp) != NULL )
         sipClass = sipClass_QgsLineStringV2;
+      else if (dynamic_cast<QgsCircularStringV2*>(sipCpp) != NULL )
+        sipClass = sipClass_QgsCircularStringV2;
+      else if (dynamic_cast<QgsCompoundCurveV2*>(sipCpp) != NULL )
+        sipClass = sipClass_QgsCompoundCurveV2;
       else
         sipClass = 0;
 %End
@@ -71,7 +75,7 @@ class QgsAbstractGeometryV2
     @return false if at end*/
     virtual bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const = 0;
 
-    //virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const = 0;
+    virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord /Out/ ) const = 0;
     int nCoordinates() const;
     QgsPointV2 vertexAt( const QgsVertexId& id ) const;
     virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const = 0;

@@ -29,7 +29,7 @@ class QgsCircularStringV2: public QgsCurveV2
 
     virtual QString geometryType() const { return "CircularString"; }
     virtual int dimension() const { return 1; }
-    virtual QgsCircularStringV2* clone() const;
+    virtual QgsAbstractGeometryV2* clone() const;
     virtual void clear();
 
     virtual QgsRectangle calculateBoundingBox() const;

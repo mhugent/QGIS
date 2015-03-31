@@ -21,7 +21,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeometryutils.h"
 #include "qgslinestringv2.h"
 
-QgsMultiLineStringV2* QgsMultiLineStringV2::clone() const
+QgsAbstractGeometryV2* QgsMultiLineStringV2::clone() const
 {
   return new QgsMultiLineStringV2( *this );
 }

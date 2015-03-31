@@ -22,7 +22,7 @@ class QgsMultiPolygonV2: public QgsGeometryCollectionV2
 {
   public:
     virtual QString geometryType() const { return "MultiPolygon"; }
-    QgsMultiPolygonV2* clone() const;
+    QgsAbstractGeometryV2* clone() const;
 
     bool fromWkt( const QString& wkt );
 

@@ -64,7 +64,7 @@ QgsCurvePolygonV2& QgsCurvePolygonV2::operator=( const QgsCurvePolygonV2 & p )
   return *this;
 }
 
-QgsCurvePolygonV2* QgsCurvePolygonV2::clone() const
+QgsAbstractGeometryV2* QgsCurvePolygonV2::clone() const
 {
   return new QgsCurvePolygonV2( *this );
 }

@@ -21,7 +21,7 @@
 #include "qgslinestringv2.h"
 #include "qgswkbptr.h"
 
-QgsPolygonV2* QgsPolygonV2::clone() const
+QgsAbstractGeometryV2* QgsPolygonV2::clone() const
 {
   return new QgsPolygonV2( *this );
 }
@@ -102,5 +102,5 @@ unsigned char* QgsPolygonV2::asWkb( int& binarySize ) const
 
 QgsPolygonV2* QgsPolygonV2::surfaceToPolygon() const
 {
-  return clone();
+  return dynamic_cast<QgsPolygonV2*>( clone() );
 }

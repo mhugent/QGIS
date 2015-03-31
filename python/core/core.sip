@@ -248,7 +248,18 @@
 
 %Include geometry/qgsgeometry.sip
 %Include geometry/qgsabstractgeometryv2.sip
+%Include geometry/qgscircularstringv2.sip
+%Include geometry/qgscompoundcurvev2.sip
+%Include geometry/qgscurvepolygonv2.sip
 %Include geometry/qgscurvev2.sip
+%Include geometry/qgsgeometrycollectionv2.sip
 %Include geometry/qgslinestringv2.sip
+%Include geometry/qgsmulticurvev2.sip
+%Include geometry/qgsmultilinestringv2.sip
+%Include geometry/qgsmultipointv2.sip
+%Include geometry/qgsmultipolygonv2.sip
+%Include geometry/qgsmultisurfacev2.sip
 %Include geometry/qgspointv2.sip
+%Include geometry/qgspolygonv2.sip
+%Include geometry/qgssurfacev2.sip
 %Include geometry/qgswkbtypes.sip

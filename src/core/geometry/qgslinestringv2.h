@@ -30,7 +30,7 @@ class QgsLineStringV2: public QgsCurveV2
 
     virtual QString geometryType() const { return "LineString"; }
     virtual int dimension() const { return 1; }
-    virtual QgsLineStringV2* clone() const;
+    virtual QgsAbstractGeometryV2* clone() const;
     virtual void clear();
 
     virtual bool fromWkb( const unsigned char* wkb );
