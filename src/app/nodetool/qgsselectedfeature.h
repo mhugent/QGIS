@@ -89,7 +89,7 @@ class QgsSelectedFeature: public QObject
      * @param vertexNr number of vertex which is to be inverted
      * @param invert flag if vertex selection should be inverted or not
      */
-    void invertVertexSelection( int vertexNr, bool invert = true );
+    void invertVertexSelection( int vertexNr );
 
     /**
      * Tells if vertex is selected
@@ -114,11 +114,6 @@ class QgsSelectedFeature: public QObject
      * Updates whole selection object from the selected object
      */
     void replaceVertexMap();
-
-    /**
-     * Clears data about vertexes if they are in rubber band for moving etc.
-     */
-    void cleanRubberBandsData();
 
     /**
      * Get the layer of the selected feature
@@ -206,7 +201,6 @@ class QgsSelectedFeature: public QObject
     bool mFeatureSelected;
     bool mChangingGeometry;
     QgsVectorLayer* mVlayer;
-    QgsRubberBand* mRubberBand;
     QList<QgsVertexEntry*> mVertexMap;
     QgsMapCanvas* mCanvas;
 

@@ -316,12 +316,9 @@ int QgsCompoundCurveV2::numPoints() const
   int nCurves = mCurves.size();
   for ( int i = 0; i < nCurves; ++i )
   {
-    nPoints += mCurves.at( i )->numPoints();
-    if ( i > 0 && mCurves.at( i )->startPoint() == mCurves.at( i - 1 )->endPoint() )
-    {
-      nPoints -= 1;
-    }
+    nPoints += mCurves.at( i )->numPoints() - 1; //last vertex is equal to first of next section
   }
+  nPoints += 1; //last vertex was removed above
   return nPoints;
 }
 

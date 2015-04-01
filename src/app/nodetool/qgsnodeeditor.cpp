@@ -114,7 +114,6 @@ void QgsNodeEditor::rebuildTable()
 
     ++row;
   }
-  mTableWidget->setRowHidden( row - 1, true ); // Hide last row since it is the same as the first one
   mTableWidget->setColumnHidden( 3, !mSelectedFeature->vertexMap()[0]->point().is3D() );
   mTableWidget->setColumnHidden( 4, !mSelectedFeature->vertexMap()[0]->point().isMeasure() );
   mTableWidget->resizeColumnToContents( 0 );

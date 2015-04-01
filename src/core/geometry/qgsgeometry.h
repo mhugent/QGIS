@@ -532,6 +532,9 @@ class CORE_EXPORT QgsGeometry
     void clip( const QgsRectangle& rect );
     void draw( QPainter& p ) const;
 
+    bool vertexIdFromVertexNr( int nr, QgsVertexId& id ) const;
+    int vertexNrFromVertexId( const QgsVertexId& i ) const;
+
   private:
 
     QgsGeometryData* d; //implicitely shared data pointer
@@ -542,8 +545,6 @@ class CORE_EXPORT QgsGeometry
     void detach( bool cloneGeom = true ); //make sure mGeometry only referenced from this instance
     void removeWkbGeos();
 
-    bool vertexIdFromVertexNr( int nr, QgsVertexId& id ) const;
-    int vertexNrFromVertexId( const QgsVertexId& i ) const;
     //convert point list from v1 to v2
     static void convertPointList( const QList<QgsPoint>& input, QList<QgsPointV2>& output );
     static void convertPointList( const QList<QgsPointV2>& input, QList<QgsPoint>& output );

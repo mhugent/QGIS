@@ -20,15 +20,10 @@
 
 class QRubberBand;
 
-class QgsRubberBand;
+class QgsGeometryRubberBand;
 class QgsVertexEntry;
 class QgsSelectedFeature;
 class QgsNodeEditor;
-
-/**
- * Set representing set of vertex numbers
- */
-typedef QSet<int> Vertexes;
 
 /**A maptool to move/deletes/adds vertices of line or polygon features*/
 class QgsMapToolNodeTool: public QgsMapToolVertexEdit
@@ -47,8 +42,6 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
     void canvasReleaseEvent( QMouseEvent * e );
 
     void keyPressEvent( QKeyEvent* e );
-
-    void keyReleaseEvent( QKeyEvent* e );
 
     //! called when map tool is being deactivated
     void deactivate();
@@ -78,14 +71,6 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
     void cleanTool( bool deleteSelectedFeature = true );
 
     /**
-     * Creating rubber band marker for movin of point
-     * @param center coordinates of point to be moved
-     * @param vlayer vector layer on which we are working
-     * @return rubber band marker
-     */
-    QgsRubberBand* createRubberBandMarker( QgsPoint center, QgsVectorLayer* vlayer );
-
-    /**
      * Function to check if selected feature exists and is same with original one
      * stored in internal structures
      * @param vlayer vector layer for checking
@@ -94,17 +79,9 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
     bool checkCorrectnessOfFeature( QgsVectorLayer* vlayer );
 
     /**
-     * Creates rubberbands for moving points
-     */
-    void createMovingRubberBands();
-
-    /**
      * Creates rubber bands for ther features when topology editing is enabled
-     * @param vlayer vector layer for ehich rubber bands are created
-     * @param vertexMap map of vertexes
-     * @param vertex currently processed vertex
      */
-    void createTopologyRubberBands( QgsVectorLayer* vlayer, const QList<QgsVertexEntry*> &vertexMap, int vertex );
+    void createTopologyRubberBands();
 
     /**
      * Returns the index of first selected vertex, -1 when all unselected
@@ -114,22 +91,13 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
     /**
      * Select the specified vertex bounded to current index range, returns the valid selected index
      */
-    int safeSelectVertex( int vertexNr );
+    void safeSelectVertex( int vertexNr );
 
-    /** The position of the vertex to move (in map coordinates) to exclude later from snapping*/
-    QList<QgsPoint> mExcludePoint;
+    /** rubber bands during node move */
+    QMap<QgsFeatureId, QgsGeometryRubberBand*> mMoveRubberBands;
 
-    /** rubber bands */
-    QList<QgsRubberBand*> mRubberBands;
-
-    /** list of topology rubber bands */
-    QList<QgsRubberBand*> mTopologyRubberBand;
-
-    /** vertexes of rubberbands which are to be moved */
-    QMap<QgsFeatureId, Vertexes*> mTopologyMovingVertexes;
-
-    /** vertexes of features with int id which were already added tu rubber bands */
-    QMap<QgsFeatureId, Vertexes*> mTopologyRubberBandVertexes;
+    /** vertices of features to move */
+    QMap<QgsFeatureId, QList< QPair<QgsVertexId, QgsPointV2> > > mMoveVertices;
 
     /** object containing selected feature and it's vertexes */
     QgsSelectedFeature *mSelectedFeature;
@@ -137,17 +105,8 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
     /** dock widget which allows to edit vertices */
     QgsNodeEditor* mNodeEditor;
 
-    /** flag if selection rectangle is active */
-    bool mSelectionRectangle;
-
     /** flag if moving of vertexes is occuring */
     bool mMoving;
-
-    /** flag if click action is still in queue to be processed */
-    bool mClicked;
-
-    /** flag if crtl is pressed */
-    bool mCtrl;
 
     /** flag if selection of another feature can occur */
     bool mSelectAnother;
@@ -160,9 +119,6 @@ class QgsMapToolNodeTool: public QgsMapToolVertexEdit
 
     /** closest vertex to click in map coordinates */
     QgsPoint mClosestMapVertex;
-
-    /** backup of map coordinates to be able to count change between moves */
-    QgsPoint mPosMapCoordBackup;
 
     /** active rubberband for selecting vertexes */
     QRubberBand *mSelectionRubberBand;
