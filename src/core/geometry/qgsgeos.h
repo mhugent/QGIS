@@ -66,7 +66,7 @@ class QgsGeos: public QgsGeometryEngine
     @param[out] topologyTestPoints points that need to be tested for topological completeness in the dataset
     @return 0 in case of success, 1 if geometry has not been split, error else*/
     int splitGeometry( const QgsLineStringV2& splitLine,
-                       QList<QgsAbstractGeometryV2*>&newGeometries,
+                       QList<QgsAbstractGeometryV2*>& newGeometries,
                        bool topological,
                        QList<QgsPointV2> &topologyTestPoints ) const;
 

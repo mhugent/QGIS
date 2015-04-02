@@ -253,6 +253,8 @@
 %Include geometry/qgscurvepolygonv2.sip
 %Include geometry/qgscurvev2.sip
 %Include geometry/qgsgeometrycollectionv2.sip
+%Include geometry/qgsgeometryengine.sip
+%Include geometry/qgsgeos.sip
 %Include geometry/qgslinestringv2.sip
 %Include geometry/qgsmulticurvev2.sip
 %Include geometry/qgsmultilinestringv2.sip
