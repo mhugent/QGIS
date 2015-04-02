@@ -23,8 +23,8 @@
 #include "qgslinestringv2.h"
 #include "qgspolygonv2.h"
 #include "qgswkbptr.h"
-#include "QPainter"
-#include "QPainterPath"
+#include <QPainter>
+#include <QPainterPath>
 
 QgsCurvePolygonV2::QgsCurvePolygonV2(): QgsSurfaceV2(), mExteriorRing( 0 )
 {
@@ -51,15 +51,18 @@ QgsCurvePolygonV2::QgsCurvePolygonV2( const QgsCurvePolygonV2& p ) : QgsSurfaceV
 
 QgsCurvePolygonV2& QgsCurvePolygonV2::operator=( const QgsCurvePolygonV2 & p )
 {
-  QgsSurfaceV2::operator=( p );
-  if ( p.mExteriorRing )
+  if ( &p != this )
   {
-    mExteriorRing = static_cast<QgsCurveV2*>( p.mExteriorRing->clone() );
-  }
+    QgsSurfaceV2::operator=( p );
+    if ( p.mExteriorRing )
+    {
+      mExteriorRing = static_cast<QgsCurveV2*>( p.mExteriorRing->clone() );
+    }
 
-  foreach ( const QgsCurveV2* ring, p.mInteriorRings )
-  {
-    mInteriorRings.push_back( static_cast<QgsCurveV2*>( ring->clone() ) );
+    foreach ( const QgsCurveV2* ring, p.mInteriorRings )
+    {
+      mInteriorRings.push_back( static_cast<QgsCurveV2*>( ring->clone() ) );
+    }
   }
   return *this;
 }
@@ -528,140 +531,116 @@ double QgsCurvePolygonV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segm
   return QgsGeometryUtils::closestSegmentFromComponents( segmentList, QgsGeometryUtils::RING, pt, segmentPt,  vertexAfter, leftOf, epsilon );
 }
 
-bool QgsCurvePolygonV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
+bool QgsCurvePolygonV2::nextVertex( QgsVertexId& vId, QgsPointV2& vertex ) const
 {
-  if ( !mExteriorRing || id.ring >= ( mInteriorRings.size() + 1 ) )
+  if ( !mExteriorRing || vId.ring >= 1 + mInteriorRings.size() )
   {
     return false;
   }
 
-  if ( id.ring < 0 )
+  if ( vId.ring < 0 )
   {
-    id.ring = 0; id.vertex = -1;
-    if ( id.part < 0 )
+    vId.ring = 0; vId.vertex = -1;
+    if ( vId.part < 0 )
     {
-      id.part = 0;
+      vId.part = 0;
     }
-    return mExteriorRing->nextVertex( id, vertex );
+    return mExteriorRing->nextVertex( vId, vertex );
   }
   else
   {
-    QgsCurveV2* ring = 0;
-    if ( id.ring == 0 )
+    QgsCurveV2* ring = vId.ring == 0 ? mExteriorRing : mInteriorRings[vId.ring - 1];
+
+    // Skip the closing vertex of the ring (which is equal to the first one)
+    if ( vId.vertex == ring->numPoints() - 2 )
     {
-      ring = mExteriorRing;
-    }
-    else
-    {
-      ring = mInteriorRings.at( id.ring - 1 );
+      ++vId.ring;
+      vId.vertex = -1;
+      if ( vId.ring >= 1 + mInteriorRings.size() )
+      {
+        return false;
+      }
+      ring = mInteriorRings[ vId.ring - 1 ];
     }
 
-    if ( ring->nextVertex( id, vertex ) )
+    if ( ring->nextVertex( vId, vertex ) )
     {
       return true;
     }
-    ++id.ring; id.vertex = -1;
-    if ( id.ring >= ( mInteriorRings.size() + 1 ) )
+    ++vId.ring;
+    vId.vertex = -1;
+    if ( vId.ring >= 1 + mInteriorRings.size() )
     {
       return false;
     }
-    ring = mInteriorRings.at( id.ring - 1 );
-    return ring->nextVertex( id, vertex );
+    ring = mInteriorRings[ vId.ring - 1 ];
+    return ring->nextVertex( vId, vertex );
   }
 }
 
-bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
+bool QgsCurvePolygonV2::insertVertex( const QgsVertexId& vId, const QgsPointV2& vertex )
 {
-  if ( !mExteriorRing || position.ring < 0 || position.vertex < 0 )
+  if ( !mExteriorRing || vId.ring < 0 || vId.ring >= 1 + mInteriorRings.size() )
   {
     return false;
   }
 
-  QgsVertexId ringId = position;
-  if ( position.ring == 0 )
-  {
-    ringId.ring = 0;
-    mExteriorRing->insertVertex( ringId, vertex );
-  }
-  else
-  {
-    ringId.ring = position.ring - 1;
-    mInteriorRings[ position.ring - 1 ]->insertVertex( ringId, vertex );
-  }
+  QgsCurveV2* ring = vId.ring == 0 ? mExteriorRing : mInteriorRings[vId.ring - 1];
+  int n = ring->numPoints();
+  ring->insertVertex( vId, vertex );
+  // If first or last vertex is inserted, re-sync the last/first vertex
+  if ( vId.vertex == 0 )
+    ring->moveVertex( QgsVertexId( vId.part, vId.ring, n ), vertex );
+  else if ( vId.vertex == n )
+    ring->moveVertex( QgsVertexId( vId.part, vId.ring, 0 ), vertex );
 
   return false;
 }
 
-bool QgsCurvePolygonV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
+bool QgsCurvePolygonV2::moveVertex( const QgsVertexId& vId, const QgsPointV2& newPos )
 {
-  QList< QgsVertexId > vertexIds = ringVertexIds( position );
-  QList< QgsVertexId >::const_iterator vIt = vertexIds.constBegin();
-  for ( ; vIt != vertexIds.constEnd(); ++vIt )
+  if ( !mExteriorRing || vId.ring < 0 || vId.ring >= 1 + mInteriorRings.size() )
   {
-    if ( vIt->ring == 0 )
-    {
-      mExteriorRing->moveVertex( *vIt, newPos );
-    }
-    else
-    {
-      mInteriorRings[vIt->ring - 1]->moveVertex( *vIt, newPos );
-    }
+    return false;
   }
-  mBoundingBox = QgsRectangle();
-  return ( vertexIds.size() > 0 );
+
+  QgsCurveV2* ring = vId.ring == 0 ? mExteriorRing : mInteriorRings[vId.ring - 1];
+  int n = ring->numPoints();
+  bool success = ring->moveVertex( vId, newPos );
+  if ( success )
+  {
+    // If first or last vertex is moved, also move the last/first vertex
+    if ( vId.vertex == 0 )
+      ring->moveVertex( QgsVertexId( vId.part, vId.ring, n - 1 ), newPos );
+    else if ( vId.vertex == n - 1 )
+      ring->moveVertex( QgsVertexId( vId.part, vId.ring, 0 ), newPos );
+    mBoundingBox = QgsRectangle();
+  }
+  return success;
 }
 
-bool QgsCurvePolygonV2::deleteVertex( const QgsVertexId& position )
+bool QgsCurvePolygonV2::deleteVertex( const QgsVertexId& vId )
 {
-  QList< QgsVertexId > vertexIds = ringVertexIds( position );
-  QList< QgsVertexId >::const_iterator vIt = vertexIds.constBegin();
-  for ( ; vIt != vertexIds.constEnd(); ++vIt )
+  if ( !mExteriorRing || vId.ring < 0 || vId.ring >= 1 + mInteriorRings.size() )
   {
-    if ( vIt->ring == 0 )
-    {
-      mExteriorRing->deleteVertex( *vIt );
-    }
-    else
-    {
-      mInteriorRings[vIt->ring - 1]->deleteVertex( *vIt );
-    }
+    return false;
   }
-  return ( vertexIds.size() > 0 );
+
+  QgsCurveV2* ring = vId.ring == 0 ? mExteriorRing : mInteriorRings[vId.ring - 1];
+  int n = ring->numPoints();
+  if ( n <= 4 )
+  {
+    return false;
+  }
+  bool success = ring->deleteVertex( vId );
+  if ( success )
+  {
+    // If first or last vertex is removed, re-sync the last/first vertex
+    if ( vId.vertex == 0 )
+      ring->moveVertex( QgsVertexId( vId.part, vId.ring, n - 2 ), ring->vertexAt( QgsVertexId( vId.part, vId.ring, 0 ) ) );
+    else if ( vId.vertex == n - 1 )
+      ring->moveVertex( QgsVertexId( vId.part, vId.ring, 0 ), ring->vertexAt( QgsVertexId( vId.part, vId.ring, n - 2 ) ) );
+    mBoundingBox = QgsRectangle();
+  }
+  return success;
 }
-
-QList< QgsVertexId > QgsCurvePolygonV2::ringVertexIds( const QgsVertexId& id ) const
-{
-  QList< QgsVertexId > vertexList;
-
-  int numRingPoints;
-  if ( mExteriorRing && id.ring == 0 )
-  {
-    numRingPoints = mExteriorRing->numPoints();
-  }
-  else if ( id.ring > 0 && id.ring <= mInteriorRings.size() )
-  {
-    numRingPoints = mInteriorRings[id.ring - 1]->numPoints();
-  }
-
-  if ( numRingPoints < 1 )
-  {
-    return vertexList;
-  }
-
-  vertexList.append( id );
-  if ( id.vertex == 0 )
-  {
-    QgsVertexId vId = id;
-    vId.vertex = numRingPoints - 1;
-    vertexList.append( vId );
-  }
-  else if ( id.vertex == ( numRingPoints - 1 ) )
-  {
-    QgsVertexId vId = id;
-    vId.vertex = 0;
-    vertexList.append( vId );
-  }
-  return vertexList;
-}
-
-

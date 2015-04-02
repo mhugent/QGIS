@@ -61,7 +61,7 @@ class QgsGeometryRubberBand: public QgsMapCanvasItem
     QgsGeometryRubberBand( QgsMapCanvas* mapCanvas, QGis::GeometryType geomType = QGis::Line );
     ~QgsGeometryRubberBand();
 
-    /**Sets geometry (takes ownership)*/
+    /** Sets geometry (takes ownership). Geometry is expected to be in map coordinates */
     void setGeometry( QgsAbstractGeometryV2* geom );
     const QgsAbstractGeometryV2* geometry() { return mGeometry; }
 
@@ -69,8 +69,10 @@ class QgsGeometryRubberBand: public QgsMapCanvasItem
 
     void setFillColor( const QColor& c );
     void setOutlineColor( const QColor& c );
+    void setOutlineWidth( int width );
     void setLineStyle( Qt::PenStyle penStyle );
     void setBrushStyle( Qt::BrushStyle brushStyle );
+    void setIconType( IconType iconType ) { mIconType = iconType; }
 
   protected:
     virtual void paint( QPainter* painter );

@@ -19,6 +19,7 @@
 #include "qgsmaptopixel.h"
 #include "qgsmaprenderer.h"
 #include "qgsrendercontext.h"
+#include "qgspointv2.h"
 #include <QAction>
 #include <QAbstractButton>
 
@@ -59,6 +60,12 @@ QgsPoint QgsMapTool::toLayerCoordinates( QgsMapLayer* layer, const QgsPoint& poi
 QgsPoint QgsMapTool::toMapCoordinates( QgsMapLayer* layer, const QgsPoint& point )
 {
   return mCanvas->mapSettings().layerToMapCoordinates( layer, point );
+}
+
+QgsPointV2 QgsMapTool::toMapCoordinates( QgsMapLayer* layer, const QgsPointV2& point )
+{
+  QgsPoint result = mCanvas->mapSettings().layerToMapCoordinates( layer, QgsPoint( point.x(), point.y() ) );
+  return QgsPointV2( result.x(), result.y() );
 }
 
 QgsRectangle QgsMapTool::toLayerCoordinates( QgsMapLayer* layer, const QgsRectangle& rect )

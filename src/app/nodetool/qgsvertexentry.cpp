@@ -16,11 +16,10 @@
 #include "nodetool/qgsvertexentry.h"
 #include "qgsmaprenderer.h"
 
-QgsVertexEntry::QgsVertexEntry( QgsMapCanvas *canvas, QgsMapLayer *layer, const QgsPointV2 &p, QString tooltip, QgsVertexMarker::IconType type, int penWidth )
+QgsVertexEntry::QgsVertexEntry( QgsMapCanvas *canvas, QgsMapLayer *layer, const QgsPointV2 &p, const QgsVertexId &vertexId, QString tooltip, QgsVertexMarker::IconType type, int penWidth )
     : mSelected( false )
-    , mEquals( -1 )
-    , mInRubberBand( false )
-    , mRubberBandNr( 0 )
+    , mPoint( p )
+    , mVertexId( vertexId )
     , mPenWidth( penWidth )
     , mToolTip( tooltip )
     , mType( type )
@@ -28,21 +27,16 @@ QgsVertexEntry::QgsVertexEntry( QgsMapCanvas *canvas, QgsMapLayer *layer, const 
     , mCanvas( canvas )
     , mLayer( layer )
 {
-  setCenter( p );
+  placeMarker();
 }
 
 QgsVertexEntry::~QgsVertexEntry()
 {
-  if ( mMarker )
-  {
-    delete mMarker;
-    mMarker = 0;
-  }
+  delete mMarker;
 }
 
-void QgsVertexEntry::setCenter( const QgsPointV2 &p )
+void QgsVertexEntry::placeMarker()
 {
-  mPoint = p;
   QgsPoint pm = mCanvas->mapSettings().layerToMapCoordinates( mLayer, pointV1() );
 
   if ( mCanvas->extent().contains( pm ) )
@@ -53,12 +47,11 @@ void QgsVertexEntry::setCenter( const QgsPointV2 &p )
       mMarker->setIconType( mType );
       mMarker->setColor( mSelected ? Qt::blue : Qt::red );
       mMarker->setPenWidth( mPenWidth );
-
-      if ( !mToolTip.isEmpty() )
-        mMarker->setToolTip( mToolTip );
+      mMarker->setToolTip( mToolTip );
     }
 
     mMarker->setCenter( pm );
+    mMarker->update();
   }
   else if ( mMarker )
   {
@@ -73,18 +66,6 @@ void QgsVertexEntry::setSelected( bool selected )
   if ( mMarker )
   {
     mMarker->setColor( mSelected ? Qt::blue : Qt::red );
-  }
-}
-
-void QgsVertexEntry::setRubberBandValues( bool inRubberBand, int rubberBandNr, int indexInRubberBand )
-{
-  mRubberBandIndex = indexInRubberBand;
-  mInRubberBand    = inRubberBand;
-  mRubberBandNr    = rubberBandNr;
-}
-
-void QgsVertexEntry::update()
-{
-  if ( mMarker )
     mMarker->update();
+  }
 }

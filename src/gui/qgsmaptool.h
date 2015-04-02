@@ -34,6 +34,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QWheelEvent;
 class QgsPoint;
+class QgsPointV2;
 class QgsRectangle;
 class QPoint;
 class QAction;
@@ -179,6 +180,9 @@ class GUI_EXPORT QgsMapTool : public QObject
 
     //!transformation from layer's coordinates to map coordinates (which is different in case reprojection is used)
     QgsPoint toMapCoordinates( QgsMapLayer* layer, const QgsPoint &point );
+
+    //!transformation from layer's coordinates to map coordinates (which is different in case reprojection is used)
+    QgsPointV2 toMapCoordinates( QgsMapLayer* layer, const QgsPointV2 &point );
 
     //! trnasformation of the rect from map coordinates to layer's coordinates
     QgsRectangle toLayerCoordinates( QgsMapLayer* layer, const QgsRectangle& rect );

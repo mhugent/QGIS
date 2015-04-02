@@ -36,8 +36,11 @@ QgsAbstractGeometryV2::QgsAbstractGeometryV2( const QgsAbstractGeometryV2& geom 
 
 QgsAbstractGeometryV2& QgsAbstractGeometryV2::operator=( const QgsAbstractGeometryV2 & geom )
 {
-  clear();
-  mWkbType = geom.mWkbType;
+  if ( &geom != this )
+  {
+    clear();
+    mWkbType = geom.mWkbType;
+  }
   return *this;
 }
 

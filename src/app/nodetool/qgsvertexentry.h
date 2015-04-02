@@ -25,10 +25,7 @@ class QgsVertexEntry
 {
     bool mSelected;
     QgsPointV2 mPoint;
-    int mEquals;
-    bool mInRubberBand;
-    int mRubberBandNr;
-    int mRubberBandIndex;
+    QgsVertexId mVertexId;
     int mPenWidth;
     QString mToolTip;
     QgsVertexMarker::IconType mType;
@@ -40,28 +37,20 @@ class QgsVertexEntry
     QgsVertexEntry( QgsMapCanvas *canvas,
                     QgsMapLayer *layer,
                     const QgsPointV2& p,
+                    const QgsVertexId& vertexId,
                     QString tooltip = QString::null,
                     QgsVertexMarker::IconType type = QgsVertexMarker::ICON_BOX,
                     int penWidth = 2 );
     ~QgsVertexEntry();
 
-    QgsPointV2 point() const { return mPoint; }
+    const QgsPointV2& point() const { return mPoint; }
     QgsPoint pointV1() const { return QgsPoint( mPoint.x(), mPoint.y() ); }
-    int equals() const { return mEquals; }
+    const QgsVertexId& vertexId() const { return mVertexId; }
     bool isSelected() const { return mSelected; }
-    bool isInRubberBand() const { return mInRubberBand; }
 
-    void setCenter( const QgsPointV2 &p );
+    void placeMarker();
 
-    void setEqual( int index ) { mEquals = index; }
     void setSelected( bool selected = true );
-    void setInRubberBand( bool inRubberBand = true ) { mInRubberBand = inRubberBand; }
-
-    int rubberBandNr() const { return mRubberBandNr; }
-    int rubberBandIndex() { return mRubberBandIndex; }
-
-    void setRubberBandValues( bool inRubberBand, int rubberBandNr, int indexInRubberBand );
-    void update();
 };
 
 #endif

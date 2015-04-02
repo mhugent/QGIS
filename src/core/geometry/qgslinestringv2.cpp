@@ -340,7 +340,7 @@ void QgsLineStringV2::transform( const QTransform& t )
 
 bool QgsLineStringV2::insertVertex( const QgsVertexId& position, const QgsPointV2& vertex )
 {
-  if ( position.vertex > mCoords.size() )
+  if ( position.vertex < 0 || position.vertex > mCoords.size() )
   {
     return false;
   }
@@ -358,7 +358,7 @@ bool QgsLineStringV2::insertVertex( const QgsVertexId& position, const QgsPointV
 
 bool QgsLineStringV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newPos )
 {
-  if ( position.vertex > mCoords.size() )
+  if ( position.vertex < 0 || position.vertex > mCoords.size() )
   {
     return false;
   }
@@ -372,6 +372,7 @@ bool QgsLineStringV2::moveVertex( const QgsVertexId& position, const QgsPointV2&
   {
     mM[position.vertex] = newPos.m();
   }
+  mBoundingBox = QgsRectangle(); //set bounding box invalid
   return true;
 }
 

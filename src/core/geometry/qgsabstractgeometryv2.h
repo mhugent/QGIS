@@ -33,7 +33,18 @@ class QPainter;
 struct QgsVertexId
 {
   QgsVertexId(): part( - 1 ), ring( -1 ), vertex( -1 ) {}
+  QgsVertexId( int _part, int _ring, int _vertex )
+      : part( _part ), ring( _ring ), vertex( _vertex ) {}
   bool isValid() const { return part >= 0 && ring >= 0 && vertex >= 0; }
+  bool operator==( const QgsVertexId& other )
+  {
+    return part == other.part && ring == other.ring && vertex == other.vertex;
+  }
+  bool operator!=( const QgsVertexId& other )
+  {
+    return part != other.part || ring != other.ring || vertex != other.vertex;
+  }
+
   int part;
   int ring;
   int vertex;

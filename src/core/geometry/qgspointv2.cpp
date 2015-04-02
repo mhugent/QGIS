@@ -36,8 +36,11 @@ QgsPointV2::QgsPointV2( QgsWKBTypes::Type type, double x, double y, double z, do
 
 bool QgsPointV2::operator==( const QgsPointV2& pt ) const
 {
-  return ( pt.wkbType() == wkbType() && qgsDoubleNear( pt.x(), mX ) && qgsDoubleNear( pt.y(), mY ) &&
-           qgsDoubleNear( pt.z(), mZ ) && qgsDoubleNear( pt.m(), mM ) );
+  return ( pt.wkbType() == wkbType() &&
+           qgsDoubleNear( pt.x(), mX, 1E-8 ) &&
+           qgsDoubleNear( pt.y(), mY, 1E-8 ) &&
+           qgsDoubleNear( pt.z(), mZ, 1E-8 ) &&
+           qgsDoubleNear( pt.m(), mM, 1E-8 ) );
 }
 
 bool QgsPointV2::operator!=( const QgsPointV2& pt ) const
@@ -204,7 +207,7 @@ bool QgsPointV2::moveVertex( const QgsVertexId& position, const QgsPointV2& newP
   {
     mM = newPos.mM;
   }
-  *this = newPos;
+  mBoundingBox = QgsRectangle(); //set bounding box invalid
   return true;
 }
 
