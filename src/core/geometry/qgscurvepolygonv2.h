@@ -78,7 +78,6 @@ class QgsCurvePolygonV2: public QgsSurfaceV2
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
     double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
-    /** Note: this method skips the closing vertices of the polygon rings */
     bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const;
 
   protected:

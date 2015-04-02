@@ -551,18 +551,6 @@ bool QgsCurvePolygonV2::nextVertex( QgsVertexId& vId, QgsPointV2& vertex ) const
   {
     QgsCurveV2* ring = vId.ring == 0 ? mExteriorRing : mInteriorRings[vId.ring - 1];
 
-    // Skip the closing vertex of the ring (which is equal to the first one)
-    if ( vId.vertex == ring->numPoints() - 2 )
-    {
-      ++vId.ring;
-      vId.vertex = -1;
-      if ( vId.ring >= 1 + mInteriorRings.size() )
-      {
-        return false;
-      }
-      ring = mInteriorRings[ vId.ring - 1 ];
-    }
-
     if ( ring->nextVertex( vId, vertex ) )
     {
       return true;
