@@ -28,7 +28,12 @@ QgsPointV2 QgsGeometryUtils::closestVertex( const QgsAbstractGeometryV2& geom, c
   while ( geom.nextVertex( vertexId, vertex ) )
   {
     currentDist = QgsGeometryUtils::sqrDistance2D( pt, vertex );
-    if ( currentDist < minDist )
+    // The <= is on purpose: for geometries with closing vertices, this ensures
+    // that the closing vertex is retuned. For the node tool, the rubberband
+    // of the closing vertex is above the opening vertex, hence with the <=
+    // situations where the covered opening vertex rubberband is selected are
+    // avoided.
+    if ( currentDist <= minDist )
     {
       minDist = currentDist;
       minDistPoint = vertex;
