@@ -490,16 +490,21 @@ double QgsGeometry::closestSegmentWithContext(
 
 int QgsGeometry::addRing( const QList<QgsPoint>& ring )
 {
+  QgsLineStringV2* ringLine = new QgsLineStringV2();
+  QList< QgsPointV2 > ringPoints;
+  convertPointList( ring, ringPoints );
+  ringLine->setPoints( ringPoints );
+  return addRing( ringLine );
+}
+
+int QgsGeometry::addRing( QgsCurveV2* ring )
+{
   if ( !d || !d->geometry )
   {
     return 1;
   }
 
-  QgsLineStringV2* ringLine = new QgsLineStringV2();
-  QList< QgsPointV2 > ringPoints;
-  convertPointList( ring, ringPoints );
-  ringLine->setPoints( ringPoints );
-  return QgsGeometryEditUtils::addRing( d->geometry, ringLine );
+  return QgsGeometryEditUtils::addRing( d->geometry, ring );
 }
 
 int QgsGeometry::addPart( const QList<QgsPoint> &points, QGis::GeometryType geomType )

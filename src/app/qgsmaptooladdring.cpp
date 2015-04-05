@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptooladdring.h"
+#include "qgscompoundcurvev2.h"
 #include "qgsgeometry.h"
 #include "qgsmapcanvas.h"
 #include "qgsproject.h"
@@ -74,7 +75,13 @@ void QgsMapToolAddRing::canvasReleaseEvent( QMouseEvent * e )
     closePolygon();
 
     vlayer->beginEditCommand( tr( "Ring added" ) );
-    int addRingReturnCode = vlayer->addRing( points() );
+    const QgsCompoundCurveV2* cCurve = geometry();
+    if ( !cCurve )
+    {
+      return;
+    }
+
+    int addRingReturnCode = vlayer->addRing( dynamic_cast<QgsCompoundCurveV2*>( cCurve->clone() ) );
     if ( addRingReturnCode != 0 )
     {
       QString errorMessage;

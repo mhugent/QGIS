@@ -1099,6 +1099,27 @@ int QgsVectorLayer::addRing( const QList<QgsPoint>& ring )
   return utils.addRing( ring );
 }
 
+int QgsVectorLayer::addRing( QgsCurveV2* ring )
+{
+  if ( !mEditBuffer || !mDataProvider )
+  {
+    return 6;
+  }
+
+  if ( !ring )
+  {
+    return 1;
+  }
+
+  if ( !ring->isClosed() )
+  {
+    delete ring; return 2;
+  }
+
+  QgsVectorLayerEditUtils utils( this );
+  return utils.addRing( ring );
+}
+
 int QgsVectorLayer::addPart( const QList<QgsPoint> &points )
 {
   if ( !mEditBuffer || !mDataProvider )

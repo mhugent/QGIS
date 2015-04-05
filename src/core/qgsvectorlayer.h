@@ -25,6 +25,7 @@
 
 #include "qgis.h"
 #include "qgsmaplayer.h"
+#include "qgscurvev2.h"
 #include "qgsfeature.h"
 #include "qgsfeatureiterator.h"
 #include "qgseditorwidgetconfig.h"
@@ -938,6 +939,14 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
        5 no feature found where ring can be inserted
        6 layer not editable */
     int addRing( const QList<QgsPoint>& ring );
+
+    /**Adds a ring to polygon/multipolygon features (takes ownership)
+        @return
+        0 in case of success
+        1 problem with feature type
+        2 ring not closed
+        6 layer not editable*/
+    int addRing( QgsCurveV2* ring );
 
     /**Adds a new part polygon to a multipart feature
      @return

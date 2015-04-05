@@ -62,6 +62,16 @@ class CORE_EXPORT QgsVectorLayerEditUtils
        5 no feature found where ring can be inserted*/
     int addRing( const QList<QgsPoint>& ring );
 
+    /** Adds a ring to polygon/multipolygon features
+     @return
+       0 in case of success,
+       1 problem with feature type,
+       2 ring not closed,
+       3 ring not valid,
+       4 ring crosses existing rings,
+       5 no feature found where ring can be inserted*/
+    int addRing( QgsCurveV2* ring );
+
     /** Adds a new part polygon to a multipart feature
      @return
        0 in case of success,

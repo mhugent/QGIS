@@ -13,7 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsvectorlayereditutils.h"
-
+#include "qgslinestringv2.h"
 #include "qgsvectordataprovider.h"
 #include "qgsgeometrycache.h"
 #include "qgsvectorlayereditbuffer.h"
@@ -122,23 +122,25 @@ bool QgsVectorLayerEditUtils::deleteVertex( QgsFeatureId atFeatureId, int atVert
 
 int QgsVectorLayerEditUtils::addRing( const QList<QgsPoint>& ring )
 {
+  QgsLineStringV2* ringLine = new QgsLineStringV2();
+  QList< QgsPointV2 > ringPoints;
+  QList<QgsPoint>::const_iterator ringIt = ring.constBegin();
+  for ( ; ringIt != ring.constEnd(); ++ringIt )
+  {
+    ringPoints.append( QgsPointV2( ringIt->x(), ringIt->y() ) );
+  }
+  ringLine->setPoints( ringPoints );
+  addRing( ringLine );
+}
+
+int QgsVectorLayerEditUtils::addRing( QgsCurveV2* ring )
+{
   if ( !L->hasGeometryType() )
     return 5;
 
   int addRingReturnCode = 5; //default: return code for 'ring not inserted'
   double xMin, yMin, xMax, yMax;
-  QgsRectangle bBox;
-
-  if ( boundingBoxFromPointList( ring, xMin, yMin, xMax, yMax ) == 0 )
-  {
-    bBox.setXMinimum( xMin ); bBox.setYMinimum( yMin );
-    bBox.setXMaximum( xMax ); bBox.setYMaximum( yMax );
-  }
-  else
-  {
-    return 3; //ring not valid
-  }
-
+  QgsRectangle bBox = ring->boundingBox();
   QgsFeatureIterator fit = L->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
 
   QgsFeature f;

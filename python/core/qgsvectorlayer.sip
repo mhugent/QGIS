@@ -581,6 +581,14 @@ class QgsVectorLayer : QgsMapLayer
        6 layer not editable */
     int addRing( const QList<QgsPoint>& ring );
 
+    /**Adds a ring to polygon/multipolygon features (takes ownership)
+     @return
+      0 in case of success
+      1 problem with feature type
+      2 ring not closed
+      6 layer not editable*/
+        int addRing( QgsCurveV2* ring );
+
     /**Adds a new part polygon to a multipart feature
      @return
        0 in case of success,
