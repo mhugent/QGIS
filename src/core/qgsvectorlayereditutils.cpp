@@ -184,6 +184,30 @@ int QgsVectorLayerEditUtils::addPart( const QList<QgsPoint> &points, QgsFeatureI
   return errorCode;
 }
 
+int QgsVectorLayerEditUtils::addPart( QgsCurveV2* ring, QgsFeatureId featureId )
+{
+  if ( !L->hasGeometryType() )
+    return 6;
+
+  QgsGeometry geometry;
+  if ( !cache()->geometry( featureId, geometry ) ) // maybe it's in cache
+  {
+    // it's not in cache: let's fetch it from layer
+    QgsFeature f;
+    if ( !L->getFeatures( QgsFeatureRequest().setFilterFid( featureId ).setSubsetOfAttributes( QgsAttributeList() ) ).nextFeature( f ) || !f.geometry() )
+      return 6; //geometry not found
+
+    geometry = *f.geometry();
+  }
+
+  int errorCode = geometry.addPart( ring );
+  if ( errorCode == 0 )
+  {
+    L->editBuffer()->changeGeometry( featureId, &geometry );
+  }
+  return errorCode;
+}
+
 
 
 int QgsVectorLayerEditUtils::translateFeature( QgsFeatureId featureId, double dx, double dy )

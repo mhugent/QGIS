@@ -587,7 +587,7 @@ class QgsVectorLayer : QgsMapLayer
       1 problem with feature type
       2 ring not closed
       6 layer not editable*/
-        int addRing( QgsCurveV2* ring );
+        int addRing( QgsCurveV2* ring /Transfer/ );
 
     /**Adds a new part polygon to a multipart feature
      @return
@@ -600,6 +600,8 @@ class QgsVectorLayer : QgsMapLayer
        6 if selected geometry not found
        7 layer not editable */
     int addPart( const QList<QgsPoint>& ring );
+
+    int addPart( QgsCurveV2* ring /Transfer/ );
 
     /**Translates feature by dx, dy
        @param featureId id of the feature to translate

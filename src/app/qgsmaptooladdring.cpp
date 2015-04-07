@@ -75,13 +75,8 @@ void QgsMapToolAddRing::canvasReleaseEvent( QMouseEvent * e )
     closePolygon();
 
     vlayer->beginEditCommand( tr( "Ring added" ) );
-    const QgsCompoundCurveV2* cCurve = geometry();
-    if ( !cCurve )
-    {
-      return;
-    }
 
-    int addRingReturnCode = vlayer->addRing( dynamic_cast<QgsCompoundCurveV2*>( cCurve->clone() ) );
+    int addRingReturnCode = vlayer->addRing( geometryClone() );
     if ( addRingReturnCode != 0 )
     {
       QString errorMessage;

@@ -83,6 +83,8 @@ class CORE_EXPORT QgsVectorLayerEditUtils
        6 if selected geometry not found*/
     int addPart( const QList<QgsPoint>& ring, QgsFeatureId featureId );
 
+    int addPart( QgsCurveV2* ring, QgsFeatureId featureId );
+
     /** Translates feature by dx, dy
        @param featureId id of the feature to translate
        @param dx translation of x-coordinate

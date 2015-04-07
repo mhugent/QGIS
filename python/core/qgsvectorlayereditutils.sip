@@ -43,7 +43,7 @@ class QgsVectorLayerEditUtils
            3 ring not valid,
            4 ring crosses existing rings,
            5 no feature found where ring can be inserted*/
-        int addRing( QgsCurveV2* ring );
+        int addRing( QgsCurveV2* ring /Transfer/ );
 
     /** Adds a new part polygon to a multipart feature
      @return
@@ -55,6 +55,8 @@ class QgsVectorLayerEditUtils
        5 if several features are selected,
        6 if selected geometry not found*/
     int addPart( const QList<QgsPoint>& ring, QgsFeatureId featureId );
+
+    int addPart( QgsCurveV2* ring /Transfer/, QgsFeatureId featureId );
 
     /** Translates feature by dx, dy
        @param featureId id of the feature to translate

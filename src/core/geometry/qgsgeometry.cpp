@@ -527,18 +527,28 @@ int QgsGeometry::addPart( const QList<QgsPoint> &points, QGis::GeometryType geom
     ringLine->setPoints( partPoints );
     partGeom = ringLine;
   }
-  return QgsGeometryEditUtils::addPart( d->geometry, partGeom );
+  return addPart( dynamic_cast<QgsCurveV2*>( partGeom ) );
 }
 
-int QgsGeometry::addPart( QgsGeometry *newPart )
+int QgsGeometry::addPart( QgsCurveV2* part )
+{
+  return QgsGeometryEditUtils::addPart( d->geometry, part );
+}
+
+int QgsGeometry::addPart( const QgsGeometry *newPart )
 {
   if ( !d || !d->geometry || !newPart || !newPart->d || !newPart->d->geometry )
   {
     return 1;
   }
 
-  QgsAbstractGeometryV2* geom = newPart->d->geometry->clone();
-  return QgsGeometryEditUtils::addPart( d->geometry, geom );
+  QgsAbstractGeometryV2* g = d->geometry->clone();
+  QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( g );
+  if ( !curve )
+  {
+    delete g; return 1;
+  }
+  return addPart( curve );
 }
 
 int QgsGeometry::addPart( GEOSGeometry *newPart )

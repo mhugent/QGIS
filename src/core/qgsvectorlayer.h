@@ -960,6 +960,8 @@ class CORE_EXPORT QgsVectorLayer : public QgsMapLayer
        7 layer not editable */
     int addPart( const QList<QgsPoint>& ring );
 
+    int addPart( QgsCurveV2* ring );
+
     /**Translates feature by dx, dy
        @param featureId id of the feature to translate
        @param dx translation of x-coordinate

@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptooladdpart.h"
+#include "qgscompoundcurvev2.h"
 #include "qgsgeometry.h"
 #include "qgsmapcanvas.h"
 #include "qgsproject.h"
@@ -119,26 +120,10 @@ void QgsMapToolAddPart::canvasReleaseEvent( QMouseEvent * e )
       {
         //close polygon
         closePolygon();
-        //avoid intersections
-        QgsGeometry* geom = QgsGeometry::fromPolygon( QgsPolygon() << points().toVector() );
-        if ( geom )
-        {
-          geom->avoidIntersections();
-          QgsPolygon poly = geom->asPolygon();
-          if ( poly.size() < 1 )
-          {
-            stopCapturing();
-            delete geom;
-            vlayer->destroyEditCommand();
-            return;
-          }
-          setPoints( geom->asPolygon()[0].toList() );
-          delete geom;
-        }
       }
 
       vlayer->beginEditCommand( tr( "Part added" ) );
-      errorCode = vlayer->addPart( points() );
+      errorCode = vlayer->addPart( geometryClone() );
 
       stopCapturing();
     }

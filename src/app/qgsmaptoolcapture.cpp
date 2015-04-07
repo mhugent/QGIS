@@ -229,6 +229,16 @@ int QgsMapToolCapture::nextPoint( const QPoint &p, QgsPoint &layerPoint, QgsPoin
   return 0;
 }
 
+QgsCurveV2* QgsMapToolCapture::geometryClone() const
+{
+  //mGeometry, QgsCompoundCurve
+  if ( mGeometry->nCurves() == 1 && mGeometry->curveAt( 0 )->geometryType() == "LineString" )
+  {
+    return dynamic_cast<QgsCurveV2*>( mGeometry->curveAt( 0 )->clone() );
+  }
+  return dynamic_cast<QgsCurveV2*>( mGeometry->clone() );
+}
+
 void QgsMapToolCapture::setCurve( QgsCurveV2* c )
 {
   if ( !mGeometry )

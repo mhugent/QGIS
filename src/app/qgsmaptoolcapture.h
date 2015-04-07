@@ -67,6 +67,9 @@ class APP_EXPORT QgsMapToolCapture : public QgsMapToolEdit
 
     const QgsCompoundCurveV2* geometry() const { return mGeometry; }
 
+    /**Clones the captured geometry. If it is only one linear curve, it is converted to QgsLineStringV2*/
+    QgsCurveV2* geometryClone() const;
+
     /**Adds curve part. Takes ownership*/
     void setCurve( QgsCurveV2* c );
 

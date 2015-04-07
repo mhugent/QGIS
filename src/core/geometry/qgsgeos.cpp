@@ -957,7 +957,7 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
     }
     return GEOSGeom_createCollection_r( geosinit.ctxt, GEOS_MULTIPOINT, geomarr, c->numGeometries() ); //todo: geos exceptions
   }
-  else if ( geom->geometryType() == "MultiCurve" )
+  else if ( geom->geometryType() == "MultiCurve" || geom->geometryType() == "MultiLineString" )
   {
     const QgsGeometryCollectionV2* c = dynamic_cast<const QgsGeometryCollectionV2*>( geom );
     if ( !c )
@@ -972,7 +972,7 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
     }
     return GEOSGeom_createCollection_r( geosinit.ctxt, GEOS_MULTILINESTRING, geomarr, c->numGeometries() ); //todo: geos exceptions
   }
-  else if ( geom->geometryType() == "MultiSurface" )
+  else if ( geom->geometryType() == "MultiSurface" || geom->geometryType() == "MultiPolygon" )
   {
     const QgsGeometryCollectionV2* c = dynamic_cast<const QgsGeometryCollectionV2*>( geom );
     if ( !c )

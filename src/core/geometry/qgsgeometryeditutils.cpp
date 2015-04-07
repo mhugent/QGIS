@@ -35,16 +35,16 @@ int QgsGeometryEditUtils::addRing( QgsAbstractGeometryV2* geom, QgsCurveV2* ring
 
   QList< QgsCurvePolygonV2* > polygonList;
   QgsCurvePolygonV2* curvePoly = dynamic_cast< QgsCurvePolygonV2* >( geom );
-  QgsMultiSurfaceV2* multiSurface = dynamic_cast< QgsMultiSurfaceV2* >( geom );
+  QgsGeometryCollectionV2* multiGeom = dynamic_cast< QgsGeometryCollectionV2* >( geom );
   if ( curvePoly )
   {
     polygonList.append( curvePoly );
   }
-  else if ( multiSurface )
+  else if ( multiGeom )
   {
-    for ( int i = 0; i < multiSurface->numGeometries(); ++i )
+    for ( int i = 0; i < multiGeom->numGeometries(); ++i )
     {
-      polygonList.append( dynamic_cast< QgsCurvePolygonV2* >( multiSurface->geometryN( i ) ) );
+      polygonList.append( dynamic_cast< QgsCurvePolygonV2* >( multiGeom->geometryN( i ) ) );
     }
   }
   else
@@ -107,7 +107,7 @@ int QgsGeometryEditUtils::addPart( QgsAbstractGeometryV2* geom, QgsAbstractGeome
   }
 
   bool added = false;
-  if ( geom->geometryType() == "MultiSurface" )
+  if ( geom->geometryType() == "MultiSurface" || geom->geometryType() == "MultiPolygon" )
   {
     QgsCurveV2* curve = dynamic_cast<QgsCurveV2*>( part );
     if ( !curve || !curve->isClosed() )
