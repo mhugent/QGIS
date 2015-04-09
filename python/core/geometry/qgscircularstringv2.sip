@@ -49,7 +49,7 @@ class QgsCircularStringV2: public QgsCurveV2
     virtual bool deleteVertex( const QgsVertexId& position );
 
     double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const;
-    bool pointAt( int i, QgsPointV2& vertex ) const;
+    bool pointAt( int i, QgsPointV2& vertex, QgsVertexId::VertexType& type ) const;
 
     void sumUpArea( double& sum ) const;
 };

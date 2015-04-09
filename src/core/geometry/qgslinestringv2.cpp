@@ -440,13 +440,14 @@ double QgsLineStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmen
   return sqrDist;
 }
 
-bool QgsLineStringV2::pointAt( int i, QgsPointV2& vertex ) const
+bool QgsLineStringV2::pointAt( int i, QgsPointV2& vertex, QgsVertexId::VertexType& type ) const
 {
   if ( i >= numPoints() )
   {
     return false;
   }
   vertex = pointN( i );
+  type = QgsVertexId::SegmentVertex;
   return true;
 }
 

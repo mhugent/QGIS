@@ -3,11 +3,21 @@ struct QgsVertexId
 %TypeHeaderCode
 #include <qgsabstractgeometryv2.h>
 %End
+
+    enum VertexType
+    {
+      SegmentVertex, //start / endpoint of a segment
+      CurveVertex
+    };
+
   QgsVertexId();
+  QgsVertexId( int _part, int _ring, int _vertex, VertexType _type );
+
   bool isValid() const;
   int part;
   int ring;
   int vertex;
+  VertexType type;
 };
 
 class QgsAbstractGeometryV2

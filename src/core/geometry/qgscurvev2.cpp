@@ -65,7 +65,7 @@ bool QgsCurveV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const
     }
     ++id.vertex;
   }
-  return pointAt( id.vertex, vertex );
+  return pointAt( id.vertex, vertex, id.type );
 }
 
 double QgsCurveV2::area() const

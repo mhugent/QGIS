@@ -32,9 +32,15 @@ class QPainter;
 
 struct QgsVertexId
 {
-  QgsVertexId(): part( - 1 ), ring( -1 ), vertex( -1 ) {}
-  QgsVertexId( int _part, int _ring, int _vertex )
-      : part( _part ), ring( _ring ), vertex( _vertex ) {}
+  enum VertexType
+  {
+    SegmentVertex = 1, //start / endpoint of a segment
+    CurveVertex
+  };
+
+  QgsVertexId(): part( - 1 ), ring( -1 ), vertex( -1 ), type( SegmentVertex ) {}
+  QgsVertexId( int _part, int _ring, int _vertex, VertexType _type = SegmentVertex )
+      : part( _part ), ring( _ring ), vertex( _vertex ), type( _type ) {}
   bool isValid() const { return part >= 0 && ring >= 0 && vertex >= 0; }
   bool operator==( const QgsVertexId& other )
   {
@@ -48,6 +54,7 @@ struct QgsVertexId
   int part;
   int ring;
   int vertex;
+  VertexType type;
 };
 
 /**Abstract base class for all geometries*/

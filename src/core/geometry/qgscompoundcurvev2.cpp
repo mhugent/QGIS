@@ -541,7 +541,7 @@ double QgsCompoundCurveV2::closestSegment( const QgsPointV2& pt, QgsPointV2& seg
   return QgsGeometryUtils::closestSegmentFromComponents( mCurves, QgsGeometryUtils::VERTEX, pt, segmentPt, vertexAfter, leftOf, epsilon );
 }
 
-bool QgsCompoundCurveV2::pointAt( int i, QgsPointV2& vertex ) const
+bool QgsCompoundCurveV2::pointAt( int i, QgsPointV2& vertex, QgsVertexId::VertexType& type ) const
 {
   int currentVertexId = 0;
   for ( int j = 0; j < mCurves.size(); ++j )
@@ -549,7 +549,7 @@ bool QgsCompoundCurveV2::pointAt( int i, QgsPointV2& vertex ) const
     int nCurvePoints = mCurves.at( j )->numPoints();
     if (( i - currentVertexId ) < nCurvePoints )
     {
-      return ( mCurves.at( j )->pointAt( i - currentVertexId, vertex ) );
+      return ( mCurves.at( j )->pointAt( i - currentVertexId, vertex, type ) );
     }
     currentVertexId += ( nCurvePoints - 1 );
   }

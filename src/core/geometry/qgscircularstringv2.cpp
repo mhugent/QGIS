@@ -781,13 +781,14 @@ double QgsCircularStringV2::closestSegment( const QgsPointV2& pt, QgsPointV2& se
   return minDist;
 }
 
-bool QgsCircularStringV2::pointAt( int i, QgsPointV2& vertex ) const
+bool QgsCircularStringV2::pointAt( int i, QgsPointV2& vertex, QgsVertexId::VertexType& type ) const
 {
   if ( i >= numPoints() )
   {
     return false;
   }
   vertex = pointN( i );
+  type = ( i % 2 == 0 ) ? QgsVertexId::SegmentVertex : QgsVertexId::CurveVertex;
   return true;
 }
 

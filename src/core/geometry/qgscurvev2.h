@@ -45,7 +45,7 @@ class QgsCurveV2: public QgsAbstractGeometryV2
 
     virtual void coordinateSequence( QList< QList< QList< QgsPointV2 > > >& coord ) const;
     virtual bool nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const;
-    virtual bool pointAt( int i, QgsPointV2& vertex ) const = 0;
+    virtual bool pointAt( int i, QgsPointV2& vertex, QgsVertexId::VertexType& type ) const = 0;
 };
 
 #endif // QGSCURVEV2_H
