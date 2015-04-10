@@ -20,7 +20,7 @@
 
 #include "qgscurvepolygonv2.h"
 
-class QgsPolygonV2: public QgsCurvePolygonV2
+class CORE_EXPORT QgsPolygonV2: public QgsCurvePolygonV2
 {
   public:
     virtual QString geometryType() const { return "Polygon"; }

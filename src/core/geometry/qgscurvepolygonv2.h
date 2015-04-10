@@ -22,7 +22,7 @@
 
 class QgsPolygonV2;
 
-class QgsCurvePolygonV2: public QgsSurfaceV2
+class CORE_EXPORT QgsCurvePolygonV2: public QgsSurfaceV2
 {
   public:
     QgsCurvePolygonV2();

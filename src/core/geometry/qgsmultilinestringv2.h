@@ -18,7 +18,7 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include "qgsgeometrycollectionv2.h"
 
-class QgsMultiLineStringV2: public QgsGeometryCollectionV2
+class CORE_EXPORT QgsMultiLineStringV2: public QgsGeometryCollectionV2
 {
   public:
     virtual QString geometryType() const { return "MultiLineString"; }

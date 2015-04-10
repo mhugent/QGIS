@@ -20,7 +20,7 @@
 
 #include "qgsabstractgeometryv2.h"
 
-class QgsPointV2: public QgsAbstractGeometryV2
+class CORE_EXPORT QgsPointV2: public QgsAbstractGeometryV2
 {
   public:
     QgsPointV2( double x = 0.0, double y = 0.0 );

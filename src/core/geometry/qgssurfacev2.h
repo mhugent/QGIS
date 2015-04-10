@@ -23,7 +23,7 @@
 
 class QgsPolygonV2;
 
-class QgsSurfaceV2: public QgsAbstractGeometryV2
+class CORE_EXPORT QgsSurfaceV2: public QgsAbstractGeometryV2
 {
   public:
     virtual QgsPointV2 centroid() const = 0;

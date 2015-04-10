@@ -30,7 +30,7 @@ class QgsConstWkbPtr;
 class QgsWkbPtr;
 class QPainter;
 
-struct QgsVertexId
+struct CORE_EXPORT QgsVertexId
 {
   enum VertexType
   {
@@ -58,7 +58,7 @@ struct QgsVertexId
 };
 
 /**Abstract base class for all geometries*/
-class QgsAbstractGeometryV2
+class CORE_EXPORT QgsAbstractGeometryV2
 {
   public:
     QgsAbstractGeometryV2();

@@ -19,7 +19,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsabstractgeometryv2.h"
 #include <QVector>
 
-class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
+class CORE_EXPORT QgsGeometryCollectionV2: public QgsAbstractGeometryV2
 {
   public:
     QgsGeometryCollectionV2();

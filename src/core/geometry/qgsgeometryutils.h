@@ -19,7 +19,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgspointv2.h"
 #include <limits>
 
-class QgsGeometryUtils
+class CORE_EXPORT QgsGeometryUtils
 {
   public:
 

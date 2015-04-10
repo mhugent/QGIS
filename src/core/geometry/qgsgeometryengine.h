@@ -22,7 +22,7 @@ email                : marco.hugentobler at sourcepole dot com
 class QgsAbstractGeometryV2;
 class QgsLineStringV2;
 
-class QgsGeometryEngine
+class CORE_EXPORT QgsGeometryEngine
 {
   public:
     QgsGeometryEngine( const QgsAbstractGeometryV2* geometry ): mGeometry( geometry ) {}

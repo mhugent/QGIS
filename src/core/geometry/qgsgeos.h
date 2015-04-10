@@ -24,7 +24,7 @@ class QgsLineStringV2;
 class QgsPolygonV2;
 
 /**Does vector analysis using the geos library and handles import, export, exception handling*/
-class QgsGeos: public QgsGeometryEngine
+class CORE_EXPORT QgsGeos: public QgsGeometryEngine
 {
   public:
     QgsGeos( const QgsAbstractGeometryV2* geometry );

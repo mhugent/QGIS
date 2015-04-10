@@ -21,7 +21,7 @@
 #include "qgscurvev2.h"
 #include <QVector>
 
-class QgsCircularStringV2: public QgsCurveV2
+class CORE_EXPORT QgsCircularStringV2: public QgsCurveV2
 {
   public:
     QgsCircularStringV2();

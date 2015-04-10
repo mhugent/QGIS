@@ -32,7 +32,7 @@ typedef QVector<QgsPoint> QgsMultiPoint;
 typedef QVector<QgsPolyline> QgsMultiPolyline;
 typedef QVector<QgsPolygon> QgsMultiPolygon;
 
-class QgsGeometryImport
+class CORE_EXPORT QgsGeometryImport
 {
   public:
     static QgsAbstractGeometryV2* geomFromWkb( const unsigned char* wkb );

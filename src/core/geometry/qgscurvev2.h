@@ -24,7 +24,7 @@
 class QgsLineStringV2;
 class QPainterPath;
 
-class QgsCurveV2: public QgsAbstractGeometryV2
+class CORE_EXPORT QgsCurveV2: public QgsAbstractGeometryV2
 {
   public:
     QgsCurveV2();

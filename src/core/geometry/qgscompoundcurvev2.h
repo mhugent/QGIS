@@ -20,7 +20,7 @@
 
 #include "qgscurvev2.h"
 
-class QgsCompoundCurveV2: public QgsCurveV2
+class CORE_EXPORT QgsCompoundCurveV2: public QgsCurveV2
 {
   public:
     QgsCompoundCurveV2();
