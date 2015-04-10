@@ -59,7 +59,7 @@ class CORE_EXPORT QgsGeometryEngine
     virtual int splitGeometry( const QgsLineStringV2& splitLine,
                                QList<QgsAbstractGeometryV2*>& newGeometries,
                                bool topological,
-                               QList<QgsPointV2> &topologyTestPoints ) const {} //= 0;
+                               QList<QgsPointV2> &topologyTestPoints ) const { return 2; } //= 0;
 
     virtual QgsAbstractGeometryV2* offsetCurve( double distance, int segments, int joinStyle, double mitreLimit ) const = 0;
 

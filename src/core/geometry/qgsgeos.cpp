@@ -922,9 +922,6 @@ GEOSGeometry* QgsGeos::asGeos( const QgsAbstractGeometryV2* geom )
     ++coordDims;
   }
 
-  bool hasZ = geom->is3D();
-  bool hasM = geom->isMeasure();
-
   //curve
   const QgsCurveV2* curve = dynamic_cast< const QgsCurveV2* >( geom );
   const QgsCurvePolygonV2* curvePolygon = dynamic_cast< const QgsCurvePolygonV2* >( geom );
@@ -1034,6 +1031,7 @@ QgsAbstractGeometryV2* QgsGeos::overlay( const QgsAbstractGeometryV2& geom, Over
   }
   catch ( GEOSException &e )
   {
+    Q_UNUSED( e );
     GEOSGeom_destroy_r( geosinit.ctxt, geosGeom );
     return 0;
   }
@@ -1113,6 +1111,7 @@ bool QgsGeos::relation( const QgsAbstractGeometryV2& geom, Relation r ) const
   }
   catch ( GEOSException &e )
   {
+    Q_UNUSED( e );
     GEOSGeom_destroy_r( geosinit.ctxt, geosGeom );
     return 0;
   }

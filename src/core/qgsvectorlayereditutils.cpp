@@ -130,7 +130,7 @@ int QgsVectorLayerEditUtils::addRing( const QList<QgsPoint>& ring )
     ringPoints.append( QgsPointV2( ringIt->x(), ringIt->y() ) );
   }
   ringLine->setPoints( ringPoints );
-  addRing( ringLine );
+  return addRing( ringLine );
 }
 
 int QgsVectorLayerEditUtils::addRing( QgsCurveV2* ring )
@@ -139,7 +139,6 @@ int QgsVectorLayerEditUtils::addRing( QgsCurveV2* ring )
     return 5;
 
   int addRingReturnCode = 5; //default: return code for 'ring not inserted'
-  double xMin, yMin, xMax, yMax;
   QgsRectangle bBox = ring->boundingBox();
   QgsFeatureIterator fit = L->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
 
