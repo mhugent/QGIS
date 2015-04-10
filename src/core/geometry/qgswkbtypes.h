@@ -22,7 +22,7 @@
 #include <QString>
 
 /**Class to store information about wkb types.*/
-class QgsWKBTypes
+class CORE_EXPORT QgsWKBTypes
 {
   public:
 
