@@ -22,7 +22,7 @@
 #include "qgswkbptr.h"
 #include <QPolygonF>
 
-class QgsLineStringV2: public QgsCurveV2
+class CORE_EXPORT QgsLineStringV2: public QgsCurveV2
 {
   public:
     QgsLineStringV2();
