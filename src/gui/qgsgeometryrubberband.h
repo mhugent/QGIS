@@ -27,7 +27,7 @@ class QgsAbstractGeometryV2;
 class QgsPointV2;
 struct QgsVertexId;
 
-class QgsGeometryRubberBand: public QgsMapCanvasItem
+class GUI_EXPORT QgsGeometryRubberBand: public QgsMapCanvasItem
 {
   public:
     enum IconType
