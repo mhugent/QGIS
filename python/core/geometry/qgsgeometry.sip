@@ -34,9 +34,13 @@ class QgsGeometry
     /** copy constructor will prompt a deep copy of the object */
     QgsGeometry( const QgsGeometry & );
 
+    QgsGeometry( QgsAbstractGeometryV2* geom /Transfer/ );
+
 
     //! Destructor
     ~QgsGeometry();
+
+    const QgsAbstractGeometryV2* geometry() const;
 
     /** static method that creates geometry from Wkt */
     static QgsGeometry* fromWkt( QString wkt ) /Factory/;

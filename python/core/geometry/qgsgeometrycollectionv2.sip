@@ -20,7 +20,7 @@ class QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual void clear();
 
     /**Adds a geometry and takes ownership. Returns true in case of success*/
-    virtual bool addGeometry( QgsAbstractGeometryV2* g );
+    virtual bool addGeometry( QgsAbstractGeometryV2* g /Transfer/ );
     virtual bool removeGeometry( int nr );
 
     virtual void transform( const QgsCoordinateTransform& ct );

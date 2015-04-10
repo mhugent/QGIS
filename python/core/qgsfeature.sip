@@ -300,7 +300,7 @@ class QgsFeature
     void setValid( bool validity );
 
     const QgsAbstractGeometryV2* geometryV2() const;
-    void setGeometryV2( QgsAbstractGeometryV2* geom );
+    void setGeometryV2( QgsAbstractGeometryV2* geom /Transfer/ );
 
     /**
      * Get the geometry object associated with this feature
