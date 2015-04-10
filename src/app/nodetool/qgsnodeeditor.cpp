@@ -84,6 +84,9 @@ QgsNodeEditor::QgsNodeEditor(
 
 void QgsNodeEditor::rebuildTable()
 {
+  QFont curvePointFont = mTableWidget->font();
+  curvePointFont.setItalic( true );
+
   mTableWidget->blockSignals( true );
   mTableWidget->setRowCount( 0 );
   int row = 0;
@@ -111,6 +114,13 @@ void QgsNodeEditor::rebuildTable()
     QTableWidgetItem* mItem = new QTableWidgetItem();
     mItem->setData( Qt::EditRole, entry->point().m() );
     mTableWidget->setItem( row, 4, mItem );
+
+    bool curvePoint = ( entry->vertexId().type == QgsVertexId::CurveVertex );
+    if ( curvePoint )
+    {
+      idItem->setFont( curvePointFont ); xItem->setFont( curvePointFont ); yItem->setFont( curvePointFont );
+      zItem->setFont( curvePointFont ); mItem->setFont( curvePointFont );
+    }
 
     ++row;
   }
