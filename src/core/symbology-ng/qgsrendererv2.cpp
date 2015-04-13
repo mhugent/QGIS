@@ -453,28 +453,6 @@ void QgsFeatureRendererV2::renderVertexMarkers( const QgsAbstractGeometryV2* geo
                                       ( QgsVectorLayer::VertexMarkerType ) mCurrentVertexMarkerType,
                                       mCurrentVertexMarkerSize );
   }
-
-#if 0
-  QList< QList< QList< QgsPointV2 > > > coords;
-  geom->coordinateSequence( coords );
-  QList< QList< QList< QgsPointV2 > > >::const_iterator partIt = coords.constBegin();
-  for ( ; partIt != coords.constEnd(); ++partIt )
-  {
-    const QList< QList< QgsPointV2 > >& part = *partIt;
-    QList< QList< QgsPointV2 > >::const_iterator ringIt = part.constBegin();
-    for ( ; ringIt != part.constEnd(); ++ringIt )
-    {
-      const QList< QgsPointV2 >& ring = *ringIt;
-      QList< QgsPointV2 >::const_iterator vertexIt = ring.constBegin();
-      for ( ; vertexIt != ring.constEnd(); ++vertexIt )
-      {
-        QgsVectorLayer::drawVertexMarker( vertexIt->x(), vertexIt->y(), *context.painter(),
-                                          ( QgsVectorLayer::VertexMarkerType ) mCurrentVertexMarkerType,
-                                          mCurrentVertexMarkerSize );
-      }
-    }
-  }
-#endif //0
 }
 
 void QgsFeatureRendererV2::renderVertexMarker( QPointF& pt, QgsRenderContext& context )
