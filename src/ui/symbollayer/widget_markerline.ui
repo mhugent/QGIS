@@ -35,6 +35,49 @@
       <string>Marker placement</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="6" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Offset along line</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="mSpinOffsetAlongLine">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="decimals">
+           <number>6</number>
+          </property>
+          <property name="maximum">
+           <double>10000000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.200000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QgsUnitSelectionWidget" name="mOffsetAlongLineUnitWidget" native="true"/>
+        </item>
+       </layout>
+      </item>
+      <item row="5" column="0">
+       <widget class="QRadioButton" name="radCentralPoint">
+        <property name="text">
+         <string>on central point</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
@@ -81,62 +124,26 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QRadioButton" name="radVertexLast">
         <property name="text">
          <string>on last vertex only</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QRadioButton" name="radVertexFirst">
         <property name="text">
          <string>on first vertex only</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QRadioButton" name="radCentralPoint">
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="radCurvePoint">
         <property name="text">
-         <string>on central point</string>
+         <string>on curve point</string>
         </property>
        </widget>
-      </item>
-      <item row="5" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Offset along line</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="mSpinOffsetAlongLine">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>1</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="maximum">
-           <double>10000000.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.200000000000000</double>
-          </property>
-          <property name="value">
-           <double>1.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QgsUnitSelectionWidget" name="mOffsetAlongLineUnitWidget" native="true"/>
-        </item>
-       </layout>
       </item>
      </layout>
     </widget>

@@ -157,6 +157,7 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     {
       Interval,
       Vertex,
+      CurveVertex,
       LastVertex,
       FirstVertex,
       CentralPoint
@@ -280,6 +281,7 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
     void renderPolylineInterval( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context );
     void renderPolylineVertex( const QPolygonF& points, QgsSymbolV2RenderContext& context, Placement placement = Vertex );
     void renderPolylineVertex( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context, Placement placement = Vertex );
+    void renderVertex( const QgsCurveV2* curve, QgsSymbolV2RenderContext& context, Placement placement = Vertex );
     void renderPolylineCentral( const QPolygonF& points, QgsSymbolV2RenderContext& context );
     void renderPolylineCentral( const QList<QgsPointV2>& points, QgsSymbolV2RenderContext& context );
     double markerAngle( const QPolygonF& points, bool isRing, int vertex );
@@ -310,6 +312,8 @@ class CORE_EXPORT QgsMarkerLineSymbolLayerV2 : public QgsLineSymbolLayerV2
      * @see setOffsetAlongLineUnit
     */
     void renderOffsetVertexAlongLine( const QPolygonF& points, int vertex, double distance , QgsSymbolV2RenderContext &context );
+
+    static QList< const QgsCurveV2* > geometryCurves( const QgsAbstractGeometryV2* geom );
 };
 
 #endif

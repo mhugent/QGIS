@@ -16,6 +16,7 @@
 #include "qgslinesymbollayerv2.h"
 #include "qgsdxfexport.h"
 #include "qgssymbollayerv2utils.h"
+#include "qgscurvepolygonv2.h"
 #include "qgsexpression.h"
 #include "qgsgeometryeditutils.h"
 #include "qgslinestringv2.h"
@@ -746,6 +747,8 @@ QgsSymbolLayerV2* QgsMarkerLineSymbolLayerV2::create( const QgsStringMap& props 
       x->setPlacement( FirstVertex );
     else if ( props["placement"] == "centralpoint" )
       x->setPlacement( CentralPoint );
+    else if ( props["placement"] == "curvevertex" )
+      x->setPlacement( CurveVertex );
     else
       x->setPlacement( Interval );
   }
@@ -850,27 +853,28 @@ void QgsMarkerLineSymbolLayerV2::renderGeometry( const QgsGeometry* geom, QgsSym
     g.convertToStraightSegment();
   }
 
-  QList< QList< QList< QgsPointV2 > > > coords;
-  g.geometry()->coordinateSequence( coords );
-
-  QList< QList< QList< QgsPointV2 > > >::const_iterator fIt = coords.constBegin();
-  for ( ; fIt != coords.constEnd(); ++fIt )
+  QList< const QgsCurveV2* > curveList = geometryCurves( g.geometry() );
+  QList< const QgsCurveV2* >::const_iterator curveIt = curveList.constBegin();
+  for ( ; curveIt != curveList.constEnd(); ++curveIt )
   {
-    QList< QList< QgsPointV2 > >::const_iterator ringIt = fIt->constBegin();
-    for ( ; ringIt != fIt->constEnd(); ++ringIt )
+    if ( placement == Vertex || placement == CurveVertex || placement == FirstVertex || placement == LastVertex )
     {
+      renderVertex( *curveIt, context, placement );
+    }
+    else
+    {
+      QgsLineStringV2* curve = ( *curveIt )->curveToLine();
+      QList<QgsPointV2> curvePoints;
+      curve->points( curvePoints );
       if ( placement == Interval )
       {
-        renderPolylineInterval( *ringIt, context );
+        renderPolylineInterval( curvePoints, context );
       }
       else if ( placement == CentralPoint )
       {
-        renderPolylineCentral( *ringIt, context );
+        renderPolylineCentral( curvePoints, context );
       }
-      else //Placement == Vertex / FirstVertex / LastVertex
-      {
-        renderPolylineVertex( *ringIt, context, placement );
-      }
+      delete curve;
     }
   }
 }
@@ -1053,6 +1057,47 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
 
   // restore original rotation
   mMarker->setAngle( origAngle );
+}
+
+void QgsMarkerLineSymbolLayerV2::renderVertex( const QgsCurveV2* curve, QgsSymbolV2RenderContext& context, Placement placement )
+{
+  if ( !curve || curve->numPoints() < 1 )
+  {
+    return;
+  }
+
+  QList< QgsPointV2 > vertices;
+  QgsVertexId id;
+  QgsPointV2 vertex;
+
+  if ( placement == FirstVertex )
+  {
+    QgsVertexId::VertexType type;
+    curve->pointAt( 0, vertex, type );
+    vertices.append( vertex );
+  }
+  else if ( placement == LastVertex )
+  {
+    QgsVertexId::VertexType type;
+    curve->pointAt( curve->numPoints() - 1, vertex, type );
+    vertices.append( vertex );
+  }
+  else
+  {
+    while ( curve->nextVertex( id, vertex ) )
+    {
+      if ( placement == Vertex && id.type == QgsVertexId::SegmentVertex )
+      {
+        vertices.append( vertex );
+      }
+      else if ( placement == CurveVertex && id.type == QgsVertexId::CurveVertex )
+      {
+        vertices.append( vertex );
+      }
+    }
+  }
+
+  renderPolylineVertex( vertices, context, placement );
 }
 
 double QgsMarkerLineSymbolLayerV2::markerAngle( const QPolygonF& points, bool isRing, int vertex )
@@ -1269,6 +1314,8 @@ QgsStringMap QgsMarkerLineSymbolLayerV2::properties() const
     map["placement"] = "firstvertex";
   else if ( mPlacement == CentralPoint )
     map["placement"] = "centralpoint";
+  else if ( mPlacement == CurveVertex )
+    map["placement"] = "curvevertex";
   else
     map["placement"] = "interval";
 
@@ -1512,5 +1559,53 @@ double QgsMarkerLineSymbolLayerV2::estimateMaxBleed() const
   return ( mMarker->size() / 2.0 ) + mOffset;
 }
 
+QList< const QgsCurveV2* > QgsMarkerLineSymbolLayerV2::geometryCurves( const QgsAbstractGeometryV2* geom )
+{
+  QList< const QgsCurveV2* > curveList;
+  if ( !geom )
+  {
+    return curveList;
+  }
 
+  QList< const QgsAbstractGeometryV2* > geometryParts;
+  const QgsGeometryCollectionV2* geomCollection = dynamic_cast<const QgsGeometryCollectionV2*>( geom );
+  if ( geomCollection )
+  {
+    for ( int i = 0; i < geomCollection->numGeometries(); ++i )
+    {
+      geometryParts.append( geomCollection->geometryN( i ) );
+    }
+  }
+  else
+  {
+    geometryParts.append( geom );
+  }
+
+  QList< const QgsAbstractGeometryV2* >::const_iterator geomIt = geometryParts.constBegin();
+  for ( ; geomIt != geometryParts.constEnd(); ++geomIt )
+  {
+    //curve or polygon?
+    const QgsCurvePolygonV2* poly = dynamic_cast<const QgsCurvePolygonV2*>( *geomIt );
+    if ( poly )
+    {
+      if ( poly->exteriorRing() )
+      {
+        curveList.append( poly->exteriorRing() );
+      }
+      for ( int i = 0; i < poly->numInteriorRings(); ++i )
+      {
+        curveList.append( poly->interiorRing( i ) );
+      }
+    }
+    else
+    {
+      const QgsCurveV2* curve = dynamic_cast<const QgsCurveV2*>( *geomIt );
+      if ( curve )
+      {
+        curveList.append( curve );
+      }
+    }
+  }
+  return curveList;
+}
 

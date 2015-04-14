@@ -1453,6 +1453,7 @@ QgsMarkerLineSymbolLayerV2Widget::QgsMarkerLineSymbolLayerV2Widget( const QgsVec
   connect( spinOffset, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
   connect( radInterval, SIGNAL( clicked() ), this, SLOT( setPlacement() ) );
   connect( radVertex, SIGNAL( clicked() ), this, SLOT( setPlacement() ) );
+  connect( radCurvePoint, SIGNAL( clicked() ), this, SLOT( setPlacement() ) );
   connect( radVertexLast, SIGNAL( clicked() ), this, SLOT( setPlacement() ) );
   connect( radVertexFirst, SIGNAL( clicked() ), this, SLOT( setPlacement() ) );
   connect( radCentralPoint, SIGNAL( clicked() ), this, SLOT( setPlacement() ) );
@@ -1483,6 +1484,8 @@ void QgsMarkerLineSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )
     radInterval->setChecked( true );
   else if ( mLayer->placement() == QgsMarkerLineSymbolLayerV2::Vertex )
     radVertex->setChecked( true );
+  else if ( mLayer->placement() == QgsMarkerLineSymbolLayerV2::CurveVertex )
+    radCurvePoint->setChecked( true );
   else if ( mLayer->placement() == QgsMarkerLineSymbolLayerV2::LastVertex )
     radVertexLast->setChecked( true );
   else if ( mLayer->placement() == QgsMarkerLineSymbolLayerV2::CentralPoint )
@@ -1546,6 +1549,8 @@ void QgsMarkerLineSymbolLayerV2Widget::setPlacement()
     mLayer->setPlacement( QgsMarkerLineSymbolLayerV2::Interval );
   else if ( radVertex->isChecked() )
     mLayer->setPlacement( QgsMarkerLineSymbolLayerV2::Vertex );
+  else if ( radCurvePoint->isChecked() )
+    mLayer->setPlacement( QgsMarkerLineSymbolLayerV2::CurveVertex );
   else if ( radVertexLast->isChecked() )
     mLayer->setPlacement( QgsMarkerLineSymbolLayerV2::LastVertex );
   else if ( radVertexFirst->isChecked() )
@@ -1602,7 +1607,7 @@ void QgsMarkerLineSymbolLayerV2Widget::on_mDataDefinedPropertiesButton_clicked()
   dataDefinedProperties << QgsDataDefinedSymbolDialog::DataDefinedSymbolEntry( "offset", tr( "Line offset" ), mLayer->dataDefinedPropertyString( "offset" ),
       QgsDataDefinedSymbolDialog::doubleHelpText() );
   dataDefinedProperties << QgsDataDefinedSymbolDialog::DataDefinedSymbolEntry( "placement", tr( "Placement" ), mLayer->dataDefinedPropertyString( "placement" ),
-      tr( "'vertex'|'lastvertex'|'firstvertex'|'centerpoint'" ) );
+      tr( "'vertex'|'curvepoint'|lastvertex'|'firstvertex'|'centerpoint'" ) );
   dataDefinedProperties << QgsDataDefinedSymbolDialog::DataDefinedSymbolEntry( "offset_along_line", tr( "Offset along line" ), mLayer->dataDefinedPropertyString( "offset_along_line" ),
       QgsDataDefinedSymbolDialog::doubleHelpText() );
   QgsDataDefinedSymbolDialog d( dataDefinedProperties, mVectorLayer );
