@@ -459,6 +459,7 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
     points.append( p1 );
     points.append( p2 );
     points.append( p3 );
+    return;
   }
 
   bool clockwise = false;
@@ -498,6 +499,7 @@ void QgsCircularStringV2::segmentize( const QgsPointV2& p1, const QgsPointV2& p2
   double x, y;
   double z = 0;
   double m = 0;
+
   points.append( p1 );
   if ( p2 != p3 && p1 != p2 ) //draw straight line segment if two points have the same position
   {
