@@ -8,11 +8,13 @@ SET (SOS_SRCS
      qgsmaptoolsensorinfo.cpp
      qgssensorinfodialog.cpp
      qgswatermldata.cpp
+     qgswfssensorlayerdialog.cpp
 )
 
 SET (SOS_UIS
     qgssossourceselectbase.ui
     qgssensorinfodialogbase.ui
+    qgswfssensorlayerdialogbase.ui
     )
 
 SET (SOS_MOC_HDRS
@@ -21,6 +23,7 @@ qgssossourceselect.h
 qgssoscapabilities.h
 qgsmaptoolsensorinfo.h
 qgssensorinfodialog.h
+qgswfssensorlayerdialog.h
 )
 
 IF (WIN32)

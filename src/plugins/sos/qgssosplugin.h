@@ -42,10 +42,12 @@ class QgsSOSPlugin: public QObject, public QgisPlugin
     QgisInterface* mIface;
     QAction* mAction;
     QAction* mSensorInfoAction;
+    QAction* mWFSSensorLayerAction;
     QgsMapToolSensorInfo* mMapToolSensorInfo;
 
   private slots:
     void showSOSDialog();
+    void showWFSSensorLayerDialog();
     void toggleSensorInfo( bool checked );
 };
 

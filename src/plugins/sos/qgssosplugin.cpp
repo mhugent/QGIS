@@ -19,6 +19,7 @@
 #include "qgsmapcanvas.h"
 #include "qgsmaptoolsensorinfo.h"
 #include "qgssossourceselect.h"
+#include "qgswfssensorlayerdialog.h"
 #include "qgis.h"
 #include "qgisinterface.h"
 #include <QAction>
@@ -48,6 +49,10 @@ void QgsSOSPlugin::initGui()
     mIface->addWebToolBarIcon( mAction );
     mIface->addPluginToWebMenu( tr( "Sensor observation service" ), mAction );
 
+    mWFSSensorLayerAction = new QAction( tr( "WFS Sensor layer" ), 0 );
+    QObject::connect( mWFSSensorLayerAction, SIGNAL( triggered() ), this, SLOT( showWFSSensorLayerDialog() ) );
+    mIface->addWebToolBarIcon( mWFSSensorLayerAction );
+
     mSensorInfoAction = new QAction( QIcon( ":/sensor_info.png" ), tr( "Sensor info" ), 0 );
     QObject::connect( mSensorInfoAction, SIGNAL( toggled( bool ) ), this, SLOT( toggleSensorInfo( bool ) ) );
     mSensorInfoAction->setCheckable( true );
@@ -73,8 +78,16 @@ void QgsSOSPlugin::unload()
     mIface->removeWebToolBarIcon( mSensorInfoAction );
   }
 
+  if ( mWFSSensorLayerAction && mIface )
+  {
+    mIface->removeWebToolBarIcon( mWFSSensorLayerAction );
+  }
+
   delete mMapToolSensorInfo;
   mMapToolSensorInfo = 0;
+
+  delete mWFSSensorLayerAction;
+  mWFSSensorLayerAction = 0;
 
   delete mSensorInfoAction;
   mSensorInfoAction = 0;
@@ -84,6 +97,12 @@ void QgsSOSPlugin::showSOSDialog()
 {
   QgsSOSSourceSelect dialog( mIface );
   dialog.exec();
+}
+
+void QgsSOSPlugin::showWFSSensorLayerDialog()
+{
+  QgsWFSSensorLayerDialog d;
+  d.exec();
 }
 
 void QgsSOSPlugin::toggleSensorInfo( bool checked )
