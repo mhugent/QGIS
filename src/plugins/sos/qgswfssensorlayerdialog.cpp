@@ -13,6 +13,7 @@ QgsWFSSensorLayerDialog::QgsWFSSensorLayerDialog( QWidget * parent, Qt::WindowFl
   QStringList urlList = s.value( "SOS/WFSSensorUrls" ).toStringList();
   QStringList sosList = s.value( "SOS/WFSSOSSensorUrls" ).toStringList();
   QStringList idList = s.value( "SOS/WFSSensorFeatureIds" ).toStringList();
+  QStringList obsList = s.value( "SOS/WFSSensorObservableAttributes" ).toStringList();
   QStringList beginList = s.value( "SOS/WFSSensorBeginAttributes" ).toStringList();
   QStringList endList = s.value( "SOS/WFSSensorEndAttributes" ).toStringList();
 
@@ -29,13 +30,17 @@ QgsWFSSensorLayerDialog::QgsWFSSensorLayerDialog( QWidget * parent, Qt::WindowFl
     {
       mTableWidget->setItem( i, 2, new QTableWidgetItem( idList.at( i ) ) );
     }
+    if ( i < obsList.size() )
+    {
+      mTableWidget->setItem( i, 3, new QTableWidgetItem( obsList.at( i ) ) );
+    }
     if ( i < beginList.size() )
     {
-      mTableWidget->setItem( i, 3, new QTableWidgetItem( beginList.at( i ) ) );
+      mTableWidget->setItem( i, 4, new QTableWidgetItem( beginList.at( i ) ) );
     }
     if ( i < endList.size() )
     {
-      mTableWidget->setItem( i, 4, new QTableWidgetItem( endList.at( i ) ) );
+      mTableWidget->setItem( i, 5, new QTableWidgetItem( endList.at( i ) ) );
     }
   }
 }
@@ -46,20 +51,22 @@ QgsWFSSensorLayerDialog::~QgsWFSSensorLayerDialog()
 
 void QgsWFSSensorLayerDialog::writeSettings()
 {
-  QStringList urlList, sosList, idList, beginList, endList;
+  QStringList urlList, sosList, idList, obsList, beginList, endList;
   for ( int i = 0; i < mTableWidget->rowCount(); ++i )
   {
     urlList.append( mTableWidget->item( i, 0 )->text() );
     sosList.append( mTableWidget->item( i, 1 )->text() );
     idList.append( mTableWidget->item( i, 2 )->text() );
-    beginList.append( mTableWidget->item( i, 3 )->text() );
-    endList.append( mTableWidget->item( i, 4 )->text() );
+    obsList.append( mTableWidget->item( i, 3 )->text() );
+    beginList.append( mTableWidget->item( i, 4 )->text() );
+    endList.append( mTableWidget->item( i, 5 )->text() );
   }
 
   QSettings s;
   s.setValue( "SOS/WFSSensorUrls", urlList );
   s.setValue( "SOS/WFSSOSSensorUrls", sosList );
   s.setValue( "SOS/WFSSensorFeatureIds", idList );
+  s.setValue( "SOS/WFSSensorObservableAttributes", obsList );
   s.setValue( "SOS/WFSSensorBeginAttributes", beginList );
   s.setValue( "SOS/WFSSensorEndAttributes", endList );
 }

@@ -37,6 +37,10 @@ class QgsMapToolSensorInfo: public QgsMapTool
   private:
     /**Returns sensor layers in the project*/
     QList< QgsMapLayer* > sensorLayers();
+    /**Returns wfs sensor layers and relevant additional information*/
+    void wfsSensorLayers( QList<QgsMapLayer*>& wfsList, QStringList& sosUrls, QStringList& idAttributes, QStringList& observableAttributes, QStringList& beginAttributes,
+                          QStringList& endAttributes ) const;
+
     /**Does GetDataAvailability request for station id*/
     int getDataAvailability( const QString& serviceUrl, const QString& station_id,
                              QStringList& observedPropertyList, QList< QDateTime >& begin,

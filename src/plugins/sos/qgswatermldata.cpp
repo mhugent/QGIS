@@ -149,8 +149,22 @@ QDateTime QgsWaterMLData::convertTimeString( const QString& str )
   else
   {
     QStringList plusSplit = str.split( "+" );
-    QDateTime dateTime = QDateTime::fromString( plusSplit.at( 0 ), "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'z" );
+    QString dateTimeString = plusSplit.at( 0 );
+
+    QDateTime dateTime;
+    if ( dateTimeString.size() >= 4 && dateTimeString.at( dateTimeString.size() - 4 ) == '.' )
+    {
+      dateTime = QDateTime::fromString( dateTimeString, "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'zzz" );
+    }
+    else
+    {
+      dateTime = QDateTime::fromString( plusSplit.at( 0 ), "yyyy'-'MM'-'dd'T'HH':'mm':'ss" );
+    }
     dateTime.setTimeSpec( Qt::OffsetFromUTC );
+
+    //debug
+    bool valid = dateTime.isValid();
+    QString debugText = dateTime.toString();
 
     if ( plusSplit.size() > 1 )
     {

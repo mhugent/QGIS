@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>441</width>
-    <height>295</height>
+    <width>601</width>
+    <height>235</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,6 +64,11 @@
      <column>
       <property name="text">
        <string>ID attribute</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Observable attribute</string>
       </property>
      </column>
      <column>

@@ -40,39 +40,63 @@ QgsMapToolSensorInfo::~QgsMapToolSensorInfo()
 
 void QgsMapToolSensorInfo::canvasReleaseEvent( QMouseEvent * e )
 {
-
-  QList< QgsMapLayer* > sensorLayerList = sensorLayers();
-  if ( sensorLayerList.isEmpty() )
-  {
-    return;
-  }
-
   showSensorInfoDialog();
   mSensorInfoDialog->clearObservables();
 
-
   QgsMapToolIdentify idTool( mCanvas );
-  QList<QgsMapToolIdentify::IdentifyResult> idList = idTool.identify( e->x(), e->y(), sensorLayerList, QgsMapToolIdentify::TopDownAll );
-  QList<QgsMapToolIdentify::IdentifyResult>::const_iterator idListIt = idList.constBegin();
-  for ( ; idListIt != idList.constEnd(); ++idListIt )
+
+  //add matching features from SOS layers
+  QList< QgsMapLayer* > sensorLayerList = sensorLayers();
+  if ( !sensorLayerList.isEmpty() )
   {
-    QgsVectorLayer* vl = qobject_cast<QgsVectorLayer*>( idListIt->mLayer );
-    if ( !vl )
+    QList<QgsMapToolIdentify::IdentifyResult> idList = idTool.identify( e->x(), e->y(), sensorLayerList, QgsMapToolIdentify::TopDownAll );
+    QList<QgsMapToolIdentify::IdentifyResult>::const_iterator idListIt = idList.constBegin();
+    for ( ; idListIt != idList.constEnd(); ++idListIt )
     {
-      continue;
+      QgsVectorLayer* vl = qobject_cast<QgsVectorLayer*>( idListIt->mLayer );
+      if ( !vl )
+      {
+        continue;
+      }
+      QgsDataProvider* dp = vl->dataProvider();
+
+      QgsMapToolIdentify::IdentifyResult debug = *idListIt;
+      QString name = idListIt->mFeature.attribute( "name" ).toString();
+      QString id = idListIt->mFeature.attribute( "identifier" ).toString();
+
+      //data structure with id / name / list< observable, start time, end time>
+      QStringList observedProperties;
+      QList< QDateTime > beginList;
+      QList< QDateTime > endList;
+      getDataAvailability( dp->dataSourceUri(), id, observedProperties, beginList, endList );
+      mSensorInfoDialog->addObservables( dp->dataSourceUri(), id, observedProperties, beginList, endList );
     }
-    QgsDataProvider* dp = vl->dataProvider();
+  }
 
-    QgsMapToolIdentify::IdentifyResult debug = *idListIt;
-    QString name = idListIt->mFeature.attribute( "name" ).toString();
-    QString id = idListIt->mFeature.attribute( "identifier" ).toString();
+  //add sensor objects from WFS layers
+  QList<QgsMapLayer*> wfsLayers;
+  QStringList sosUrls, ids, observableAttributes, beginAttributes, endAttributes;
+  wfsSensorLayers( wfsLayers, sosUrls, ids, observableAttributes, beginAttributes, endAttributes );
 
-    //data structure with id / name / list< observable, start time, end time>
-    QStringList observedProperties;
-    QList< QDateTime > beginList;
-    QList< QDateTime > endList;
-    getDataAvailability( dp->dataSourceUri(), id, observedProperties, beginList, endList );
-    mSensorInfoDialog->addObservables( dp->dataSourceUri(), id, observedProperties, beginList, endList );
+  //loop  wfs layers
+  for ( int i = 0; i < wfsLayers.size(); ++i )
+  {
+    QList<QgsMapToolIdentify::IdentifyResult> idList = idTool.identify( e->x(), e->y(), QList<QgsMapLayer*>() << wfsLayers.at( i ), QgsMapToolIdentify::TopDownAll );
+    QList<QgsMapToolIdentify::IdentifyResult>::const_iterator idResultIt = idList.constBegin();
+    for ( ; idResultIt != idList.constEnd(); ++idResultIt )
+    {
+      //todo: test if lists are large enough
+      QString sosUrl = sosUrls.size() > i ? sosUrls.at( i ) : QString();
+      QString idAttributeName = ids.size() > i ? ids.at( i ) : QString();
+      QString observableAttributeName = observableAttributes.size() > i ? observableAttributes.at( i ) : QString();
+      QString beginAttributeName = beginAttributes.size() > i ? beginAttributes.at( i ) : QString();
+      QString endAttributeName = endAttributes.size() > i ? endAttributes.at( i ) : QString();
+
+      mSensorInfoDialog->addObservables( sosUrl, idResultIt->mFeature.attribute( idAttributeName ).toString(),
+                                         QStringList() << idResultIt->mFeature.attribute( observableAttributeName ).toString(),
+                                         QList<QDateTime>() << QDateTime::fromString( idResultIt->mFeature.attribute( beginAttributeName ).toString() ),
+                                         QList<QDateTime>() << QDateTime::fromString( idResultIt->mFeature.attribute( endAttributeName ).toString() ) );
+    }
   }
 }
 
@@ -99,6 +123,56 @@ QList< QgsMapLayer* > QgsMapToolSensorInfo::sensorLayers()
     }
   }
   return sensorLayerList;
+}
+
+void QgsMapToolSensorInfo::wfsSensorLayers( QList<QgsMapLayer*>& wfsList, QStringList& sosUrls, QStringList& idAttributes, QStringList& observableAttributes, QStringList& beginAttributes,
+    QStringList& endAttributes ) const
+{
+  wfsList.clear(); sosUrls.clear(); idAttributes.clear(); observableAttributes.clear(); beginAttributes.clear(); endAttributes.clear();
+
+  QSettings s;
+  QStringList urlList = s.value( "SOS/WFSSensorUrls" ).toStringList();
+  QStringList sosList = s.value( "SOS/WFSSOSSensorUrls" ).toStringList();
+  QStringList idList = s.value( "SOS/WFSSensorFeatureIds" ).toStringList();
+  QStringList obsList = s.value( "SOS/WFSSensorObservableAttributes" ).toStringList();
+  QStringList beginList = s.value( "SOS/WFSSensorBeginAttributes" ).toStringList();
+  QStringList endList = s.value( "SOS/WFSSensorEndAttributes" ).toStringList();
+
+  QList<QgsMapLayer*> layerList = mCanvas->layers();
+  QList<QgsMapLayer*>::iterator layerIt = layerList.begin();
+  for ( ; layerIt != layerList.end(); ++layerIt )
+  {
+    QgsVectorLayer* vLayer = dynamic_cast<QgsVectorLayer*>( *layerIt );
+    if ( !vLayer )
+    {
+      continue;
+    }
+
+    QgsVectorDataProvider* dp = vLayer->dataProvider();
+    if ( !dp )
+    {
+      continue;
+    }
+
+    if ( dp->name() != "WFS" )
+    {
+      continue;
+    }
+
+    //find matching url
+    int index = urlList.indexOf( dp->dataSourceUri() );
+    if ( index < 0 )
+    {
+      continue;
+    }
+
+    wfsList.append( *layerIt );
+    sosUrls.append( sosList.size() > index ? sosList.at( index ) : QString() );
+    idAttributes.append( idList.size() > index ? idList.at( index ) : QString() );
+    observableAttributes.append( obsList.size() > index ? obsList.at( index ) : QString() );
+    beginAttributes.append( beginList.size() > index ? beginList.at( index ) : QString() );
+    endAttributes.append( endList.size() > index ? endList.at( index ) : QString() );
+  }
 }
 
 int QgsMapToolSensorInfo::getDataAvailability( const QString& serviceUrl, const QString& station_id,

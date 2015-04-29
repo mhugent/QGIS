@@ -146,6 +146,7 @@ void QgsSensorInfoDialog::showDiagram()
 
   QUrl url( serviceUrl );
   url.removeQueryItem( "request" );
+  url.addQueryItem( "SERVICE", "SOS" );
   url.addQueryItem( "request", "GetObservation" );
   url.addQueryItem( "featureOfInterest", featureOfInterest );
   url.addQueryItem( "observedProperty", observedProperty );
