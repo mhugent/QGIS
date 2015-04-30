@@ -38,13 +38,14 @@ class QgsWFSCapabilities : public QObject
     //! URI to get capabilities
     QString uriGetCapabilities() const;
     //! URI to get schema of wfs layer
-    QString uriDescribeFeatureType( const QString& typeName ) const;
+    QString uriDescribeFeatureType( const QString& typeName, QString version = "1.0.0" ) const;
     //! URI to get features
     //! @param filter can be an OGC filter xml or a QGIS expression (containing =,!=, <,>,<=, >=, AND, OR, NOT )
     QString uriGetFeature( QString typeName,
                            QString crs = QString(),
                            QString filter = QString(),
-                           QgsRectangle bBox = QgsRectangle() ) const;
+                           QgsRectangle bBox = QgsRectangle(),
+                           QString version = "1.0.0" ) const;
 
     //! start network connection to get capabilities
     void requestCapabilities();
@@ -76,6 +77,8 @@ class QgsWFSCapabilities : public QObject
     //! set authorization header
     void setAuthorization( QNetworkRequest &request ) const;
 
+    QString version() const { return mVersion; }
+
   signals:
     void gotCapabilities();
 
@@ -100,6 +103,8 @@ class QgsWFSCapabilities : public QObject
 
     //! Password for basic http authentication
     QString mPassword;
+
+    QString mVersion;
 };
 
 #endif // QGSWFSCAPABILITIES_H

@@ -50,6 +50,7 @@ QgsGml::QgsGml(
     , mCoorMode( QgsGml::coordinate )
     , mEpsg( 0 )
 {
+  mTypeName.prepend( "Site" ); //hack
   mThematicAttributes.clear();
   for ( int i = 0; i < fields.size(); i++ )
   {

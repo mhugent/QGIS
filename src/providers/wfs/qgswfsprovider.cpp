@@ -20,6 +20,7 @@
 #include "qgis.h"
 #include "qgsapplication.h"
 #include "qgsmaplayerregistry.h"
+#include "qgsdatasourceuri.h"
 #include "qgsfeature.h"
 #include "qgsfield.h"
 #include "qgsgeometry.h"
@@ -27,7 +28,6 @@
 #include "qgscoordinatereferencesystem.h"
 #include "qgswfsfeatureiterator.h"
 #include "qgswfsprovider.h"
-#include "qgsdatasourceuri.h"
 #include "qgsspatialindex.h"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
@@ -871,13 +871,23 @@ int QgsWFSProvider::readAttributesFromSchema( QDomDocument& schemaDoc, QString& 
 
   //find out, on which lines the first <element> or the first <complexType> occur. If <element> occurs first (mapserver), read the type of the relevant <complexType> tag. If <complexType> occurs first (geoserver), search for information about the feature type directly under this first complexType element
 
+  QString complexTypeName = "complexType"; //hilltop server incorrectly writes ComplexType instead of complexType
   int firstElementTagPos = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "element" ).at( 0 ).toElement().columnNumber();
   int firstComplexTypeTagPos = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "complexType" ).at( 0 ).toElement().columnNumber();
+  if ( firstComplexTypeTagPos < 0 )
+  {
+    firstComplexTypeTagPos = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "ComplexType" ).at( 0 ).toElement().columnNumber();
+    if ( firstComplexTypeTagPos >= 0 )
+    {
+      complexTypeName = "ComplexType";
+    }
+  }
+
 
   if ( firstComplexTypeTagPos < firstElementTagPos )
   {
     //geoserver
-    complexTypeElement = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "complexType" ).at( 0 ).toElement();
+    complexTypeElement = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", complexTypeName ).at( 0 ).toElement();
   }
   else
   {
@@ -887,25 +897,41 @@ int QgsWFSProvider::readAttributesFromSchema( QDomDocument& schemaDoc, QString& 
     QDomElement typeElement = typeElementNodeList.at( 0 ).toElement();
     complexTypeType = typeElement.attribute( "type" );
 
-    if ( complexTypeType.isEmpty() )
+    if ( !complexTypeType.isEmpty() )
     {
-      return 3;
-    }
 
-    //remove the namespace on complexTypeType
-    if ( complexTypeType.contains( ":" ) )
-    {
-      complexTypeType = complexTypeType.section( ":", 1, 1 );
-    }
-
-    //find <complexType name=complexTypeType
-    QDomNodeList complexTypeNodeList = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "complexType" );
-    for ( uint i = 0; i < complexTypeNodeList.length(); ++i )
-    {
-      if ( complexTypeNodeList.at( i ).toElement().attribute( "name" ) == complexTypeType )
+      //remove the namespace on complexTypeType
+      if ( complexTypeType.contains( ":" ) )
       {
-        complexTypeElement = complexTypeNodeList.at( i ).toElement();
-        break;
+        complexTypeType = complexTypeType.section( ":", 1, 1 );
+      }
+
+      //find <complexType name=complexTypeType
+      QDomNodeList complexTypeNodeList = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", complexTypeName );
+      for ( uint i = 0; i < complexTypeNodeList.length(); ++i )
+      {
+        if ( complexTypeNodeList.at( i ).toElement().attribute( "name" ) == complexTypeType )
+        {
+          complexTypeElement = complexTypeNodeList.at( i ).toElement();
+          break;
+        }
+      }
+    }
+    else
+    {
+      //hilltop WFS gives all the layers in DescribeFeatureType
+      QUrl url( dataSourceUri() );
+      QString typeName = url.queryItemValue( "TYPENAME" );
+      QDomNodeList complexTypeNodeList = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", complexTypeName );
+      for ( int i = 0; i < complexTypeNodeList.size(); ++i )
+      {
+        QDomElement typeElem = complexTypeNodeList.at( i ).toElement();
+        QString name = typeElem.attribute( "name" );
+        if ( name == typeName )
+        {
+          complexTypeElement = typeElem;
+          break;
+        }
       }
     }
   }
