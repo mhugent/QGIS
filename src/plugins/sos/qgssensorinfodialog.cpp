@@ -29,6 +29,7 @@
 #include <qwt_plot_curve.h>
 #include <qwt_plot_marker.h>
 #include <qwt_plot_picker.h>
+#include <qwt_plot_zoomer.h>
 #include <qwt_scale_draw.h>
 #include <qwt_symbol.h>
 
@@ -192,6 +193,9 @@ void QgsSensorInfoDialog::showDiagram()
   plotPicker->setSelectionFlags( QwtPicker::PointSelection | QwtPicker::ClickSelection );
   plotPicker->setRubberBand( QwtPlotPicker::RectRubberBand );
   connect( plotPicker, SIGNAL( selected( const QwtDoublePoint& ) ), this, SLOT( onDiagramSelected( const QwtDoublePoint& ) ) );
+
+  QwtPlotZoomer* zoomer = new QwtPlotZoomer( diagram->canvas() );
+  zoomer->setMousePattern( QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::ShiftModifier );
 
   mTabWidget->addTab( diagram, featureOfInterest );
   diagram->replot();
