@@ -1,4 +1,6 @@
 #include "qgswfssensorlayerdialog.h"
+#include "qgsaddwfssensorlayerdialog.h"
+#include "qgsmaplayerregistry.h"
 #include <QSettings>
 
 QgsWFSSensorLayerDialog::QgsWFSSensorLayerDialog( QWidget * parent, Qt::WindowFlags f ): QDialog( parent, f )
@@ -73,7 +75,17 @@ void QgsWFSSensorLayerDialog::writeSettings()
 
 void QgsWFSSensorLayerDialog::addEntry()
 {
-  mTableWidget->insertRow( mTableWidget->rowCount() );
+  QgsAddWFSSensorLayerDialog d( QgsMapLayerRegistry::instance()->mapLayers() );
+  if ( d.exec() == QDialog::Accepted )
+  {
+    mTableWidget->insertRow( mTableWidget->rowCount() );
+    mTableWidget->setItem( mTableWidget->rowCount() - 1, 0, new QTableWidgetItem( d.wfsUrl() ) );
+    mTableWidget->setItem( mTableWidget->rowCount() - 1, 1, new QTableWidgetItem( d.sosUrl() ) );
+    mTableWidget->setItem( mTableWidget->rowCount() - 1, 2, new QTableWidgetItem( d.idAttribute() ) );
+    mTableWidget->setItem( mTableWidget->rowCount() - 1, 3, new QTableWidgetItem( d.observableAttribute() ) );
+    mTableWidget->setItem( mTableWidget->rowCount() - 1, 4, new QTableWidgetItem( d.fromAttribute() ) );
+    mTableWidget->setItem( mTableWidget->rowCount() - 1, 5, new QTableWidgetItem( d.toAttribute() ) );
+  }
 }
 
 void QgsWFSSensorLayerDialog::removeEntry()

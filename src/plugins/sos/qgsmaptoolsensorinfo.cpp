@@ -40,13 +40,27 @@ QgsMapToolSensorInfo::~QgsMapToolSensorInfo()
 
 void QgsMapToolSensorInfo::canvasReleaseEvent( QMouseEvent * e )
 {
-  showSensorInfoDialog();
-  mSensorInfoDialog->clearObservables();
 
+  if ( mSensorInfoDialog )
+  {
+    mSensorInfoDialog->clearObservables();
+  }
+
+  //sos layers
+  QList< QgsMapLayer* > sensorLayerList = sensorLayers();
+  //sensor objects from WFS layers
+  QList<QgsMapLayer*> wfsLayers;
+  QStringList sosUrls, ids, observableAttributes, beginAttributes, endAttributes;
+  wfsSensorLayers( wfsLayers, sosUrls, ids, observableAttributes, beginAttributes, endAttributes );
+
+  if ( sensorLayers().isEmpty() && wfsLayers.isEmpty() )
+  {
+    return;
+  }
+
+  showSensorInfoDialog();
   QgsMapToolIdentify idTool( mCanvas );
 
-  //add matching features from SOS layers
-  QList< QgsMapLayer* > sensorLayerList = sensorLayers();
   if ( !sensorLayerList.isEmpty() )
   {
     QList<QgsMapToolIdentify::IdentifyResult> idList = idTool.identify( e->x(), e->y(), sensorLayerList, QgsMapToolIdentify::TopDownAll );
@@ -72,11 +86,6 @@ void QgsMapToolSensorInfo::canvasReleaseEvent( QMouseEvent * e )
       mSensorInfoDialog->addObservables( dp->dataSourceUri(), id, observedProperties, beginList, endList );
     }
   }
-
-  //add sensor objects from WFS layers
-  QList<QgsMapLayer*> wfsLayers;
-  QStringList sosUrls, ids, observableAttributes, beginAttributes, endAttributes;
-  wfsSensorLayers( wfsLayers, sosUrls, ids, observableAttributes, beginAttributes, endAttributes );
 
   //loop  wfs layers
   for ( int i = 0; i < wfsLayers.size(); ++i )

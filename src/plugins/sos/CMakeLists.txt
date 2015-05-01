@@ -8,12 +8,14 @@ SET (SOS_SRCS
      qgsmaptoolsensorinfo.cpp
      qgssensorinfodialog.cpp
      qgswatermldata.cpp
+     qgsaddwfssensorlayerdialog.cpp
      qgswfssensorlayerdialog.cpp
 )
 
 SET (SOS_UIS
     qgssossourceselectbase.ui
     qgssensorinfodialogbase.ui
+    qgsaddwfssensorlayerdialogbase.ui
     qgswfssensorlayerdialogbase.ui
     )
 
@@ -23,6 +25,7 @@ qgssossourceselect.h
 qgssoscapabilities.h
 qgsmaptoolsensorinfo.h
 qgssensorinfodialog.h
+qgsaddwfssensorlayerdialog.h
 qgswfssensorlayerdialog.h
 )
 

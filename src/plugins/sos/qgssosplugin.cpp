@@ -49,7 +49,7 @@ void QgsSOSPlugin::initGui()
     mIface->addWebToolBarIcon( mAction );
     mIface->addPluginToWebMenu( tr( "Sensor observation service" ), mAction );
 
-    mWFSSensorLayerAction = new QAction( tr( "WFS Sensor layer" ), 0 );
+    mWFSSensorLayerAction = new QAction( QIcon( ":/wfssos.png" ), tr( "WFS Sensor layer" ), 0 );
     QObject::connect( mWFSSensorLayerAction, SIGNAL( triggered() ), this, SLOT( showWFSSensorLayerDialog() ) );
     mIface->addWebToolBarIcon( mWFSSensorLayerAction );
 

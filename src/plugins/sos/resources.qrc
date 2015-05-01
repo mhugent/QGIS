@@ -2,5 +2,6 @@
     <qresource prefix="/" >
         <file>sos.png</file>
         <file>sensor_info.png</file>
+	<file>wfssos.png</file>
     </qresource>
 </RCC>
