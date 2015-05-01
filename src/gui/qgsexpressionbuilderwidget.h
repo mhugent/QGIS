@@ -38,28 +38,28 @@ class QgsExpressionItemSearchProxy : public QSortFilterProxyModel
     bool filterAcceptsRow( int source_row, const QModelIndex &source_parent ) const override
     {
       if ( source_parent == qobject_cast<QStandardItemModel*>( sourceModel() )->invisibleRootItem()->index() )
-        return true;
+      return true;
 
       return QSortFilterProxyModel::filterAcceptsRow( source_row, source_parent );
     }
-};
+  };
 
 /** An expression item that can be used in the QgsExpressionBuilderWidget tree.
   */
 class QgsExpressionItem : public QStandardItem
 {
-  public:
-    enum ItemType
-    {
-      Header,
-      Field,
-      ExpressionNode
-    };
+public:
+  enum ItemType
+  {
+    Header,
+    Field,
+    ExpressionNode
+  };
 
-    QgsExpressionItem( QString label,
-                       QString expressionText,
-                       QString helpText,
-                       QgsExpressionItem::ItemType itemType = ExpressionNode )
+  QgsExpressionItem( QString label,
+                     QString expressionText,
+                     QString helpText,
+                     QgsExpressionItem::ItemType itemType = ExpressionNode )
         : QStandardItem( label )
     {
       mExpressionText = expressionText;
@@ -122,6 +122,11 @@ class GUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::QgsExp
     void loadFieldNames();
 
     void loadFieldNames( const QgsFields& fields );
+
+    /** Loads field names and values from the specified map.
+     *  Note: The field values must be quoted appropriately if they are strings.
+     */
+    void loadFieldsAndValues( const QMap<QString, QStringList>& fieldValues );
 
     /** Sets geometry calculator used in distance/area calculations. */
     void setGeomCalculator( const QgsDistanceArea & da );
@@ -200,7 +205,7 @@ class GUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::QgsExp
   private:
     void runPythonCode( QString code );
     void updateFunctionTree();
-    void fillFieldValues( int fieldIndex, int countLimit );
+    void fillFieldValues( const QString &fieldName, int countLimit );
     QString loadFunctionHelp( QgsExpressionItem* functionName );
 
     QString mFunctionsPath;
@@ -212,6 +217,7 @@ class GUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::QgsExp
     QgsExpressionHighlighter* highlighter;
     bool mExpressionValid;
     QgsDistanceArea mDa;
+    QMap<QString, QStringList> mFieldValues;
 };
 
 #endif // QGSEXPRESSIONBUILDER_H
