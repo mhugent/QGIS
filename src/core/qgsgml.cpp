@@ -391,6 +391,8 @@ void QgsGml::endElement( const XML_Char* el )
       mIdMap.insert( mCurrentFeature->id(), mCurrentFeatureId );
     }
     mCurrentFeature = 0;
+    mCurrentWKB = 0;
+    mCurrentWKBSize = 0;
     ++mFeatureCount;
     mParseModeStack.pop();
   }
