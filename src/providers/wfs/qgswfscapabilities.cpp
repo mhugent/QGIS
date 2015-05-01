@@ -75,12 +75,12 @@ QString QgsWFSCapabilities::uriGetCapabilities() const
   return mBaseUrl + "SERVICE=WFS&REQUEST=GetCapabilities&VERSION=1.0.0";
 }
 
-QString QgsWFSCapabilities::uriDescribeFeatureType( const QString& typeName ) const
+QString QgsWFSCapabilities::uriDescribeFeatureType( const QString& typeName, QString version ) const
 {
-  return mBaseUrl + "SERVICE=WFS&REQUEST=DescribeFeatureType&VERSION=1.0.0&TYPENAME=" + typeName;
+  return mBaseUrl + "SERVICE=WFS&REQUEST=DescribeFeatureType&VERSION=" + version + "&TYPENAME=" + typeName;
 }
 
-QString QgsWFSCapabilities::uriGetFeature( QString typeName, QString crsString, QString filter, QgsRectangle bBox ) const
+QString QgsWFSCapabilities::uriGetFeature( QString typeName, QString crsString, QString filter, QgsRectangle bBox, QString version ) const
 {
   //get CRS
   if ( !crsString.isEmpty() )
@@ -133,7 +133,9 @@ QString QgsWFSCapabilities::uriGetFeature( QString typeName, QString crsString, 
   QString uri = mBaseUrl;
 
   //add a wfs layer to the map
-  uri += "SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=" + typeName + crsString + bBoxString + filterString;
+  uri += "SERVICE=WFS&VERSION=";
+  uri += version;
+  uri += "&REQUEST=GetFeature&TYPENAME=" + typeName + crsString + bBoxString + filterString;
 
   //add authorization information
   if ( mUri.hasParam( "username" ) && mUri.hasParam( "password" ) )
@@ -230,8 +232,8 @@ void QgsWFSCapabilities::capabilitiesReplyFinished()
   mCaps.clear();
 
   //test wfs version
-  QString version = capabilitiesDocument.documentElement().attribute( "version" );
-  if ( version != "1.0.0" && version != "1.0" )
+  mVersion = capabilitiesDocument.documentElement().attribute( "version" );
+  if ( mVersion != "1.0.0" && mVersion != "1.0" && mVersion != "1.1.0" && mVersion != "1.1" )
   {
     mErrorCode = WFSVersionNotSupported;
     mErrorMessage = tr( "Either the WFS server does not support WFS version 1.0.0 or the WFS url is wrong" );

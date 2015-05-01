@@ -406,11 +406,11 @@ void QgsWFSSourceSelect::addLayer()
     //is "cache features" checked?
     if ( mModel->item( row, 3 )->checkState() == Qt::Checked )
     { //yes: entire WFS layer will be retrieved and cached
-      mUri = conn.uriGetFeature( typeName, pCrsString, filter );
+      mUri = conn.uriGetFeature( typeName, pCrsString, filter, QgsRectangle(), mCapabilities->version() );
     }
     else
     { //no: include BBOX of current canvas extent in URI
-      mUri = conn.uriGetFeature( typeName, pCrsString, filter, extent );
+      mUri = conn.uriGetFeature( typeName, pCrsString, filter, extent, mCapabilities->version() );
     }
     emit addWfsLayer( mUri, layerName );
   }
