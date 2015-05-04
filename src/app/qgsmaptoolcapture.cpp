@@ -416,6 +416,10 @@ void QgsMapToolCapture::validateGeometry()
     delete mGeomErrorMarkers.takeFirst();
   }
 
+  QgsLineStringV2*  validationLine = mGeometry->curveToLine();
+  QgsGeometry* g = new QgsGeometry( validationLine );
+
+  /*
   QgsGeometry *g = 0;
 
   switch ( mCaptureMode )
@@ -436,7 +440,7 @@ void QgsMapToolCapture::validateGeometry()
   }
 
   if ( !g )
-    return;
+    return;*/
 
   mValidator = new QgsGeometryValidator( g );
   connect( mValidator, SIGNAL( errorFound( QgsGeometry::Error ) ), this, SLOT( addError( QgsGeometry::Error ) ) );
