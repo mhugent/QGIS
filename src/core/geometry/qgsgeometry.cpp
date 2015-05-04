@@ -436,6 +436,10 @@ QgsPoint QgsGeometry::vertexAt( int atVertex )
 
   QgsVertexId vId;
   vertexIdFromVertexNr( atVertex, vId );
+  if ( vId.vertex < 0 )
+  {
+    return QgsPoint( 0, 0 );
+  }
   QgsPointV2 pt = d->geometry->vertexAt( vId );
   return QgsPoint( pt.x(), pt.y() );
 }
