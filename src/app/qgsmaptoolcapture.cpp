@@ -419,29 +419,6 @@ void QgsMapToolCapture::validateGeometry()
   QgsLineStringV2*  validationLine = mGeometry->curveToLine();
   QgsGeometry* g = new QgsGeometry( validationLine );
 
-  /*
-  QgsGeometry *g = 0;
-
-  switch ( mCaptureMode )
-  {
-    case CaptureNone:
-    case CapturePoint:
-      return;
-    case CaptureLine:
-      if ( mCaptureList.size() < 2 )
-        return;
-      g = QgsGeometry::fromPolyline( mCaptureList.toVector() );
-      break;
-    case CapturePolygon:
-      if ( mCaptureList.size() < 3 )
-        return;
-      g = QgsGeometry::fromPolygon( QgsPolygon() << ( QgsPolyline() << mCaptureList.toVector() << mCaptureList[0] ) );
-      break;
-  }
-
-  if ( !g )
-    return;*/
-
   mValidator = new QgsGeometryValidator( g );
   connect( mValidator, SIGNAL( errorFound( QgsGeometry::Error ) ), this, SLOT( addError( QgsGeometry::Error ) ) );
   connect( mValidator, SIGNAL( finished() ), this, SLOT( validationFinished() ) );
