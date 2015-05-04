@@ -222,7 +222,11 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
       {
         const QgsCompoundCurveV2* geom = geometry();
         QgsAbstractGeometryV2* geometry;
-        if ( geom->nCurves() < 2 )
+        if ( geom->nCurves() <= 0 )
+        {
+          return;
+        }
+        else if ( geom->nCurves() < 2 )
         {
           geometry = geom->curveAt( 0 )->clone();
         }
@@ -256,7 +260,11 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
 
           QgsCurveV2* ringGeom;
           QgsCurvePolygonV2* geometry;
-          if ( geom->nCurves() < 2 )
+          if ( geom->nCurves() <= 0 )
+          {
+            return;
+          }
+          else if ( geom->nCurves() < 2 )
           {
             ringGeom = dynamic_cast<QgsCurveV2*>( geom->curveAt( 0 )->clone() );
             if ( ringGeom->geometryType() == "LineString" )

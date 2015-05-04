@@ -383,7 +383,7 @@ QgsPointV2 QgsCircularStringV2::pointN( int i ) const
   {
     t = QgsWKBTypes::PointM;
   }
-  return QgsPointV2( mWkbType, x, y, z, m );
+  return QgsPointV2( t, x, y, z, m );
 }
 
 void QgsCircularStringV2::points( QList<QgsPointV2>& pts ) const
