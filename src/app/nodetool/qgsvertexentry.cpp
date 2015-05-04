@@ -44,11 +44,14 @@ void QgsVertexEntry::placeMarker()
     if ( !mMarker )
     {
       mMarker = new QgsVertexMarker( mCanvas );
-      mMarker->setIconType( mType );
       QColor c = mSelected ? QColor( Qt::blue ) : QColor( Qt::red );
       if ( mVertexId.type == QgsVertexId::CurveVertex )
       {
-        c.setAlpha( 50 );
+        mMarker->setIconType( QgsVertexMarker::ICON_CIRCLE );
+      }
+      else
+      {
+        mMarker->setIconType( mType );
       }
       mMarker->setColor( c );
       mMarker->setPenWidth( mPenWidth );
@@ -71,10 +74,6 @@ void QgsVertexEntry::setSelected( bool selected )
   if ( mMarker )
   {
     QColor c = mSelected ? QColor( Qt::blue ) : QColor( Qt::red );
-    if ( mVertexId.type == QgsVertexId::CurveVertex )
-    {
-      c.setAlpha( 50 );
-    }
     mMarker->setColor( c );
     mMarker->update();
   }
