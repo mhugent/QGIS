@@ -50,11 +50,6 @@ QgsGml::QgsGml(
     , mCoorMode( QgsGml::coordinate )
     , mEpsg( 0 )
 {
-  if ( mTypeName == "MeasurementList" ) //workaround for hilltop server layer
-  {
-    mTypeName.prepend( "Site" );
-  }
-
   mThematicAttributes.clear();
   for ( int i = 0; i < fields.size(); i++ )
   {

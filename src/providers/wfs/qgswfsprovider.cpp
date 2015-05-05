@@ -856,7 +856,12 @@ int QgsWFSProvider::describeFeatureTypeFile( const QString& uri, QString& geomet
 int QgsWFSProvider::readAttributesFromSchema( QDomDocument& schemaDoc, QString& geometryAttribute, QgsFields& fields, QGis::WkbType& geomType )
 {
   //get the <schema> root element
-  QDomNodeList schemaNodeList = schemaDoc.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "schema" );
+  //QDomNodeList schemaNodeList = schemaDoc.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", "schema" );
+
+  //debug
+  qWarning( schemaDoc.toString().toLocal8Bit().data() );
+
+  QDomNodeList schemaNodeList = schemaDoc.elementsByTagName( "schema" );
   if ( schemaNodeList.length() < 1 )
   {
     return 1;
@@ -911,20 +916,9 @@ int QgsWFSProvider::readAttributesFromSchema( QDomDocument& schemaDoc, QString& 
     }
     else
     {
-      //hilltop WFS gives all the layers in DescribeFeatureType
-      QUrl url( dataSourceUri() );
-      QString typeName = url.queryItemValue( "TYPENAME" );
-      QDomNodeList complexTypeNodeList = schemaElement.elementsByTagNameNS( "http://www.w3.org/2001/XMLSchema", complexTypeName );
-      for ( int i = 0; i < complexTypeNodeList.size(); ++i )
-      {
-        QDomElement typeElem = complexTypeNodeList.at( i ).toElement();
-        QString name = typeElem.attribute( "name" );
-        if ( name == typeName )
-        {
-          complexTypeElement = typeElem;
-          break;
-        }
-      }
+        //hilltop
+        complexTypeType = typeElement.attribute( "name" );
+        complexTypeElement = typeElement.firstChildElement( "complexType" );
     }
   }
 
