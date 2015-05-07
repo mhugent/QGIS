@@ -49,6 +49,8 @@ QgsGml::QgsGml(
     , mDimension( 2 )
     , mCoorMode( QgsGml::coordinate )
     , mEpsg( 0 )
+    , mCRSHasAxisInversion( false )
+    , mInvertAxisOrder( false )
 {
   mThematicAttributes.clear();
   for ( int i = 0; i < fields.size(); i++ )
@@ -265,10 +267,25 @@ void QgsGml::startElement( const XML_Char* el, const XML_Char** attr )
   else if ( theParseMode == boundingBox && elementName == GML_NAMESPACE + NS_SEPARATOR + "Box" )
   {
     //read attribute srsName="EPSG:26910"
-    int epsgNr;
-    if ( readEpsgFromAttribute( epsgNr, attr ) != 0 )
+    if ( readEpsgFromAttribute( mEpsg, attr ) != 0 )
     {
       QgsDebugMsg( "error, could not get epsg id" );
+    }
+    else
+    {
+      mCRSHasAxisInversion = crs().axisInverted();
+    }
+  }
+  else if ( theParseMode == boundingBox && elementName == GML_NAMESPACE + NS_SEPARATOR + "Envelope" )
+  {
+    //read attribute srsName="EPSG:26910"
+    if ( readEpsgFromAttribute( mEpsg, attr ) != 0 )
+    {
+      QgsDebugMsg( "error, could not get epsg id" );
+    }
+    else
+    {
+      mCRSHasAxisInversion = crs().axisInverted();
     }
   }
   else if ( elementName == GML_NAMESPACE + NS_SEPARATOR + "Polygon" )
@@ -591,6 +608,10 @@ int QgsGml::readEpsgFromAttribute( int& epsgNr, const XML_Char** attr ) const
       {
         epsgNrString = epsgString.section( "#", 1, 1 );
       }
+      else if ( epsgString.startsWith( "urn:" ) )
+      {
+        epsgNrString = epsgString.section( "::", -1 );
+      }
       else //e.g. umn mapserver: "EPSG:4326">
       {
         epsgNrString = epsgString.section( ":", 1, 1 );
@@ -667,7 +688,7 @@ int QgsGml::pointsFromCoordinateString( QList<QgsPoint>& points, const QString& 
     {
       continue;
     }
-    points.push_back( QgsPoint( x, y ) );
+    points.push_back(( mCRSHasAxisInversion && mInvertAxisOrder ) ? QgsPoint( y, x ) : QgsPoint( x, y ) );
   }
   return 0;
 }
@@ -696,7 +717,7 @@ int QgsGml::pointsFromPosListString( QList<QgsPoint>& points, const QString& coo
     {
       continue;
     }
-    points.append( QgsPoint( x, y ) );
+    points.append(( mCRSHasAxisInversion && mInvertAxisOrder ) ? QgsPoint( y, x ) : QgsPoint( x, y ) );
   }
   return 0;
 }

@@ -75,6 +75,8 @@ class CORE_EXPORT QgsGml : public QObject
       @note Added in QGIS 2.1 */
     QgsCoordinateReferenceSystem crs() const;
 
+    void setInvertAxisOrder( bool invert ) { mInvertAxisOrder = invert; }
+
   private slots:
 
     void setFinished();
@@ -240,6 +242,10 @@ class CORE_EXPORT QgsGml : public QObject
     ParseMode mCoorMode;
     /** EPSG of parsed features geometries */
     int mEpsg;
+    /**True if CRS suggests inversion of x/y*/
+    bool mCRSHasAxisInversion;
+    /**True if x/y should be inverted if suggested by the CRS*/
+    bool mInvertAxisOrder;
 };
 
 #endif

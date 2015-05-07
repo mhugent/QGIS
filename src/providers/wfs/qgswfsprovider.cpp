@@ -678,6 +678,11 @@ int QgsWFSProvider::getFeatureGET( const QString& uri, const QString& geometryAt
   QString typeName = parameterFromUrl( "typename" );
   QgsGml dataReader( typeName, geometryAttribute, mFields );
 
+  if ( uri.contains( "VERSION=1.1", Qt::CaseInsensitive ) || uri.contains( "VERSION=1.1.0", Qt::CaseInsensitive ) )
+  {
+    dataReader.setInvertAxisOrder( true );
+  }
+
   connect( &dataReader, SIGNAL( dataProgressAndSteps( int, int ) ), this, SLOT( handleWFSProgressMessage( int, int ) ) );
 
   //also connect to statusChanged signal of qgisapp (if it exists)
@@ -916,9 +921,9 @@ int QgsWFSProvider::readAttributesFromSchema( QDomDocument& schemaDoc, QString& 
     }
     else
     {
-        //hilltop
-        complexTypeType = typeElement.attribute( "name" );
-        complexTypeElement = typeElement.firstChildElement( "complexType" );
+      //hilltop
+      complexTypeType = typeElement.attribute( "name" );
+      complexTypeElement = typeElement.firstChildElement( "complexType" );
     }
   }
 
