@@ -188,63 +188,10 @@ void QgsNodeEditor::tableValueChanged( int row, int col )
     double x3 = mTableWidget->item( row + 1, 1 )->data( Qt::EditRole ).toDouble();
     double y3 = mTableWidget->item( row + 1, 2 )->data( Qt::EditRole ).toDouble();
 
-    // Determine old center and radius and sweep angles
-    double oldR, oldCx, oldCy;
-    QgsGeometryUtils::circleCenterRadius( QgsPointV2( x1, y1 ), QgsPointV2( x2, y2 ), QgsPointV2( x3, y3 ), oldR, oldCx, oldCy );
-
-    // See https://bugreports.qt.io/browse/QTBUG-12515 about qAtan2...
-    double oldA1 = qAtan2( y1 - oldCy, x1 - oldCx );
-    if ( oldA1 < 0 ) oldA1 += 2 * M_PI;
-    double oldA2 = qAtan2( y2 - oldCy, x2 - oldCx );
-    if ( oldA2 < 0 ) oldA2 += 2 * M_PI;
-    double oldA3 = qAtan2( y3 - oldCy, x3 - oldCx );
-    if ( oldA3 < 0 ) oldA3 += 2 * M_PI;
-
-    // Find possible centers of new arc
-    /*           * C1 (C2 at mirrored position wrt P1-P3 line)
-     *          /|\
-     *         / | \
-     *       r/ h|  \
-     *       /   ^   \
-     *      /    |e   \
-     *  P1 *-----*-----* P3
-     *        d  M
-     */
-    QVector2D P1( x1, y1 ), P2( x2, y2 ), P3( x3, y3 );
-    QVector2D M = 0.5 * ( P1 + P3 );
-    double d = 0.5 * ( P3 - P1 ).length();
-    double h = qSqrt( r * r - d * d );
-    QVector2D e = QVector2D( y3 - y1, x1 - x3 ).normalized();
-    QVector2D C1 = M + h * e;
-    QVector2D C2 = M - h * e;
-
-    // Pick center on same side as before: depending on whether the sweep angle
-    // between the arc endpoints is more or less than 180deg, the new center
-    // needs to be on the same or opposite side than P2 WRT P1-P2
-    double cross1 = ( P3.x() - P1.x() ) * ( C1.y() - P1.y() ) - ( P3.y() - P1.y() ) * ( C1.x() - P1.x() );
-    double cross2 = ( P3.x() - P1.x() ) * ( P2.y() - P1.y() ) - ( P3.y() - P1.y() ) * ( P2.x() - P1.x() );
-    QVector2D C;
-    if ( qAbs( oldA3 - oldA1 ) < M_PI ) // opposite side
-    {
-      C = cross1 * cross2 < 0 ? C1 : C2;
-    }
-    else // same side
-    {
-      C = cross1 * cross2 > 0 ? C1 : C2;
-    }
-
-    // Place the third point in such way that it is proportionally on the same
-    // spot as before
-    double ratio = ( oldA2 - oldA1 ) / ( oldA3 - oldA1 );
-
-    double newA1 = qAtan2( y1 - C.y(), x1 - C.x() );
-    if ( newA1 < 0 ) newA1 += 2 * M_PI;
-    double newA3 = qAtan2( y3 - C.y(), x3 - C.x() );
-    if ( newA3 < 0 ) newA3 += 2 * M_PI;
-    double newA2 = newA1 + ratio * ( newA3 - newA1 );
-
-    x = C.x() + r * qCos( newA2 );
-    y = C.y() + r * qSin( newA2 );
+    QgsPointV2 result;
+    QgsGeometryUtils::segmentMidPoint( QgsPointV2( x1, y1 ), QgsPointV2( x3, y3 ), result, r, QgsPointV2( x2, y2 ) );
+    x = result.x();
+    y = result.y();
   }
   else
   {
