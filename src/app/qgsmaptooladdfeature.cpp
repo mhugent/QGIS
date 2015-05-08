@@ -21,9 +21,11 @@
 #include "qgscurvepolygonv2.h"
 #include "qgsfield.h"
 #include "qgsgeometry.h"
+#include "qgslinestringv2.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsmulticurvev2.h"
+#include "qgsmultilinestringv2.h"
 #include "qgspolygonv2.h"
 #include "qgsproject.h"
 #include "qgsvectordataprovider.h"
@@ -192,31 +194,10 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
     }
     else if ( e->button() == Qt::RightButton )
     {
-#if 0
-      //lines: bail out if there are not at least two vertices
-      if ( mode() == CaptureLine && size() < 2 )
-      {
-        stopCapturing();
-        return;
-      }
-
-      //polygons: bail out if there are not at least two vertices
-      if ( mode() == CapturePolygon && size() < 3 )
-      {
-        stopCapturing();
-        return;
-      }
-#endif //0
-
       //create QgsFeature with wkb representation
       QgsFeature* f = new QgsFeature( vlayer->pendingFields(),  0 );
 
       QgsGeometry* g = 0;
-
-      /*if ( !geom || geom->nCurves() < 1 )
-      {
-        return;
-      }*/
 
       if ( mode() == CaptureLine )
       {
@@ -226,21 +207,38 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
         {
           return;
         }
-        else if ( geom->nCurves() < 2 )
+
+        //layer type compound curve?
+        if ( QgsWKBTypes::flatType(( QgsWKBTypes::Type )layerWKBType ) == QgsWKBTypes::LineString
+             || QgsWKBTypes::flatType(( QgsWKBTypes::Type )layerWKBType ) == QgsWKBTypes::CircularString )
         {
-          geometry = geom->curveAt( 0 )->clone();
+          if ( geom->nCurves() < 2 )
+          {
+            geometry = geom->curveAt( 0 )->clone();
+          }
+          else
+          {
+            geometry = geom->curveToLine();
+          }
         }
-        else
+        else //compoundcurve or unknown (e.g. type GEOMETRY)
         {
           geometry = geom->clone();
         }
 
-        //multitype?
-        if ( layerWKBType == QGis::WKBMultiLineString || layerWKBType == QGis::WKBMultiLineString25D )
+        //multicurve
+        if ( QgsWKBTypes::flatType(( QgsWKBTypes::Type )layerWKBType ) == QgsWKBTypes::MultiCurve ) //if ( layerWKBType == QGis::WKBMultiLineString || layerWKBType == QGis::WKBMultiLineString25D )
         {
           QgsMultiCurveV2* multiCurve = new QgsMultiCurveV2();
           multiCurve->addGeometry( geometry );
           geometry = multiCurve;
+        }
+        else if ( QgsWKBTypes::flatType(( QgsWKBTypes::Type )layerWKBType ) == QgsWKBTypes::MultiLineString )
+        {
+          QgsMultiLineStringV2* multiLine = new QgsMultiLineStringV2();
+          multiLine->addGeometry( dynamic_cast<QgsCurveV2*>( geometry )->curveToLine() );
+          delete geometry;
+          geometry = multiLine;
         }
 
         g = new QgsGeometry( geometry );
@@ -267,7 +265,7 @@ void QgsMapToolAddFeature::canvasReleaseEvent( QMouseEvent * e )
           else if ( geom->nCurves() < 2 )
           {
             ringGeom = dynamic_cast<QgsCurveV2*>( geom->curveAt( 0 )->clone() );
-            if ( ringGeom->geometryType() == "LineString" )
+            if ( ringGeom->geometryType() == "LineString" &&  QgsWKBTypes::flatType(( QgsWKBTypes::Type )layerWKBType ) == QgsWKBTypes::Polygon )
             {
               geometry = new QgsPolygonV2();
             }
