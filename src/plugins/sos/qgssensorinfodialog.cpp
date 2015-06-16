@@ -112,37 +112,35 @@ void QgsSensorInfoDialog::addObservables( const QString& serviceUrl, const QStri
 
 void QgsSensorInfoDialog::showDiagram()
 {
-  QList<QTreeWidgetItem*> selectedItems = mObservableTreeWidget->selectedItems();
-  if ( selectedItems.size() < 1 )
+  QString serviceUrl, featureOfInterest, observedProperty;
+  if ( !currentServiceParams( serviceUrl, featureOfInterest, observedProperty ) )
   {
     return;
   }
 
-  QTreeWidgetItem* item  = selectedItems.at( 0 );
-  QTreeWidgetItem* parent = item->parent();
-  if ( !parent )
+  QTreeWidgetItem* item  = mObservableTreeWidget->selectedItems().at( 0 );
+  if ( qobject_cast<QCheckBox*>( mObservableTreeWidget->itemWidget( item, 2 ) )->isChecked() )
   {
-    return;
+    QDateTime beginTime = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 3 ) )->dateTime();
+    QDateTime endTime = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 4 ) )->dateTime();
+    showDiagram( serviceUrl, featureOfInterest, observedProperty, &beginTime, &endTime );
   }
+  else
+  {
+    showDiagram( serviceUrl, featureOfInterest, observedProperty, 0, 0 );
+  }
+}
 
-  QString featureOfInterest = parent->text( 0 );
-  QString serviceUrl = parent->data( 0, Qt::UserRole ).toString();
-  QString observedProperty = item->text( 1 );
-
-  bool useTemporalFilter = qobject_cast<QCheckBox*>( mObservableTreeWidget->itemWidget( item, 2 ) )->isChecked();
+void QgsSensorInfoDialog::showDiagram( const QString& serviceUrl, const QString& featureOfInterest, const QString& observedProperty, const QDateTime* beginTime,
+                                       const QDateTime* endTime )
+{
+  bool useTemporalFilter = ( beginTime && endTime );
   QString temporalFilter;
 
   if ( useTemporalFilter )
   {
-    QDateTimeEdit* beginEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 3 ) );
-    QDateTimeEdit* endEdit = qobject_cast<QDateTimeEdit*>( mObservableTreeWidget->itemWidget( item, 4 ) );
-    if ( !beginEdit || ! endEdit )
-    {
-      return;
-    }
-
-    temporalFilter = "om:phenomenonTime," + beginEdit->dateTime().toString( Qt::ISODate )
-                     + "/" + endEdit->dateTime().toString( Qt::ISODate );
+    temporalFilter = "om:phenomenonTime," + beginTime->toString( Qt::ISODate )
+                     + "/" + endTime->toString( Qt::ISODate );
   }
 
   QUrl url( serviceUrl );
@@ -300,4 +298,54 @@ void QgsSensorInfoDialog::on_mTabWidget_tabCloseRequested( int index )
     return;
   }
   mTabWidget->removeTab( index );
+}
+
+void QgsSensorInfoDialog::on_mDisplayLast24HoursButton_clicked()
+{
+  QString serviceUrl, featureOfInterest, observedProperty;
+  if ( !currentServiceParams( serviceUrl, featureOfInterest, observedProperty ) )
+  {
+    return;
+  }
+
+  QDateTime endTime = QDateTime::currentDateTime();
+  QDateTime beginTime = endTime.addDays( -1 );
+
+  showDiagram( serviceUrl, featureOfInterest, observedProperty, &beginTime, &endTime );
+}
+
+void QgsSensorInfoDialog::on_mDisplayLast7DaysButton_clicked()
+{
+  QString serviceUrl, featureOfInterest, observedProperty;
+  if ( !currentServiceParams( serviceUrl, featureOfInterest, observedProperty ) )
+  {
+    return;
+  }
+
+  QDateTime endTime = QDateTime::currentDateTime();
+  QDateTime beginTime = endTime.addDays( -7 );
+
+  showDiagram( serviceUrl, featureOfInterest, observedProperty, &beginTime, &endTime );
+}
+
+bool QgsSensorInfoDialog::currentServiceParams( QString& serviceUrl, QString& featureOfInterest, QString& observedProperty )
+{
+  QList<QTreeWidgetItem*> selectedItems = mObservableTreeWidget->selectedItems();
+  if ( selectedItems.size() < 1 )
+  {
+    return false;
+  }
+
+  QTreeWidgetItem* item  = selectedItems.at( 0 );
+  QTreeWidgetItem* parent = item->parent();
+  if ( !parent )
+  {
+    return false;
+  }
+
+  featureOfInterest = parent->text( 0 );
+  serviceUrl = parent->data( 0, Qt::UserRole ).toString();
+  observedProperty = item->text( 1 );
+
+  return true;
 }

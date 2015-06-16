@@ -41,10 +41,15 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
     QDateTime convertIntToTime( int t ) const;
     void onDiagramSelected( const QwtDoublePoint &pt );
     void on_mTabWidget_tabCloseRequested( int index );
+    void on_mDisplayLast24HoursButton_clicked();
+    void on_mDisplayLast7DaysButton_clicked();
 
   private:
     QwtPlot* currentPlot();
     QwtPlotMarker* plotMarker( QwtPlot* plot );
+    void showDiagram( const QString& serviceUrl, const QString& featureOfInterest, const QString& observedProperty, const QDateTime* beginTime,
+                      const QDateTime* endTime );
+    bool currentServiceParams( QString& serviceUrl, QString& featureOfInterest, QString& observedProperty );
 
     QMap< QwtPlot*, QwtPlotMarker* > mPlotMarkers;
 };
