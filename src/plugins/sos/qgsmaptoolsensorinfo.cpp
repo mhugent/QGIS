@@ -22,13 +22,14 @@
 #include "qgssensorinfodialog.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
+#include "qgisinterface.h"
 #include <QDateTime>
 #include <QMouseEvent>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
-QgsMapToolSensorInfo::QgsMapToolSensorInfo( QgsMapCanvas* canvas ): QgsMapTool( canvas ),
-    mDataAvailabilityRequestFinished( true ), mSensorInfoDialog( 0 )
+QgsMapToolSensorInfo::QgsMapToolSensorInfo( QgisInterface* iface, QgsMapCanvas* canvas ): QgsMapTool( canvas ),
+    mDataAvailabilityRequestFinished( true ), mSensorInfoDialog( 0 ), mIface( iface )
 {
 
 }
@@ -279,7 +280,7 @@ void QgsMapToolSensorInfo::showSensorInfoDialog()
 {
   if ( !mSensorInfoDialog )
   {
-    mSensorInfoDialog = new QgsSensorInfoDialog();
+    mSensorInfoDialog = new QgsSensorInfoDialog( mIface );
   }
   mSensorInfoDialog->show();
   mSensorInfoDialog->raise();

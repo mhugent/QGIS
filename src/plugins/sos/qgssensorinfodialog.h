@@ -22,6 +22,7 @@
 #include <qwt_double_rect.h>
 #include <QDateTime>
 
+class QgisInterface;
 class QwtPlot;
 class QwtPlotMarker;
 
@@ -29,20 +30,22 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
 {
     Q_OBJECT
   public:
-    QgsSensorInfoDialog( QWidget * parent = 0, Qt::WindowFlags f = 0 );
+    QgsSensorInfoDialog( QgisInterface* iface, QWidget * parent = 0, Qt::WindowFlags f = 0 );
     ~QgsSensorInfoDialog();
 
     void clearObservables();
     void addObservables( const QString& serviceUrl, const QString stationId, const QStringList& observables, const QList< QDateTime >& begin, const QList< QDateTime >& end );
 
   private slots:
-    void showDiagram();
+    void on_mDisplayButton_clicked();
     int convertTimeToInt( const QDateTime& dt ) const;
     QDateTime convertIntToTime( int t ) const;
     void onDiagramSelected( const QwtDoublePoint &pt );
     void on_mTabWidget_tabCloseRequested( int index );
     void on_mDisplayLast24HoursButton_clicked();
     void on_mDisplayLast7DaysButton_clicked();
+    void on_mExportCsvButton_clicked();
+    void on_mTabWidget_currentChanged( int index );
 
   private:
     QwtPlot* currentPlot();
@@ -51,7 +54,9 @@ class QgsSensorInfoDialog: public QDialog, private Ui::QgsSensorInfoDialogBase
                       const QDateTime* endTime );
     bool currentServiceParams( QString& serviceUrl, QString& featureOfInterest, QString& observedProperty );
 
+    QgisInterface* mIface;
     QMap< QwtPlot*, QwtPlotMarker* > mPlotMarkers;
+
 };
 
 #endif // QGSSENSORINFODIALOG_H

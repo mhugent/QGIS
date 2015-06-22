@@ -58,7 +58,7 @@ void QgsSOSPlugin::initGui()
     mSensorInfoAction->setCheckable( true );
     mIface->addWebToolBarIcon( mSensorInfoAction );
 
-    mMapToolSensorInfo = new QgsMapToolSensorInfo( mIface->mapCanvas() );
+    mMapToolSensorInfo = new QgsMapToolSensorInfo( mIface, mIface->mapCanvas() );
     mMapToolSensorInfo->setAction( mSensorInfoAction );
   }
 }

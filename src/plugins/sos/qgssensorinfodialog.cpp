@@ -16,12 +16,18 @@
  ***************************************************************************/
 
 #include "qgssensorinfodialog.h"
+#include "qgsmessagebar.h"
 #include "qgswatermldata.h"
+#include "qgisinterface.h"
 #include <QCheckBox>
 #include <QCursor>
 #include <QDateTimeEdit>
+#include <QFileDialog>
 #include <QMessageBox>
+#include <QProgressBar>
 #include <QPushButton>
+#include <QSettings>
+#include <QTextStream>
 #include <QUrl>
 #include <QToolTip>
 #include <qwt_picker_machine.h>
@@ -50,13 +56,9 @@ class TimeScaleDraw: public QwtScaleDraw
     }
 };
 
-QgsSensorInfoDialog::QgsSensorInfoDialog( QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f )
+QgsSensorInfoDialog::QgsSensorInfoDialog( QgisInterface* iface, QWidget* parent, Qt::WindowFlags f ): QDialog( parent, f ), mIface( iface )
 {
   setupUi( this );
-  QPushButton* displayButton = new QPushButton( tr( "Display" ), this );
-  connect( displayButton, SIGNAL( clicked() ), this, SLOT( showDiagram() ) );
-  mButtonBox->addButton( displayButton, QDialogButtonBox::ActionRole );
-
   mTabWidget->setTabsClosable( true );
 }
 
@@ -110,7 +112,7 @@ void QgsSensorInfoDialog::addObservables( const QString& serviceUrl, const QStri
   mObservableTreeWidget->expandAll();
 }
 
-void QgsSensorInfoDialog::showDiagram()
+void QgsSensorInfoDialog::on_mDisplayButton_clicked()
 {
   QString serviceUrl, featureOfInterest, observedProperty;
   if ( !currentServiceParams( serviceUrl, featureOfInterest, observedProperty ) )
@@ -348,4 +350,82 @@ bool QgsSensorInfoDialog::currentServiceParams( QString& serviceUrl, QString& fe
   observedProperty = item->text( 1 );
 
   return true;
+}
+
+void QgsSensorInfoDialog::on_mExportCsvButton_clicked()
+{
+  //get last output file dir
+  QSettings s;
+  QString lastOutputDir = s.value( "/SOS/lastCSVDir", "" ).toString();
+
+  QString saveFileName = QFileDialog::getSaveFileName( 0, tr( "Export data as comma separated value (csv)" ), lastOutputDir );
+  if ( saveFileName.isNull() )
+  {
+    return;
+  }
+  else
+  {
+    QFileInfo csvFileInfo( saveFileName );
+    QDir fileDir = csvFileInfo.absoluteDir();
+    if ( fileDir.exists() )
+    {
+      s.setValue( "/SOS/lastCSVDir", csvFileInfo.absolutePath() );
+    }
+  }
+
+  QwtPlot* plot = dynamic_cast<QwtPlot*>( mTabWidget->currentWidget() );
+  if ( !plot )
+  {
+    mIface->messageBar()->pushMessage( tr( "Error, csv export failed" ), QgsMessageBar::CRITICAL );
+    return;
+  }
+
+  //get curve
+  const QwtPlotItemList& items =  plot->itemList();
+  if ( items.size() < 1 )
+  {
+    mIface->messageBar()->pushMessage( tr( "Error, csv export failed" ), QgsMessageBar::CRITICAL );
+    return;
+  }
+
+  //get curve data
+  QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>( items.at( 0 ) );
+  if ( !curve )
+  {
+    mIface->messageBar()->pushMessage( tr( "Error, csv export failed" ), QgsMessageBar::CRITICAL );
+    return;
+  }
+
+  //write file / header
+  QFile file( saveFileName );
+  if ( !file.open( QIODevice::WriteOnly ) )
+  {
+    mIface->messageBar()->pushMessage( tr( "File could not be opened for writing. csv export failed" ), QgsMessageBar::CRITICAL );
+    return;
+  }
+  QTextStream outStream( &file );
+  outStream << "time,value" << endl;
+
+  QwtData& curveData = curve->data();
+  int nEntries = curveData.size();
+  QProgressBar pb;
+  pb.setMinimum( 0 );
+  pb.setMaximum( nEntries );
+  pb.show();
+
+  for ( int i = 0; i < nEntries; ++i )
+  {
+    outStream << convertIntToTime( curveData.x( i ) ).toString( "dd.MM.yyyy hh:mm:ss" );
+    outStream << ",";
+    outStream << QString::number( curveData.y( i ) );
+    outStream << endl;
+    pb.setValue( i + 1 );
+  }
+
+  pb.setValue( nEntries );
+}
+
+void QgsSensorInfoDialog::on_mTabWidget_currentChanged( int index )
+{
+  mExportCsvButton->setEnabled( index > 0 );
 }

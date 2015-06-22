@@ -20,6 +20,7 @@
 
 #include "qgsmaptool.h"
 
+class QgisInterface;
 class QgsSensorInfoDialog;
 class QgsVectorLayer;
 class QDateTime;
@@ -28,7 +29,7 @@ class QgsMapToolSensorInfo: public QgsMapTool
 {
     Q_OBJECT
   public:
-    QgsMapToolSensorInfo( QgsMapCanvas* canvas );
+    QgsMapToolSensorInfo( QgisInterface* iface, QgsMapCanvas* canvas );
     ~QgsMapToolSensorInfo();
 
     /**Get sensor information at point (observed properties and available time intervals)*/
@@ -49,6 +50,7 @@ class QgsMapToolSensorInfo: public QgsMapTool
     bool mDataAvailabilityRequestFinished;
 
     QgsSensorInfoDialog* mSensorInfoDialog;
+    QgisInterface* mIface;
 
   private slots:
     void dataAvailabilityRequestFinished();
