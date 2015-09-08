@@ -23,6 +23,7 @@
 #include "qgsvectorlayer.h"
 #include "qgsgeometryutils.h"
 
+#include <QKeyEvent>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QVBoxLayout>
@@ -238,4 +239,20 @@ void QgsNodeEditor::updateNodeSelection()
   }
 
   connect( mSelectedFeature, SIGNAL( selectionChanged() ), this, SLOT( updateTableSelection() ) );
+}
+
+void QgsNodeEditor::keyPressEvent( QKeyEvent* event )
+{
+    if( !event )
+    {
+        return;
+    }
+
+    if( event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete )
+    {
+        //delete selected vertices
+        mSelectedFeature->beginGeometryChange();
+        mSelectedFeature->deleteSelectedVertexes();
+        mSelectedFeature->endGeometryChange();
+    }
 }

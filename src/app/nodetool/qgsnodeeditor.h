@@ -42,6 +42,9 @@ class QgsNodeEditor : public QDockWidget
     QgsMapCanvas* mCanvas;
     QTableWidget* mTableWidget;
 
+  protected:
+    void keyPressEvent( QKeyEvent* event );
+
   private slots:
     void rebuildTable();
     void tableValueChanged( int row, int col );
