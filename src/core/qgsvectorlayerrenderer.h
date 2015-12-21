@@ -49,7 +49,7 @@ class QgsVectorLayerDiagramProvider;
  *
  * @note added in 2.4
  */
-class QgsVectorLayerRenderer : public QgsMapLayerRenderer
+class CORE_EXPORT QgsVectorLayerRenderer : public QgsMapLayerRenderer
 {
   public:
     QgsVectorLayerRenderer( QgsVectorLayer* layer, QgsRenderContext& context );

@@ -1571,6 +1571,12 @@ void QgsImageFillSymbolLayer::renderPolygon( const QPolygonF& points, QList<QPol
   applyDataDefinedSettings( context );
 
   p->setPen( QPen( Qt::NoPen ) );
+
+  //transform brush to upper left corner of geometry bbox
+  QPointF leftCorner = points.boundingRect().topLeft();
+  QTransform leftCornerTransform = QTransform::fromTranslate( leftCorner.x(), leftCorner.y() );
+  mBrush.setTransform( leftCornerTransform );
+
   if ( context.selected() )
   {
     QColor selColor = context.renderContext().selectionColor();
@@ -2760,7 +2766,7 @@ void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolV2RenderContext
     polygons.append( QPolygonF() << p5 << p6 );
   }
 
-  Q_FOREACH ( const QPolygonF& polygon, polygons )
+  Q_FOREACH( const QPolygonF& polygon, polygons )
   {
     fillLineSymbol->renderPolyline( polygon, context.feature(), lineRenderContext, -1, context.selected() );
   }
