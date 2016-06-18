@@ -2393,22 +2393,63 @@ int QgsWMSServer::featureInfoFromRasterLayer( QgsRasterLayer* layer,
   }
 
   QgsMessageLog::logMessage( QString( "infoPoint: %1 %2" ).arg( infoPoint->x() ).arg( infoPoint->y() ) );
-
-  if ( !( layer->dataProvider()->capabilities() & QgsRasterDataProvider::IdentifyValue ) )
+  int providerCapabilities = layer->dataProvider()->capabilities();
+  if ( !( providerCapabilities & QgsRasterDataProvider::Identify ) )
   {
     return 1;
   }
+
+  //set output format ( value , text, html )
+  QgsRaster::IdentifyFormat identifyFormat;
+  if ( providerCapabilities & QgsRasterInterface::IdentifyValue )
+  {
+    identifyFormat = QgsRaster::IdentifyFormatValue;
+  }
+  else if ( providerCapabilities & QgsRasterInterface::IdentifyText )
+  {
+    identifyFormat = QgsRaster::IdentifyFormatText;
+  }
+
   QMap<int, QVariant> attributes;
   // use context extent, width height (comes with request) to use WCS cache
   // We can only use context if raster is not reprojected, otherwise it is difficult
   // to guess correct source resolution
   if ( mMapRenderer->hasCrsTransformEnabled() && layer->dataProvider()->crs() != mMapRenderer->destinationCrs() )
   {
-    attributes = layer->dataProvider()->identify( *infoPoint, QgsRaster::IdentifyFormatValue ).results();
+    attributes = layer->dataProvider()->identify( *infoPoint, identifyFormat ).results();
   }
   else
   {
-    attributes = layer->dataProvider()->identify( *infoPoint, QgsRaster::IdentifyFormatValue, mMapRenderer->extent(), mMapRenderer->outputSize().width(), mMapRenderer->outputSize().height() ).results();
+    attributes = layer->dataProvider()->identify( *infoPoint, identifyFormat, mMapRenderer->extent(), mMapRenderer->outputSize().width(), mMapRenderer->outputSize().height() ).results();
+  }
+
+  if ( identifyFormat == QgsRaster::IdentifyFormatText )
+  {
+    QDomElement lastGroupElem = layerElement;
+
+    QString text = attributes.value( 0 ).toString();
+    QStringList attributeList = text.split( "\n", QString::SkipEmptyParts );
+    QStringList::const_iterator attributeIt = attributeList.constBegin();
+    for ( ; attributeIt != attributeList.constEnd(); ++attributeIt )
+    {
+
+      QStringList equalSplit = attributeIt->split( "=" );
+      if ( equalSplit.size() > 1 )
+      {
+        QDomElement attributeElement = infoDocument.createElement( "Attribute" );
+        attributeElement.setAttribute( "name", equalSplit.at( 0 ).trimmed() );
+        attributeElement.setAttribute( "value", equalSplit.at( 1 ).trimmed() );
+        lastGroupElem.appendChild( attributeElement );
+      }
+      else
+      {
+        QString xmlElemName = equalSplit.at( 0 );
+        QDomElement groupElem = infoDocument.createElement( xmlElemName.replace( " ", "_" ) ); //spaces not allowed in xml names
+        layerElement.appendChild( groupElem );
+        lastGroupElem = groupElem;
+      }
+    }
+    return 0;
   }
 
   if ( infoFormat == "application/vnd.ogc.gml" )
