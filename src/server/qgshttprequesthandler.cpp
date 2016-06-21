@@ -343,6 +343,7 @@ void QgsHttpRequestHandler::setGetFeatureInfoResponse( const QDomDocument& infoD
     //create string
     QString featureInfoString;
 
+
     if ( infoFormat == "text/plain" )
     {
       featureInfoString.append( "GetFeatureInfo results\n" );
@@ -357,91 +358,16 @@ void QgsHttpRequestHandler::setGetFeatureInfoResponse( const QDomDocument& infoD
       featureInfoString.append( "<BODY>\n" );
     }
 
-    QDomNodeList layerList = infoDoc.elementsByTagName( "Layer" );
-
-    //layer loop
-    for ( int i = 0; i < layerList.size(); ++i )
+    QDomNodeList children = infoDoc.documentElement().childNodes();
+    for ( int i = 0; i < children.size(); ++i )
     {
-      QDomElement layerElem = layerList.at( i ).toElement();
-      if ( infoFormat == "text/plain" )
+      QDomElement childElem = children.at( i ).toElement();
+      if ( childElem.tagName() == "Layer" )
       {
-        featureInfoString.append( "Layer '" + layerElem.attribute( "name" ) + "'\n" );
-      }
-      else if ( infoFormat == "text/html" )
-      {
-        featureInfoString.append( "<TABLE border=1 width=100%>\n" );
-        featureInfoString.append( "<TR><TH width=25%>Layer</TH><TD>" + layerElem.attribute( "name" ) + "</TD></TR>\n" );
-        featureInfoString.append( "</BR>" );
-      }
-
-      //feature loop (for vector layers)
-      QDomNodeList featureNodeList = layerElem.elementsByTagName( "Feature" );
-      QDomElement currentFeatureElement;
-
-      if ( featureNodeList.size() < 1 ) //raster layer?
-      {
-        QDomNodeList attributeNodeList = layerElem.elementsByTagName( "Attribute" );
-        for ( int j = 0; j < attributeNodeList.size(); ++j )
-        {
-          QDomElement attributeElement = attributeNodeList.at( j ).toElement();
-          if ( infoFormat == "text/plain" )
-          {
-            featureInfoString.append( attributeElement.attribute( "name" ) + " = '" +
-                                      attributeElement.attribute( "value" ) + "'\n" );
-          }
-          else if ( infoFormat == "text/html" )
-          {
-            featureInfoString.append( "<TR><TH>" + attributeElement.attribute( "name" ) + "</TH><TD>" +
-                                      attributeElement.attribute( "value" ) + "</TD></TR>\n" );
-          }
-        }
-      }
-      else //vector layer
-      {
-        for ( int j = 0; j < featureNodeList.size(); ++j )
-        {
-          QDomElement featureElement = featureNodeList.at( j ).toElement();
-          if ( infoFormat == "text/plain" )
-          {
-            featureInfoString.append( "Feature " + featureElement.attribute( "id" ) + "\n" );
-          }
-          else if ( infoFormat == "text/html" )
-          {
-            featureInfoString.append( "<TABLE border=1 width=100%>\n" );
-            featureInfoString.append( "<TR><TH>Feature</TH><TD>" + featureElement.attribute( "id" ) + "</TD></TR>\n" );
-          }
-          //attribute loop
-          QDomNodeList attributeNodeList = featureElement.elementsByTagName( "Attribute" );
-          for ( int k = 0; k < attributeNodeList.size(); ++k )
-          {
-            QDomElement attributeElement = attributeNodeList.at( k ).toElement();
-            if ( infoFormat == "text/plain" )
-            {
-              featureInfoString.append( attributeElement.attribute( "name" ) + " = '" +
-                                        attributeElement.attribute( "value" ) + "'\n" );
-            }
-            else if ( infoFormat == "text/html" )
-            {
-              featureInfoString.append( "<TR><TH>" + attributeElement.attribute( "name" ) + "</TH><TD>" + attributeElement.attribute( "value" ) + "</TD></TR>\n" );
-            }
-          }
-
-          if ( infoFormat == "text/html" )
-          {
-            featureInfoString.append( "</TABLE>\n</BR>\n" );
-          }
-        }
-      }
-      if ( infoFormat == "text/plain" )
-      {
-        featureInfoString.append( "\n" );
-      }
-      else if ( infoFormat == "text/html" )
-      {
-        featureInfoString.append( "</TABLE>\n<BR></BR>\n" );
-
+        addLayerToFeatureInfo( childElem, featureInfoString, infoFormat );
       }
     }
+
     if ( infoFormat == "text/html" )
     {
       featureInfoString.append( "</BODY>\n" );
@@ -455,6 +381,78 @@ void QgsHttpRequestHandler::setGetFeatureInfoResponse( const QDomDocument& infoD
   }
 
   setHttpResponse( &ba, infoFormat );
+}
+
+void QgsHttpRequestHandler::addLayerToFeatureInfo( const QDomElement& layerElem, QString& featureInfoString, const QString& infoFormat )
+{
+  if ( infoFormat == "text/plain" )
+  {
+    featureInfoString.append( "Layer '" + layerElem.attribute( "name" ) + "'\n" );
+  }
+  else if ( infoFormat == "text/html" )
+  {
+    featureInfoString.append( "<TABLE border=1 width=100%>\n" );
+    featureInfoString.append( "<TR><TH width=25%>Layer</TH><TD>" + layerElem.attribute( "name" ) + "</TD></TR>\n" );
+    featureInfoString.append( "</BR>" );
+  }
+
+  QDomNodeList childList = layerElem.childNodes();
+  for ( int i = 0; i < childList.size(); ++i )
+  {
+    QDomElement childElem = childList.at( i ).toElement();
+    if ( childElem.tagName() == "Layer" )
+    {
+      addLayerToFeatureInfo( childElem, featureInfoString, infoFormat );
+    }
+    else if ( childElem.tagName() == "Feature" )
+    {
+      if ( infoFormat == "text/plain" )
+      {
+        featureInfoString.append( "Feature " + childElem.attribute( "id" ) + "\n" );
+      }
+      else if ( infoFormat == "text/html" )
+      {
+        featureInfoString.append( "<TABLE border=1 width=100%>\n" );
+        featureInfoString.append( "<TR><TH>Feature</TH><TD>" + childElem.attribute( "id" ) + "</TD></TR>\n" );
+      }
+      appendAttributes( childElem, featureInfoString, infoFormat );
+      if ( infoFormat == "text/html" )
+      {
+        featureInfoString.append( "</TABLE>\n</BR>\n" );
+      }
+    }
+    else
+    {
+      appendAttributes( childElem, featureInfoString, infoFormat );
+    }
+  }
+
+  if ( infoFormat == "text/plain" )
+  {
+    featureInfoString.append( "\n" );
+  }
+  else if ( infoFormat == "text/html" )
+  {
+    featureInfoString.append( "</TABLE>\n<BR></BR>\n" );
+  }
+}
+
+void QgsHttpRequestHandler::appendAttributes( const QDomElement& parentElem, QString& featureInfoString, const QString& infoFormat )
+{
+  QDomNodeList attributeNodeList = parentElem.elementsByTagName( "Attribute" );
+  for ( int k = 0; k < attributeNodeList.size(); ++k )
+  {
+    QDomElement attributeElement = attributeNodeList.at( k ).toElement();
+    if ( infoFormat == "text/plain" )
+    {
+      featureInfoString.append( attributeElement.attribute( "name" ) + " = '" +
+                                attributeElement.attribute( "value" ) + "'\n" );
+    }
+    else if ( infoFormat == "text/html" )
+    {
+      featureInfoString.append( "<TR><TH>" + attributeElement.attribute( "name" ) + "</TH><TD>" + attributeElement.attribute( "value" ) + "</TD></TR>\n" );
+    }
+  }
 }
 
 void QgsHttpRequestHandler::setServiceException( QgsMapServiceException ex )

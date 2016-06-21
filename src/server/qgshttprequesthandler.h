@@ -25,6 +25,8 @@
 #include <QPair>
 #include <QHash>
 
+class QDomElement;
+
 typedef QList< QPair<QRgb, int> > QgsColorBox; //Color / number of pixels
 typedef QMultiMap< int, QgsColorBox > QgsColorBoxMap; // sum of pixels / color box
 
@@ -97,6 +99,9 @@ class QgsHttpRequestHandler: public QgsRequestHandler
     bool mCaptureOutput;
     void addToResponseHeader( const char * response );
     void addToResponseBody( const char * response );
+
+    static void addLayerToFeatureInfo( const QDomElement& layerElem, QString& featureInfoString, const QString& infoFormat );
+    static void appendAttributes( const QDomElement& parentElem, QString& featureInfoString, const QString& infoFormat );
 };
 
 #endif
