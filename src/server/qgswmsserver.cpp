@@ -2438,14 +2438,49 @@ int QgsWMSServer::featureInfoFromRasterLayer( QgsRasterLayer* layer,
       {
         QDomElement attributeElement = infoDocument.createElement( "Attribute" );
         attributeElement.setAttribute( "name", equalSplit.at( 0 ).trimmed() );
-        attributeElement.setAttribute( "value", equalSplit.at( 1 ).trimmed() );
+        QString attributeValue = equalSplit.at( 1 ).trimmed();
+        if ( attributeValue.startsWith( "'" ) && attributeValue.endsWith( "'" ) )
+        {
+          attributeValue.chop( 1 );
+          attributeValue.remove( 0, 1 );
+        }
+        attributeElement.setAttribute( "value", attributeValue );
         lastGroupElem.appendChild( attributeElement );
       }
       else
       {
-        QString xmlElemName = equalSplit.at( 0 );
-        QDomElement groupElem = infoDocument.createElement( xmlElemName.replace( " ", "_" ) ); //spaces not allowed in xml names
-        layerElement.appendChild( groupElem );
+        QString xmlElemName = equalSplit.at( 0 ).trimmed();
+        if ( xmlElemName.startsWith( "GetFeatureInfo results", Qt::CaseInsensitive ) )
+        {
+          continue;
+        }
+        QDomElement groupElem;
+        if ( xmlElemName.startsWith( "layer ", Qt::CaseInsensitive ) )
+        {
+          groupElem = infoDocument.createElement( "Layer" );
+          QString layerName = xmlElemName.remove( 0, 6 );
+          if ( layerName.endsWith( ":" ) )
+          {
+            layerName.chop( 1 );
+          }
+          groupElem.setAttribute( "name", layerName );
+          layerElement.appendChild( groupElem );
+        }
+        else if ( xmlElemName.startsWith( "feature ", Qt::CaseInsensitive ) )
+        {
+          groupElem = infoDocument.createElement( "Feature" );
+          QString idName = xmlElemName.remove( 0, 8 );
+          if ( idName.endsWith( ":" ) )
+          {
+            idName.chop( 1 );
+          }
+          groupElem.setAttribute( "id", idName );
+          lastGroupElem.appendChild( groupElem );
+        }
+        else
+        {
+          continue;
+        }
         lastGroupElem = groupElem;
       }
     }
