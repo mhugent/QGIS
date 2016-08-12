@@ -2425,65 +2425,7 @@ int QgsWMSServer::featureInfoFromRasterLayer( QgsRasterLayer* layer,
 
   if ( identifyFormat == QgsRaster::IdentifyFormatText )
   {
-    QDomElement lastGroupElem = layerElement;
-
-    QString text = attributes.value( 0 ).toString();
-    QStringList attributeList = text.split( "\n", QString::SkipEmptyParts );
-    QStringList::const_iterator attributeIt = attributeList.constBegin();
-    for ( ; attributeIt != attributeList.constEnd(); ++attributeIt )
-    {
-
-      QStringList equalSplit = attributeIt->split( "=" );
-      if ( equalSplit.size() > 1 )
-      {
-        QDomElement attributeElement = infoDocument.createElement( "Attribute" );
-        attributeElement.setAttribute( "name", equalSplit.at( 0 ).trimmed() );
-        QString attributeValue = equalSplit.at( 1 ).trimmed();
-        if ( attributeValue.startsWith( "'" ) && attributeValue.endsWith( "'" ) )
-        {
-          attributeValue.chop( 1 );
-          attributeValue.remove( 0, 1 );
-        }
-        attributeElement.setAttribute( "value", attributeValue );
-        lastGroupElem.appendChild( attributeElement );
-      }
-      else
-      {
-        QString xmlElemName = equalSplit.at( 0 ).trimmed();
-        if ( xmlElemName.startsWith( "GetFeatureInfo results", Qt::CaseInsensitive ) )
-        {
-          continue;
-        }
-        QDomElement groupElem;
-        if ( xmlElemName.startsWith( "layer ", Qt::CaseInsensitive ) )
-        {
-          groupElem = infoDocument.createElement( "Layer" );
-          QString layerName = xmlElemName.remove( 0, 6 );
-          if ( layerName.endsWith( ":" ) )
-          {
-            layerName.chop( 1 );
-          }
-          groupElem.setAttribute( "name", layerName );
-          layerElement.appendChild( groupElem );
-        }
-        else if ( xmlElemName.startsWith( "feature ", Qt::CaseInsensitive ) )
-        {
-          groupElem = infoDocument.createElement( "Feature" );
-          QString idName = xmlElemName.remove( 0, 8 );
-          if ( idName.endsWith( ":" ) )
-          {
-            idName.chop( 1 );
-          }
-          groupElem.setAttribute( "id", idName );
-          lastGroupElem.appendChild( groupElem );
-        }
-        else
-        {
-          continue;
-        }
-        lastGroupElem = groupElem;
-      }
-    }
+    addWmsFeatureInfoFromText( layerElement, infoDocument, attributes );
     return 0;
   }
 
@@ -3576,6 +3518,118 @@ void QgsWMSServer::readDxfLayerSettings( QList< QPair<QgsVectorLayer *, int > >&
       }
 
       layers.append( qMakePair( vlayer, layerAttribute ) );
+    }
+  }
+}
+
+void QgsWMSServer::addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDocument doc, const QMap<int, QVariant>& attributes ) const
+{
+  QDomElement lastGroupElem = layerElement;
+  bool lastGroupElemIsFeature = false;
+
+  QMap<int, QVariant>::const_iterator it = attributes.constBegin();
+  for ( ; it != attributes.constEnd(); ++it )
+  {
+    QStringList attributeList = it.value().toString().split( "\n", QString::SkipEmptyParts );
+    QStringList::const_iterator attributeIt = attributeList.constBegin();
+    for ( ; attributeIt != attributeList.constEnd(); ++attributeIt )
+    {
+
+      QStringList equalSplit = attributeIt->split( "=" );
+      QStringList doublePointSplit = attributeIt->split( ":" );
+      if ( equalSplit.size() > 1 || doublePointSplit.size() > 1 )
+      {
+        QDomElement attributeElement = doc.createElement( "Attribute" );
+        QString attributeValue;
+        if ( equalSplit.size() > 1 )
+        {
+          attributeElement.setAttribute( "name", equalSplit.at( 0 ).trimmed() );
+          equalSplit.removeFirst();
+          attributeValue = equalSplit.join( QString() ).trimmed();
+        }
+        else if ( doublePointSplit.size() > 1 )
+        {
+          attributeElement.setAttribute( "name", doublePointSplit.at( 0 ).trimmed() );
+          doublePointSplit.removeFirst();
+          attributeValue = doublePointSplit.join( QString() ).trimmed();
+        }
+
+        if ( attributeValue.startsWith( "'" ) && attributeValue.endsWith( "'" ) )
+        {
+          attributeValue.chop( 1 );
+          attributeValue.remove( 0, 1 );
+        }
+        attributeElement.setAttribute( "value", attributeValue );
+
+        //Attribute needs to have a feature. Add one if not already there
+        if ( !lastGroupElemIsFeature )
+        {
+
+          QDomElement featureElem = doc.createElement( "Feature" );
+          lastGroupElem.appendChild( featureElem );
+          lastGroupElem = featureElem;
+          lastGroupElemIsFeature = true;
+        }
+
+        lastGroupElem.appendChild( attributeElement );
+      }
+      else
+      {
+        QString xmlElemName = equalSplit.at( 0 ).trimmed();
+        if ( xmlElemName.startsWith( "GetFeatureInfo results", Qt::CaseInsensitive ) )
+        {
+          continue;
+        }
+        QDomElement groupElem;
+        if ( xmlElemName.startsWith( "layer ", Qt::CaseInsensitive ) )
+        {
+          groupElem = doc.createElement( "Layer" );
+          QString layerName = xmlElemName.remove( 0, 6 );
+          if ( layerName.endsWith( ":" ) )
+          {
+            layerName.chop( 1 );
+          }
+          groupElem.setAttribute( "name", layerName );
+          layerElement.appendChild( groupElem );
+          lastGroupElemIsFeature = false;
+        }
+        else if ( xmlElemName.startsWith( "feature ", Qt::CaseInsensitive ) || xmlElemName.startsWith( "-----" ) )
+        {
+          if ( lastGroupElemIsFeature )
+          {
+            if ( xmlElemName.startsWith( "feature ", Qt::CaseInsensitive ) )
+            {
+              lastGroupElem = lastGroupElem.parentNode().toElement();
+            }
+            else if ( xmlElemName.startsWith( "-----" ) )
+            {
+              lastGroupElem = lastGroupElem.parentNode().toElement();
+              lastGroupElemIsFeature = false;
+              continue;
+            }
+          }
+
+          groupElem = doc.createElement( "Feature" );
+
+          //feature id
+          if ( !xmlElemName.startsWith( "-----" ) )
+          {
+            QString idName = xmlElemName.remove( 0, 8 );
+            if ( idName.endsWith( ":" ) )
+            {
+              idName.chop( 1 );
+            }
+            groupElem.setAttribute( "id", idName );
+          }
+          lastGroupElem.appendChild( groupElem );
+          lastGroupElemIsFeature = true;
+        }
+        else
+        {
+          continue;
+        }
+        lastGroupElem = groupElem;
+      }
     }
   }
 }

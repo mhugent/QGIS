@@ -284,6 +284,8 @@ class QgsWMSServer: public QgsOWSServer
     /** Reads and extracts the different options in the FORMAT_OPTIONS parameter*/
     void readFormatOptions( QMap<QString, QString>& formatOptions ) const;
     void readDxfLayerSettings( QList< QPair<QgsVectorLayer *, int > >& layers, const QMap<QString, QString>& formatOptionsMap ) const;
+    /** Heuristic to convert cascaded WMS feature info (text) to usable content*/
+    void addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDocument doc, const QMap<int, QVariant>& attributes ) const;
 };
 
 #endif
