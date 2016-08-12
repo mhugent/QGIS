@@ -3534,7 +3534,64 @@ void QgsWMSServer::addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDoc
     QStringList::const_iterator attributeIt = attributeList.constBegin();
     for ( ; attributeIt != attributeList.constEnd(); ++attributeIt )
     {
+      if ( attributeIt->startsWith( "@" ) )
+      {
+        //@layername att1;att2;att3 val1;val2;val3
+        QStringList spaceSeparated = attributeIt->split( " " );
 
+        int attributesIndex = 0;
+        for ( ; attributesIndex < spaceSeparated.size(); ++attributesIndex )
+        {
+          if ( spaceSeparated.at( attributesIndex ).contains( ";" ) )
+          {
+            break;
+          }
+        }
+
+        if ( spaceSeparated.size() < attributesIndex + 2 )
+        {
+          return;
+        }
+
+        //attribute names
+        QStringList attributes = spaceSeparated.at( attributesIndex ).split( ";" );
+        if ( attributes.last().isEmpty() )
+        {
+          attributes.removeLast();
+        }
+
+        for ( int i = 0; i <= attributesIndex; ++i )
+        {
+          spaceSeparated.removeFirst();
+        }
+
+        QStringList attributeValues = spaceSeparated.join( " " ).split( ";" );
+        QDomElement featureElem = doc.createElement( "Feature" );
+
+        int nFeatures = attributeValues.size() / attributes.size();
+        int attributeValueIndex = 0;
+        for ( int i = 0; i < nFeatures; ++i )
+        {
+          for ( int j = 0; j < attributes.size(); ++j )
+          {
+            QDomElement attributeElement = doc.createElement( "Attribute" );
+            attributeElement.setAttribute( "name", attributes.at( j ) );
+            if ( i < attributeValues.size() )
+            {
+              attributeElement.setAttribute( "value", attributeValues.at( attributeValueIndex ) );
+            }
+            else
+            {
+              attributeElement.setAttribute( "value", "" );
+            }
+            ++attributeValueIndex;
+            featureElem.appendChild( attributeElement );
+          }
+        }
+
+        lastGroupElem.appendChild( featureElem );
+        continue;
+      }
       QStringList equalSplit = attributeIt->split( "=" );
       QStringList doublePointSplit = attributeIt->split( ":" );
       if ( equalSplit.size() > 1 || doublePointSplit.size() > 1 )
