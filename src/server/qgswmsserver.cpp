@@ -3534,10 +3534,18 @@ void QgsWMSServer::addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDoc
     QStringList::const_iterator attributeIt = attributeList.constBegin();
     for ( ; attributeIt != attributeList.constEnd(); ++attributeIt )
     {
-      if ( attributeIt->startsWith( "@" ) )
+
+      //some wms servers use '|' as line ending
+      QString attributeString = *attributeIt;
+      if ( attributeString.endsWith( QString( "|\r" ) ) )
+      {
+        attributeString.chop( 2 );
+      }
+
+      if ( attributeString.startsWith( "@" ) )
       {
         //@layername att1;att2;att3 val1;val2;val3
-        QStringList spaceSeparated = attributeIt->split( " " );
+        QStringList spaceSeparated = attributeString.split( " " );
 
         int attributesIndex = 0;
         for ( ; attributesIndex < spaceSeparated.size(); ++attributesIndex )
@@ -3592,8 +3600,8 @@ void QgsWMSServer::addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDoc
         lastGroupElem.appendChild( featureElem );
         continue;
       }
-      QStringList equalSplit = attributeIt->split( "=" );
-      QStringList doublePointSplit = attributeIt->split( ":" );
+      QStringList equalSplit = attributeString.split( "=" );
+      QStringList doublePointSplit = attributeString.split( ":" );
       if ( equalSplit.size() > 1 || doublePointSplit.size() > 1 )
       {
         QDomElement attributeElement = doc.createElement( "Attribute" );
@@ -3602,13 +3610,13 @@ void QgsWMSServer::addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDoc
         {
           attributeElement.setAttribute( "name", equalSplit.at( 0 ).trimmed() );
           equalSplit.removeFirst();
-          attributeValue = equalSplit.join( QString() ).trimmed();
+          attributeValue = equalSplit.join( "=" ).trimmed();
         }
         else if ( doublePointSplit.size() > 1 )
         {
           attributeElement.setAttribute( "name", doublePointSplit.at( 0 ).trimmed() );
           doublePointSplit.removeFirst();
-          attributeValue = doublePointSplit.join( QString() ).trimmed();
+          attributeValue = doublePointSplit.join( ":" ).trimmed();
         }
 
         if ( attributeValue.startsWith( "'" ) && attributeValue.endsWith( "'" ) )
