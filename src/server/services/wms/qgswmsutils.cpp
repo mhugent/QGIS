@@ -24,6 +24,8 @@
 #include "qgsmediancut.h"
 #include "qgsconfigcache.h"
 #include "qgsserverprojectutils.h"
+//for geotiff export
+#include "cpl_string.h"
 
 namespace QgsWms
 {
@@ -87,6 +89,10 @@ namespace QgsWms
     {
       return JPEG;
     }
+    else if ( format.compare( QLatin1String( "geotiff" ), Qt::CaseInsensitive ) == 0 )
+    {
+      return GEOTIFF;
+    }
     else
     {
       // lookup for png with mode
@@ -118,7 +124,7 @@ namespace QgsWms
 
   // Write image response
   void writeImage( QgsServerResponse &response, QImage &img, const QString &formatStr,
-                   int imageQuality )
+                   int imageQuality, const QgsRectangle *mapExtent, const QgsCoordinateReferenceSystem *mapCrs )
   {
     ImageOutputFormat outputFormat = parseImageFormat( formatStr );
     QImage  result;
@@ -159,21 +165,27 @@ namespace QgsWms
         contentType = "image/jpeg";
         saveFormat = "JPEG";
         break;
+      case GEOTIFF:
+        //extent
+        //crs
+        //call writeGeoTiff -> writeGeorefInfo u. writeImageToGDALDataSource
+        writeGeoTiff( img, response, mapExtent, mapCrs );
+        break;
       default:
         QgsMessageLog::logMessage( QString( "Unsupported format string %1" ).arg( formatStr ) );
         saveFormat = UNKN;
         break;
     }
 
-    if ( outputFormat != UNKN )
-    {
-      response.setHeader( "Content-Type", contentType );
-      result.save( response.io(), qPrintable( saveFormat ), imageQuality );
-    }
-    else
+    if ( outputFormat == UNKN )
     {
       throw QgsServiceException( "InvalidFormat",
                                  QString( "Output format '%1' is not supported in the GetMap request" ).arg( formatStr ) );
+    }
+    else
+    {
+      response.setHeader( "Content-Type", contentType );
+      result.save( response.io(), qPrintable( saveFormat ), imageQuality );
     }
   }
 
@@ -193,6 +205,97 @@ namespace QgsWms
         return QgsRectangle();
     }
     return QgsRectangle( d[0], d[1], d[2], d[3] );
+  }
+
+  void writeGeoTiff( const QImage &img, QgsServerResponse &response, const QgsRectangle *mapExtent, const QgsCoordinateReferenceSystem *mapCrs )
+  {
+    if ( !mapExtent || !mapCrs )
+    {
+      return; //throw exception?
+    }
+
+    //save image into vsi file with GDAL
+    GDALDriverH geoTiffDriver = GDALGetDriverByName( "GTiff" );
+    GDALDatasetH geoTiffDS;
+    char **options = NULL;
+    options = CSLSetNameValue( options, "COMPRESS", "LZW" );
+    geoTiffDS = GDALCreate( geoTiffDriver, "/vsimem/wms.tif", img.width(), img.height(), 4, GDT_Byte, options );
+
+    writeGeorefInfo( geoTiffDS, *mapExtent, *mapCrs, img.width(), img.height() );
+    writeImageToGDALDataSource( geoTiffDS, img );
+
+    CSLDestroy( options );
+    GDALClose( geoTiffDS );
+
+    //get content of vsi file into QBuffer ba
+    long long unsigned int dataLength;
+    GByte *data = VSIGetMemFileBuffer( "/vsimem/wms.tif", &dataLength, TRUE );
+
+    response.setHeader( QStringLiteral( "Content-Type" ), QStringLiteral( "image/geotiff" ) );
+    response.io()->write( reinterpret_cast< const char *>( data ), dataLength );
+  }
+
+  void writeGeorefInfo( GDALDatasetH ds, const QgsRectangle &extent, const QgsCoordinateReferenceSystem &crs, int pixelWidth, int pixelHeight )
+  {
+    if ( extent.isNull() )
+    {
+      return;
+    }
+
+    double geoTransform[6] = { extent.xMinimum(), extent.width() / ( double )pixelWidth, 0, extent.yMaximum(), 0, -( extent.height() / ( double )pixelHeight ) };
+    GDALSetGeoTransform( ds, geoTransform );
+
+    if ( crs.isValid() )
+    {
+      GDALSetProjection( ds, crs.toWkt().toLocal8Bit().data() );
+    }
+  }
+
+  void writeImageToGDALDataSource( GDALDatasetH ds, const QImage &img )
+  {
+    GDALRasterBandH redBand = GDALGetRasterBand( ds, 1 );
+    GDALRasterBandH greenBand = GDALGetRasterBand( ds, 2 );
+    GDALRasterBandH blueBand = GDALGetRasterBand( ds, 3 );
+    GDALRasterBandH alphaBand = GDALGetRasterBand( ds, 4 );
+
+    //separate image into four channels
+    int nPixels = img.width() * img.height();
+    void *redData = malloc( nPixels );
+    void *greenData = malloc( nPixels );
+    void *blueData = malloc( nPixels );
+    void *alphaData = malloc( nPixels );
+
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    int alpha = 255;
+
+    int  currentPixel = 0;
+    for ( int i = 0; i < img.height(); ++i )
+    {
+      for ( int j = 0; j < img.width(); ++j )
+      {
+        QRgb rgb = img.pixel( j, i );
+        red = qRed( rgb ); green = qGreen( rgb ); blue = qBlue( rgb ); alpha = qAlpha( rgb );
+        if ( img.format() == QImage::Format_ARGB32_Premultiplied )
+        {
+          double a = alpha / 255.0;
+          red /= a; green /= a; blue /= a;
+        }
+        memcpy( ( char * )redData + currentPixel, &red, 1 );
+        memcpy( ( char * )greenData + currentPixel, &green, 1 );
+        memcpy( ( char * )blueData + currentPixel, &blue, 1 );
+        memcpy( ( char * )alphaData + currentPixel, &alpha, 1 );
+        ++currentPixel;
+      }
+    }
+
+    //do rasterIO to get image content into geoTiffDS
+    GDALRasterIO( redBand, GF_Write, 0, 0, img.width(), img.height(), redData, img.width(), img.height(), GDT_Byte, 0, 0 );
+    GDALRasterIO( greenBand, GF_Write, 0, 0, img.width(), img.height(), greenData, img.width(), img.height(), GDT_Byte, 0, 0 );
+    GDALRasterIO( blueBand, GF_Write, 0, 0, img.width(), img.height(), blueData, img.width(), img.height(), GDT_Byte, 0, 0 );
+    GDALRasterIO( alphaBand, GF_Write, 0, 0, img.width(), img.height(), alphaData, img.width(), img.height(), GDT_Byte, 0, 0 );
+    free( redData ); free( greenData ); free( blueData ); free( alphaData );
   }
 
 } // namespace QgsWms

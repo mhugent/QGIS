@@ -18,6 +18,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#include "qgsmapsettings.h"
 #include "qgswmsutils.h"
 #include "qgswmsgetmap.h"
 #include "qgswmsrenderer.h"
@@ -36,11 +37,14 @@ namespace QgsWms
     QgsServerRequest::Parameters params = request.parameters();
     QgsRenderer renderer( serverIface, project, params, getConfigParser( serverIface ) );
 
-    std::unique_ptr<QImage> result( renderer.getMap() );
+    QgsMapSettings mapSettings;
+    std::unique_ptr<QImage> result( renderer.getMap( mapSettings ) );
     if ( result )
     {
       QString format = params.value( QStringLiteral( "FORMAT" ), QStringLiteral( "PNG" ) );
-      writeImage( response, *result, format, renderer.getImageQuality() );
+      QgsRectangle extent = mapSettings.extent();
+      QgsCoordinateReferenceSystem crs = mapSettings.destinationCrs();
+      writeImage( response, *result, format, renderer.getImageQuality(), &extent, &crs );
     }
     else
     {

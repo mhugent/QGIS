@@ -475,6 +475,7 @@ namespace QgsWms
     appendFormat( elem, QStringLiteral( "image/png; mode=8bit" ) );
     appendFormat( elem, QStringLiteral( "image/png; mode=1bit" ) );
     appendFormat( elem, QStringLiteral( "application/dxf" ) );
+    appendFormat( elem, QStringLiteral( "image/geotiff" ) );
     elem.appendChild( dcpTypeElem.cloneNode().toElement() ); //this is the same as for 'GetCapabilities'
     requestElem.appendChild( elem );
 

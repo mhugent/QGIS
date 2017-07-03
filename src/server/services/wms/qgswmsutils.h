@@ -26,6 +26,7 @@
 #include "qgsmodule.h"
 #include "qgswmsconfigparser.h"
 #include "qgswmsserviceexception.h"
+#include "gdal.h"
 
 class QgsRectangle;
 
@@ -49,7 +50,8 @@ namespace QgsWms
     PNG8,
     PNG16,
     PNG1,
-    JPEG
+    JPEG,
+    GEOTIFF
   };
 
   /** Return the highest version supported by this implementation
@@ -76,7 +78,7 @@ namespace QgsWms
   /** Write image response
    */
   void writeImage( QgsServerResponse &response, QImage &img, const QString &formatStr,
-                   int imageQuality = -1 );
+                   int imageQuality = -1, const QgsRectangle *mapExtent = 0, const QgsCoordinateReferenceSystem *mapCrs = 0 );
 
   /**
    * Parse bbox parameter
@@ -90,6 +92,11 @@ namespace QgsWms
   /** Reads the layers and style lists from the parameters LAYERS and STYLES
    */
   void readLayersAndStyles( const QgsServerRequest::Parameters &parameters, QStringList &layersList, QStringList &stylesList );
+
+  //write geotiff with GDAL
+  void writeGeoTiff( const QImage &img, QgsServerResponse &response, const QgsRectangle *mapExtent, const QgsCoordinateReferenceSystem *mapCrs );
+  void writeGeorefInfo( GDALDatasetH ds, const QgsRectangle &extent, const QgsCoordinateReferenceSystem &crs, int pixelWidth, int pixelHeight );
+  void writeImageToGDALDataSource( GDALDatasetH ds, const QImage &img );
 
 } // namespace QgsWms
 
