@@ -2552,11 +2552,41 @@ int QgsWMSServer::featureInfoFromRasterLayer( QgsRasterLayer* layer,
   }
 
   QgsMessageLog::logMessage( QString( "infoPoint: %1 %2" ).arg( infoPoint->x() ).arg( infoPoint->y() ) );
-
-  if ( !( layer->dataProvider()->capabilities() & QgsRasterDataProvider::IdentifyValue ) )
+  int providerCapabilities = layer->dataProvider()->capabilities();
+  if ( !( providerCapabilities & QgsRasterDataProvider::Identify ) )
   {
     return 1;
   }
+
+  QgsRaster::IdentifyFormat identifyFormat;
+  if ( providerCapabilities & QgsRasterInterface::IdentifyValue )
+  {
+    identifyFormat = QgsRaster::IdentifyFormatValue;
+  }
+  else if ( providerCapabilities & QgsRasterInterface::IdentifyText )
+  {
+    identifyFormat = QgsRaster::IdentifyFormatText;
+  }
+
+  if ( identifyFormat == QgsRaster::IdentifyFormatText )
+  {
+    QMap<int, QVariant> attributes;
+    // use context extent, width height (comes with request) to use WCS cache
+    // We can only use context if raster is not reprojected, otherwise it is difficult
+    // to guess correct source resolution
+    if ( mMapRenderer->hasCrsTransformEnabled() && layer->dataProvider()->crs() != mMapRenderer->destinationCrs() )
+    {
+      attributes = layer->dataProvider()->identify( *infoPoint, identifyFormat ).results();
+    }
+    else
+    {
+      attributes = layer->dataProvider()->identify( *infoPoint, identifyFormat, mMapRenderer->extent(), mMapRenderer->outputSize().width(), mMapRenderer->outputSize().height() ).results();
+    }
+    addWmsFeatureInfoFromText( layerElement, infoDocument, attributes );
+    return 0;
+  }
+
+
   QgsRasterIdentifyResult identifyResult;
   // use context extent, width height (comes with request) to use WCS cache
   // We can only use context if raster is not reprojected, otherwise it is difficult
@@ -3636,6 +3666,183 @@ void QgsWMSServer::readDxfLayerSettings( QList< QgsDxfExport::DxfLayer >& layers
       }
 
       layers.append( QgsDxfExport::DxfLayer( vlayer, layerAttribute ) );
+    }
+  }
+}
+
+void QgsWMSServer::addWmsFeatureInfoFromText( QDomElement& layerElement, QDomDocument doc, const QMap<int, QVariant>& attributes ) const
+{
+  QDomElement lastGroupElem = layerElement;
+  bool lastGroupElemIsFeature = false;
+
+  QMap<int, QVariant>::const_iterator it = attributes.constBegin();
+  for ( ; it != attributes.constEnd(); ++it )
+  {
+    QStringList attributeList = it.value().toString().split( "\n", QString::SkipEmptyParts );
+    QStringList::const_iterator attributeIt = attributeList.constBegin();
+    for ( ; attributeIt != attributeList.constEnd(); ++attributeIt )
+    {
+
+      //some wms servers use '|' as line ending
+      QString attributeString = *attributeIt;
+      if ( attributeString.endsWith( QString( "|\r" ) ) )
+      {
+        attributeString.chop( 2 );
+      }
+
+      if ( attributeString.startsWith( "@" ) )
+      {
+        //@layername att1;att2;att3 val1;val2;val3
+        QStringList spaceSeparated = attributeString.split( " " );
+
+        int attributesIndex = 0;
+        for ( ; attributesIndex < spaceSeparated.size(); ++attributesIndex )
+        {
+          if ( spaceSeparated.at( attributesIndex ).contains( ";" ) )
+          {
+            break;
+          }
+        }
+
+        if ( spaceSeparated.size() < attributesIndex + 2 )
+        {
+          return;
+        }
+
+        //attribute names
+        QStringList attributes = spaceSeparated.at( attributesIndex ).split( ";" );
+        if ( attributes.last().isEmpty() )
+        {
+          attributes.removeLast();
+        }
+
+        for ( int i = 0; i <= attributesIndex; ++i )
+        {
+          spaceSeparated.removeFirst();
+        }
+
+        QStringList attributeValues = spaceSeparated.join( " " ).split( ";" );
+        QDomElement featureElem = doc.createElement( "Feature" );
+
+        int nFeatures = attributeValues.size() / attributes.size();
+        int attributeValueIndex = 0;
+        for ( int i = 0; i < nFeatures; ++i )
+        {
+          for ( int j = 0; j < attributes.size(); ++j )
+          {
+            QDomElement attributeElement = doc.createElement( "Attribute" );
+            attributeElement.setAttribute( "name", attributes.at( j ) );
+            if ( i < attributeValues.size() )
+            {
+              attributeElement.setAttribute( "value", attributeValues.at( attributeValueIndex ) );
+            }
+            else
+            {
+              attributeElement.setAttribute( "value", "" );
+            }
+            ++attributeValueIndex;
+            featureElem.appendChild( attributeElement );
+          }
+        }
+
+        lastGroupElem.appendChild( featureElem );
+        continue;
+      }
+      QStringList equalSplit = attributeString.split( "=" );
+      QStringList doublePointSplit = attributeString.split( ":" );
+      if ( equalSplit.size() > 1 || doublePointSplit.size() > 1 )
+      {
+        QDomElement attributeElement = doc.createElement( "Attribute" );
+        QString attributeValue;
+        if ( equalSplit.size() > 1 )
+        {
+          attributeElement.setAttribute( "name", equalSplit.at( 0 ).trimmed() );
+          equalSplit.removeFirst();
+          attributeValue = equalSplit.join( "=" ).trimmed();
+        }
+        else if ( doublePointSplit.size() > 1 )
+        {
+          attributeElement.setAttribute( "name", doublePointSplit.at( 0 ).trimmed() );
+          doublePointSplit.removeFirst();
+          attributeValue = doublePointSplit.join( ":" ).trimmed();
+        }
+
+        if ( attributeValue.startsWith( "'" ) && attributeValue.endsWith( "'" ) )
+        {
+          attributeValue.chop( 1 );
+          attributeValue.remove( 0, 1 );
+        }
+        attributeElement.setAttribute( "value", attributeValue );
+
+        //Attribute needs to have a feature. Add one if not already there
+        if ( !lastGroupElemIsFeature )
+        {
+
+          QDomElement featureElem = doc.createElement( "Feature" );
+          lastGroupElem.appendChild( featureElem );
+          lastGroupElem = featureElem;
+          lastGroupElemIsFeature = true;
+        }
+
+        lastGroupElem.appendChild( attributeElement );
+      }
+      else
+      {
+        QString xmlElemName = equalSplit.at( 0 ).trimmed();
+        if ( xmlElemName.startsWith( "GetFeatureInfo results", Qt::CaseInsensitive ) )
+        {
+          continue;
+        }
+        QDomElement groupElem;
+        if ( xmlElemName.startsWith( "layer ", Qt::CaseInsensitive ) )
+        {
+          groupElem = doc.createElement( "Layer" );
+          QString layerName = xmlElemName.remove( 0, 6 );
+          if ( layerName.endsWith( ":" ) )
+          {
+            layerName.chop( 1 );
+          }
+          groupElem.setAttribute( "name", layerName );
+          layerElement.appendChild( groupElem );
+          lastGroupElemIsFeature = false;
+        }
+        else if ( xmlElemName.startsWith( "feature ", Qt::CaseInsensitive ) || xmlElemName.startsWith( "-----" ) )
+        {
+          if ( lastGroupElemIsFeature )
+          {
+            if ( xmlElemName.startsWith( "feature ", Qt::CaseInsensitive ) )
+            {
+              lastGroupElem = lastGroupElem.parentNode().toElement();
+            }
+            else if ( xmlElemName.startsWith( "-----" ) )
+            {
+              lastGroupElem = lastGroupElem.parentNode().toElement();
+              lastGroupElemIsFeature = false;
+              continue;
+            }
+          }
+
+          groupElem = doc.createElement( "Feature" );
+
+          //feature id
+          if ( !xmlElemName.startsWith( "-----" ) )
+          {
+            QString idName = xmlElemName.remove( 0, 8 );
+            if ( idName.endsWith( ":" ) )
+            {
+              idName.chop( 1 );
+            }
+            groupElem.setAttribute( "id", idName );
+          }
+          lastGroupElem.appendChild( groupElem );
+          lastGroupElemIsFeature = true;
+        }
+        else
+        {
+          continue;
+        }
+        lastGroupElem = groupElem;
+      }
     }
   }
 }
