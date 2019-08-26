@@ -43,6 +43,9 @@ class SERVER_EXPORT QgsWCSProjectParser
     void describeCoverage( const QString& aCoveName, QDomElement& parentElement, QDomDocument& doc ) const;
     QList<QgsMapLayer*> mapLayerFromCoverage( const QString& cName, bool useCache = true ) const;
 
+    /** Trigger update of QgsProjetc properties in mProjectParser*/
+    void newRequest();
+
   private:
     QgsServerProjectParser* mProjectParser;
 #ifdef HAVE_SERVER_PYTHON_PLUGINS

@@ -74,6 +74,12 @@ QgsServerProjectParser::QgsServerProjectParser( QDomDocument* xmlDoc, const QStr
       }
     }
   }
+
+  updateProjectProperties();
+}
+
+void QgsServerProjectParser::updateProjectProperties()
+{
   // Setting the QgsProject instance fileName
   // to help converting relative pathes to absolute
   if ( !mProjectPath.isEmpty() )
@@ -84,10 +90,6 @@ QgsServerProjectParser::QgsServerProjectParser( QDomDocument* xmlDoc, const QStr
   // Set the project scope variables
   QStringList variableNames = readListEntry( "Variables", "variableNames" );
   QStringList variableValues = readListEntry( "Variables", "variableValues" );
-
-  //read values
-
-  //append standard values
 
   QgsProject::instance()->writeEntry( "Variables", "/variableNames", variableNames );
   QgsProject::instance()->writeEntry( "Variables", "/variableValues", variableValues );

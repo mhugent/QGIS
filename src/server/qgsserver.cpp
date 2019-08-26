@@ -33,6 +33,7 @@
 #include "qgswmsserver.h"
 #include "qgswfsserver.h"
 #include "qgswcsserver.h"
+#include "qgswcsprojectparser.h"
 #include "qgsmapserviceexception.h"
 #include "qgspallabeling.h"
 #include "qgsnetworkaccessmanager.h"
@@ -576,6 +577,7 @@ QPair<QByteArray, QByteArray> QgsServer::handleRequest( const QString& queryStri
       }
       else
       {
+        p->newRequest();
         QgsWCSServer wcsServer(
           configFilePath
           , parameterMap
@@ -602,6 +604,7 @@ QPair<QByteArray, QByteArray> QgsServer::handleRequest( const QString& queryStri
       }
       else
       {
+        p->newRequest();
         QgsWFSServer wfsServer(
           configFilePath
           , parameterMap
@@ -628,6 +631,7 @@ QPair<QByteArray, QByteArray> QgsServer::handleRequest( const QString& queryStri
       }
       else
       {
+        p->newRequest();
         QgsWMSServer wmsServer(
           configFilePath
           , parameterMap

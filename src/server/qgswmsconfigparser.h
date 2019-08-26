@@ -158,6 +158,9 @@ class SERVER_EXPORT QgsWMSConfigParser
     QMap<QString, QDomDocument*> mExternalGMLDatasets;
 #endif //0
 
+    /** Give config parser the possibility to update / cleanup things upon a new request. Default implementation does nothing*/
+    virtual void newRequest() {}
+
   private:
 
     //helper methods for 'addHighlightLayers'

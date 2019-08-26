@@ -44,6 +44,16 @@ QgsWFSProjectParser::~QgsWFSProjectParser()
   delete mProjectParser;
 }
 
+void QgsWFSProjectParser::newRequest()
+{
+  if ( !mProjectParser )
+  {
+    return;
+  }
+
+  mProjectParser->updateProjectProperties();
+}
+
 void QgsWFSProjectParser::serviceCapabilities( QDomElement& parentElement, QDomDocument& doc ) const
 {
   mProjectParser->serviceCapabilities( parentElement, doc, "WFS" );

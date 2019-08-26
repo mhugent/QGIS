@@ -45,6 +45,16 @@ QgsWCSProjectParser::~QgsWCSProjectParser()
   delete mProjectParser;
 }
 
+void QgsWCSProjectParser::newRequest()
+{
+  if ( !mProjectParser )
+  {
+    return;
+  }
+
+  mProjectParser->updateProjectProperties();
+}
+
 void QgsWCSProjectParser::serviceCapabilities( QDomElement& parentElement, QDomDocument& doc ) const
 {
   mProjectParser->serviceCapabilities( parentElement, doc, "WCS" );

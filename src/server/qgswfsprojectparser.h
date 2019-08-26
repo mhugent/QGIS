@@ -56,6 +56,9 @@ class SERVER_EXPORT QgsWFSProjectParser
     QSet<QString> wfstInsertLayers() const;
     QSet<QString> wfstDeleteLayers() const;
 
+    /** Trigger update of QgsProjetc properties in mProjectParser*/
+    void newRequest();
+
   private:
     QgsServerProjectParser* mProjectParser;
     QRegExp mCleanTagNameRegExp;

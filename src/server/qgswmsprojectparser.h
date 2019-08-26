@@ -133,6 +133,9 @@ class SERVER_EXPORT QgsWMSProjectParser : public QgsWMSConfigParser
     /** True if tile render mode is enabled in the configuration*/
     bool tileRenderMode() const override;
 
+    /** Trigger update of QgsProjetc properties in mProjectParser*/
+    void newRequest() override;
+
   private:
     QgsServerProjectParser* mProjectParser;
 #ifdef HAVE_SERVER_PYTHON_PLUGINS

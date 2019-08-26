@@ -136,6 +136,8 @@ class SERVER_EXPORT QgsServerProjectParser
 
     QStringList customLayerOrder() const { return mCustomLayerOrder; }
 
+    void updateProjectProperties();
+
   private:
 
     /** Content of project file*/

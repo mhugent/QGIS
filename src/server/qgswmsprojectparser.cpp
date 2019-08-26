@@ -2419,6 +2419,16 @@ bool QgsWMSProjectParser::tileRenderMode() const
   return ( renderMapTileElem.text() == "1" );
 }
 
+void QgsWMSProjectParser::newRequest()
+{
+  if ( !mProjectParser )
+  {
+    return;
+  }
+
+  mProjectParser->updateProjectProperties();
+}
+
 QDomElement QgsWMSProjectParser::composerByName( const QString& composerName ) const
 {
   QDomElement composerElem;
