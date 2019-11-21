@@ -154,6 +154,16 @@ SET(QGIS_ANALYSIS_SRCS
   vector/qgsgeometrysnapper.cpp
   vector/qgsgeometrysnappersinglesource.cpp
   vector/qgszonalstatistics.cpp
+  vector/abstracttool.cpp
+  vector/buffertool.cpp
+  vector/convexhulltool.cpp
+  #vector/differencetool.cpp
+  vector/dissolvetool.cpp
+  #vector/intersectiontool.cpp
+  #vector/sliverpolygontool.cpp
+  #vector/symdifferencetool.cpp
+  #vector/uniontool.cpp
+  vector/utils.cpp
 
   mesh/qgsmeshcalcnode.cpp
   mesh/qgsmeshcalculator.cpp
@@ -299,6 +309,7 @@ SET(QGIS_ANALYSIS_HDRS
   vector/qgsgeometrysnapper.h
   vector/qgsgeometrysnappersinglesource.h
   vector/qgszonalstatistics.h
+  vector/abstracttool.h
 )
 
 FIND_PACKAGE(EXIV2 REQUIRED)

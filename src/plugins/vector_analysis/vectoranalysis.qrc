@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/vectoranalysis">
+        <file>icons/buffer.png</file>
+        <file>icons/clip.png</file>
+        <file>icons/convex_hull.png</file>
+        <file>icons/difference.png</file>
+        <file>icons/dissolve.png</file>
+        <file>icons/geoprocessing.png</file>
+        <file>icons/intersect.png</file>
+        <file>icons/sliverpolygon.png</file>
+        <file>icons/sym_difference.png</file>
+        <file>icons/union.png</file>
+    </qresource>
+</RCC>
