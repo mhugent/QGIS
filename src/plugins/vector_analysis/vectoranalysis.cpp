@@ -23,6 +23,7 @@
 #include "convexhulltooldialog.h"
 #include "dissolvetooldialog.h"
 #include "intersectiontool.h"
+#include "uniontool.h"
 
 #if 0
 #include "geoprocessing/differencetool.h"
@@ -159,11 +160,9 @@ void VectorAnalysis::runSymDifferenceTool()
 
 void VectorAnalysis::runUnionTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::UnionTool>( mQGisIface, tr( "Union" ) );
   mCurrDialog->show();
-#endif //0
 }
 
 QIcon VectorAnalysis::getPluginIcon( const QString &name )

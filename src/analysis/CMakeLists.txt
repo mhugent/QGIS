@@ -162,7 +162,7 @@ SET(QGIS_ANALYSIS_SRCS
   vector/intersectiontool.cpp
   #vector/sliverpolygontool.cpp
   #vector/symdifferencetool.cpp
-  #vector/uniontool.cpp
+  vector/uniontool.cpp
   vector/utils.cpp
 
   mesh/qgsmeshcalcnode.cpp
