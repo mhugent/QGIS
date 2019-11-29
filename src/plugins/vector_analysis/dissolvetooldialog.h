@@ -1,5 +1,5 @@
 /***************************************************************************
- *  intersectiontool.h                                                 *
+ *  dissolvetooldialog.h                                                   *
  *  -------------------                                                    *
  *  begin                : Jun 10, 2014                                    *
  *  copyright            : (C) 2014 by Sandro Mani / Sourcepole AG         *
@@ -15,40 +15,31 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef VECTORANALYSIS_INTERSECTION_TOOL_H
-#define VECTORANALYSIS_INTERSECTION_TOOL_H
+#ifndef VECTORANALYSIS_DISSOLVETOOLDIALOG_H
+#define VECTORANALYSIS_DISSOLVETOOLDIALOG_H
 
-#include "abstracttool.h"
+#include "geoprocessingtooldialog.h"
 
 namespace Geoprocessing
 {
 
-  class ANALYSIS_EXPORT IntersectionTool : public AbstractTool
-  {
-    public:
-      IntersectionTool( QgsVectorLayer *layerA,
-                        QgsVectorLayer *layerB,
-                        bool selectedA, bool selectedB,
-                        const QString &output,
-                        const QString &outputDriverName,
-                        OutputFields outputFields,
-                        OutputCrs outputCrs,
-                        double precision );
+  namespace Utils { class SummarizeUI; }
+  namespace Utils { class GroupUI; }
 
-      static bool validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString &errorMsgs );
+  class DissolveToolDialog : public GeoprocessingToolDialog
+  {
+      Q_OBJECT
+    public:
+      DissolveToolDialog( QgisInterface *iface );
 
     private:
-      QgsSpatialIndex mSpatialIndex;
-      QgsVectorLayer *mLayerA;
-      QgsVectorLayer *mLayerB;
-      bool mSelectedA;
-      bool mSelectedB;
-      OutputFields mOutputFileds;
+      Utils::GroupUI *mGroupUI;
+      Utils::SummarizeUI *mSummarizeUI;
+      QCheckBox *mMultiPartCheckbox;
 
-      void prepare();
-      void processFeature( const Job *job );
+      AbstractTool *setupTool();
   };
 
 } // Geoprocessing
 
-#endif // VECTORANALYSIS_INTERSECTION_TOOL_H
+#endif // VECTORANALYSIS_DISSOLVETOOLDIALOG_H

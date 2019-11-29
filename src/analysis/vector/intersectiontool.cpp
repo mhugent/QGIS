@@ -17,8 +17,9 @@
 
 #include <QApplication>
 #include "intersectiontool.h"
-#include "geos_c.h"
 #include "qgsgeometry.h"
+#include "qgsgeos.h"
+#include "qgsvectorlayer.h"
 
 namespace Geoprocessing
 {
@@ -28,10 +29,10 @@ namespace Geoprocessing
     QgsVectorLayer *layerB,
     bool selectedA, bool selectedB,
     const QString &output,
-    const QString& outputDriverName,
+    const QString &outputDriverName,
     OutputFields outputFields, OutputCrs outputCrs,
     double precision )
-      : AbstractTool( precision )
+    : AbstractTool( precision )
   {
     mLayerA = layerA;
     mLayerB = layerB;
@@ -62,41 +63,43 @@ namespace Geoprocessing
     // Get currently processed feature
     QgsFeature f;
     if ( !getFeatureAtId( f, job->featureid, mLayerA ) ) return;
-    QgsGeometry* geom = f.geometry();
+    QgsGeometry geom = f.geometry();
 
     // Get features which intersect current feature
-    QVector<QgsFeature*> featureList = getIntersects( geom->boundingBox(), mSpatialIndex, mLayerB );
+    QVector<QgsFeature *> featureList = getIntersects( geom.boundingBox(), mSpatialIndex, mLayerB );
 
     // Perform intersections
-    const GEOSPreparedGeometry* featureGeomPrepared = GEOSPrepare_r( QgsGeometry::getGEOSHandler(), geom->asGeos() );
-    QVector<QgsFeature*> outputFeatures; // Use pointers to prevent copies
+    QgsGeos geos( geom.constGet() );
+    geos.prepareGeometry();
+
+    QVector<QgsFeature *> outputFeatures; // Use pointers to prevent copies
     QString errorMsg;
 
-    foreach ( QgsFeature* testFeature, featureList )
+    for ( QgsFeature *testFeature : featureList )
     {
-      QgsGeometry* testGeom = testFeature->geometry();
-      if ( GEOSPreparedIntersects_r( QgsGeometry::getGEOSHandler(), featureGeomPrepared, testGeom->asGeos() ) )
+      QgsGeometry testGeom = testFeature->geometry();
+      if ( geos.intersects( testGeom.constGet() ) )
       {
-        QgsGeometry* outGeometry = geom->intersection( testGeom, &errorMsg );
-        if ( !outGeometry )
+        QgsGeometry outGeometry = geom.intersection( testGeom );
+        if ( outGeometry.isNull() )
         {
-          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayerA, job->featureid ) << ErrorFeature( mLayerB, testFeature->id() ), errorMsg );
+          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayerA, job->featureid ) << ErrorFeature( mLayerB, testFeature->id() ), outGeometry.lastError() );
         }
-        else if ( outGeometry->isGeosEmpty() )
+        else if ( outGeometry.isEmpty() )
         {
-          delete outGeometry;
           reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayerA, job->featureid ) << ErrorFeature( mLayerB, testFeature->id() ), QApplication::translate( "IntersectionTool", "GEOSIntersection returned empty geometry even though the geometries intersect" ) );
         }
         else
         {
-          QgsFeature* outFeature = new QgsFeature();
+          QgsFeature *outFeature = new QgsFeature();
           outFeature->setGeometry( outGeometry );
-          outFeature->setAttributes( combineAttributes( &f.attributes(), &testFeature->attributes(), mOutputFileds ) );
+          QgsAttributes fAtt = f.attributes();
+          QgsAttributes testAtt = testFeature->attributes();
+          outFeature->setAttributes( combineAttributes( &fAtt, &testAtt, mOutputFileds ) );
           outputFeatures.append( outFeature );
         }
       }
     }
-    GEOSPreparedGeom_destroy_r( QgsGeometry::getGEOSHandler(), featureGeomPrepared );
     writeFeatures( outputFeatures );
     qDeleteAll( outputFeatures );
     qDeleteAll( featureList );

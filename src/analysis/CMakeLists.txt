@@ -159,7 +159,7 @@ SET(QGIS_ANALYSIS_SRCS
   vector/convexhulltool.cpp
   #vector/differencetool.cpp
   vector/dissolvetool.cpp
-  #vector/intersectiontool.cpp
+  vector/intersectiontool.cpp
   #vector/sliverpolygontool.cpp
   #vector/symdifferencetool.cpp
   #vector/uniontool.cpp

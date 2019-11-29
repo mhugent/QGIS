@@ -18,10 +18,11 @@
 #include "vectoranalysis.h"
 #include "plugin.h"
 
+#include "binarytooldialog.h"
 #include "buffertooldialog.h"
 #include "convexhulltooldialog.h"
 #include "dissolvetooldialog.h"
-
+#include "intersectiontool.h"
 
 #if 0
 #include "geoprocessing/differencetool.h"
@@ -41,24 +42,24 @@
 #include <QMenu>
 #include <QSettings>
 
-VectorAnalysis::VectorAnalysis( QgisInterface * theQgisInterface ):
-    QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType ),
-    mQGisIface( theQgisInterface ), mCurrDialog( 0 )
+VectorAnalysis::VectorAnalysis( QgisInterface *theQgisInterface ):
+  QgisPlugin( sName, sDescription, sCategory, sPluginVersion, sPluginType ),
+  mQGisIface( theQgisInterface ), mCurrDialog( 0 )
 {
 }
 
 void VectorAnalysis::initGui()
 {
   // Construct menu
-  QAction* bufferAction = new QAction( getPluginIcon( "buffer.png" ), tr( "Buffer" ), this );
-  QAction* clipAction = new QAction( getPluginIcon( "clip.png" ), tr( "Clip" ), this );
-  QAction* convexhullAction = new QAction( getPluginIcon( "convex_hull.png" ), tr( "Convex Hull" ), this );
-  QAction* differenceAction = new QAction( getPluginIcon( "difference.png" ), tr( "Difference" ), this );
-  QAction* dissolveAction = new QAction( getPluginIcon( "dissolve.png" ), tr( "Dissolve" ), this );
-  QAction* intersectAction = new QAction( getPluginIcon( "intersect.png" ), tr( "Intersect" ), this );
-  QAction* sliverPolygonsAction = new QAction( getPluginIcon( "sliverpolygon.png" ), tr( "Eliminate sliver polygons" ), this );
-  QAction* symDifferenceAction = new QAction( getPluginIcon( "sym_difference.png" ), tr( "Symmetric difference" ), this );
-  QAction* unionAction = new QAction( getPluginIcon( "union.png" ), tr( "Union" ), this );
+  QAction *bufferAction = new QAction( getPluginIcon( "buffer.png" ), tr( "Buffer" ), this );
+  QAction *clipAction = new QAction( getPluginIcon( "clip.png" ), tr( "Clip" ), this );
+  QAction *convexhullAction = new QAction( getPluginIcon( "convex_hull.png" ), tr( "Convex Hull" ), this );
+  QAction *differenceAction = new QAction( getPluginIcon( "difference.png" ), tr( "Difference" ), this );
+  QAction *dissolveAction = new QAction( getPluginIcon( "dissolve.png" ), tr( "Dissolve" ), this );
+  QAction *intersectAction = new QAction( getPluginIcon( "intersect.png" ), tr( "Intersect" ), this );
+  QAction *sliverPolygonsAction = new QAction( getPluginIcon( "sliverpolygon.png" ), tr( "Eliminate sliver polygons" ), this );
+  QAction *symDifferenceAction = new QAction( getPluginIcon( "sym_difference.png" ), tr( "Symmetric difference" ), this );
+  QAction *unionAction = new QAction( getPluginIcon( "union.png" ), tr( "Union" ), this );
 
   mGeoprocessingMenu = new QMenu( tr( "&Geoprocessing Tools" ), mQGisIface->vectorMenu() );
   mGeoprocessingMenu->setIcon( QIcon( ":/vectoranalysis/icons/geoprocessing.png" ) );
@@ -133,11 +134,9 @@ void VectorAnalysis::runDissolveTool()
 
 void VectorAnalysis::runIntersectionTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::IntersectionTool>( mQGisIface, tr( "Intersection" ) );
   mCurrDialog->show();
-#endif //0
 }
 
 void VectorAnalysis::runSliverPolygonTool()
