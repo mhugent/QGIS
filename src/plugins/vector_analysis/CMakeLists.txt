@@ -9,6 +9,7 @@ SET (vectoranalysis_SRCS
     geoprocessingtooldialog.cpp
     buffertooldialog.cpp
     convexhulltooldialog.cpp
+    dissolvetooldialog.cpp
     vectoranalysisutils.cpp
 )
 
@@ -18,6 +19,7 @@ SET (vectoranalysis_HDRS
   geoprocessingtooldialog.h
   buffertooldialog.h
   convexhulltooldialog.h
+  dissolvetooldialog.h
 )
 
 SET (vectoranalysis_UIS

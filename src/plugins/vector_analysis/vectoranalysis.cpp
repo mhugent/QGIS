@@ -20,6 +20,8 @@
 
 #include "buffertooldialog.h"
 #include "convexhulltooldialog.h"
+#include "dissolvetooldialog.h"
+
 
 #if 0
 #include "geoprocessing/differencetool.h"
@@ -124,11 +126,9 @@ void VectorAnalysis::runDifferenceTool()
 
 void VectorAnalysis::runDissolveTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::DissolveToolDialog( mQGisIface );
   mCurrDialog->show();
-#endif //0
 }
 
 void VectorAnalysis::runIntersectionTool()

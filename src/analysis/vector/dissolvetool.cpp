@@ -173,7 +173,7 @@ namespace Geoprocessing
         QgsAttributes outAttribs;
         if( partAttributes.size() > 0 )
         {
-            Utils::summarizeAttributes( mLayer->fields(), partAttributes, mNumericSummarizer, mNonNumericSummarizer, mLayer->dataProvider()->pkAttributeIndexes() << mGroupField );
+            outAttribs = Utils::summarizeAttributes( mLayer->fields(), partAttributes, mNumericSummarizer, mNonNumericSummarizer, mLayer->dataProvider()->pkAttributeIndexes() << mGroupField );
         }
         outFeature->setAttributes( outAttribs );
       }
