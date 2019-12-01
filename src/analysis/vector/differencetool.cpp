@@ -17,8 +17,8 @@
 
 #include <QApplication>
 #include "differencetool.h"
-#include "geos_c.h"
 #include "qgsgeometry.h"
+#include "qgsgeos.h"
 #include "qgsvectorlayer.h"
 
 namespace Geoprocessing
@@ -27,10 +27,10 @@ namespace Geoprocessing
   DifferenceTool::DifferenceTool( QgsVectorLayer *layerA,
                                   QgsVectorLayer *layerB,
                                   bool selectedA, bool selectedB,
-                                  const QString& output,
+                                  const QString &output,
                                   const QString &outputDriverName, OutputFields, OutputCrs outputCrs,
                                   double precision )
-      : AbstractTool( precision )
+    : AbstractTool( precision )
   {
     mLayerA = layerA;
     mLayerB = layerB;
@@ -39,7 +39,7 @@ namespace Geoprocessing
     createOutputFileWriter( output, layerA, layerB, FieldsA, outputCrs, outputDriverName );
   }
 
-  bool DifferenceTool::validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString& errorMsgs )
+  bool DifferenceTool::validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString &errorMsgs )
   {
     if ( layerA->geometryType() != QgsWkbTypes::PolygonGeometry || layerB->geometryType() != QgsWkbTypes::PolygonGeometry )
     {
@@ -64,41 +64,36 @@ namespace Geoprocessing
     QgsGeometry geom = f.geometry();
 
     // Get features which intersect current feature
-    QVector<QgsFeature*> featureList = getIntersects( geom->boundingBox(), mSpatialIndex, mLayerB );
+    QVector<QgsFeature *> featureList = getIntersects( geom.boundingBox(), mSpatialIndex, mLayerB );
 
     // Compute difference (or add feature as is if no intersection)
-    const GEOSPreparedGeometry* featureGeomPrepared = GEOSPrepare_r( QgsGeometry::getGEOSHandler(), geom->asGeos() );
-    QString errorMsg;
-    QgsGeometry* newGeom = new QgsGeometry( *geom );
-    foreach ( QgsFeature* testFeature, featureList )
+    QgsGeos geos( geom.constGet() );
+    geos.prepareGeometry();
+
+    QgsGeometry newGeom( geom );
+    for ( QgsFeature *testFeature : featureList )
     {
-      QgsGeometry* testGeom = testFeature->geometry();
-      if ( GEOSPreparedIntersects_r( QgsGeometry::getGEOSHandler(), featureGeomPrepared, testGeom->asGeos() ) )
+      QgsGeometry testGeom = testFeature->geometry();
+      if ( geos.intersects( testGeom.constGet() ) )
       {
-        QgsGeometry* newGeomTmp = newGeom->difference( testGeom, &errorMsg );
-        if ( !newGeomTmp )
+        QgsGeometry newGeomTmp = newGeom.difference( testGeom );
+        if ( newGeomTmp.isNull() )
         {
-          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayerA, job->featureid ) << ErrorFeature( mLayerB, testFeature->id() ), errorMsg );
+          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayerA, job->featureid ) << ErrorFeature( mLayerB, testFeature->id() ), newGeomTmp.lastError() );
         }
         else
         {
-          delete newGeom;
           newGeom = newGeomTmp;
         }
       }
     }
-    GEOSPreparedGeom_destroy_r( QgsGeometry::getGEOSHandler(), featureGeomPrepared );
 
-    if ( !newGeom->isGeosEmpty() )
+    if ( !newGeom.isEmpty() )
     {
       QgsFeature outFeature;
       outFeature.setGeometry( newGeom );
       outFeature.setAttributes( f.attributes() );
-      writeFeatures( QVector<QgsFeature*>() << &outFeature );
-    }
-    else
-    {
-      delete newGeom;
+      writeFeatures( QVector<QgsFeature *>() << &outFeature );
     }
 
     qDeleteAll( featureList );

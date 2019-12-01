@@ -21,6 +21,7 @@
 #include "binarytooldialog.h"
 #include "buffertooldialog.h"
 #include "convexhulltooldialog.h"
+#include "differencetool.h"
 #include "dissolvetooldialog.h"
 #include "intersectiontool.h"
 #include "uniontool.h"
@@ -119,11 +120,9 @@ void VectorAnalysis::runConvexhullTool()
 
 void VectorAnalysis::runDifferenceTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::DifferenceTool, Geoprocessing::AbstractTool::FieldsA>( mQGisIface, tr( "Difference" ) );
   mCurrDialog->show();
-#endif //0
 }
 
 void VectorAnalysis::runDissolveTool()

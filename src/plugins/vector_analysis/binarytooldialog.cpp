@@ -133,7 +133,7 @@ namespace Geoprocessing
     mOperatorLayer = layer;
     if ( mOperatorLayer )
     {
-      connect( mOperatorLayer, SIGNAL( selectionChanged() ), this, SLOT( updateOperatorSelectionCheckBox() ) );
+      connect( mOperatorLayer, SIGNAL( selectionChanged( const QgsFeatureIds &, const QgsFeatureIds &, bool ) ), this, SLOT( updateOperatorSelectionCheckBox() ) );
     }
     updateOperatorSelectionCheckBox();
   }

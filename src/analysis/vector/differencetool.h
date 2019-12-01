@@ -23,28 +23,28 @@
 namespace Geoprocessing
 {
 
-  class DifferenceTool : public AbstractTool
+  class ANALYSIS_EXPORT DifferenceTool : public AbstractTool
   {
     public:
       DifferenceTool( QgsVectorLayer *layerA,
                       QgsVectorLayer *layerB,
                       bool selectedA, bool selectedB,
-                      const QString& output,
-                      const QString& outputDriverName,
+                      const QString &output,
+                      const QString &outputDriverName,
                       OutputFields /*outputFields*/, OutputCrs outputCrs,
                       double precision );
       ~DifferenceTool() {}
-      static bool validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString& errorMsgs );
+      static bool validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString &errorMsgs );
 
     private:
       QgsSpatialIndex mSpatialIndex;
-      QgsVectorLayer* mLayerA;
-      QgsVectorLayer* mLayerB;
+      QgsVectorLayer *mLayerA;
+      QgsVectorLayer *mLayerB;
       bool mSelectedA;
       bool mSelectedB;
 
       void prepare();
-      void processFeature( const Job* job );
+      void processFeature( const Job *job );
   };
 
 } // Geoprocessing
