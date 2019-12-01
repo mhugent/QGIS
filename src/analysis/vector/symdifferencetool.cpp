@@ -17,8 +17,9 @@
 
 #include <QApplication>
 #include "symdifferencetool.h"
-#include "geos_c.h"
 #include "qgsgeometry.h"
+#include "qgsgeos.h"
+#include "qgsvectorlayer.h"
 
 namespace Geoprocessing
 {
@@ -28,10 +29,10 @@ namespace Geoprocessing
     QgsVectorLayer *layerB,
     bool selectedA, bool selectedB,
     const QString &output,
-    const QString& outputDriverName,
+    const QString &outputDriverName,
     OutputFields outputFields, OutputCrs outputCrs,
     double precision )
-      : AbstractTool( precision )
+    : AbstractTool( precision )
   {
     mLayerA = layerA;
     mLayerB = layerB;
@@ -41,9 +42,9 @@ namespace Geoprocessing
     mOutputFileds = outputFields;
   }
 
-  bool SymDifferenceTool::validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString& errorMsgs )
+  bool SymDifferenceTool::validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString &errorMsgs )
   {
-    if ( layerA->geometryType() != QGis::Polygon || layerB->geometryType() != QGis::Polygon )
+    if ( layerA->geometryType() != QgsWkbTypes::PolygonGeometry || layerB->geometryType() != QgsWkbTypes::PolygonGeometry )
     {
       errorMsgs = QApplication::translate( "SymDifferenceTool", "Input and operator layers must both be polygon layers." );
       return false;
@@ -61,8 +62,8 @@ namespace Geoprocessing
 
   void SymDifferenceTool::processFeature( const Job *job )
   {
-    QgsVectorLayer* layerCurr = 0, * layerInter = 0;
-    QgsSpatialIndex* spatialIndex = 0;
+    QgsVectorLayer *layerCurr = 0, * layerInter = 0;
+    QgsSpatialIndex *spatialIndex = 0;
 
     if ( job->taskFlag == ProcessLayerAFeature )
     {
@@ -80,52 +81,48 @@ namespace Geoprocessing
     // Get currently processed feature
     QgsFeature f;
     if ( !getFeatureAtId( f, job->featureid, layerCurr ) ) return;
-    QgsGeometry* geom = f.geometry();
+    QgsGeometry geom = f.geometry();
 
     // Get features which intersect current feature
-    QVector<QgsFeature*> featureList = getIntersects( geom->boundingBox(), *spatialIndex, layerInter );
+    QVector<QgsFeature *> featureList = getIntersects( geom.boundingBox(), *spatialIndex, layerInter );
 
     // Cut off all parts of current feature which intersect with features from intersecting layer
-    const GEOSPreparedGeometry* featureGeomPrepared = GEOSPrepare_r( QgsGeometry::getGEOSHandler(), geom->asGeos() );
-    QString errorMsg;
-    QgsGeometry* newGeom = new QgsGeometry( *geom );
-    foreach ( QgsFeature* testFeature, featureList )
+    QgsGeos geos( geom.constGet() );
+    geos.prepareGeometry();
+
+    QgsGeometry newGeom( geom );
+    for ( QgsFeature *testFeature : featureList )
     {
-      QgsGeometry* testGeom = testFeature->geometry();
-      if ( GEOSPreparedIntersects_r( QgsGeometry::getGEOSHandler(), featureGeomPrepared, testGeom->asGeos() ) )
+      QgsGeometry testGeom = testFeature->geometry();
+      if ( geos.intersects( testGeom.constGet() ) )
       {
-        QgsGeometry* newGeomTmp = newGeom->difference( testGeom, &errorMsg );
-        if ( !newGeomTmp )
+        QgsGeometry newGeomTmp = newGeom.difference( testGeom );
+        if ( newGeomTmp.isNull() )
         {
-          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( layerCurr, f.id() ) << ErrorFeature( layerInter, testFeature->id() ), errorMsg );
+          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( layerCurr, f.id() ) << ErrorFeature( layerInter, testFeature->id() ), newGeomTmp.lastError() );
           continue;
         }
         else
         {
-          delete newGeom;
           newGeom = newGeomTmp;
         }
       }
     }
-    GEOSPreparedGeom_destroy_r( QgsGeometry::getGEOSHandler(), featureGeomPrepared );
 
-    if ( !newGeom->isGeosEmpty() )
+    if ( !newGeom.isEmpty() )
     {
       QgsFeature outFeature;
       outFeature.setGeometry( newGeom );
+      QgsAttributes fAtt = f.attributes();
       if ( job->taskFlag == ProcessLayerAFeature )
       {
-        outFeature.setAttributes( combineAttributes( &f.attributes(), 0, mOutputFileds ) );
+        outFeature.setAttributes( combineAttributes( &fAtt, 0, mOutputFileds ) );
       }
       else
       {
-        outFeature.setAttributes( combineAttributes( 0, &f.attributes(), mOutputFileds ) );
+        outFeature.setAttributes( combineAttributes( 0, &fAtt, mOutputFileds ) );
       }
-      writeFeatures( QVector<QgsFeature*>() << &outFeature );
-    }
-    else
-    {
-      delete newGeom;
+      writeFeatures( QVector<QgsFeature *>() << &outFeature );
     }
 
     qDeleteAll( featureList );

@@ -23,19 +23,19 @@
 namespace Geoprocessing
 {
 
-  class SymDifferenceTool : public AbstractTool
+  class ANALYSIS_EXPORT SymDifferenceTool : public AbstractTool
   {
     public:
       SymDifferenceTool( QgsVectorLayer *layerA,
                          QgsVectorLayer *layerB,
                          bool selectedA, bool selectedB,
-                         const QString& output,
-                         const QString& outputDriverName,
+                         const QString &output,
+                         const QString &outputDriverName,
                          OutputFields outputFields,
                          OutputCrs outputCrs,
                          double precision );
 
-      static bool validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString& errorMsgs );
+      static bool validateInputs( QgsVectorLayer *layerA, QgsVectorLayer *layerB, QString &errorMsgs );
 
     private:
       enum Task
@@ -46,14 +46,14 @@ namespace Geoprocessing
 
       QgsSpatialIndex mSpatialIndexA;
       QgsSpatialIndex mSpatialIndexB;
-      QgsVectorLayer* mLayerA;
-      QgsVectorLayer* mLayerB;
+      QgsVectorLayer *mLayerA;
+      QgsVectorLayer *mLayerB;
       bool mSelectedA;
       bool mSelectedB;
       OutputFields mOutputFileds;
 
       void prepare();
-      void processFeature( const Job* job );
+      void processFeature( const Job *job );
   };
 
 } // Geoprocessing

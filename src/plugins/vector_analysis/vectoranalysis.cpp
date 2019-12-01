@@ -24,6 +24,7 @@
 #include "differencetool.h"
 #include "dissolvetooldialog.h"
 #include "intersectiontool.h"
+#include "symdifferencetool.h"
 #include "uniontool.h"
 
 #if 0
@@ -150,11 +151,9 @@ void VectorAnalysis::runSliverPolygonTool()
 
 void VectorAnalysis::runSymDifferenceTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::SymDifferenceTool>( mQGisIface, tr( "Symmetric difference" ) );
   mCurrDialog->show();
-#endif //0
 }
 
 void VectorAnalysis::runUnionTool()
