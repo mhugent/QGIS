@@ -23,7 +23,9 @@
 
 #include "sliverpolygontool.h"
 #include "qgsgeometry.h"
+#include "qgsgeos.h"
 #include "qgsvectordataprovider.h"
+#include "qgsvectorlayer.h"
 #include "qgswkbtypes.h"
 
 //#define DEBUG(x) QTextStream(stdout) << x << endl;
@@ -35,13 +37,13 @@ namespace Geoprocessing
   SliverPolygonTool::SliverPolygonTool( QgsVectorLayer *layer,
                                         bool selected,
                                         const QString &output,
-                                        const QString& outputDriverName,
-                                        MergeMethod mergeMethod , double threshold,
+                                        const QString &outputDriverName,
+                                        MergeMethod mergeMethod, double threshold,
                                         double precision )
-      : AbstractTool( precision )
+    : AbstractTool( precision )
   {
-    mOutWkbType = QGis::WKBMultiPolygon;
-    mOutputWriter = new QgsVectorFileWriter( output, layer->dataProvider()->encoding(), layer->pendingFields(), mOutWkbType, &layer->crs(), outputDriverName );
+    mOutWkbType = QgsWkbTypes::MultiPolygon;
+    mOutputWriter = new QgsVectorFileWriter( output, layer->dataProvider()->encoding(), layer->fields(), mOutWkbType, layer->crs(), outputDriverName );
     mLayer = layer;
     mSelected = selected;
     mMergeMethod = mergeMethod;
@@ -63,8 +65,8 @@ namespace Geoprocessing
     }
     else /*if(task == 1)*/
     {
-      const MergeManager::MergeMap& mergeMap = mMergeManager.get();
-      foreach ( const QgsFeatureId& id, mergeMap.keys() )
+      const MergeManager::MergeMap &mergeMap = mMergeManager.get();
+      for ( const QgsFeatureId &id : mergeMap.keys() )
       {
         mMergeJobs.append( MergeJob( id, mergeMap[id] ) );
       }
@@ -72,28 +74,28 @@ namespace Geoprocessing
     }
   }
 
-  static inline double perpDot( const QgsPoint& q, const QgsPoint& p1, const QgsPoint& p2 )
+  static inline double perpDot( const QgsPoint &q, const QgsPoint &p1, const QgsPoint &p2 )
   {
-    return (( p1.x() - q.x() ) * ( p2.y() - q.y() ) ) - (( p2.x() - q.x() ) * ( p1.y() - q.y() ) );
+    return ( ( p1.x() - q.x() ) * ( p2.y() - q.y() ) ) - ( ( p2.x() - q.x() ) * ( p1.y() - q.y() ) );
   }
 
-  static double sharedBoundaryLenght( const GEOSCoordSequence* coo1, const GEOSCoordSequence* coo2 )
+  static double sharedBoundaryLenght( const GEOSCoordSequence *coo1, const GEOSCoordSequence *coo2 )
   {
     double len = 0;
 
     // Test every pair of segments for shared edges
-    unsigned int n; GEOSCoordSeq_getSize_r( QgsGeometry::getGEOSHandler(), coo1, &n );
-    unsigned int nt; GEOSCoordSeq_getSize_r( QgsGeometry::getGEOSHandler(), coo2, &nt );
+    unsigned int n; GEOSCoordSeq_getSize_r( QgsGeos::getGEOSHandler(), coo1, &n );
+    unsigned int nt; GEOSCoordSeq_getSize_r( QgsGeos::getGEOSHandler(), coo2, &nt );
     for ( unsigned int i = 0, j = 1; j < n; i = j++ )
     {
       double x, y;
 
-      GEOSCoordSeq_getX_r( QgsGeometry::getGEOSHandler(), coo1, i, &x );
-      GEOSCoordSeq_getY_r( QgsGeometry::getGEOSHandler(), coo1, i, &y );
+      GEOSCoordSeq_getX_r( QgsGeos::getGEOSHandler(), coo1, i, &x );
+      GEOSCoordSeq_getY_r( QgsGeos::getGEOSHandler(), coo1, i, &y );
       QgsPoint p1( x, y );
 
-      GEOSCoordSeq_getX_r( QgsGeometry::getGEOSHandler(), coo1, j, &x );
-      GEOSCoordSeq_getY_r( QgsGeometry::getGEOSHandler(), coo1, j, &y );
+      GEOSCoordSeq_getX_r( QgsGeos::getGEOSHandler(), coo1, j, &x );
+      GEOSCoordSeq_getY_r( QgsGeos::getGEOSHandler(), coo1, j, &y );
       QgsPoint p2( x, y );
 
       QgsVector d = QgsVector( p2.x() - p1.x(), p2.y() - p1.y() );
@@ -103,12 +105,12 @@ namespace Geoprocessing
 
       for ( unsigned int it = 0, jt = 1; jt < nt; it = jt++ )
       {
-        GEOSCoordSeq_getX_r( QgsGeometry::getGEOSHandler(), coo2, it, &x );
-        GEOSCoordSeq_getY_r( QgsGeometry::getGEOSHandler(), coo2, it, &y );
+        GEOSCoordSeq_getX_r( QgsGeos::getGEOSHandler(), coo2, it, &x );
+        GEOSCoordSeq_getY_r( QgsGeos::getGEOSHandler(), coo2, it, &y );
         QgsPoint q1( x, y );
 
-        GEOSCoordSeq_getX_r( QgsGeometry::getGEOSHandler(), coo2, jt, &x );
-        GEOSCoordSeq_getY_r( QgsGeometry::getGEOSHandler(), coo2, jt, &y );
+        GEOSCoordSeq_getX_r( QgsGeos::getGEOSHandler(), coo2, jt, &x );
+        GEOSCoordSeq_getY_r( QgsGeos::getGEOSHandler(), coo2, jt, &y );
         QgsPoint q2( x, y );
 
         // Check whether q1 and q2 are on the line p1, p2
@@ -149,9 +151,9 @@ namespace Geoprocessing
       // src is already listed to be merged with another feature
       return;
     }
-    QMap<QgsFeatureId, QSet<int> >& srcMap = mMergeMap[src.first][src.second];
-    QMap<QgsFeatureId, QSet<int> >& destMap = mMergeMap[realDest.first][realDest.second];
-    foreach ( const QgsFeatureId& id, srcMap.keys() )
+    QMap<QgsFeatureId, QSet<int> > &srcMap = mMergeMap[src.first][src.second];
+    QMap<QgsFeatureId, QSet<int> > &destMap = mMergeMap[realDest.first][realDest.second];
+    for ( const QgsFeatureId &id : srcMap.keys() )
     {
       destMap[id].unite( srcMap[id] );
     }
@@ -172,7 +174,7 @@ namespace Geoprocessing
     {
       return;
     }
-    QList<QgsGeometry*> geoms = f.geometry()->asGeometryCollection();
+    QVector<QgsGeometry> geoms = f.geometry().asGeometryCollection();
     DEBUG( "Feature " << f.id() << " has " << geoms.size() << " geometries" );
 
     // Prepare struct for neighbors
@@ -186,26 +188,29 @@ namespace Geoprocessing
       DEBUG( "Looking at (" << subjIdx.first << ", " << subjIdx.second << ")" );
 
       // Check if geometry is a sliver
-      double area = geoms[i]->area();
+      double area = geoms[i].area();
       if ( area <= 0. || area >= mThreshold )
       {
         DEBUG( "(" << subjIdx.first << ", " << subjIdx.second << ") is not a sliver" );
         continue;
       }
 
+      QgsGeometry &geom = geoms[i];
+      geos::unique_ptr geosGeom = QgsGeos::asGeos( geom, mPrecision );
+
       // Geometry is a sliver: determine with which neighboring geometry to merge
-      GEOSGeometry* subjBoundary = GEOSBoundary_r( QgsGeometry::getGEOSHandler(), geoms[i]->asGeos() );
+      GEOSGeometry *subjBoundary = GEOSBoundary_r( QgsGeos::getGEOSHandler(), geosGeom.get() );
 
       mSpatialIndexMutex.lock();
-      QList<QgsFeatureId> candidates = mSpatialIndex.intersects( geoms[i]->boundingBox() );
+      QList<QgsFeatureId> candidates = mSpatialIndex.intersects( geom.boundingBox() );
       mSpatialIndexMutex.unlock();
 
       double maxVal = 0;
       GeomIdx maxIdx( 0, 0 );
-      foreach ( QgsFeatureId candId, candidates )
+      for ( QgsFeatureId candId : candidates )
       {
         // Get feature and boundaries of candidate
-        FeatureInfo* candInfo = 0;
+        FeatureInfo *candInfo = 0;
         QMap<QgsFeatureId, FeatureInfo>::iterator candIt = neighbors.find( candId );
         if ( candIt != neighbors.end() )
         {
@@ -220,11 +225,12 @@ namespace Geoprocessing
             delete info.feature;
             continue;
           }
-          foreach ( QgsGeometry* candGeom, info.feature->geometry()->asGeometryCollection() )
+          for ( const QgsGeometry &candGeom : info.feature->geometry().asGeometryCollection() )
           {
-            info.areas.append( candGeom->area() );
-            info.boundaries.append( GEOSBoundary_r( QgsGeometry::getGEOSHandler(), candGeom->asGeos() ) );
-            delete candGeom;
+            info.areas.append( candGeom.area() );
+            geos::unique_ptr candGeosGeom = QgsGeos::asGeos( candGeom, mPrecision );
+            info.boundaries.append( GEOSBoundary_r( QgsGeos::getGEOSHandler(), candGeosGeom.get() ) );
+
           }
           candInfo = &neighbors.insert( candId, info ).value();
         }
@@ -237,7 +243,7 @@ namespace Geoprocessing
           {
             continue;
           }
-          double len = sharedBoundaryLenght( GEOSGeom_getCoordSeq_r( QgsGeometry::getGEOSHandler(), GEOSGetGeometryN_r( QgsGeometry::getGEOSHandler(), subjBoundary, 0 ) ), GEOSGeom_getCoordSeq_r( QgsGeometry::getGEOSHandler(), GEOSGetGeometryN_r( QgsGeometry::getGEOSHandler(), candInfo->boundaries[j], 0 ) ) );
+          double len = sharedBoundaryLenght( GEOSGeom_getCoordSeq_r( QgsGeos::getGEOSHandler(), GEOSGetGeometryN_r( QgsGeos::getGEOSHandler(), subjBoundary, 0 ) ), GEOSGeom_getCoordSeq_r( QgsGeos::getGEOSHandler(), GEOSGetGeometryN_r( QgsGeos::getGEOSHandler(), candInfo->boundaries[j], 0 ) ) );
           if ( len > mPrecision )
           {
             double val = mMergeMethod == MergeLargestArea ? candInfo->areas[j] : len;
@@ -258,18 +264,17 @@ namespace Geoprocessing
     }
 
     // Cleanup
-    foreach ( const FeatureInfo& finfo, neighbors )
+    for ( const FeatureInfo &finfo : neighbors )
     {
       delete finfo.feature;
-      foreach ( GEOSGeometry* boundary, finfo.boundaries )
+      for ( GEOSGeometry *boundary : finfo.boundaries )
       {
-        GEOSGeom_destroy_r( QgsGeometry::getGEOSHandler(), boundary );
+        GEOSGeom_destroy_r( QgsGeos::getGEOSHandler(), boundary );
       }
     }
-    qDeleteAll( geoms );
   }
 
-  void SliverPolygonTool::mergeFeatures( const MergeJob& mergeJob )
+  void SliverPolygonTool::mergeFeatures( const MergeJob &mergeJob )
   {
     // Get feature and geometries which which slivers will be merged
     QgsFeature f;
@@ -277,18 +282,18 @@ namespace Geoprocessing
     {
       return;
     }
-    QList<QgsGeometry*> geoms = f.geometry()->asGeometryCollection();
-    QList<QgsGeometry*> outGeoms;
+    QVector<QgsGeometry> geoms = f.geometry().asGeometryCollection();
+    QList<QgsGeometry> outGeoms;
     DEBUG( "Processing feature " << f.id() << " with " << geoms.size() << " geometries" );
 
     // For each geometry part of the feature, gather which slivers to merge which the geometry part
-    foreach ( int i, mergeJob.mergeIdx.keys() )
+    for ( int i : mergeJob.mergeIdx.keys() )
     {
-      QList<QgsGeometry*> unionGeometries;
-      const QMap<QgsFeatureId, QSet<int> >& mergeGroup = mergeJob.mergeIdx[i];
+      QVector<QgsGeometry> unionGeometries;
+      const QMap<QgsFeatureId, QSet<int> > &mergeGroup = mergeJob.mergeIdx[i];
 
       QList<ErrorFeature> errorFeatures;
-      foreach ( QgsFeatureId mergeId, mergeGroup.keys() )
+      for ( QgsFeatureId mergeId : mergeGroup.keys() )
       {
         QgsFeature mergeFeature;
         if ( !getFeatureAtId( mergeFeature, mergeId, mLayer ) )
@@ -296,14 +301,13 @@ namespace Geoprocessing
           errorFeatures.append( ErrorFeature( mLayer, mergeId ) );
           continue;
         }
-        QList<QgsGeometry*> mergeFeatureGeometries = mergeFeature.geometry()->asGeometryCollection();
-        foreach ( int j, mergeGroup[mergeId] )
+        QVector<QgsGeometry> mergeFeatureGeometries = mergeFeature.geometry().asGeometryCollection();
+        for ( int j : mergeGroup[mergeId] )
         {
           DEBUG( "Adding (" << mergeFeature.id() << ", " << j << ") [" << GEOSGeomType_r( QgsGeometry::getGEOSHandler(), mergeFeatureGeometries[j]->asGeos() ) << "] to group" );
           unionGeometries.append( mergeFeatureGeometries[j] );
-          mergeFeatureGeometries[j] = 0;
+          mergeFeatureGeometries[j] = QgsGeometry();
         }
-        qDeleteAll( mergeFeatureGeometries );
       }
 
       // If there are geometries to merge, do so
@@ -311,19 +315,16 @@ namespace Geoprocessing
       {
         unionGeometries.append( geoms[i] );
         DEBUG( "Merging " << unionGeometries.size() << " geometries with (" << f.id() << ", " << i << ")" );
-        QString errMsg;
-        geoms[i] = QgsGeometry::unaryUnion( unionGeometries, &errMsg );
-        geoms[i]->filterGeometryCollection( QgsWKBTypes::Polygon );
-        qDeleteAll( unionGeometries );
-        if ( !geoms[i] )
+        geoms[i] = QgsGeometry::unaryUnion( unionGeometries );
+        geoms[i].convertGeometryCollectionToSubclass( QgsWkbTypes::PolygonGeometry );
+        if ( geoms[i].isNull() )
         {
           reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayer, f.id() ) << errorFeatures, QApplication::translate( "sliverpolygontool", "Merge combine" ) );
         }
       }
       outGeoms.append( geoms[i] );
-      geoms[i] = 0;
+      geoms[i] = QgsGeometry();
     }
-    qDeleteAll( geoms );
 
     // If all geometries of the feature were slivers and merged with other geometries, no geometries remain...
     if ( outGeoms.isEmpty() )
@@ -338,7 +339,7 @@ namespace Geoprocessing
     // Set output feature geometry; if necessary, convert back to multipolygon
     if ( outGeoms.size() == 1 )
     {
-      if ( outGeoms[0] == 0 )
+      if ( outGeoms[0].isEmpty() )
       {
         return;
       }
@@ -348,32 +349,31 @@ namespace Geoprocessing
     else
     {
       DEBUG( "outGeoms has " << outGeoms.size() << " geometries" );
-      QList<QgsGeometry*> polygons;
-      foreach ( QgsGeometry* geom, outGeoms )
+      QVector<QgsGeometry> polygons;
+      for ( const QgsGeometry &geom : outGeoms )
       {
-        DEBUG( "Adding " << GEOSGeomType_r( QgsGeometry::getGEOSHandler(), geom->asGeos() ) << " to output polygons (GEOSGetNumGeometries = " << GEOSGetNumGeometries_r( QgsGeometry::getGEOSHandler(), geom->asGeos() ) << ")" );
-        polygons.append( geom->asGeometryCollection() );
+        //DEBUG( "Adding " << GEOSGeomType_r( QgsGeometry::getGEOSHandler(), geom->asGeos() ) << " to output polygons (GEOSGetNumGeometries = " << GEOSGetNumGeometries_r( QgsGeometry::getGEOSHandler(), geom->asGeos() ) << ")" );
+        polygons.append( geom.asGeometryCollection() );
       }
-      qDeleteAll( outGeoms );
+
       // Can apparently happen that a multi polygon contains zero parts...
       if ( polygons.isEmpty() )
       {
         return;
       }
-      QString errMsg;
+
       DEBUG( "Output feature has " << polygons.size() << " geometries" );
-      QgsGeometry* outGeom = QgsGeometry::fromCollection( polygons );
-      qDeleteAll( polygons );
-      if ( !outGeom )
+      QgsGeometry outGeom = QgsGeometry::collectGeometry( polygons );
+      if ( outGeom.isNull() )
       {
-        reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayer, f.id() ), QApplication::translate( "sliverpolygontool", "Failed to create multipolygon from merge results: %1" ).arg( errMsg ) );
+        reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayer, f.id() ), QApplication::translate( "sliverpolygontool", "Failed to create multipolygon from merge results: %1" ).arg( outGeom.lastError() ) );
         return;
       }
       outputFeature.setGeometry( outGeom );
     }
 
     // Write output feature
-    writeFeatures( QVector<QgsFeature*>() << &outputFeature );
+    writeFeatures( QVector<QgsFeature *>() << &outputFeature );
   }
 
 } // Geoprocessing

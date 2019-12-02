@@ -24,6 +24,7 @@
 #include "differencetool.h"
 #include "dissolvetooldialog.h"
 #include "intersectiontool.h"
+#include "sliverpolygontooldialog.h"
 #include "symdifferencetool.h"
 #include "uniontool.h"
 
@@ -142,11 +143,9 @@ void VectorAnalysis::runIntersectionTool()
 
 void VectorAnalysis::runSliverPolygonTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::SliverPolygonToolDialog( mQGisIface );
   mCurrDialog->show();
-#endif //0
 }
 
 void VectorAnalysis::runSymDifferenceTool()

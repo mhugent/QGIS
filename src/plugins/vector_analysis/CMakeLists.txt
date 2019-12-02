@@ -11,6 +11,7 @@ SET (vectoranalysis_SRCS
     buffertooldialog.cpp
     convexhulltooldialog.cpp
     dissolvetooldialog.cpp
+    sliverpolygontooldialog.cpp
     vectoranalysisutils.cpp
 )
 
@@ -22,6 +23,7 @@ SET (vectoranalysis_HDRS
   buffertooldialog.h
   convexhulltooldialog.h
   dissolvetooldialog.h
+  sliverpolygontooldialog.h
 )
 
 SET (vectoranalysis_UIS

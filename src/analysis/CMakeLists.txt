@@ -160,7 +160,7 @@ SET(QGIS_ANALYSIS_SRCS
   vector/differencetool.cpp
   vector/dissolvetool.cpp
   vector/intersectiontool.cpp
-  #vector/sliverpolygontool.cpp
+  vector/sliverpolygontool.cpp
   vector/symdifferencetool.cpp
   vector/uniontool.cpp
   vector/utils.cpp

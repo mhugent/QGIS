@@ -26,15 +26,15 @@ typedef struct GEOSGeom_t GEOSGeometry;
 namespace Geoprocessing
 {
 
-  class SliverPolygonTool : public AbstractTool
+  class ANALYSIS_EXPORT SliverPolygonTool : public AbstractTool
   {
     public:
       enum MergeMethod { MergeLargestArea, MergeLongestEdge };
 
       SliverPolygonTool( QgsVectorLayer *layer,
                          bool selected,
-                         const QString& output,
-                         const QString& outputDriverName,
+                         const QString &output,
+                         const QString &outputDriverName,
                          MergeMethod mergeMethod,
                          double threshold,
                          double precision );
@@ -46,27 +46,27 @@ namespace Geoprocessing
 
       struct FeatureInfo
       {
-        QgsFeature* feature;
+        QgsFeature *feature;
         QList<double> areas;
-        QList<GEOSGeometry*> boundaries;
+        QList<GEOSGeometry *> boundaries;
       };
 
       struct MergeJob
       {
-        MergeJob( const QgsFeatureId& _id, const QMap< int, QMap<QgsFeatureId, QSet<int> > > & _mergeIdx )
-            : id( _id ), mergeIdx( _mergeIdx ) {}
+        MergeJob( const QgsFeatureId &_id, const QMap< int, QMap<QgsFeatureId, QSet<int> > > &_mergeIdx )
+          : id( _id ), mergeIdx( _mergeIdx ) {}
         QgsFeatureId id;
         QMap< int, QMap<QgsFeatureId, QSet<int> > > mergeIdx;
       };
 
       struct MergeFeaturesWrapper
       {
-        SliverPolygonTool* instance;
-        MergeFeaturesWrapper( SliverPolygonTool* _instance ) : instance( _instance ) {}
-        void operator()( const MergeJob& job ) { instance->mergeFeatures( job ); }
+        SliverPolygonTool *instance;
+        MergeFeaturesWrapper( SliverPolygonTool *_instance ) : instance( _instance ) {}
+        void operator()( const MergeJob &job ) { instance->mergeFeatures( job ); }
       };
 
-      QgsVectorLayer* mLayer;
+      QgsVectorLayer *mLayer;
       bool mSelected;
       MergeMethod mMergeMethod;
       double mThreshold;
@@ -77,9 +77,9 @@ namespace Geoprocessing
         public:
           typedef QMap< QgsFeatureId, QMap<int, QMap<QgsFeatureId, QSet<int> > > > MergeMap;
 
-          void insert( const GeomIdx& idx );
-          void merge( const GeomIdx& src, GeomIdx& dest );
-          const MergeMap& get() const { return mMergeMap; }
+          void insert( const GeomIdx &idx );
+          void merge( const GeomIdx &src, GeomIdx &dest );
+          const MergeMap &get() const { return mMergeMap; }
 
         private:
           QMutex mLock;
@@ -93,8 +93,8 @@ namespace Geoprocessing
       QMutex mSpatialIndexMutex;
 
       void prepare();
-      void processFeature( const Job* job );
-      void mergeFeatures( const MergeJob& mergeJob );
+      void processFeature( const Job *job );
+      void mergeFeatures( const MergeJob &mergeJob );
   };
 
 } // Geoprocessing
