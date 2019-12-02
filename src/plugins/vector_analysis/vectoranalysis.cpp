@@ -106,11 +106,9 @@ void VectorAnalysis::runBufferTool()
 
 void VectorAnalysis::runClipTool()
 {
-#if 0
   delete mCurrDialog;
   mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::IntersectionTool, Geoprocessing::AbstractTool::FieldsA>( mQGisIface, tr( "Clip" ) );
   mCurrDialog->show();
-#endif //0
 }
 
 void VectorAnalysis::runConvexhullTool()
