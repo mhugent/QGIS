@@ -21,7 +21,7 @@
 #include "qgsgeometry.h"
 #include "qgsvectorlayer.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   UnionTool::UnionTool( QgsVectorLayer *layerA,

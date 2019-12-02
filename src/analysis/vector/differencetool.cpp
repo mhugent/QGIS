@@ -21,7 +21,7 @@
 #include "qgsgeos.h"
 #include "qgsvectorlayer.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   DifferenceTool::DifferenceTool( QgsVectorLayer *layerA,

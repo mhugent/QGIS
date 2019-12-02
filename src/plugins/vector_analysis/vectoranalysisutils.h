@@ -36,16 +36,16 @@ class QgsVectorLayer;
 typedef QList<int> QgsAttributeList;
 typedef QSet<qint64> QgsFeatureIds;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
   namespace Utils
   {
 
-    QgsVectorLayer* getSelectedLayer( QComboBox* combobox );
+    QgsVectorLayer *getSelectedLayer( QComboBox *combobox );
 
 ///////////////////////////////////////////////////////////////////////////////
 
-    QFrame* createHLine( QWidget *parent = 0 );
+    QFrame *createHLine( QWidget *parent = 0 );
 
 #if 0
     enum SummarizeMode
@@ -87,9 +87,9 @@ namespace Geoprocessing
       SummarizeStdDev,
       SummarizeNull
     };
-    typedef QVariant( *summarizer_t )( int, const QVector<const QgsAttributes*>& );
+    typedef QVariant( *summarizer_t )( int, const QVector<const QgsAttributes *> & );
     summarizer_t getSummarizer( SummarizeMode mode );
-    QgsAttributes summarizeAttributes( const QgsFields& fields, const QVector<const QgsAttributes *> &maps, summarizer_t numericSummarizer, summarizer_t nonNumericSummarizer , const QgsAttributeList &exclude );
+    QgsAttributes summarizeAttributes( const QgsFields &fields, const QVector<const QgsAttributes *> &maps, summarizer_t numericSummarizer, summarizer_t nonNumericSummarizer, const QgsAttributeList &exclude );
 #endif //0
 
     class SummarizeUI : public QObject
@@ -97,13 +97,13 @@ namespace Geoprocessing
         Q_OBJECT
 
       public:
-        SummarizeUI( QObject* parent = 0 ) : QObject( parent ) {}
-        void setupUI( QGridLayout* layout, Geoprocessing::Utils::SummarizeMode defaultNumericSummarizeMode, Geoprocessing::Utils::SummarizeMode defaultNonNumericSummarizeMode );
-        void getSettings( SummarizeMode& numericSummarizeMode, SummarizeMode& nonNumericSummarizeMode ) const;
+        SummarizeUI( QObject *parent = 0 ) : QObject( parent ) {}
+        void setupUI( QGridLayout *layout, Vectoranalysis::Utils::SummarizeMode defaultNumericSummarizeMode, Vectoranalysis::Utils::SummarizeMode defaultNonNumericSummarizeMode );
+        void getSettings( SummarizeMode &numericSummarizeMode, SummarizeMode &nonNumericSummarizeMode ) const;
 
       private:
-        QComboBox* mComboNumericSummarizeMode;
-        QComboBox* mComboNonNumericSummarizeMode;
+        QComboBox *mComboNumericSummarizeMode;
+        QComboBox *mComboNonNumericSummarizeMode;
     };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,7 @@ namespace Geoprocessing
       GroupByExpression,
     };
 
-    QMap<QString, QgsFeatureIds> groupFeatures( QgsVectorLayer* layer, bool selectedOnly, GroupMode mode, int groupField, QgsExpression* groupExpr );
+    QMap<QString, QgsFeatureIds> groupFeatures( QgsVectorLayer *layer, bool selectedOnly, GroupMode mode, int groupField, QgsExpression *groupExpr );
 #endif //0
 
     class GroupUI : public QObject
@@ -125,17 +125,17 @@ namespace Geoprocessing
         Q_OBJECT
 
       public:
-        GroupUI( QObject* parent = 0 ) : QObject( parent ) {}
-        void setupUI( QComboBox *layerCombo, QGridLayout* layout, const QString &operation = tr( "Group" ) );
-        bool getSettings( GroupMode& groupMode, int &groupField, QgsExpression*& groupExpression ) const;
+        GroupUI( QObject *parent = 0 ) : QObject( parent ) {}
+        void setupUI( QComboBox *layerCombo, QGridLayout *layout, const QString &operation = tr( "Group" ) );
+        bool getSettings( GroupMode &groupMode, int &groupField, QgsExpression *&groupExpression ) const;
       private:
-        QComboBox* mLayerCombo;
-        QComboBox* mComboGroupField;
-        QLineEdit* mLineeditGroupExpression;
-        QPushButton* mButtonGroupExpression;
-        QRadioButton* mRadioGroupAll;
-        QRadioButton* mRadioGroupField;
-        QRadioButton* mRadioGroupExpression;
+        QComboBox *mLayerCombo;
+        QComboBox *mComboGroupField;
+        QLineEdit *mLineeditGroupExpression;
+        QPushButton *mButtonGroupExpression;
+        QRadioButton *mRadioGroupAll;
+        QRadioButton *mRadioGroupField;
+        QRadioButton *mRadioGroupExpression;
 
       private slots:
         void populateAttributeIndexCombo();

@@ -22,18 +22,18 @@
 #include "qgsvectorlayer.h"
 #include <QPushButton>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   int GeoprocessingErrorDialog::sFeatureErrorRole = Qt::UserRole + 1;
   int GeoprocessingErrorDialog::sGeometryErrorRole = Qt::UserRole + 2;
 
-  GeoprocessingErrorDialog::GeoprocessingErrorDialog( QgisInterface* iface, AbstractTool *tool )
-      : mIface( iface ), mTool( tool )
+  GeoprocessingErrorDialog::GeoprocessingErrorDialog( QgisInterface *iface, AbstractTool *tool )
+    : mIface( iface ), mTool( tool )
   {
     ui.setupUi( this );
 
-    QPushButton* selectFaultyButton = ui.buttonBox->addButton( tr( "Select faulty features" ), QDialogButtonBox::ActionRole );
+    QPushButton *selectFaultyButton = ui.buttonBox->addButton( tr( "Select faulty features" ), QDialogButtonBox::ActionRole );
 
     if ( !tool->getFeatureErrorList().isEmpty() )
     {
@@ -47,18 +47,18 @@ namespace Geoprocessing
 
     if ( !tool->getWriteErrors().isEmpty() )
     {
-      QTreeWidgetItem* parent = new QTreeWidgetItem(
+      QTreeWidgetItem *parent = new QTreeWidgetItem(
         QStringList() << tr( "%1 features could not be written" ).arg( tool->getWriteErrors().size() ) );
-      foreach ( const QString& msg, tool->getWriteErrors() )
+      foreach ( const QString &msg, tool->getWriteErrors() )
       {
-        QTreeWidgetItem* msgitem = new QTreeWidgetItem( QStringList() << msg );
+        QTreeWidgetItem *msgitem = new QTreeWidgetItem( QStringList() << msg );
         parent->addChild( msgitem );
       }
 
       ui.treeWidget->addTopLevelItem( parent );
     }
 
-    connect( ui.treeWidget, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ), this, SLOT( highlightFeature( QTreeWidgetItem*, int ) ) );
+    connect( ui.treeWidget, SIGNAL( itemClicked( QTreeWidgetItem *, int ) ), this, SLOT( highlightFeature( QTreeWidgetItem *, int ) ) );
     connect( selectFaultyButton, SIGNAL( clicked() ), this, SLOT( selectFaulty() ) );
   }
 
@@ -67,24 +67,24 @@ namespace Geoprocessing
     qDeleteAll( mRubberBands );
   }
 
-  void GeoprocessingErrorDialog::populateErrorList( const QString& section, const QList<AbstractTool::Error>& errors )
+  void GeoprocessingErrorDialog::populateErrorList( const QString &section, const QList<AbstractTool::Error> &errors )
   {
-    QTreeWidgetItem* parent = new QTreeWidgetItem( QStringList() << section );
+    QTreeWidgetItem *parent = new QTreeWidgetItem( QStringList() << section );
     ui.treeWidget->addTopLevelItem( parent );
     for ( int i = 0, n = errors.size(); i < n; ++i )
     {
-      const AbstractTool::Error& err = errors[i];
+      const AbstractTool::Error &err = errors[i];
       QString featureStr;
-      foreach ( const AbstractTool::ErrorFeature& errFeature, err.features )
+      foreach ( const AbstractTool::ErrorFeature &errFeature, err.features )
       {
         featureStr += QString( "%1(%2) " ).arg( errFeature.first->name() ).arg( errFeature.second );
       }
 
-      QTreeWidgetItem* iditem = new QTreeWidgetItem( QStringList() << featureStr );
+      QTreeWidgetItem *iditem = new QTreeWidgetItem( QStringList() << featureStr );
       parent->addChild( iditem );
       iditem->setData( 0, sGeometryErrorRole, i );
 
-      QTreeWidgetItem* msgitem = new QTreeWidgetItem( QStringList() << err.errorMsg );
+      QTreeWidgetItem *msgitem = new QTreeWidgetItem( QStringList() << err.errorMsg );
       iditem->addChild( msgitem );
     }
   }
@@ -94,7 +94,7 @@ namespace Geoprocessing
     qDeleteAll( mRubberBands );
     mRubberBands.clear();
 
-    const AbstractTool::Error* error = 0;
+    const AbstractTool::Error *error = 0;
     if ( !item->data( column, sFeatureErrorRole ).isNull() )
     {
       error = &mTool->getFeatureErrorList()[item->data( column, sFeatureErrorRole ).toInt()];
@@ -108,16 +108,16 @@ namespace Geoprocessing
       return;
     }
 
-    QMap<QgsVectorLayer*, QgsFeatureIds> layerMap;
-    foreach ( const AbstractTool::ErrorFeature& errorfeature, error->features )
+    QMap<QgsVectorLayer *, QgsFeatureIds> layerMap;
+    foreach ( const AbstractTool::ErrorFeature &errorfeature, error->features )
     {
       layerMap[errorfeature.first].insert( errorfeature.second );
     }
     QgsRectangle bbox;
     bool unite = false;
-    foreach ( QgsVectorLayer* layer, layerMap.keys() )
+    foreach ( QgsVectorLayer *layer, layerMap.keys() )
     {
-      foreach ( const QgsFeatureId& id, layerMap[layer] )
+      foreach ( const QgsFeatureId &id, layerMap[layer] )
       {
         QgsFeature f;
         QgsFeatureRequest req( id );
@@ -125,7 +125,7 @@ namespace Geoprocessing
         layer->getFeatures( req ).nextFeature( f );
 
 
-        QgsRubberBand* r = new QgsRubberBand( mIface->mapCanvas() );
+        QgsRubberBand *r = new QgsRubberBand( mIface->mapCanvas() );
         r->setToGeometry( f.geometry(), layer );
         r->setColor( Qt::yellow );
         r->setWidth( 2 );
@@ -133,11 +133,11 @@ namespace Geoprocessing
 
         QVector<QgsGeometry::Error> geometryErrors;
         QgsGeometryValidator::validateGeometry( f.geometry(), geometryErrors );
-        for( const QgsGeometry::Error& error : geometryErrors )
+        for ( const QgsGeometry::Error &error : geometryErrors )
         {
           if ( error.hasWhere() )
           {
-            QgsRubberBand* r = new QgsRubberBand( mIface->mapCanvas(), QgsWkbTypes::PointGeometry );
+            QgsRubberBand *r = new QgsRubberBand( mIface->mapCanvas(), QgsWkbTypes::PointGeometry );
             r->addPoint( mIface->mapCanvas()->mapSettings().layerToMapCoordinates( layer, error.where() ) );
             r->setWidth( 10 );
             r->setColor( Qt::red );
@@ -162,25 +162,25 @@ namespace Geoprocessing
 
   void GeoprocessingErrorDialog::selectFaulty()
   {
-    QMap<QgsVectorLayer*, QgsFeatureIds> layerMap;
+    QMap<QgsVectorLayer *, QgsFeatureIds> layerMap;
 
-    foreach ( const AbstractTool::Error& error, mTool->getFeatureErrorList() )
+    foreach ( const AbstractTool::Error &error, mTool->getFeatureErrorList() )
     {
-      foreach ( const AbstractTool::ErrorFeature& errorfeature, error.features )
+      foreach ( const AbstractTool::ErrorFeature &errorfeature, error.features )
       {
         layerMap[errorfeature.first].insert( errorfeature.second );
       }
     }
 
-    foreach ( const AbstractTool::Error& error, mTool->getGeometryErrorList() )
+    foreach ( const AbstractTool::Error &error, mTool->getGeometryErrorList() )
     {
-      foreach ( const AbstractTool::ErrorFeature& errorfeature, error.features )
+      foreach ( const AbstractTool::ErrorFeature &errorfeature, error.features )
       {
         layerMap[errorfeature.first].insert( errorfeature.second );
       }
     }
 
-    foreach ( QgsVectorLayer* layer, layerMap.keys() )
+    foreach ( QgsVectorLayer *layer, layerMap.keys() )
     {
       layer->selectByIds( layerMap[layer ] );
     }

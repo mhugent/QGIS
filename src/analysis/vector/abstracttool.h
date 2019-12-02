@@ -29,7 +29,7 @@
 class QgsCoordinateReferenceSystem;
 class QgsVectorLayer;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class ANALYSIS_EXPORT AbstractTool
@@ -48,11 +48,11 @@ namespace Geoprocessing
         CrsLayerB
       };
 
-      typedef QPair<QgsVectorLayer*, QgsFeatureId> ErrorFeature;
+      typedef QPair<QgsVectorLayer *, QgsFeatureId> ErrorFeature;
       struct Error
       {
-        Error( const QList<ErrorFeature>& _features, const QString& _errorMsg )
-            : features( _features ), errorMsg( _errorMsg ) {}
+        Error( const QList<ErrorFeature> &_features, const QString &_errorMsg )
+          : features( _features ), errorMsg( _errorMsg ) {}
         QList<ErrorFeature> features;
         QString errorMsg;
       };
@@ -65,10 +65,10 @@ namespace Geoprocessing
       void finalizeOutput() { delete mOutputWriter; mOutputWriter = 0; }
 
       bool errorsOccurred() const { return !mGeometryErrorList.isEmpty() || !mFeatureErrorList.isEmpty() || !mWriteErrors.isEmpty(); }
-      const QList<Error>& getFeatureErrorList() const { return mFeatureErrorList; }
-      const QList<Error>& getGeometryErrorList() const { return mGeometryErrorList; }
-      const QList<QString>& getWriteErrors() const { return mWriteErrors; }
-      const QList<QString>& getExceptions() const { return mExceptions; }
+      const QList<Error> &getFeatureErrorList() const { return mFeatureErrorList; }
+      const QList<Error> &getGeometryErrorList() const { return mGeometryErrorList; }
+      const QList<QString> &getWriteErrors() const { return mWriteErrors; }
+      const QList<QString> &getExceptions() const { return mExceptions; }
 
 
     protected:
@@ -77,8 +77,8 @@ namespace Geoprocessing
 
       struct Job
       {
-        Job( const QgsFeatureId& _featureid, int _taskFlag )
-            : featureid( _featureid ), taskFlag( _taskFlag ) {}
+        Job( const QgsFeatureId &_featureid, int _taskFlag )
+          : featureid( _featureid ), taskFlag( _taskFlag ) {}
         virtual ~Job() {}
         QgsFeatureId featureid;
         int taskFlag;
@@ -86,35 +86,35 @@ namespace Geoprocessing
 
       struct ProcessFeatureWrapper
       {
-        AbstractTool* instance;
-        ProcessFeatureWrapper( AbstractTool* _instance ) : instance( _instance ) {}
-        void operator()( const Job* job );
+        AbstractTool *instance;
+        ProcessFeatureWrapper( AbstractTool *_instance ) : instance( _instance ) {}
+        void operator()( const Job *job );
       };
 
       virtual void prepare() = 0;
-      virtual void processFeature( const Job* job ) = 0;
+      virtual void processFeature( const Job *job ) = 0;
 
-      void buildSpatialIndex( QgsSpatialIndex& index, QgsVectorLayer *layer, bool selectedOnly ) const;
+      void buildSpatialIndex( QgsSpatialIndex &index, QgsVectorLayer *layer, bool selectedOnly ) const;
       void appendToJobQueue( QgsVectorLayer *layer, bool selectedOnly, int taskFlag = 0 );
-      void createOutputFileWriter( const QString& fileName, const QgsVectorLayer* layerA, const QgsVectorLayer* layerB, OutputFields outputFields, OutputCrs outputCrs, const QString& outputDriverName );
-      bool getFeatureAtId( QgsFeature &feature, QgsFeatureId id, QgsVectorLayer* layer );
-      QVector<QgsFeature*> getIntersects( const QgsRectangle& rect, QgsSpatialIndex& index, QgsVectorLayer* layer );
+      void createOutputFileWriter( const QString &fileName, const QgsVectorLayer *layerA, const QgsVectorLayer *layerB, OutputFields outputFields, OutputCrs outputCrs, const QString &outputDriverName );
+      bool getFeatureAtId( QgsFeature &feature, QgsFeatureId id, QgsVectorLayer *layer );
+      QVector<QgsFeature *> getIntersects( const QgsRectangle &rect, QgsSpatialIndex &index, QgsVectorLayer *layer );
       QgsAttributes combineAttributes( const QgsAttributes *attribsA, const QgsAttributes *attribsB, OutputFields outputFields ) const;
       void writeFeatures( const QVector<QgsFeature *> &outFeatures );
 
-      void reportInvalidFeatureError( QgsVectorLayer* layer, const QgsFeatureId& id, const QString& errorMessage )
+      void reportInvalidFeatureError( QgsVectorLayer *layer, const QgsFeatureId &id, const QString &errorMessage )
       {
         QMutexLocker locker( &mErrorMutex );
         mFeatureErrorList.append( Error( QList<ErrorFeature>() << ErrorFeature( layer, id ), errorMessage ) );
       }
 
-      void reportGeometryError( const QList<ErrorFeature>& features, const QString& errorMessage )
+      void reportGeometryError( const QList<ErrorFeature> &features, const QString &errorMessage )
       {
         QMutexLocker locker( &mErrorMutex );
         mGeometryErrorList.append( Error( features, errorMessage ) );
       }
 
-      QList<Job*> mJobQueue;
+      QList<Job *> mJobQueue;
       QList<Error> mGeometryErrorList;
       QList<Error> mFeatureErrorList;
       QList<QString> mExceptions;
@@ -123,7 +123,7 @@ namespace Geoprocessing
       QMutex mErrorMutex;
       QMutex mIntersectMutex;
       QMutex mWriteMutex;
-      QgsVectorFileWriter* mOutputWriter;
+      QgsVectorFileWriter *mOutputWriter;
       int mNumOutFields;
       QgsWkbTypes::Type mOutWkbType;
       QString mOutputDriverName;

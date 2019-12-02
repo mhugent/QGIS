@@ -25,7 +25,7 @@
 #include <QDoubleSpinBox>
 #include <QMessageBox>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   SliverPolygonToolDialog::SliverPolygonToolDialog( QgisInterface *iface )

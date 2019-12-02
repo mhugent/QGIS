@@ -23,7 +23,7 @@
 class QDoubleSpinBox;
 class QSpinBox;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   namespace Utils { class SummarizeUI; }
@@ -33,22 +33,22 @@ namespace Geoprocessing
   {
       Q_OBJECT
     public:
-      BufferToolDialog( QgisInterface* iface );
+      BufferToolDialog( QgisInterface *iface );
 
     private:
-      QDoubleSpinBox* mDistanceSpin;
-      QSpinBox* mSegmentsSpin;
-      QComboBox* mDistanceFieldCombo;
-      QComboBox* mCapStyleCombo;
-      QComboBox* mJoinStyleCombo;
-      QDoubleSpinBox* mMitreLimitSpin;
-      QCheckBox* mSingleSidedCheckBox;
-      QGroupBox* mDissolveGroupbox;
-      Utils::GroupUI* mGroupUI;
-      Utils::SummarizeUI* mSummarizeUI;
-      QCheckBox* mMultiPartCheckbox;
+      QDoubleSpinBox *mDistanceSpin;
+      QSpinBox *mSegmentsSpin;
+      QComboBox *mDistanceFieldCombo;
+      QComboBox *mCapStyleCombo;
+      QComboBox *mJoinStyleCombo;
+      QDoubleSpinBox *mMitreLimitSpin;
+      QCheckBox *mSingleSidedCheckBox;
+      QGroupBox *mDissolveGroupbox;
+      Utils::GroupUI *mGroupUI;
+      Utils::SummarizeUI *mSummarizeUI;
+      QCheckBox *mMultiPartCheckbox;
 
-      AbstractTool* setupTool();
+      AbstractTool *setupTool();
 
     private slots:
       void populateDistanceFields();

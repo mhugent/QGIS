@@ -23,7 +23,7 @@
 
 class QgsExpression;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class ANALYSIS_EXPORT ConvexHullTool : public AbstractTool
@@ -31,8 +31,8 @@ namespace Geoprocessing
     public:
       ConvexHullTool( QgsVectorLayer *layer,
                       bool selected,
-                      const QString& output,
-                      const QString& outputDriverName,
+                      const QString &output,
+                      const QString &outputDriverName,
                       Utils::GroupMode groupMode,
                       int groupField,
                       QgsExpression *groupExpression,
@@ -48,16 +48,16 @@ namespace Geoprocessing
         QgsFeatureIds cluster;
       };
 
-      QgsVectorLayer* mLayer;
+      QgsVectorLayer *mLayer;
       bool mSelected;
       Utils::GroupMode mGroupMode;
       int mGroupField;
-      QgsExpression* mGroupExpression;
+      QgsExpression *mGroupExpression;
       Utils::summarizer_t mNumericSummarizer;
       Utils::summarizer_t mNonNumericSummarizer;
 
       void prepare();
-      void processFeature( const Job* job );
+      void processFeature( const Job *job );
   };
 
 } // Geoprocessing

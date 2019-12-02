@@ -23,7 +23,7 @@
 
 typedef struct GEOSGeom_t GEOSGeometry;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class ANALYSIS_EXPORT SliverPolygonTool : public AbstractTool

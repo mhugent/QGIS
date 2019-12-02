@@ -30,11 +30,11 @@
 #include <QRadioButton>
 #include <QSpinBox>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
-  BufferToolDialog::BufferToolDialog( QgisInterface* iface )
-      : GeoprocessingToolDialog( iface, tr( "Buffer" ) )
+  BufferToolDialog::BufferToolDialog( QgisInterface *iface )
+    : GeoprocessingToolDialog( iface, tr( "Buffer" ) )
   {
     mDistanceSpin = new QDoubleSpinBox();
     mDistanceSpin->setRange( -1.E8, 1.E8 );
@@ -43,9 +43,9 @@ namespace Geoprocessing
     mDistanceFieldCombo = new QComboBox();
     mDistanceFieldCombo->setEnabled( false );
 
-    QRadioButton* distanceValueRadio = new QRadioButton( tr( "Buffer distance value:" ) );
+    QRadioButton *distanceValueRadio = new QRadioButton( tr( "Buffer distance value:" ) );
     distanceValueRadio->setChecked( true );
-    QRadioButton* distanceFieldRadio = new QRadioButton( tr( "Buffer distance field:" ) );
+    QRadioButton *distanceFieldRadio = new QRadioButton( tr( "Buffer distance field:" ) );
 
     mSegmentsSpin = new QSpinBox();
     mSegmentsSpin->setRange( 0, 100 );
@@ -78,7 +78,7 @@ namespace Geoprocessing
 
     mMultiPartCheckbox = new QCheckBox( tr( "Allow multi-part features" ) );
 
-    QGridLayout* optionsLayout = static_cast<QGridLayout*>( ui.groupBox_options->layout() );
+    QGridLayout *optionsLayout = static_cast<QGridLayout *>( ui.groupBox_options->layout() );
     int row = optionsLayout->rowCount();
     optionsLayout->addWidget( distanceValueRadio, row + 0, 0, 1, 1 );
     optionsLayout->addWidget( mDistanceSpin, row + 0, 1, 1, 1 );
@@ -97,7 +97,7 @@ namespace Geoprocessing
     optionsLayout->addWidget( Utils::createHLine(), row + 8, 0, 1, 2 );
     optionsLayout->addWidget( mDissolveGroupbox, row + 9, 0, 1, 2 );
 
-    QGridLayout* dissolveLayout = new QGridLayout( mDissolveGroupbox );
+    QGridLayout *dissolveLayout = new QGridLayout( mDissolveGroupbox );
     mGroupUI->setupUI( ui.comboBox_inputLayer, dissolveLayout, tr( "Dissolve" ) );
     dissolveLayout->addWidget( Utils::createHLine(), dissolveLayout->rowCount(), 0, 1, 2 );
     mSummarizeUI->setupUI( dissolveLayout, Utils::SummarizeMean, Utils::SummarizeFirst );
@@ -109,9 +109,9 @@ namespace Geoprocessing
     connect( ui.comboBox_inputLayer, SIGNAL( currentIndexChanged( int ) ), this, SLOT( populateDistanceFields() ) );
   }
 
-  AbstractTool* BufferToolDialog::setupTool()
+  AbstractTool *BufferToolDialog::setupTool()
   {
-    QgsVectorLayer* layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
+    QgsVectorLayer *layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
     if ( !mDistanceFieldCombo->isEnabled() )
     {
       if ( layer->geometryType() == QgsWkbTypes::PolygonGeometry && mDistanceSpin->value() == 0. )
@@ -132,9 +132,9 @@ namespace Geoprocessing
       distanceField = mDistanceFieldCombo->itemData( mDistanceFieldCombo->currentIndex() ).toInt();
     }
 
-    BufferTool::BufferParams* params = new BufferTool::BufferParams;
-    params->endCapStyle = (QgsGeometry::EndCapStyle)( mCapStyleCombo->itemData( mCapStyleCombo->currentIndex() ).toInt() );
-    params->joinStyle = (QgsGeometry::JoinStyle)( mJoinStyleCombo->itemData( mJoinStyleCombo->currentIndex() ).toInt() );
+    BufferTool::BufferParams *params = new BufferTool::BufferParams;
+    params->endCapStyle = ( QgsGeometry::EndCapStyle )( mCapStyleCombo->itemData( mCapStyleCombo->currentIndex() ).toInt() );
+    params->joinStyle = ( QgsGeometry::JoinStyle )( mJoinStyleCombo->itemData( mJoinStyleCombo->currentIndex() ).toInt() );
     params->mitreLimit = mMitreLimitSpin->value();
     params->segments = mSegmentsSpin->value();
     params->singleSided = mSingleSidedCheckBox->isChecked();
@@ -148,7 +148,7 @@ namespace Geoprocessing
 
       Utils::GroupMode groupMode;
       int groupField;
-      QgsExpression* groupExpression;
+      QgsExpression *groupExpression;
       if ( !mGroupUI->getSettings( groupMode, groupField, groupExpression ) )
       {
         return 0;
@@ -173,8 +173,8 @@ namespace Geoprocessing
   void BufferToolDialog::populateDistanceFields()
   {
     mDistanceFieldCombo->clear();
-    QgsVectorLayer* layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
-    const QgsFields& fields = layer->fields();
+    QgsVectorLayer *layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
+    const QgsFields &fields = layer->fields();
     for ( int key = 0, nKeys = fields.count(); key < nKeys; ++key )
     {
       // Don't list primary keys...

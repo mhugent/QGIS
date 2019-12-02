@@ -21,7 +21,7 @@
 #include "abstracttool.h"
 
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
   class ANALYSIS_EXPORT BufferTool : public AbstractTool
   {
@@ -38,25 +38,25 @@ namespace Geoprocessing
 
       BufferTool( QgsVectorLayer *layer,
                   bool selected,
-                  const QString& output,
-                  const QString& outputDriverName,
+                  const QString &output,
+                  const QString &outputDriverName,
                   double distance,
                   int distanceField,
                   double mapToLayer,
-                  BufferParams* params,
+                  BufferParams *params,
                   double precision );
       ~BufferTool();
 
     private:
-      QgsVectorLayer* mLayer;
+      QgsVectorLayer *mLayer;
       bool mSelected;
       double mDistance;
       int mDistanceField;
       double mMapToLayer;
-      BufferParams* mParams;
+      BufferParams *mParams;
 
       void prepare();
-      void processFeature( const Job* job );
+      void processFeature( const Job *job );
   };
 
 } // Geoprocessing

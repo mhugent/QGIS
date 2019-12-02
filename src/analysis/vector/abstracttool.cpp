@@ -29,19 +29,19 @@
 #include "qgswkbtypes.h"
 #include "qgsgeos.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   QString AbstractTool::errFeatureDoesNotExist = QApplication::translate( "AbstractTool", "The requested feature does not exist" );
   QString AbstractTool::errFailedToFetchGeometry = QApplication::translate( "AbstractTool", "The feature geometry could not be fetched" );
 
-  void AbstractTool::ProcessFeatureWrapper::operator()( const Job* job )
+  void AbstractTool::ProcessFeatureWrapper::operator()( const Job *job )
   {
     try
     {
       instance->processFeature( job );
     }
-    catch ( const std::exception& e )
+    catch ( const std::exception &e )
     {
       instance->mExceptions.append( e.what() );
       throw e;
@@ -68,12 +68,12 @@ namespace Geoprocessing
     return QtConcurrent::map( mJobQueue, ProcessFeatureWrapper( this ) );
   }
 
-  void AbstractTool::buildSpatialIndex( QgsSpatialIndex& index, QgsVectorLayer *layer, bool selectedOnly ) const
+  void AbstractTool::buildSpatialIndex( QgsSpatialIndex &index, QgsVectorLayer *layer, bool selectedOnly ) const
   {
     QgsFeature currentFeature;
     if ( selectedOnly )
     {
-      for( const QgsFeatureId& id : layer->selectedFeatureIds() )
+      for ( const QgsFeatureId &id : layer->selectedFeatureIds() )
       {
         QgsFeatureRequest request( id );
         request.setFlags( QgsFeatureRequest::SubsetOfAttributes );
@@ -108,14 +108,14 @@ namespace Geoprocessing
     }
     else
     {
-      for( const QgsFeatureId& id : layer->allFeatureIds() )
+      for ( const QgsFeatureId &id : layer->allFeatureIds() )
       {
         mJobQueue.append( new Job( id, taskFlag ) );
       }
     }
   }
 
-  void AbstractTool::createOutputFileWriter( const QString &fileName, const QgsVectorLayer *layerA, const QgsVectorLayer *layerB, OutputFields outputFields, OutputCrs outputCrs, const QString& outputDriverName )
+  void AbstractTool::createOutputFileWriter( const QString &fileName, const QgsVectorLayer *layerA, const QgsVectorLayer *layerB, OutputFields outputFields, OutputCrs outputCrs, const QString &outputDriverName )
   {
     mOutWkbType = layerA->wkbType();
 
@@ -132,12 +132,12 @@ namespace Geoprocessing
         fields = layerA->fields();
 
         QList<QString> names;
-        for( const QgsField& field : fields.toList() )
+        for ( const QgsField &field : fields.toList() )
         {
           names.append( field.name() );
         }
 
-        for( const QgsField& field : layerB->fields().toList() )
+        for ( const QgsField &field : layerB->fields().toList() )
         {
           QString name = field.name();
           for ( int count = 0; names.contains( name ); ++count )
@@ -164,7 +164,7 @@ namespace Geoprocessing
     mOutputWriter = new QgsVectorFileWriter( fileName, layerA->dataProvider()->encoding(), fields, layerA->wkbType(), crs, outputDriverName );
   }
 
-  bool AbstractTool::getFeatureAtId( QgsFeature &feature, QgsFeatureId id, QgsVectorLayer* layer )
+  bool AbstractTool::getFeatureAtId( QgsFeature &feature, QgsFeatureId id, QgsVectorLayer *layer )
   {
     QgsFeatureRequest request( id );
     if ( !layer->getFeatures( request ).nextFeature( feature ) )
@@ -180,16 +180,16 @@ namespace Geoprocessing
     return true;
   }
 
-  QVector<QgsFeature*> AbstractTool::getIntersects( const QgsRectangle& rect, QgsSpatialIndex& index, QgsVectorLayer* layer )
+  QVector<QgsFeature *> AbstractTool::getIntersects( const QgsRectangle &rect, QgsSpatialIndex &index, QgsVectorLayer *layer )
   {
     mIntersectMutex.lock();
     QList<QgsFeatureId> intersectIds = index.intersects( rect );
     mIntersectMutex.unlock();
 
-    QVector<QgsFeature*> featureList;
-    for( QgsFeatureId id : intersectIds )
+    QVector<QgsFeature *> featureList;
+    for ( QgsFeatureId id : intersectIds )
     {
-      QgsFeature* feature = new QgsFeature();
+      QgsFeature *feature = new QgsFeature();
       if ( !getFeatureAtId( *feature, id, layer ) )
       {
         delete feature;
@@ -265,7 +265,7 @@ namespace Geoprocessing
           else
           {
             int i = mid;
-            for ( const QVariant& value : *attribsB )
+            for ( const QVariant &value : *attribsB )
             {
               result.insert( i++, value );
             }
@@ -276,10 +276,10 @@ namespace Geoprocessing
     return QgsAttributes();
   }
 
-  void AbstractTool::writeFeatures( const QVector<QgsFeature*>& outFeatures )
+  void AbstractTool::writeFeatures( const QVector<QgsFeature *> &outFeatures )
   {
     QMutexLocker locker( &mWriteMutex );
-    for( QgsFeature* feature : outFeatures )
+    for ( QgsFeature *feature : outFeatures )
     {
       feature->geometry().convertGeometryCollectionToSubclass( QgsWkbTypes::geometryType( mOutWkbType ) );
       // Skip incompatible geometries
@@ -291,7 +291,7 @@ namespace Geoprocessing
       // If output type is a singleType, create features for each single geometry
       else if ( mOutWkbType == QgsWkbTypes::singleType( mOutWkbType ) )
       {
-        for( QgsGeometry geometry : feature->geometry().asGeometryCollection() )
+        for ( QgsGeometry geometry : feature->geometry().asGeometryCollection() )
         {
           QgsFeature f;
           f.setGeometry( geometry );

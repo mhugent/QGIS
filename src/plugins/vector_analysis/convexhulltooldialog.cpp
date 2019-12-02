@@ -19,35 +19,35 @@
 #include "convexhulltool.h"
 #include "vectoranalysisutils.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
-  ConvexHullToolDialog::ConvexHullToolDialog( QgisInterface* iface )
-      : GeoprocessingToolDialog( iface, tr( "Convex Hull" ) )
+  ConvexHullToolDialog::ConvexHullToolDialog( QgisInterface *iface )
+    : GeoprocessingToolDialog( iface, tr( "Convex Hull" ) )
   {
     mGroupUI = new Utils::GroupUI( this );
     mSummarizeUI = new Utils::SummarizeUI( this );
 
-    QGridLayout* optionsLayout = static_cast<QGridLayout*>( ui.groupBox_options->layout() );
+    QGridLayout *optionsLayout = static_cast<QGridLayout *>( ui.groupBox_options->layout() );
     mGroupUI->setupUI( ui.comboBox_inputLayer, optionsLayout );
     optionsLayout->addWidget( Utils::createHLine( this ), optionsLayout->rowCount(), 0, 1, 2 );
     mSummarizeUI->setupUI( optionsLayout, Utils::SummarizeNull, Utils::SummarizeNull );
   }
 
-  AbstractTool* ConvexHullToolDialog::setupTool()
+  AbstractTool *ConvexHullToolDialog::setupTool()
   {
     Utils::SummarizeMode numericSummarizeMode, nonNumericSummarizeMode;
     mSummarizeUI->getSettings( numericSummarizeMode, nonNumericSummarizeMode );
 
     Utils::GroupMode groupMode;
     int groupField;
-    QgsExpression* groupExpression;
+    QgsExpression *groupExpression;
     if ( !mGroupUI->getSettings( groupMode, groupField, groupExpression ) )
     {
       return 0;
     }
 
-    QgsVectorLayer* layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
+    QgsVectorLayer *layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
 
     return new ConvexHullTool(
              layer, ui.checkBox_inputLayerSelected->isChecked(),

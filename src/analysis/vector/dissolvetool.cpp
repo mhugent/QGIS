@@ -21,13 +21,13 @@
 #include "qgsvectorlayer.h"
 #include "qgsvectordataprovider.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   DissolveTool::DissolveTool( QgsVectorLayer *layer,
                               bool selected,
                               const QString &output,
-                              const QString& outputDriverName,
+                              const QString &outputDriverName,
                               Utils::GroupMode groupMode,
                               int groupField,
                               QgsExpression *groupExpression,
@@ -38,8 +38,8 @@ namespace Geoprocessing
                               double bufferDistance,
                               int bufferDistanceField,
                               double mapToLayer,
-                              BufferTool::BufferParams* bufferParams )
-      : AbstractTool( precision )
+                              BufferTool::BufferParams *bufferParams )
+    : AbstractTool( precision )
   {
     mLayer = layer;
     mSelected = selected;
@@ -71,7 +71,7 @@ namespace Geoprocessing
   void DissolveTool::prepare()
   {
     QMap< QString, QgsFeatureIds > clusters = Utils::groupFeatures( mLayer, mSelected, mGroupMode, mGroupField, mGroupExpression );
-    for( const QgsFeatureIds& cluster : clusters )
+    for ( const QgsFeatureIds &cluster : clusters )
     {
       mJobQueue.append( new DissolveJob( cluster ) );
     }
@@ -79,19 +79,19 @@ namespace Geoprocessing
 
   void DissolveTool::processFeature( const Job *job )
   {
-    const QgsFeatureIds& cluster = static_cast<const DissolveJob*>( job )->cluster;
+    const QgsFeatureIds &cluster = static_cast<const DissolveJob *>( job )->cluster;
 
     // Merge features in current cluster
-    QVector<QgsFeature*> features;
+    QVector<QgsFeature *> features;
     QVector<QgsAttributes> attributes;
-    QVector<QgsFeature*> outFeatures;
+    QVector<QgsFeature *> outFeatures;
     QString errorMsg;
     QVector<QgsGeometry> combineGeometries;
     QMap<QgsFeatureId, QPair< QgsGeometry, QgsAttributes > > geomAttribMap;
 
-    for ( const QgsFeatureId& id : cluster )
+    for ( const QgsFeatureId &id : cluster )
     {
-      QgsFeature* feature = new QgsFeature();
+      QgsFeature *feature = new QgsFeature();
       if ( !getFeatureAtId( *feature, id, mLayer ) )
       {
         delete feature;
@@ -110,19 +110,19 @@ namespace Geoprocessing
         distance *= mMapToLayer;
         QString errorMsg;
         QgsGeometry bufferGeom;
-        if( mBufferParams->singleSided )
+        if ( mBufferParams->singleSided )
         {
-            bufferGeom = feature->geometry().singleSidedBuffer( distance, mBufferParams->segments, mBufferParams->bufferSide, mBufferParams->joinStyle, mBufferParams->mitreLimit );
+          bufferGeom = feature->geometry().singleSidedBuffer( distance, mBufferParams->segments, mBufferParams->bufferSide, mBufferParams->joinStyle, mBufferParams->mitreLimit );
         }
         else
         {
-            bufferGeom = feature->geometry().buffer( distance, mBufferParams->segments, mBufferParams->endCapStyle, mBufferParams->joinStyle, mBufferParams->mitreLimit );
+          bufferGeom = feature->geometry().buffer( distance, mBufferParams->segments, mBufferParams->endCapStyle, mBufferParams->joinStyle, mBufferParams->mitreLimit );
         }
 
-        if( bufferGeom.isEmpty() )
+        if ( bufferGeom.isEmpty() )
         {
-            reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayer, feature->id() ), bufferGeom.lastError() );
-            continue;
+          reportGeometryError( QList<ErrorFeature>() << ErrorFeature( mLayer, feature->id() ), bufferGeom.lastError() );
+          continue;
         }
         feature->setGeometry( bufferGeom );
       }
@@ -141,9 +141,9 @@ namespace Geoprocessing
     }
     if ( !mAllowMultipart )
     {
-      for( const QgsGeometry& part : geom.asGeometryCollection() )
+      for ( const QgsGeometry &part : geom.asGeometryCollection() )
       {
-        QgsFeature* outFeature = new QgsFeature();
+        QgsFeature *outFeature = new QgsFeature();
         outFeature->setGeometry( part );
         outFeatures.append( outFeature );
         QgsRectangle rect = part.boundingBox();
@@ -152,35 +152,35 @@ namespace Geoprocessing
         QVector<QgsAttributes> partAttributes;
         QMap<QgsFeatureId, QPair< QgsGeometry, QgsAttributes > >::const_iterator it = geomAttribMap.constBegin();
         QList< QgsFeatureId > removeList;
-        for(; it != geomAttribMap.constEnd(); ++it )
+        for ( ; it != geomAttribMap.constEnd(); ++it )
         {
-            if ( rect.contains( it.value().first.boundingBox() ) )
+          if ( rect.contains( it.value().first.boundingBox() ) )
+          {
+            if ( part.contains( it.value().first ) )
             {
-              if ( part.contains( it.value().first ) )
-              {
-                partAttributes.append( it.value().second );
-                removeList.append( it.key() );
-              }
+              partAttributes.append( it.value().second );
+              removeList.append( it.key() );
             }
+          }
         }
 
-        for( const QgsFeatureId& id : removeList )
+        for ( const QgsFeatureId &id : removeList )
         {
-            geomAttribMap.remove( id );
+          geomAttribMap.remove( id );
         }
 
         // Summarize attributes
         QgsAttributes outAttribs;
-        if( partAttributes.size() > 0 )
+        if ( partAttributes.size() > 0 )
         {
-            outAttribs = Utils::summarizeAttributes( mLayer->fields(), partAttributes, mNumericSummarizer, mNonNumericSummarizer, mLayer->dataProvider()->pkAttributeIndexes() << mGroupField );
+          outAttribs = Utils::summarizeAttributes( mLayer->fields(), partAttributes, mNumericSummarizer, mNonNumericSummarizer, mLayer->dataProvider()->pkAttributeIndexes() << mGroupField );
         }
         outFeature->setAttributes( outAttribs );
       }
     }
     else
     {
-      QgsFeature* outFeature = new QgsFeature();
+      QgsFeature *outFeature = new QgsFeature();
       outFeature->setGeometry( geom );
       outFeatures.append( outFeature );
       // Summarize attributes

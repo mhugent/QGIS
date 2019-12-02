@@ -22,7 +22,7 @@
 
 #include <QMessageBox>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   DissolveToolDialog::DissolveToolDialog( QgisInterface *iface )

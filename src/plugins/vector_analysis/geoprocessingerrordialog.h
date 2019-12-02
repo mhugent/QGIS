@@ -25,7 +25,7 @@
 
 class QgsRubberBand;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class GeoprocessingErrorDialog : public QDialog
@@ -33,21 +33,21 @@ namespace Geoprocessing
       Q_OBJECT
 
     public:
-      GeoprocessingErrorDialog( QgisInterface* iface, AbstractTool *tool );
+      GeoprocessingErrorDialog( QgisInterface *iface, AbstractTool *tool );
       ~GeoprocessingErrorDialog();
 
     private:
       Ui::GeoprocessingErrorDialog ui;
-      QgisInterface* mIface;
+      QgisInterface *mIface;
       AbstractTool *mTool;
-      QVector<QgsRubberBand*> mRubberBands;
+      QVector<QgsRubberBand *> mRubberBands;
 
       static int sFeatureErrorRole;
       static int sGeometryErrorRole;
 
     private slots:
-      void populateErrorList( const QString& section, const QList<AbstractTool::Error>& errors );
-      void highlightFeature( QTreeWidgetItem* item, int column );
+      void populateErrorList( const QString &section, const QList<AbstractTool::Error> &errors );
+      void highlightFeature( QTreeWidgetItem *item, int column );
       void selectFaulty();
   };
 

@@ -22,7 +22,7 @@
 
 class QRadioButton;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   namespace Utils { class SummarizeUI; }
@@ -32,13 +32,13 @@ namespace Geoprocessing
   {
       Q_OBJECT
     public:
-      ConvexHullToolDialog( QgisInterface* iface );
+      ConvexHullToolDialog( QgisInterface *iface );
 
     private:
-      Utils::GroupUI* mGroupUI;
-      Utils::SummarizeUI* mSummarizeUI;
+      Utils::GroupUI *mGroupUI;
+      Utils::SummarizeUI *mSummarizeUI;
 
-      AbstractTool* setupTool();
+      AbstractTool *setupTool();
   };
 
 } // Geoprocessing

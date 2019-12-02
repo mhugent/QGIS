@@ -20,7 +20,7 @@
 
 #include "geoprocessingtooldialog.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   namespace Utils { class SummarizeUI; }

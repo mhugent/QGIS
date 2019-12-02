@@ -20,7 +20,7 @@
 
 #include "abstracttool.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class ANALYSIS_EXPORT UnionTool : public AbstractTool

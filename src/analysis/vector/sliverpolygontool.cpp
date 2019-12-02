@@ -31,7 +31,7 @@
 //#define DEBUG(x) QTextStream(stdout) << x << endl;
 #define DEBUG(x)
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   SliverPolygonTool::SliverPolygonTool( QgsVectorLayer *layer,

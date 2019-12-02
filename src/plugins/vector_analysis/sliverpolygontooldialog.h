@@ -23,7 +23,7 @@
 class QComboBox;
 class QDoubleSpinBox;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class SliverPolygonToolDialog : public GeoprocessingToolDialog

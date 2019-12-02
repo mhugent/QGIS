@@ -100,63 +100,63 @@ void VectorAnalysis::unload()
 void VectorAnalysis::runBufferTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::BufferToolDialog( mQGisIface );
+  mCurrDialog = new Vectoranalysis::BufferToolDialog( mQGisIface );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runClipTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::IntersectionTool, Geoprocessing::AbstractTool::FieldsA>( mQGisIface, tr( "Clip" ) );
+  mCurrDialog = new Vectoranalysis::BinaryToolDialog<Vectoranalysis::IntersectionTool, Vectoranalysis::AbstractTool::FieldsA>( mQGisIface, tr( "Clip" ) );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runConvexhullTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::ConvexHullToolDialog( mQGisIface );
+  mCurrDialog = new Vectoranalysis::ConvexHullToolDialog( mQGisIface );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runDifferenceTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::DifferenceTool, Geoprocessing::AbstractTool::FieldsA>( mQGisIface, tr( "Difference" ) );
+  mCurrDialog = new Vectoranalysis::BinaryToolDialog<Vectoranalysis::DifferenceTool, Vectoranalysis::AbstractTool::FieldsA>( mQGisIface, tr( "Difference" ) );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runDissolveTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::DissolveToolDialog( mQGisIface );
+  mCurrDialog = new Vectoranalysis::DissolveToolDialog( mQGisIface );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runIntersectionTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::IntersectionTool>( mQGisIface, tr( "Intersection" ) );
+  mCurrDialog = new Vectoranalysis::BinaryToolDialog<Vectoranalysis::IntersectionTool>( mQGisIface, tr( "Intersection" ) );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runSliverPolygonTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::SliverPolygonToolDialog( mQGisIface );
+  mCurrDialog = new Vectoranalysis::SliverPolygonToolDialog( mQGisIface );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runSymDifferenceTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::SymDifferenceTool>( mQGisIface, tr( "Symmetric difference" ) );
+  mCurrDialog = new Vectoranalysis::BinaryToolDialog<Vectoranalysis::SymDifferenceTool>( mQGisIface, tr( "Symmetric difference" ) );
   mCurrDialog->show();
 }
 
 void VectorAnalysis::runUnionTool()
 {
   delete mCurrDialog;
-  mCurrDialog = new Geoprocessing::BinaryToolDialog<Geoprocessing::UnionTool>( mQGisIface, tr( "Union" ) );
+  mCurrDialog = new Vectoranalysis::BinaryToolDialog<Vectoranalysis::UnionTool>( mQGisIface, tr( "Union" ) );
   mCurrDialog->show();
 }
 

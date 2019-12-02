@@ -22,20 +22,20 @@
 #include "qgsvectorlayer.h"
 #include "qgsexpression.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   ConvexHullTool::ConvexHullTool( QgsVectorLayer *layer,
                                   bool selected,
-                                  const QString& output,
-                                  const QString& outputDriverName,
+                                  const QString &output,
+                                  const QString &outputDriverName,
                                   Utils::GroupMode groupMode,
                                   int groupField,
                                   QgsExpression *groupExpression,
                                   Utils::SummarizeMode numericSummarizeMode,
                                   Utils::SummarizeMode nonNumericSummarizeMode,
                                   double precision )
-      : AbstractTool( precision )
+    : AbstractTool( precision )
   {
     mOutWkbType = QgsWkbTypes::Polygon;
     mOutputWriter = new QgsVectorFileWriter( output, layer->dataProvider()->encoding(), layer->fields(), mOutWkbType, layer->crs(), outputDriverName );
@@ -56,7 +56,7 @@ namespace Geoprocessing
   void ConvexHullTool::prepare()
   {
     QMap< QString, QgsFeatureIds > clusters = Utils::groupFeatures( mLayer, mSelected, mGroupMode, mGroupField, mGroupExpression );
-    for( const QgsFeatureIds& cluster : clusters )
+    for ( const QgsFeatureIds &cluster : clusters )
     {
       mJobQueue.append( new ConvexHullJob( cluster ) );
     }
@@ -64,16 +64,16 @@ namespace Geoprocessing
 
   void ConvexHullTool::processFeature( const Job *job )
   {
-    const QgsFeatureIds& cluster = static_cast<const ConvexHullJob*>( job )->cluster;
+    const QgsFeatureIds &cluster = static_cast<const ConvexHullJob *>( job )->cluster;
 
     // Compute convex hull of features in current cluster
-    QVector<QgsFeature*> features;
+    QVector<QgsFeature *> features;
     QVector<QgsAttributes> attributes;
 
-    QgsGeometryCollection* geomCollection = new QgsGeometryCollection();
-    for ( const QgsFeatureId& id : cluster )
+    QgsGeometryCollection *geomCollection = new QgsGeometryCollection();
+    for ( const QgsFeatureId &id : cluster )
     {
-      QgsFeature* feature = new QgsFeature();
+      QgsFeature *feature = new QgsFeature();
       if ( !getFeatureAtId( *feature, id, mLayer ) )
       {
         delete feature;
@@ -102,7 +102,7 @@ namespace Geoprocessing
     outFeature.setAttributes( outMap );
 
     // Write features
-    writeFeatures( QVector<QgsFeature*>() << &outFeature );
+    writeFeatures( QVector<QgsFeature *>() << &outFeature );
     qDeleteAll( features );
   }
 

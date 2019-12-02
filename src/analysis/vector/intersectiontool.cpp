@@ -21,7 +21,7 @@
 #include "qgsgeos.h"
 #include "qgsvectorlayer.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   IntersectionTool::IntersectionTool(

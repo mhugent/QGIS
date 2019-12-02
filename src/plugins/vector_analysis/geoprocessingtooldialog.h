@@ -24,7 +24,7 @@
 class QgisInterface;
 class QgsVectorLayer;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class AbstractTool;
@@ -33,14 +33,14 @@ namespace Geoprocessing
   {
       Q_OBJECT
     public:
-      GeoprocessingToolDialog( QgisInterface* iface, const QString& title );
+      GeoprocessingToolDialog( QgisInterface *iface, const QString &title );
 
     private:
       int mProgressMin, mProgressMax;
       QString mOutputDriverName;
 
       void closeEvent( QCloseEvent *ev );
-      virtual AbstractTool* setupTool() = 0;
+      virtual AbstractTool *setupTool() = 0;
       void showEvent( QShowEvent * ) { emit shown(); }
 
     signals:
@@ -57,16 +57,16 @@ namespace Geoprocessing
       void updateInputSelectionCheckBox();
 
     protected:
-      QgisInterface* mIface;
+      QgisInterface *mIface;
       Ui::GeoprocessingToolDialog ui;
       double mProgressCurTask;
       double mProgressNTasks;
-      QgsVectorLayer* mInputLayer;
+      QgsVectorLayer *mInputLayer;
 
       virtual bool getInputValid() const;
-      const QString& getOutputDriverName() const { return mOutputDriverName; }
+      const QString &getOutputDriverName() const { return mOutputDriverName; }
       double getPrecision() const;
-      void updateSelectionCheckBox( QCheckBox* selectionCheckBox, QComboBox* layerComboBox );
+      void updateSelectionCheckBox( QCheckBox *selectionCheckBox, QComboBox *layerComboBox );
 
     protected slots:
       virtual void updateLayers();

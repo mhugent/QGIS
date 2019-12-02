@@ -31,11 +31,11 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
-  GeoprocessingToolDialog::GeoprocessingToolDialog( QgisInterface* iface, const QString &title )
-      : QDialog( iface->mainWindow() ), mIface( iface ), mInputLayer( 0 )
+  GeoprocessingToolDialog::GeoprocessingToolDialog( QgisInterface *iface, const QString &title )
+    : QDialog( iface->mainWindow() ), mIface( iface ), mInputLayer( 0 )
   {
     ui.setupUi( this );
     setWindowTitle( title );
@@ -51,12 +51,12 @@ namespace Geoprocessing
     connect( ui.comboBox_inputLayer, SIGNAL( currentIndexChanged( int ) ), this, SLOT( validateInput() ) );
     connect( ui.comboBox_inputLayer, SIGNAL( currentIndexChanged( int ) ), this, SLOT( setInputLayer() ) );
     connect( ui.lineEdit_outputFileName, SIGNAL( textChanged( QString ) ), this, SLOT( validateInput() ) );
-    connect( QgsProject::instance(), SIGNAL( layersAdded( QList<QgsMapLayer*> ) ), this, SLOT( updateLayers() ) );
+    connect( QgsProject::instance(), SIGNAL( layersAdded( QList<QgsMapLayer *> ) ), this, SLOT( updateLayers() ) );
     connect( QgsProject::instance(), SIGNAL( layersWillBeRemoved( QStringList ) ), this, SLOT( updateLayers() ) );
     connect( this, SIGNAL( shown() ), this, SLOT( updateLayers() ) );
   }
 
-  void GeoprocessingToolDialog::closeEvent( QCloseEvent* ev )
+  void GeoprocessingToolDialog::closeEvent( QCloseEvent *ev )
   {
     ui.buttonBox->button( QDialogButtonBox::Close )->isEnabled() ? ev->accept() : ev->ignore();
   }
@@ -69,11 +69,11 @@ namespace Geoprocessing
     ui.comboBox_inputLayer->clear();
 
     // Collect layers
-    QgsMapLayer* currentLayer = mIface->mapCanvas()->currentLayer();
+    QgsMapLayer *currentLayer = mIface->mapCanvas()->currentLayer();
     int curInputIdx = -1;
-    foreach ( QgsMapLayer* layer, QgsProject::instance()->mapLayers() )
+    foreach ( QgsMapLayer *layer, QgsProject::instance()->mapLayers() )
     {
-      if ( qobject_cast<QgsVectorLayer*>( layer ) )
+      if ( qobject_cast<QgsVectorLayer *>( layer ) )
       {
         ui.comboBox_inputLayer->addItem( layer->name(), layer->id() );
         if ( layer->name() == curInput )
@@ -93,15 +93,15 @@ namespace Geoprocessing
 
   void GeoprocessingToolDialog::runTool()
   {
-    AbstractTool* tool = setupTool();
+    AbstractTool *tool = setupTool();
     if ( !tool )
     {
       return;
     }
 
-    QPushButton* okBtn = ui.buttonBox->button( QDialogButtonBox::Ok );
-    QPushButton* cancelBtn = ui.buttonBox->button( QDialogButtonBox::Cancel );
-    QPushButton* closeBtn = ui.buttonBox->button( QDialogButtonBox::Close );
+    QPushButton *okBtn = ui.buttonBox->button( QDialogButtonBox::Ok );
+    QPushButton *cancelBtn = ui.buttonBox->button( QDialogButtonBox::Cancel );
+    QPushButton *closeBtn = ui.buttonBox->button( QDialogButtonBox::Close );
 
     QEventLoop evLoop;
     QFutureWatcher<void> futureWatcher;
@@ -172,11 +172,11 @@ namespace Geoprocessing
         exceptionDialog.setWindowTitle( tr( "Process aborted" ) );
         exceptionDialog.setLayout( new QVBoxLayout() );
         exceptionDialog.layout()->addWidget( new QLabel( tr( "The process was aborted because unhandled exceptions occurred:" ) ) );
-        QPlainTextEdit* exceptionEdit = new QPlainTextEdit();
+        QPlainTextEdit *exceptionEdit = new QPlainTextEdit();
         exceptionEdit->setPlainText( tool->getExceptions().join( "\n" ) );
         exceptionEdit->setReadOnly( true );
         exceptionDialog.layout()->addWidget( exceptionEdit );
-        QDialogButtonBox* bbox = new QDialogButtonBox( QDialogButtonBox::Ok );
+        QDialogButtonBox *bbox = new QDialogButtonBox( QDialogButtonBox::Ok );
         connect( bbox, SIGNAL( accepted() ), &exceptionDialog, SLOT( accept() ) );
         connect( bbox, SIGNAL( rejected() ), &exceptionDialog, SLOT( reject() ) );
         exceptionDialog.layout()->addWidget( bbox );
@@ -190,14 +190,14 @@ namespace Geoprocessing
       if ( ui.checkBox_addOutput->isChecked() )
       {
         QString layerName = ui.lineEdit_outputFileName->text();
-        QgsVectorLayer* layer = new QgsVectorLayer( layerName, QFileInfo( layerName ).completeBaseName(), "ogr" );
+        QgsVectorLayer *layer = new QgsVectorLayer( layerName, QFileInfo( layerName ).completeBaseName(), "ogr" );
 
         // Remove existing layer with same uri
         QStringList toRemove;
-        for( QgsMapLayer* maplayer : QgsProject::instance()->mapLayers() )
+        for ( QgsMapLayer *maplayer : QgsProject::instance()->mapLayers() )
         {
-          if ( dynamic_cast<QgsVectorLayer*>( maplayer ) &&
-               static_cast<QgsVectorLayer*>( maplayer )->dataProvider()->dataSourceUri() == layer->dataProvider()->dataSourceUri() )
+          if ( dynamic_cast<QgsVectorLayer *>( maplayer ) &&
+               static_cast<QgsVectorLayer *>( maplayer )->dataProvider()->dataSourceUri() == layer->dataProvider()->dataSourceUri() )
           {
             toRemove.append( maplayer->id() );
           }
@@ -227,7 +227,7 @@ namespace Geoprocessing
   {
     QString filterString = QgsVectorFileWriter::filterForDriver( "ESRI Shapefile" );
     QList< QgsVectorFileWriter::FilterFormatDetails > filterFormatList = QgsVectorFileWriter::supportedFiltersAndFormats();
-    for( const QgsVectorFileWriter::FilterFormatDetails& detail : filterFormatList )
+    for ( const QgsVectorFileWriter::FilterFormatDetails &detail : filterFormatList )
     {
       QString driverName = detail.driverName;
       if ( driverName != "ESRI Shapefile" ) // Default entry, first in list (see above)
@@ -236,7 +236,7 @@ namespace Geoprocessing
       }
     }
     QString initialdir;
-    QgsVectorLayer* layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
+    QgsVectorLayer *layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
     if ( layer )
     {
       QDir dir = QFileInfo( layer->dataProvider()->dataSourceUri() ).dir();
@@ -250,24 +250,24 @@ namespace Geoprocessing
     if ( !filename.isEmpty() )
     {
       mOutputDriverName.clear();
-      for( const QgsVectorFileWriter::FilterFormatDetails& detail : filterFormatList )
+      for ( const QgsVectorFileWriter::FilterFormatDetails &detail : filterFormatList )
       {
-          if( detail.filterString == selectedFilter )
-          {
-              mOutputDriverName = detail.driverName;
-              break;
-          }
+        if ( detail.filterString == selectedFilter )
+        {
+          mOutputDriverName = detail.driverName;
+          break;
+        }
       }
 
-      if( !mOutputDriverName.isEmpty() )
+      if ( !mOutputDriverName.isEmpty() )
       {
         QgsVectorFileWriter::MetaData mdata;
         if ( QgsVectorFileWriter::driverMetadata( mOutputDriverName, mdata ) )
         {
-            if ( !filename.endsWith( QString( ".%1" ).arg( mdata.ext ), Qt::CaseInsensitive ) )
-            {
-                filename += QString( ".%1" ).arg( mdata.ext );
-            }
+          if ( !filename.endsWith( QString( ".%1" ).arg( mdata.ext ), Qt::CaseInsensitive ) )
+          {
+            filename += QString( ".%1" ).arg( mdata.ext );
+          }
         }
       }
       ui.lineEdit_outputFileName->setText( filename );
@@ -324,14 +324,14 @@ namespace Geoprocessing
   {
     if ( mInputLayer )
     {
-      disconnect( mInputLayer, SIGNAL( selectionChanged( const QgsFeatureIds&, const QgsFeatureIds&, bool ) ), this, SLOT( updateInputSelectionCheckBox() ) );
+      disconnect( mInputLayer, SIGNAL( selectionChanged( const QgsFeatureIds &, const QgsFeatureIds &, bool ) ), this, SLOT( updateInputSelectionCheckBox() ) );
     }
-    QgsVectorLayer* layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
+    QgsVectorLayer *layer = Utils::getSelectedLayer( ui.comboBox_inputLayer );
     mInputLayer = layer;
 
     if ( mInputLayer )
     {
-      connect( mInputLayer, SIGNAL( selectionChanged( const QgsFeatureIds&, const QgsFeatureIds&, bool ) ), this, SLOT( updateInputSelectionCheckBox() ) );
+      connect( mInputLayer, SIGNAL( selectionChanged( const QgsFeatureIds &, const QgsFeatureIds &, bool ) ), this, SLOT( updateInputSelectionCheckBox() ) );
     }
     updateInputSelectionCheckBox();
   }
@@ -341,14 +341,14 @@ namespace Geoprocessing
     updateSelectionCheckBox( ui.checkBox_inputLayerSelected, ui.comboBox_inputLayer );
   }
 
-  void GeoprocessingToolDialog::updateSelectionCheckBox( QCheckBox* selectionCheckBox, QComboBox* layerComboBox )
+  void GeoprocessingToolDialog::updateSelectionCheckBox( QCheckBox *selectionCheckBox, QComboBox *layerComboBox )
   {
     if ( !selectionCheckBox || !layerComboBox )
     {
       return;
     }
 
-    QgsVectorLayer* layer = Utils::getSelectedLayer( layerComboBox );
+    QgsVectorLayer *layer = Utils::getSelectedLayer( layerComboBox );
     if ( !layer )
     {
       selectionCheckBox->setDisabled( true );

@@ -26,19 +26,19 @@
 
 class QgsExpression;
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class ANALYSIS_EXPORT DissolveTool : public AbstractTool
   {
     public:
-      DissolveTool( QgsVectorLayer* layer,
+      DissolveTool( QgsVectorLayer *layer,
                     bool selected,
-                    const QString& output,
-                    const QString& outputDriverName,
+                    const QString &output,
+                    const QString &outputDriverName,
                     Utils::GroupMode groupMode,
                     int groupField,
-                    QgsExpression* groupExpression,
+                    QgsExpression *groupExpression,
                     Utils::SummarizeMode numericSummarizeMode,
                     Utils::SummarizeMode nonNumericSummarizeMode,
                     bool allowMultipart,
@@ -52,29 +52,29 @@ namespace Geoprocessing
     private:
       struct DissolveJob : AbstractTool::Job
       {
-        DissolveJob( const QgsFeatureIds& _cluster ) : Job( 0, 0 ), cluster( _cluster ) {}
+        DissolveJob( const QgsFeatureIds &_cluster ) : Job( 0, 0 ), cluster( _cluster ) {}
         QgsFeatureIds cluster;
       };
 
-      QgsVectorLayer* mLayer;
+      QgsVectorLayer *mLayer;
       bool mSelected;
       QSet<int> mProcessedIds;
       Utils::GroupMode mGroupMode;
       int mGroupField;
-      QgsExpression* mGroupExpression;
+      QgsExpression *mGroupExpression;
       bool mAllowMultipart;
 
       double mBufferDistance;
       int mBufferDistanceField;
       double mMapToLayer;
-      BufferTool::BufferParams* mBufferParams;
+      BufferTool::BufferParams *mBufferParams;
 
-      typedef QVariant( *Summarizer_t )( int, const QVector<const QgsAttributeMap*>& );
+      typedef QVariant( *Summarizer_t )( int, const QVector<const QgsAttributeMap *> & );
       Utils::summarizer_t mNumericSummarizer;
       Utils::summarizer_t mNonNumericSummarizer;
 
       void prepare();
-      void processFeature( const Job* job );
+      void processFeature( const Job *job );
   };
 
 } // Geoprocessing

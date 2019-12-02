@@ -21,7 +21,7 @@
 
 #include <QComboBox>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   AbstractBinaryToolDialog::AbstractBinaryToolDialog( QgisInterface *iface, const QString &title, int outputFields, int outputCRS )

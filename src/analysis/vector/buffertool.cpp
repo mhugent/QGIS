@@ -20,19 +20,19 @@
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   BufferTool::BufferTool( QgsVectorLayer *layer,
                           bool selected,
                           const QString &output,
-                          const QString& outputDriverName,
+                          const QString &outputDriverName,
                           double distance,
                           int distanceField,
                           double mapToLayer,
                           BufferParams *params,
                           double precision )
-      : AbstractTool( precision )
+    : AbstractTool( precision )
   {
     mOutWkbType = QgsWkbTypes::Polygon;
     mOutputWriter = new QgsVectorFileWriter( output, layer->dataProvider()->encoding(), layer->fields(), mOutWkbType, layer->crs(), outputDriverName );
@@ -68,13 +68,13 @@ namespace Geoprocessing
     }
     distance *= mMapToLayer;
     QgsGeometry outGeometry;
-    if( mParams->singleSided )
+    if ( mParams->singleSided )
     {
-        outGeometry = f.geometry().singleSidedBuffer( distance, mParams->segments, mParams->bufferSide, mParams->joinStyle, mParams->mitreLimit );
+      outGeometry = f.geometry().singleSidedBuffer( distance, mParams->segments, mParams->bufferSide, mParams->joinStyle, mParams->mitreLimit );
     }
     else
     {
-        outGeometry = f.geometry().buffer( distance, mParams->segments, mParams->endCapStyle, mParams->joinStyle, mParams->mitreLimit );
+      outGeometry = f.geometry().buffer( distance, mParams->segments, mParams->endCapStyle, mParams->joinStyle, mParams->mitreLimit );
     }
 
     if ( outGeometry.isEmpty() )
@@ -86,7 +86,7 @@ namespace Geoprocessing
     QgsFeature outputFeature;
     outputFeature.setAttributes( f.attributes() );
     outputFeature.setGeometry( outGeometry );
-    writeFeatures( QVector<QgsFeature*>() << &outputFeature );
+    writeFeatures( QVector<QgsFeature *>() << &outputFeature );
   }
 
 } // Geoprocessing

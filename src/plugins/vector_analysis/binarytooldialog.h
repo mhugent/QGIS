@@ -26,7 +26,7 @@
 #include <QComboBox>
 #include <QMessageBox>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
 
   class AbstractBinaryToolDialog : public GeoprocessingToolDialog

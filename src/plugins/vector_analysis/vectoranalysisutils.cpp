@@ -33,12 +33,12 @@
 #include <QPushButton>
 #include <QRadioButton>
 
-namespace Geoprocessing
+namespace Vectoranalysis
 {
   namespace Utils
   {
 
-    QgsVectorLayer* getSelectedLayer( QComboBox *combobox )
+    QgsVectorLayer *getSelectedLayer( QComboBox *combobox )
     {
       int inputIdx = combobox->currentIndex();
       if ( inputIdx < 0 )
@@ -46,14 +46,14 @@ namespace Geoprocessing
         return 0;
       }
       QString inputLayerId = combobox->itemData( inputIdx ).toString();
-      return static_cast<QgsVectorLayer*>( QgsProject::instance()->mapLayer( inputLayerId ) );
+      return static_cast<QgsVectorLayer *>( QgsProject::instance()->mapLayer( inputLayerId ) );
     }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-    QFrame* createHLine( QWidget *parent )
+    QFrame *createHLine( QWidget *parent )
     {
-      QFrame* line = new QFrame( parent );
+      QFrame *line = new QFrame( parent );
       line->setFrameShape( QFrame::HLine );
       line->setFrameShadow( QFrame::Sunken );
       return line;
@@ -62,71 +62,71 @@ namespace Geoprocessing
 ///////////////////////////////////////////////////////////////////////////////
 
 #if 0
-    static QVariant summarizeFirst( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeFirst( int key, const QVector<const QgsAttributes *> &maps )
     {
       return maps.first()->value( key );
     }
 
-    static QVariant summarizeLast( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeLast( int key, const QVector<const QgsAttributes *> &maps )
     {
       return maps.last()->value( key );
     }
 
-    static QVariant summarizeCount( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeCount( int key, const QVector<const QgsAttributes *> &maps )
     {
       int count = 0;
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         count += !map->value( key ).isNull();
       }
       return QVariant( count );
     }
 
-    static QVariant summarizeSum( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeSum( int key, const QVector<const QgsAttributes *> &maps )
     {
       double sum = 0.0;
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         sum += map->value( key ).toDouble();
       }
       return QVariant( sum );
     }
 
-    static QVariant summarizeMean( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeMean( int key, const QVector<const QgsAttributes *> &maps )
     {
       double sum = 0.0;
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         sum += map->value( key ).toDouble();
       }
       return QVariant( sum / maps.size() );
     }
 
-    static QVariant summarizeMin( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeMin( int key, const QVector<const QgsAttributes *> &maps )
     {
       double min = maps.first()->value( key ).toDouble();
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         min = qMin( min, map->value( key ).toDouble() );
       }
       return QVariant( min );
     }
 
-    static QVariant summarizeMax( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeMax( int key, const QVector<const QgsAttributes *> &maps )
     {
       double max = maps.first()->value( key ).toDouble();
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         max = qMax( max, map->value( key ).toDouble() );
       }
       return QVariant( max );
     }
 
-    static QVariant summarizeRange( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeRange( int key, const QVector<const QgsAttributes *> &maps )
     {
       double min = maps.first()->value( key ).toDouble();
       double max = min;
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         min = qMin( min, map->value( key ).toDouble() );
         max = qMax( max, map->value( key ).toDouble() );
@@ -134,11 +134,11 @@ namespace Geoprocessing
       return QVariant( max - min );
     }
 
-    static QVariant summarizeStdDev( int key, const QVector<const QgsAttributes*>& maps )
+    static QVariant summarizeStdDev( int key, const QVector<const QgsAttributes *> &maps )
     {
       double sum = 0.0;
       double sum2 = 0.0;
-      foreach ( const QgsAttributes* map, maps )
+      foreach ( const QgsAttributes *map, maps )
       {
         double val = map->value( key ).toDouble();
         sum += val;
@@ -148,7 +148,7 @@ namespace Geoprocessing
       return QVariant( qSqrt( sum2 / n - ( sum * sum ) / ( n * n ) ) );
     }
 
-    static QVariant summarizeNull( int /*key*/, const QVector<const QgsAttributes*>& /*maps*/ )
+    static QVariant summarizeNull( int /*key*/, const QVector<const QgsAttributes *> & /*maps*/ )
     {
       return QVariant();
     }
@@ -181,7 +181,7 @@ namespace Geoprocessing
       }
     }
 
-    QgsAttributes summarizeAttributes( const QgsFields& fields, const QVector<const QgsAttributes*>& attribs, summarizer_t numericSummarizer, summarizer_t nonNumericSummarizer, const QgsAttributeList &exclude )
+    QgsAttributes summarizeAttributes( const QgsFields &fields, const QVector<const QgsAttributes *> &attribs, summarizer_t numericSummarizer, summarizer_t nonNumericSummarizer, const QgsAttributeList &exclude )
     {
       QgsAttributes output;
       for ( int idx = 0, nIdx = fields.count(); idx < nIdx; ++idx )
@@ -193,7 +193,7 @@ namespace Geoprocessing
         }
         else
         {
-          const QgsField& field = fields[ idx ];
+          const QgsField &field = fields[ idx ];
           // Distinguish between numeric types and other types
           switch ( field.type() )
           {
@@ -213,7 +213,7 @@ namespace Geoprocessing
     }
 #endif //0
 
-    void SummarizeUI::setupUI( QGridLayout *layout, Geoprocessing::Utils::SummarizeMode defaultNumericSummarizeMode, Geoprocessing::Utils::SummarizeMode defaultNonNumericSummarizeMode )
+    void SummarizeUI::setupUI( QGridLayout *layout, Vectoranalysis::Utils::SummarizeMode defaultNumericSummarizeMode, Vectoranalysis::Utils::SummarizeMode defaultNonNumericSummarizeMode )
     {
       mComboNumericSummarizeMode = new QComboBox();
       mComboNumericSummarizeMode->addItem( tr( "First" ),  SummarizeFirst );
@@ -252,7 +252,7 @@ namespace Geoprocessing
 ///////////////////////////////////////////////////////////////////////////////
 
 #if 0
-    static QString allAttributes( QgsVectorLayer* layer, const QgsFeature& feature )
+    static QString allAttributes( QgsVectorLayer *layer, const QgsFeature &feature )
     {
       QStringList values;
       for ( int idx = 0, nIdx = layer->pendingFields().count(); idx < nIdx; ++idx )
@@ -265,7 +265,7 @@ namespace Geoprocessing
       return values.join( "::" );
     }
 
-    QMap<QString, QgsFeatureIds> groupFeatures( QgsVectorLayer* layer, bool selectedOnly, GroupMode mode, int groupField, QgsExpression* groupExpr )
+    QMap<QString, QgsFeatureIds> groupFeatures( QgsVectorLayer *layer, bool selectedOnly, GroupMode mode, int groupField, QgsExpression *groupExpr )
     {
       QMap<QString, QgsFeatureIds> clusters;
       if ( mode == GroupAll )
@@ -284,7 +284,7 @@ namespace Geoprocessing
         QgsFeature f;
         if ( selectedOnly )
         {
-          foreach ( const QgsFeatureId& id, layer->selectedFeaturesIds() )
+          foreach ( const QgsFeatureId &id, layer->selectedFeaturesIds() )
           {
             QgsFeatureRequest req( id );
             req.setFlags( QgsFeatureRequest::NoGeometry );
@@ -310,7 +310,7 @@ namespace Geoprocessing
         QgsFeature f;
         if ( selectedOnly )
         {
-          foreach ( const QgsFeatureId& id, layer->selectedFeaturesIds() )
+          foreach ( const QgsFeatureId &id, layer->selectedFeaturesIds() )
           {
             QgsFeatureRequest req( id );
             req.setFlags( QgsFeatureRequest::NoGeometry );
@@ -336,7 +336,7 @@ namespace Geoprocessing
         QgsFeature f;
         if ( selectedOnly )
         {
-          foreach ( const QgsFeatureId& id, layer->selectedFeaturesIds() )
+          foreach ( const QgsFeatureId &id, layer->selectedFeaturesIds() )
           {
             QgsFeatureRequest req( id );
             req.setFlags( QgsFeatureRequest::NoGeometry );
@@ -362,7 +362,7 @@ namespace Geoprocessing
     }
 #endif //0
 
-    void GroupUI::setupUI( QComboBox *layerCombo, QGridLayout *layout, const QString& operation )
+    void GroupUI::setupUI( QComboBox *layerCombo, QGridLayout *layout, const QString &operation )
     {
       mLayerCombo = layerCombo;
 
@@ -378,7 +378,7 @@ namespace Geoprocessing
       mButtonGroupExpression = new QPushButton( "..." );
       mButtonGroupExpression->setEnabled( false );
 
-      QWidget* widgetGroupExpression = new QWidget();
+      QWidget *widgetGroupExpression = new QWidget();
       widgetGroupExpression->setLayout( new QHBoxLayout() );
       widgetGroupExpression->layout()->setMargin( 0 );
       widgetGroupExpression->layout()->addWidget( mLineeditGroupExpression );
@@ -403,17 +403,17 @@ namespace Geoprocessing
       populateAttributeIndexCombo();
     }
 
-    bool GroupUI::getSettings( GroupMode &groupMode, int& groupField, QgsExpression *&groupExpression ) const
+    bool GroupUI::getSettings( GroupMode &groupMode, int &groupField, QgsExpression *&groupExpression ) const
     {
       groupField = mRadioGroupField->isChecked() ? mComboGroupField->itemData( mComboGroupField->currentIndex() ).toInt() : -1;
       groupMode =
         mRadioGroupAll->isChecked() ? Utils::GroupAll :
         mRadioGroupField->isChecked() ? ( groupField == Utils::GroupByAllFields ? Utils::GroupByAllFields : Utils::GroupByField ) :
-            /*mRadioDissolveExpression->isChecked() ?*/ Utils::GroupByExpression;
+        /*mRadioDissolveExpression->isChecked() ?*/ Utils::GroupByExpression;
 
       groupExpression = 0;
       if ( mRadioGroupExpression->isChecked() )
-  {
+      {
         groupExpression = new QgsExpression( mLineeditGroupExpression->text() );
         if ( groupExpression->hasParserError() )
         {
@@ -434,13 +434,13 @@ namespace Geoprocessing
       QString prev = mComboGroupField->currentText();
       int selIdx = 0;
       mComboGroupField->clear();
-      QgsVectorLayer* layer = getSelectedLayer( mLayerCombo );
+      QgsVectorLayer *layer = getSelectedLayer( mLayerCombo );
       if ( layer )
       {
         mComboGroupField->addItem( tr( "All" ), Utils::GroupByAllFields );
         mComboGroupField->insertSeparator( 1 );
 
-        const QgsFields& fields = layer->fields();
+        const QgsFields &fields = layer->fields();
         for ( int index = 0, nIdx = fields.count(); index < nIdx; ++index )
         {
           // Don't list primary keys...
@@ -467,7 +467,7 @@ namespace Geoprocessing
 
     void GroupUI::showExpressionBuilder()
     {
-      QgsVectorLayer* layer = getSelectedLayer( mLayerCombo );
+      QgsVectorLayer *layer = getSelectedLayer( mLayerCombo );
       QgsExpressionBuilderDialog dialog( layer, mLineeditGroupExpression->text(), mLineeditGroupExpression );
       if ( dialog.exec() == QDialog::Accepted )
       {
