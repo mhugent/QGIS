@@ -43,14 +43,14 @@ namespace Vectoranalysis
 
   void DifferenceTool::processFeature( const Job *job )
   {
-      QgsFeature f;
-      if ( !mOutput || !mLayerA || !mLayerB || !getFeatureAtId( f, job->featureid, mLayerA, mLayerA->fields().allAttributesList() ) )
-      {
-          return;
-      }
+    QgsFeature f;
+    if ( !mOutput || !mLayerA || !mLayerB || !getFeatureAtId( f, job->featureid, mLayerA, mLayerA->fields().allAttributesList() ) )
+    {
+      return;
+    }
 
-      QgsFeatureList difference = QgsOverlayUtils::featureDifference( f, *mLayerA, *mLayerB, mSpatialIndex, mTransformContext, mLayerA->fields().size(), mLayerB->fields().size(), QgsOverlayUtils::OutputA );
-      writeFeatures( difference );
+    QgsFeatureList difference = QgsOverlayUtils::featureDifference( f, *mLayerA, *mLayerB, mSpatialIndex, mTransformContext, mLayerA->fields().size(), mLayerB->fields().size(), QgsOverlayUtils::OutputA, mPrecision );
+    writeFeatures( difference );
   }
 
 } // Geoprocessing

@@ -1393,7 +1393,7 @@ of the node is returned.
 .. versionadded:: 3.0
 %End
 
-    QgsGeometry intersection( const QgsGeometry &geometry ) const;
+    QgsGeometry intersection( const QgsGeometry &geometry, double precision = 0 ) const;
 %Docstring
 Returns a geometry representing the points shared by this geometry and other.
 
@@ -1440,7 +1440,7 @@ converts them to single line strings.
 .. versionadded:: 3.0
 %End
 
-    QgsGeometry difference( const QgsGeometry &geometry ) const;
+    QgsGeometry difference( const QgsGeometry &geometry, double precision = 0 ) const;
 %Docstring
 Returns a geometry representing the points making up this geometry that do not make up other.
 
@@ -1911,7 +1911,7 @@ The ``flags`` parameter indicates optional flags which control the type of valid
 .. versionadded:: 1.5
 %End
 
-    static QgsGeometry unaryUnion( const QVector<QgsGeometry> &geometries );
+    static QgsGeometry unaryUnion( const QVector<QgsGeometry> &geometries, double precision = 0 );
 %Docstring
 Compute the unary union on a list of ``geometries``. May be faster than an iterative union on a set of geometries.
 The returned geometry will be fully noded, i.e. a node will be created at every common intersection of the
@@ -2195,7 +2195,7 @@ geometry will retain the same dimensionality as the input geometry.
 .. versionadded:: 2.9
 %End
 
-    static QgsGeometryEngine *createGeometryEngine( const QgsAbstractGeometry *geometry ) /Factory/;
+    static QgsGeometryEngine *createGeometryEngine( const QgsAbstractGeometry *geometry, double precision = 0 ) /Factory/;
 %Docstring
 Creates and returns a new geometry engine
 %End

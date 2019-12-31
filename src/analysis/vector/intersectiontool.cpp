@@ -54,7 +54,7 @@ namespace Vectoranalysis
       return;
     }
 
-    QgsFeatureList intersection = QgsOverlayUtils::featureIntersection( f, *mLayerA, *mLayerB, mSpatialIndex, mTransformContext, mFieldIndicesA, mFieldIndicesB );
+    QgsFeatureList intersection = QgsOverlayUtils::featureIntersection( f, *mLayerA, *mLayerB, mSpatialIndex, mTransformContext, mFieldIndicesA, mFieldIndicesB, mPrecision );
     writeFeatures( intersection );
 
 #if 0
@@ -69,13 +69,13 @@ namespace Vectoranalysis
 
     for ( QgsFeature *testFeature : featureList )
     {
-        if( !testFeature )
-        {
-            return;
-        }
+      if ( !testFeature )
+      {
+        return;
+      }
 
-        QgsFeatureList intersection = QgsOverlayUtils::featureIntersection( *testFeature, *mLayerA, *mLayerB, mSpatialIndex, mTransformContext, mFieldIndicesA, mFieldIndicesB );
-        writeFeatures( intersection );
+      QgsFeatureList intersection = QgsOverlayUtils::featureIntersection( *testFeature, *mLayerA, *mLayerB, mSpatialIndex, mTransformContext, mFieldIndicesA, mFieldIndicesB );
+      writeFeatures( intersection );
     }
 
     // Perform intersections

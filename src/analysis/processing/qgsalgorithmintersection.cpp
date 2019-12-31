@@ -74,6 +74,7 @@ void QgsIntersectionAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( prefix.release() );
 
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Intersection" ) ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "PRECISION" ), QObject::tr( "Numeric precision" ), QgsProcessingParameterNumber::Double, 0, true ) );
 
 }
 
@@ -107,10 +108,12 @@ QVariantMap QgsIntersectionAlgorithm::processAlgorithm( const QVariantMap &param
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
+  double precision = parameterAsDouble( parameters, QStringLiteral( "PRECISION" ), context );
+
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
 
-  Vectoranalysis::IntersectionTool tool( sourceA.get(), sourceB.get(), fieldIndicesA, fieldIndicesB, sink.get(), geomType, context.transformContext() );
+  Vectoranalysis::IntersectionTool tool( sourceA.get(), sourceB.get(), fieldIndicesA, fieldIndicesB, sink.get(), geomType, context.transformContext(), precision );
   QgsOverlayUtils::runVectorAnalysisTool( tool, feedback );
 
   return outputs;

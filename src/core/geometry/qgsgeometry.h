@@ -1392,7 +1392,7 @@ class CORE_EXPORT QgsGeometry
      * If an error was encountered while creating the result, more information can be retrieved
      * by calling `error()` on the returned geometry.
      */
-    QgsGeometry intersection( const QgsGeometry &geometry ) const;
+    QgsGeometry intersection( const QgsGeometry &geometry, double precision = 0 ) const;
 
     /**
      * Clips the geometry using the specified \a rectangle.
@@ -1434,7 +1434,7 @@ class CORE_EXPORT QgsGeometry
      * If an error was encountered while creating the result, more information can be retrieved
      * by calling `error()` on the returned geometry.
      */
-    QgsGeometry difference( const QgsGeometry &geometry ) const;
+    QgsGeometry difference( const QgsGeometry &geometry, double precision = 0 ) const;
 
     /**
      * Returns a geometry representing the points making up this geometry that do not make up other.
@@ -2022,7 +2022,7 @@ class CORE_EXPORT QgsGeometry
      * The returned geometry will be fully noded, i.e. a node will be created at every common intersection of the
      * input geometries. An empty geometry will be returned in the case of errors.
      */
-    static QgsGeometry unaryUnion( const QVector<QgsGeometry> &geometries );
+    static QgsGeometry unaryUnion( const QVector<QgsGeometry> &geometries, double precision = 0 );
 
     /**
      * Creates a GeometryCollection geometry containing possible polygons formed from the constituent
@@ -2339,7 +2339,7 @@ class CORE_EXPORT QgsGeometry
     /**
      * Creates and returns a new geometry engine
      */
-    static QgsGeometryEngine *createGeometryEngine( const QgsAbstractGeometry *geometry ) SIP_FACTORY;
+    static QgsGeometryEngine *createGeometryEngine( const QgsAbstractGeometry *geometry, double precision = 0 ) SIP_FACTORY;
 
     /**
      * Upgrades a point list from QgsPointXY to QgsPoint

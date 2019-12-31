@@ -46,30 +46,30 @@ namespace Vectoranalysis
 
   void SymDifferenceTool::processFeature( const Job *job )
   {
-      QgsFeature f;
-      if ( !mOutput || !mLayerA || !mLayerB )
+    QgsFeature f;
+    if ( !mOutput || !mLayerA || !mLayerB )
+    {
+      return;
+    }
+
+    QgsGeometry geom = f.geometry();
+    if ( job->taskFlag == ProcessLayerAFeature )
+    {
+      if ( !getFeatureAtId( f, job->featureid, mLayerA, mLayerA->fields().allAttributesList() ) )
       {
         return;
       }
-
-      QgsGeometry geom = f.geometry();
-      if ( job->taskFlag == ProcessLayerAFeature )
+      QgsFeatureList differenceA = QgsOverlayUtils::featureDifference( f, *mLayerA, *mLayerB, mSpatialIndexB, mTransformContext, mLayerA->fields().size(), mLayerB->fields().size(), QgsOverlayUtils::OutputAB, mPrecision );
+      writeFeatures( differenceA );
+    }
+    else // if(job->taskFlag == ProcessLayerBFeature)
+    {
+      if ( !getFeatureAtId( f, job->featureid, mLayerB, mLayerB->fields().allAttributesList() ) )
       {
-        if( !getFeatureAtId( f, job->featureid, mLayerA, mLayerA->fields().allAttributesList() ) )
-        {
-            return;
-        }
-        QgsFeatureList differenceA = QgsOverlayUtils::featureDifference( f, *mLayerA, *mLayerB, mSpatialIndexB, mTransformContext, mLayerA->fields().size(), mLayerB->fields().size(), QgsOverlayUtils::OutputAB );
-        writeFeatures( differenceA );
+        return;
       }
-      else // if(job->taskFlag == ProcessLayerBFeature)
-      {
-        if( !getFeatureAtId( f, job->featureid, mLayerB, mLayerB->fields().allAttributesList() ) )
-        {
-            return;
-        }
-        QgsFeatureList differenceB = QgsOverlayUtils::featureDifference( f, *mLayerB, *mLayerA, mSpatialIndexA, mTransformContext, mLayerB->fields().size(), mLayerA->fields().size(), QgsOverlayUtils::OutputBA );
-        writeFeatures( differenceB );
-      }
+      QgsFeatureList differenceB = QgsOverlayUtils::featureDifference( f, *mLayerB, *mLayerA, mSpatialIndexA, mTransformContext, mLayerB->fields().size(), mLayerA->fields().size(), QgsOverlayUtils::OutputBA, mPrecision );
+      writeFeatures( differenceB );
+    }
   }
 } // Geoprocessing

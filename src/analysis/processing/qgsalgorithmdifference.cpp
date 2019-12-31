@@ -77,6 +77,7 @@ void QgsDifferenceAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
   addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "OVERLAY" ), QObject::tr( "Overlay layer" ) ) );
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Difference" ) ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "PRECISION" ), QObject::tr( "Numeric precision" ), QgsProcessingParameterNumber::Double, 0, true ) );
 }
 
 
@@ -97,10 +98,12 @@ QVariantMap QgsDifferenceAlgorithm::processAlgorithm( const QVariantMap &paramet
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
+  double precision = parameterAsDouble( parameters, QStringLiteral( "PRECISION" ), context );
+
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
 
-  Vectoranalysis::DifferenceTool tool( sourceA.get(), sourceB.get(), sink.get(), geomType, context.transformContext() );
+  Vectoranalysis::DifferenceTool tool( sourceA.get(), sourceB.get(), sink.get(), geomType, context.transformContext(), precision );
   QgsOverlayUtils::runVectorAnalysisTool( tool, feedback );
   return outputs;
 }

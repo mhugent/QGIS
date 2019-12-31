@@ -61,6 +61,7 @@ void QgsSymmetricalDifferenceAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( prefix.release() );
 
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Symmetrical difference" ) ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "PRECISION" ), QObject::tr( "Numeric precision" ), QgsProcessingParameterNumber::Double, 0, true ) );
 }
 
 
@@ -84,10 +85,12 @@ QVariantMap QgsSymmetricalDifferenceAlgorithm::processAlgorithm( const QVariantM
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
+  double precision = parameterAsDouble( parameters, QStringLiteral( "PRECISION" ), context );
+
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
 
-  Vectoranalysis::SymDifferenceTool tool( sourceA.get(), sourceB.get(), sink.get(), geomType, context.transformContext() );
+  Vectoranalysis::SymDifferenceTool tool( sourceA.get(), sourceB.get(), sink.get(), geomType, context.transformContext(), precision );
   QgsOverlayUtils::runVectorAnalysisTool( tool, feedback );
   return outputs;
 }

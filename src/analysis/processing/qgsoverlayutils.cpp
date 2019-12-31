@@ -73,7 +73,8 @@ static bool sanitizeDifferenceResult( QgsGeometry &geom )
   return true;
 }
 
-QgsFeatureList QgsOverlayUtils::featureIntersection( const QgsFeature &featA, const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsSpatialIndex &indexB, const QgsCoordinateTransformContext &transformContext, const QList<int> &fieldIndicesA, const QList<int> &fieldIndicesB )
+QgsFeatureList QgsOverlayUtils::featureIntersection( const QgsFeature &featA, const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsSpatialIndex &indexB, const QgsCoordinateTransformContext &transformContext,
+    const QList<int> &fieldIndicesA, const QList<int> &fieldIndicesB, double precision )
 {
   QgsFeatureList result;
   if ( !featA.hasGeometry() )
@@ -112,7 +113,7 @@ QgsFeatureList QgsOverlayUtils::featureIntersection( const QgsFeature &featA, co
     if ( !engine->intersects( tmpGeom.constGet() ) )
       continue;
 
-    QgsGeometry intGeom = geom.intersection( tmpGeom );
+    QgsGeometry intGeom = geom.intersection( tmpGeom, precision );
     if ( !sanitizeIntersectionResult( intGeom, QgsWkbTypes::geometryType( QgsWkbTypes::multiType( sourceA.wkbType() ) ) ) )
       continue;
 
@@ -130,7 +131,7 @@ QgsFeatureList QgsOverlayUtils::featureIntersection( const QgsFeature &featA, co
 }
 
 QgsFeatureList QgsOverlayUtils::featureDifference( const QgsFeature &featA, const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsSpatialIndex &indexB, const QgsCoordinateTransformContext &transformContext,
-    int fieldsCountA, int fieldsCountB, QgsOverlayUtils::DifferenceOutput outputAttrs )
+    int fieldsCountA, int fieldsCountB, QgsOverlayUtils::DifferenceOutput outputAttrs, double precision )
 {
   QgsFeatureList result;
 
@@ -168,7 +169,7 @@ QgsFeatureList QgsOverlayUtils::featureDifference( const QgsFeature &featA, cons
 
   if ( !geometriesB.isEmpty() )
   {
-    QgsGeometry geomB = QgsGeometry::unaryUnion( geometriesB );
+    QgsGeometry geomB = QgsGeometry::unaryUnion( geometriesB, precision );
     if ( !geomB.lastError().isEmpty() )
     {
       // This may happen if input geometries from a layer do not line up well (for example polygons
@@ -178,7 +179,7 @@ QgsFeatureList QgsOverlayUtils::featureDifference( const QgsFeature &featA, cons
       // 2. fix geometries (removes polygons collapsed to lines etc.) using MakeValid
       throw QgsProcessingException( QStringLiteral( "%1\n\n%2" ).arg( QObject::tr( "GEOS geoprocessing error: unary union failed." ), geomB.lastError() ) );
     }
-    geom = geom.difference( geomB );
+    geom = geom.difference( geomB, precision );
   }
 
   if ( !sanitizeDifferenceResult( geom ) )

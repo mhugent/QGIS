@@ -2238,14 +2238,14 @@ double QgsGeometry::interpolateAngle( double distance ) const
   }
 }
 
-QgsGeometry QgsGeometry::intersection( const QgsGeometry &geometry ) const
+QgsGeometry QgsGeometry::intersection( const QgsGeometry &geometry, double precision ) const
 {
   if ( !d->geometry || geometry.isNull() )
   {
     return QgsGeometry();
   }
 
-  QgsGeos geos( d->geometry.get() );
+  QgsGeos geos( d->geometry.get(), precision );
 
   mLastError.clear();
   std::unique_ptr< QgsAbstractGeometry > resultGeom( geos.intersection( geometry.d->geometry.get(), &mLastError ) );
@@ -2299,14 +2299,14 @@ QgsGeometry QgsGeometry::mergeLines() const
   return result;
 }
 
-QgsGeometry QgsGeometry::difference( const QgsGeometry &geometry ) const
+QgsGeometry QgsGeometry::difference( const QgsGeometry &geometry, double precision ) const
 {
   if ( !d->geometry || geometry.isNull() )
   {
     return QgsGeometry();
   }
 
-  QgsGeos geos( d->geometry.get() );
+  QgsGeos geos( d->geometry.get(), precision );
 
   mLastError.clear();
   std::unique_ptr< QgsAbstractGeometry > resultGeom( geos.difference( geometry.d->geometry.get(), &mLastError ) );
@@ -2628,9 +2628,9 @@ bool QgsGeometry::isGeosEqual( const QgsGeometry &g ) const
   return geos.isEqual( g.d->geometry.get(), &mLastError );
 }
 
-QgsGeometry QgsGeometry::unaryUnion( const QVector<QgsGeometry> &geometries )
+QgsGeometry QgsGeometry::unaryUnion( const QVector<QgsGeometry> &geometries, double precision )
 {
-  QgsGeos geos( nullptr );
+  QgsGeos geos( nullptr, precision );
 
   QString error;
   std::unique_ptr< QgsAbstractGeometry > geom( geos.combine( geometries, &error ) );
@@ -3502,9 +3502,9 @@ QgsGeometry QgsGeometry::convertToPolygon( bool destMultipart ) const
   }
 }
 
-QgsGeometryEngine *QgsGeometry::createGeometryEngine( const QgsAbstractGeometry *geometry )
+QgsGeometryEngine *QgsGeometry::createGeometryEngine( const QgsAbstractGeometry *geometry, double precision )
 {
-  return new QgsGeos( geometry );
+  return new QgsGeos( geometry, precision );
 }
 
 QDataStream &operator<<( QDataStream &out, const QgsGeometry &geometry )
