@@ -4580,6 +4580,8 @@ void QgsDxfExport::drawLabel( QString layerId, QgsRenderContext& context, pal::L
     }
   }
 
+  txt.replace( QString( QChar( 13 ) ) + QString( QChar( 10 ) ), "\\P" );
+  txt.replace( QChar( 10 ), "\\P" );
   txt = txt.replace( wrapchr, "\\P" );
   txt.replace( " ", "\\~" );
 
