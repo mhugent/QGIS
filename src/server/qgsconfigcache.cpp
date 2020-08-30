@@ -35,13 +35,24 @@ QgsConfigCache *QgsConfigCache::instance()
 
 QgsConfigCache::QgsConfigCache()
 {
-  QObject::connect( &mFileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &QgsConfigCache::removeChangedEntry );
 }
 
 
 const QgsProject *QgsConfigCache::project( const QString &path, QgsServerSettings *settings )
 {
-  if ( ! mProjectCache[ path ] )
+  QgsConfigCacheEntry *prjEntry = mProjectCache.object( path );
+  if ( prjEntry )
+  {
+    //remove entry from cache if project file has been modified
+    QFileInfo prjInfo( path );
+    if ( prjInfo.lastModified() > prjEntry->timeStamp )
+    {
+      removeChangedEntry( path );
+      prjEntry = nullptr;
+    }
+  }
+
+  if ( ! prjEntry )
   {
     std::unique_ptr<QgsProject> prj( new QgsProject() );
 
@@ -102,8 +113,16 @@ const QgsProject *QgsConfigCache::project( const QString &path, QgsServerSetting
           }
         }
       }
-      mProjectCache.insert( path, prj.release() );
-      mFileSystemWatcher.addPath( path );
+
+      QgsConfigCacheEntry *newEntry = new QgsConfigCacheEntry( QDateTime::currentDateTime(), prj.release() );
+      if ( mProjectCache.insert( path, newEntry ) )
+      {
+        prjEntry = newEntry;
+      }
+      else
+      {
+        delete newEntry;
+      }
     }
     else
     {
@@ -112,9 +131,13 @@ const QgsProject *QgsConfigCache::project( const QString &path, QgsServerSetting
         QStringLiteral( "Server" ), Qgis::Critical );
     }
   }
-  QgsProject::setInstance( mProjectCache[ path ] );
-  return mProjectCache[ path ];
 
+  if ( !prjEntry )
+  {
+    return 0;
+  }
+  QgsProject::setInstance( prjEntry->cachedProject );
+  return prjEntry->cachedProject;
 }
 
 QDomDocument *QgsConfigCache::xmlDocument( const QString &filePath )
@@ -149,7 +172,6 @@ QDomDocument *QgsConfigCache::xmlDocument( const QString &filePath )
       return nullptr;
     }
     mXmlDocumentCache.insert( filePath, xmlDoc );
-    mFileSystemWatcher.addPath( filePath );
     xmlDoc = mXmlDocumentCache.object( filePath );
     Q_ASSERT( xmlDoc );
   }
@@ -162,8 +184,6 @@ void QgsConfigCache::removeChangedEntry( const QString &path )
 
   //xml document must be removed last, as other config cache destructors may require it
   mXmlDocumentCache.remove( path );
-
-  mFileSystemWatcher.removePath( path );
 }
 
 

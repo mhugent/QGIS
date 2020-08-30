@@ -21,7 +21,6 @@
 #include "qgsconfig.h"
 
 #include <QCache>
-#include <QFileSystemWatcher>
 #include <QObject>
 #include <QDomDocument>
 
@@ -66,18 +65,32 @@ class SERVER_EXPORT QgsConfigCache : public QObject
     const QgsProject *project( const QString &path, QgsServerSettings *settings = nullptr );
 
   private:
+
     QgsConfigCache() SIP_FORCE;
 
-    //! Check for configuration file updates (remove entry from cache if file changes)
-    QFileSystemWatcher mFileSystemWatcher;
+    struct QgsConfigCacheEntry
+    {
+      QgsConfigCacheEntry( const QDateTime &tStamp, QgsProject *prj ): timeStamp( tStamp ), cachedProject( prj )
+      {
+      }
+
+      QgsConfigCacheEntry(): timeStamp( QDateTime() ), cachedProject( 0 )
+      {}
+
+      ~QgsConfigCacheEntry()
+      {
+        delete cachedProject;
+      }
+      QDateTime timeStamp;
+      QgsProject *cachedProject;
+    };
 
     //! Returns xml document for project file / sld or 0 in case of errors
     QDomDocument *xmlDocument( const QString &filePath );
 
     QCache<QString, QDomDocument> mXmlDocumentCache;
-    QCache<QString, QgsProject> mProjectCache;
+    QCache<QString, QgsConfigCacheEntry> mProjectCache;
 
-  private slots:
     //! Removes changed entry from this cache
     void removeChangedEntry( const QString &path );
 };
