@@ -55,6 +55,7 @@ value is ``False``).
 
   private:
     QgsConfigCache();
+    QgsConfigCache( const QgsConfigCache &other );
 };
 
 /************************************************************************

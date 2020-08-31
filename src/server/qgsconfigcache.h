@@ -65,6 +65,7 @@ class SERVER_EXPORT QgsConfigCache
   private:
 
     QgsConfigCache() SIP_FORCE;
+    QgsConfigCache( const QgsConfigCache &other ) SIP_FORCE {}
 
     struct QgsConfigCacheEntry
     {
