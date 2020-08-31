@@ -53,7 +53,6 @@ SET(QGIS_SERVER_SRCS
 
 SET (QGIS_SERVER_HDRS
   qgscapabilitiescache.h
-  qgsconfigcache.h
   qgsmapserviceexception.h
   qgsserverapi.h
   qgsserverapicontext.h

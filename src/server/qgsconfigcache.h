@@ -21,7 +21,6 @@
 #include "qgsconfig.h"
 
 #include <QCache>
-#include <QObject>
 #include <QDomDocument>
 
 #include "qgis_server.h"
@@ -34,9 +33,8 @@
  * \brief Cache for server configuration.
  * \since QGIS 2.8
  */
-class SERVER_EXPORT QgsConfigCache : public QObject
+class SERVER_EXPORT QgsConfigCache
 {
-    Q_OBJECT
   public:
 
     /**
