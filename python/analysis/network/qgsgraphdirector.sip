@@ -42,7 +42,7 @@ class QgsGraphDirector : QObject
      */
     virtual void makeGraph( QgsGraphBuilderInterface *builder,
                             const QVector< QgsPoint > &additionalPoints,
-                            QVector< QgsPoint> &tiedPoints /Out/ );
+                            QVector< QgsPoint> &tiedPoints /Out/ ) const;
 
     void addProperter( QgsArcProperter* prop /Transfer/ );
 

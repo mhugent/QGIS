@@ -40,8 +40,8 @@ class QgsFeatureRendererV2
     sipType = sipType_QgsCategorizedSymbolRendererV2;
   else if (sipCpp->type() == "graduatedSymbol")
     sipType = sipType_QgsGraduatedSymbolRendererV2;
-  else if (sipCpp->type() == "RuleRenderer")
-    sipType = sipType_QgsRuleBasedRendererV2;
+//  else if (sipCpp->type() == "RuleRenderer")
+//    sipType = sipType_QgsRuleBasedRendererV2;
   else if (sipCpp->type() == "heatmapRenderer")
     sipType = sipType_QgsHeatmapRenderer;
   else if (sipCpp->type() == "invertedPolygonRenderer")

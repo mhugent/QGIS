@@ -24,7 +24,7 @@ __copyright__ = '(C) 2016, Jürgen E. Fischer'
 __revision__ = '$Format:%H$'
 
 
-import sip
+from PyQt4 import sip
 for api in ["QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", "QVariant"]:
     sip.setapi(api, 2)
 

@@ -100,6 +100,14 @@ class CORE_EXPORT QgsSnapper
 
     explicit QgsSnapper( const QgsMapSettings& mapSettings );
 
+    //this fake function is just becasue of Sip
+    QgsSnapper& operator=( const QgsSnapper& other )
+    {
+        mSnapMode = other.mSnapMode;
+        mSnapLayers = other.mSnapLayers;
+        return *this;
+    }
+
     /** Does the snapping operation
      * @param startPoint the start point for snapping (in pixel coordinates)
      * @param snappingResult the list where the results are inserted (everything in map coordinate system)

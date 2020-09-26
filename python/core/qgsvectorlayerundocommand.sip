@@ -20,7 +20,7 @@ class QgsVectorLayerUndoCommand : QUndoCommand
     QgsGeometryCache *cache();
 
     virtual int id() const;
-    virtual bool mergeWith( QUndoCommand * );
+    virtual bool mergeWith( const QUndoCommand* );
 };
 
 

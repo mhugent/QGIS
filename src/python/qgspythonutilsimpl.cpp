@@ -122,7 +122,7 @@ bool QgsPythonUtilsImpl::checkSystemImports()
   runString( "sys.path = [" + newpaths.join( "," ) + "] + sys.path" );
 
   // import SIP
-  if ( !runString( "import sip",
+  if ( !runString( "from PyQt4 import sip",
                    QObject::tr( "Couldn't load SIP module." ) + '\n' + QObject::tr( "Python support will be disabled." ) ) )
   {
     return false;

@@ -117,15 +117,6 @@ class QgsAttributeEditorContainer : QgsAttributeEditorElement
     ~QgsAttributeEditorContainer();
 
     /**
-     * Will serialize this containers information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const;
-
-    /**
      * Add a child element to this container. This may be another container, a field or a relation.
      *
      * @param element The element to add as child
@@ -215,15 +206,6 @@ class QgsAttributeEditorField : QgsAttributeEditorElement
     ~QgsAttributeEditorField();
 
     /**
-     * Will serialize this elements information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const;
-
-    /**
      * Return the index of the field
      * @return
      */
@@ -258,15 +240,6 @@ class QgsAttributeEditorRelation : QgsAttributeEditorElement
 
     //! Destructor
     ~QgsAttributeEditorRelation();
-
-    /**
-     * Will serialize this elements information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const;
 
     /**
      * Get the id of the relation which shall be embedded

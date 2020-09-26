@@ -130,7 +130,7 @@ class QgsAttributeTableFilterModel: QSortFilterProxyModel, QgsFeatureModel
 
     QModelIndexList fidToIndexList( QgsFeatureId fid );
 
-    virtual QModelIndex mapToMaster( const QModelIndex &proxyIndex ) const;
+    QModelIndex mapToMaster( const QModelIndex &proxyIndex ) const;
 
     QModelIndex mapFromMaster( const QModelIndex& sourceIndex ) const;
 

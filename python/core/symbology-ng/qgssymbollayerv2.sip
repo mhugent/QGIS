@@ -236,7 +236,7 @@ class QgsSymbolLayerV2
      * @note added in QGIS 2.9
      * @deprecated use variant which takes QgsSymbolV2RenderContext instead
      */
-    virtual QVariant evaluateDataDefinedProperty( const QString& property, const QgsFeature* feature ) const /Deprecated/;
+    virtual QVariant evaluateDataDefinedProperty( const QString& property, const QgsFeature* feature, const QVariant& defaultVal = QVariant(), bool *ok = nullptr  ) const /Deprecated/;
 
     /** Evaluates the matching data defined property and returns the calculated
      * value. Prior to evaluation the data defined property must be prepared
