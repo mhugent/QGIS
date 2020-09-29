@@ -96,4 +96,7 @@ class QgsSnapper
     void setSnapLayers( const QList<QgsSnapper::SnapLayer>& snapLayers );
     void setSnapMode( QgsSnapper::SnappingMode snapMode );
 
+  private:
+    QgsSnapper& operator=( const QgsSnapper& );
+
 };

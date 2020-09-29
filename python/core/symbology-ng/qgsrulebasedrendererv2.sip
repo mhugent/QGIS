@@ -27,6 +27,9 @@ class QgsRuleBasedRendererV2 : QgsFeatureRendererV2
       RenderJob( QgsRuleBasedRendererV2::FeatureToRender& _ftr, QgsSymbolV2* _s );
       QgsRuleBasedRendererV2::FeatureToRender& ftr;
       QgsSymbolV2* symbol;
+
+      private:
+      RenderJob &operator=( const RenderJob & );
     };
 
     // render level: a list of jobs to be drawn at particular level

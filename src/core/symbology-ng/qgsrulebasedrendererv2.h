@@ -57,10 +57,13 @@ class CORE_EXPORT QgsRuleBasedRendererV2 : public QgsFeatureRendererV2
           : ftr( _ftr )
           , symbol( _s )
       {}
-      //this fake function is just there because of sip
-      RenderJob& operator=( const RenderJob& other ){ symbol = other.symbol; return *this; }
+
       FeatureToRender& ftr;
       QgsSymbolV2* symbol;
+
+      private:
+        //this fake function is just there because of sip
+        RenderJob& operator=( const RenderJob& other ){ symbol = other.symbol; return *this; }
     };
 
     // render level: a list of jobs to be drawn at particular level
