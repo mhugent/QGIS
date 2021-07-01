@@ -175,7 +175,7 @@ void QgsWMSServer::executeRequest()
   if ( request.compare( "GetCapabilities", Qt::CaseInsensitive ) == 0 || getProjectSettings )
   {
     QStringList cacheKeyList;
-    cacheKeyList << ( getProjectSettings ? "projectSettings" : version );
+    cacheKeyList << ( getProjectSettings ? "projectSettings" : version ) << hrefBaseUrl();
     bool cache = true;
 #ifdef HAVE_SERVER_PYTHON_PLUGINS
     cache = mAccessControl->fillCacheKey( cacheKeyList );
@@ -430,21 +430,7 @@ QDomDocument QgsWMSServer::getCapabilities( QString version, bool fullProjectInf
   QDomElement wmsCapabilitiesElement;
 
   //Prepare url
-  QString hrefString;
-  if ( mConfigParser )
-  {
-    hrefString = mConfigParser->serviceUrl();
-  }
-  if ( hrefString.isEmpty() )
-  {
-    hrefString = serviceUrl();
-  }
-
-  //href needs to be a prefix
-  if ( !hrefString.endsWith( "?" ) && !hrefString.endsWith( "&" ) )
-  {
-    hrefString.append( hrefString.contains( "?" ) ? "&" : "?" );
-  }
+  QString hrefString = hrefBaseUrl();
 
   if ( version == "1.1.1" )
   {
@@ -3644,4 +3630,24 @@ void QgsWMSServer::readDxfLayerSettings( QList< QgsDxfExport::DxfLayer >& layers
       layers.append( QgsDxfExport::DxfLayer( vlayer, layerAttribute ) );
     }
   }
+}
+
+QString QgsWMSServer::hrefBaseUrl() const
+{
+  QString hrefString;
+  if ( mConfigParser )
+  {
+    hrefString = mConfigParser->serviceUrl();
+  }
+  if ( hrefString.isEmpty() )
+  {
+    hrefString = serviceUrl();
+  }
+
+  //href needs to be a prefix
+  if ( !hrefString.endsWith( "?" ) && !hrefString.endsWith( "&" ) )
+  {
+    hrefString.append( hrefString.contains( "?" ) ? "&" : "?" );
+  }
+  return hrefString;
 }

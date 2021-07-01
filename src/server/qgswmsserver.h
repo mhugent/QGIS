@@ -283,6 +283,9 @@ class QgsWMSServer: public QgsOWSServer
     /** Reads and extracts the different options in the FORMAT_OPTIONS parameter*/
     void readFormatOptions( QMap<QString, QString>& formatOptions ) const;
     void readDxfLayerSettings( QList< QgsDxfExport::DxfLayer >& layers, const QMap<QString, QString>& formatOptionsMap ) const;
+
+    /** Returns the base url to be advertised in GetCapabilities / GetProjectSettings */
+    QString hrefBaseUrl() const;
 };
 
 #endif
