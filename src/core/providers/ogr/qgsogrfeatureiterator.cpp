@@ -55,7 +55,12 @@ QgsOgrFeatureIterator::QgsOgrFeatureIterator( QgsOgrFeatureSource *source, bool 
 
   if ( mSharedDS )
   {
-    mSharedDS->mutex().lock();
+    if ( !mSharedDS->mutex().tryLock( 3000 ) )
+    {
+      //qWarning( "********************************Deadlock prevented. Results may be uncomplete*****************" );
+      close();
+      return;
+    }
   }
 
   /* When inside a transaction for GPKG/SQLite and fetching fid(s) we might be nested inside an outer fetching loop,
