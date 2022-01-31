@@ -387,6 +387,7 @@ void QgsServer::putenv( const QString &var, const QString &val )
 
 void QgsServer::handleRequest( QgsServerRequest &request, QgsServerResponse &response, const QgsProject *project )
 {
+  QgsMessageLog::logMessage( "QgsServer::handleRequest", QStringLiteral( "Server" ), Qgis::MessageLevel::Info );
   const Qgis::MessageLevel logLevel = QgsServerLogger::instance()->logLevel();
   {
 

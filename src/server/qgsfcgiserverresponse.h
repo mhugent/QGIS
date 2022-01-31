@@ -26,6 +26,7 @@
 #include "qgsserverresponse.h"
 
 #include <QBuffer>
+#include <fcgi_stdio.h>
 
 /**
  * \ingroup server
@@ -41,7 +42,7 @@ class SERVER_EXPORT QgsFcgiServerResponse: public QgsServerResponse
      * Constructor for QgsFcgiServerResponse.
      * \param method The HTTP method (Get by default)
      */
-    QgsFcgiServerResponse( QgsServerRequest::Method method = QgsServerRequest::GetMethod );
+    QgsFcgiServerResponse( FCGX_Request* request, QgsServerRequest::Method method = QgsServerRequest::GetMethod  );
 
     void setHeader( const QString &key, const QString &value ) override;
 
@@ -77,6 +78,7 @@ class SERVER_EXPORT QgsFcgiServerResponse: public QgsServerResponse
     void setDefaultHeaders();
 
   private:
+    FCGX_Request* mFcgiRequest;
     QMap<QString, QString> mHeaders;
     QBuffer mBuffer;
     bool mFinished    = false;
