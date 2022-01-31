@@ -26,6 +26,7 @@
 #include "qgsserverresponse.h"
 
 #include <QBuffer>
+<<<<<<< HEAD
 #include <QThread>
 
 /**
@@ -54,6 +55,8 @@ class QgsSocketMonitoringThread: public QThread
     int mIpcFd = -1;
 };
 
+#include <fcgi_stdio.h>
+
 /**
  * \ingroup server
  * \class QgsFcgiServerResponse
@@ -68,7 +71,8 @@ class SERVER_EXPORT QgsFcgiServerResponse: public QgsServerResponse
      * Constructor for QgsFcgiServerResponse.
      * \param method The HTTP method (Get by default)
      */
-    QgsFcgiServerResponse( QgsServerRequest::Method method = QgsServerRequest::GetMethod );
+
+    QgsFcgiServerResponse( FCGX_Request* request, QgsServerRequest::Method method = QgsServerRequest::GetMethod  );
     virtual ~QgsFcgiServerResponse();
 
     void setHeader( const QString &key, const QString &value ) override;
@@ -111,6 +115,7 @@ class SERVER_EXPORT QgsFcgiServerResponse: public QgsServerResponse
     QgsFeedback *feedback() const override { return mFeedback.get(); }
 
   private:
+    FCGX_Request* mFcgiRequest;
     QMap<QString, QString> mHeaders;
     QBuffer mBuffer;
     bool mFinished    = false;

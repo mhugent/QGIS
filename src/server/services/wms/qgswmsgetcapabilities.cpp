@@ -84,6 +84,8 @@ namespace QgsWms
     QgsAccessControl *accessControl = serverIface->accessControls();
 #endif
 
+    QgsMessageLog::logMessage( "writeGetCapabilities", QStringLiteral( "Server" ), Qgis::MessageLevel::Info );
+
     QDomDocument doc;
     const QDomDocument *capabilitiesDocument = nullptr;
 

@@ -21,6 +21,7 @@
 #include "qgsfcgiserverresponse.h"
 #include "qgsmessagelog.h"
 #include <fcgi_stdio.h>
+#include <fcgiapp.h>
 #include <QDebug>
 
 #include "qgslogger.h"
@@ -133,9 +134,9 @@ void QgsSocketMonitoringThread::run( )
 //
 // QgsFcgiServerResponse
 //
-QgsFcgiServerResponse::QgsFcgiServerResponse( QgsServerRequest::Method method )
-  : mMethod( method )
-  , mFeedback( new QgsFeedback )
+
+QgsFcgiServerResponse::QgsFcgiServerResponse( FCGX_Request* request, QgsServerRequest::Method method )
+  : mFcgiRequest( request ), mMethod( method ), mFeedback( new QgsFeedback )
 {
   mBuffer.open( QIODevice::ReadWrite );
   setDefaultHeaders();
@@ -232,18 +233,19 @@ void QgsFcgiServerResponse::finish()
 
 void QgsFcgiServerResponse::flush()
 {
+  QgsMessageLog::logMessage( "QgsFcgiServerResponse::flush", QStringLiteral( "Server" ), Qgis::MessageLevel::Info );
   if ( ! mHeadersSent )
   {
     // Send all headers
     QMap<QString, QString>::const_iterator it;
     for ( it = mHeaders.constBegin(); it != mHeaders.constEnd(); ++it )
     {
-      fputs( it.key().toUtf8(), FCGI_stdout );
-      fputs( ": ", FCGI_stdout );
-      fputs( it.value().toUtf8(), FCGI_stdout );
-      fputs( "\n", FCGI_stdout );
+      FCGX_PutS( it.key().toUtf8(), mFcgiRequest->out );
+      FCGX_PutS( ": ", mFcgiRequest->out );
+      FCGX_PutS( it.value().toUtf8(), mFcgiRequest->out);
+      FCGX_PutS( "\n", mFcgiRequest->out );
     }
-    fputs( "\n", FCGI_stdout );
+    FCGX_PutS( "\n", mFcgiRequest->out );
     mHeadersSent = true;
   }
 
@@ -257,12 +259,7 @@ void QgsFcgiServerResponse::flush()
   else if ( mBuffer.bytesAvailable() > 0 )
   {
     QByteArray &ba = mBuffer.buffer();
-    const size_t count   = fwrite( ( void * )ba.data(), ba.size(), 1, FCGI_stdout );
-#ifdef QGISDEBUG
-    qDebug() << QStringLiteral( "Sent %1 blocks of %2 bytes" ).arg( count ).arg( ba.size() );
-#else
-    Q_UNUSED( count )
-#endif
+    FCGX_PutStr( ba.constData(), ba.size(), mFcgiRequest->out );
     // Reset the internal buffer
     ba.clear();
   }

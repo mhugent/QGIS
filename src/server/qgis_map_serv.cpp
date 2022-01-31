@@ -30,6 +30,9 @@
 #include <QFontDatabase>
 #include <QString>
 
+#include <QCommandLineOption>
+#include <QCommandLineParser>
+
 int fcgi_accept()
 {
 #ifdef Q_OS_WIN
@@ -44,6 +47,7 @@ int fcgi_accept()
 
 int main( int argc, char *argv[] )
 {
+#if 0
   if ( argc >= 2 )
   {
     if ( argv[1] == QLatin1String( "--version" ) || argv[1] == QLatin1String( "-v" ) )
@@ -52,6 +56,7 @@ int main( int argc, char *argv[] )
       return 0;
     }
   }
+#endif //0
 
   // Test if the environ variable DISPLAY is defined
   // if it's not, the server is running in offscreen mode
@@ -83,11 +88,45 @@ int main( int argc, char *argv[] )
   QFontDatabase fontDB;
 #endif
 
-  // Starts FCGI loop
-  while ( fcgi_accept() >= 0 )
+  QCommandLineOption socketPathOption( QStringList() << "s" << "socket-path", "Socket path", "socketPath" );
+  //socket path
+  QCommandLineParser commandLineParser;
+  commandLineParser.addOption( socketPathOption );
+  commandLineParser.process( app );
+  QString socketPath = commandLineParser.value( socketPathOption );
+  FCGX_Init();
+
+  int socketId = FCGX_OpenSocket( socketPath.toLocal8Bit().data(), 20 );
+  if(socketId < 0)
   {
+    return 1;
+  }
+
+  FCGX_Request frequest;
+  if( FCGX_InitRequest( &frequest, socketId, 0 ) != 0 )
+  {
+    //error
+  }
+
+  QgsMessageLog::logMessage( "Starting FCGI loop", "Server", Qgis::MessageLevel::Info );
+
+  // Starts FCGI loop
+  for ( int i = 0; i < 5; ++i )
+  {
+
+
+      int rc = FCGX_Accept_r(&frequest);
+      if(rc < 0)
+      {
+        break;
+      }
+
+    setenv( "QUERY_STRING", FCGX_GetParam( "QUERY_STRING", frequest.envp ), 1 );
+
+    QgsMessageLog::logMessage( "Received FCGI request", "Server", Qgis::MessageLevel::Info );
+
     QgsFcgiServerRequest  request;
-    QgsFcgiServerResponse response( request.method() );
+    QgsFcgiServerResponse response( &frequest, request.method() );
     if ( ! request.hasError() )
     {
       server.handleRequest( request, response );
@@ -96,6 +135,8 @@ int main( int argc, char *argv[] )
     {
       response.sendError( 400, "Bad request" );
     }
+
+    FCGX_Finish_r(&frequest);
   }
   QgsApplication::exitQgis();
   return 0;
