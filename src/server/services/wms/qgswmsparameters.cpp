@@ -2332,7 +2332,7 @@ namespace QgsWms
     const QMap<QgsWmsParameters::PdfFormatOption, QString> options = formatOptions<QgsWmsParameters::PdfFormatOption>();
     if ( options.contains( PdfFormatOption::PREDEFINED_MAP_SCALES ) )
     {
-      QStringList scaleList = options[PdfFormatOption::PREDEFINED_MAP_SCALES].split( "," );
+      QStringList scaleList = options[PdfFormatOption::PREDEFINED_MAP_SCALES].split( ',' );
       for ( const auto &it : scaleList )
       {
         bool ok = false;
