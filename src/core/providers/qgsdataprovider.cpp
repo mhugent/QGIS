@@ -120,3 +120,9 @@ QString QgsDataProvider::sublayerSeparator()
 {
   return SUBLAYER_SEPARATOR;
 }
+
+bool QgsDataProvider::isSaveAndLoadStyleToDatabaseSupported() const
+{
+    QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+   return false;
+}

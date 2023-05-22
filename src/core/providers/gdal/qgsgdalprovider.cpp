@@ -4155,6 +4155,11 @@ GDALRasterBandH QgsGdalProvider::getBand( int bandNo ) const
     return GDALGetRasterBand( mGdalDataset, bandNo );
 }
 
+bool QgsGdalProvider::isSaveAndLoadStyleToDatabaseSupported() const
+{
+    return mDriverName == QLatin1String( "GPKG" );
+}
+
 // pyramids resampling
 
 // see http://www.gdal.org/gdaladdo.html
@@ -4487,6 +4492,13 @@ QStringList QgsGdalProviderMetadata::sidecarFilesForUri( const QString &uri ) co
 QList<Qgis::LayerType> QgsGdalProviderMetadata::supportedLayerTypes() const
 {
   return { Qgis::LayerType::Raster };
+}
+
+bool QgsGdalProviderMetadata::saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle,
+    const QString &styleName, const QString &styleDescription,
+    const QString &uiFileContent, bool useAsDefault, QString &errCause )
+{
+  return QgsOgrUtils::saveStyle( uri, qmlStyle, sldStyle, styleName, styleDescription, uiFileContent, useAsDefault, errCause );
 }
 
 QgsGdalProviderMetadata::QgsGdalProviderMetadata():

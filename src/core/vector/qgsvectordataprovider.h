@@ -534,12 +534,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
 
     /**
      * It returns FALSE by default.
-     * Must be implemented by providers that support saving and loading styles to db returning TRUE
-     */
-    virtual bool isSaveAndLoadStyleToDatabaseSupported() const;
-
-    /**
-     * It returns FALSE by default.
      * Must be implemented by providers that support delete styles from db returning TRUE
      */
     virtual bool isDeleteStyleFromDatabaseSupported() const;

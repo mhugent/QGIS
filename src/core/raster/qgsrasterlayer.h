@@ -477,6 +477,23 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
     QgsMapLayerTemporalProperties *temporalProperties() override;
     QgsMapLayerElevationProperties *elevationProperties() override;
 
+    /**
+     * Saves named and sld style of the layer to the style table in the db.
+     * \param name Style name
+     * \param description A description of the style
+     * \param useAsDefault Set to TRUE if style should be used as the default style for the layer
+     * \param uiFileContent
+     * \param msgError will be set to a descriptive error message if any occurs
+     * \param categories the style categories to be saved.
+     *
+     *
+     * \since QGIS 3.32
+     */
+    virtual void saveStyleToDatabase( const QString &name, const QString &description,
+                                      bool useAsDefault, const QString &uiFileContent,
+                                      QString &msgError SIP_OUT,
+                                      QgsMapLayer::StyleCategories categories = QgsMapLayer::AllStyleCategories );
+
   public slots:
     void showStatusMessage( const QString &message );
 

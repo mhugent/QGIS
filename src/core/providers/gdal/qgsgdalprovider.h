@@ -217,6 +217,8 @@ class QgsGdalProvider final: public QgsRasterDataProvider, QgsGdalProviderBase
     bool setZoomedOutResamplingMethod( ResamplingMethod method ) override { mZoomedOutResamplingMethod = method; return true; }
     bool setMaxOversampling( double factor ) override { mMaxOversampling = factor; return true; }
 
+    bool isSaveAndLoadStyleToDatabaseSupported() const override;
+
   private:
     QgsGdalProvider( const QgsGdalProvider &other );
     QgsGdalProvider &operator=( const QgsGdalProvider & ) = delete;
@@ -401,6 +403,9 @@ class QgsGdalProviderMetadata final: public QgsProviderMetadata
     QList< QgsProviderSublayerDetails > querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
     QStringList sidecarFilesForUri( const QString &uri ) const override;
     QList< Qgis::LayerType > supportedLayerTypes() const override;
+    bool saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle,
+                    const QString &styleName, const QString &styleDescription,
+                    const QString &uiFileContent, bool useAsDefault, QString &errCause ) override;
 };
 
 ///@endcond

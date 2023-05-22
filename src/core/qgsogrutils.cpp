@@ -37,7 +37,7 @@
 #include "qgsfielddomain.h"
 #include "qgsfontmanager.h"
 #include "qgsvariantutils.h"
-#include "qgsogrproviderutils.h"
+#include "qgsgdalproviderbase.h"
 
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,6,0)
 #include "qgsweakrelation.h"
@@ -2542,3 +2542,247 @@ gdal::relationship_unique_ptr QgsOgrUtils::convertRelationship( const QgsWeakRel
   return relationH;
 }
 #endif
+
+QgsOgrLayerUniquePtr QgsOgrUtils::LoadDataSourceAndLayer( const QString &uri, QString &errCause )
+{
+  bool isSubLayer;
+  int layerIndex;
+  QString layerName;
+  QString subsetString;
+  OGRwkbGeometryType ogrGeometryType;
+  QStringList openOptions;
+  QString filePath = QgsOgrProviderUtils::analyzeURI( uri,
+                     isSubLayer,
+                     layerIndex,
+                     layerName,
+                     subsetString,
+                     ogrGeometryType,
+                     openOptions );
+
+  if ( !layerName.isEmpty() )
+  {
+    return QgsOgrProviderUtils::getLayer( filePath, true, QStringList(), layerName, errCause, true );
+  }
+  else
+  {
+    return QgsOgrProviderUtils::getLayer( filePath, true, QStringList(), layerIndex, errCause, true );
+  }
+}
+
+bool QgsOgrUtils::saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle,
+                             const QString &styleName, const QString &styleDescription,
+                             const QString &uiFileContent, bool useAsDefault, QString &errCause )
+{
+  QRecursiveMutex *mutex = nullptr;
+
+  QString layerName;
+  QString geometryColumn;
+  GDALDatasetH hDS = NULL;
+
+  QgsOgrLayerUniquePtr userLayer = LoadDataSourceAndLayer( uri, errCause );
+  if( userLayer )
+  {
+      OGRLayerH hUserLayer = userLayer->getHandleAndMutex( mutex );
+      hDS = userLayer->getDatasetHandleAndMutex( mutex );
+      layerName = QString( OGR_L_GetName( hUserLayer ) );
+      geometryColumn = QString( OGR_L_GetGeometryColumn( hUserLayer ) );
+  }
+  else //maybe it is a raster
+  {
+      int firstDPIdx = uri.indexOf(QLatin1String(":"));
+      int lastDPIdx = uri.lastIndexOf(QLatin1String(":"));
+
+      if( firstDPIdx < 0 || lastDPIdx < 0 )
+      {
+          return false;
+      }
+
+      layerName = uri.right(uri.length() - lastDPIdx- 1);
+      QString dsName = uri.mid(firstDPIdx + 1, lastDPIdx - firstDPIdx - 1);
+      hDS = QgsGdalProviderBase::gdalOpen( dsName, GDAL_OF_UPDATE );
+  }
+
+  QMutexLocker locker( mutex );
+
+  // check if layer_styles table already exist
+  OGRLayerH hLayer = GDALDatasetGetLayerByName( hDS, "layer_styles" );
+  if ( !hLayer )
+  {
+    // if not create it
+    // Note: we use the same schema as in the SpatiaLite and postgres providers
+    //for cross interoperability
+
+    char **options = nullptr;
+    // TODO: might need change if other drivers than GPKG / SQLite
+    options = CSLSetNameValue( options, "FID", "id" );
+    hLayer = GDALDatasetCreateLayer( hDS, "layer_styles", nullptr, wkbNone, options );
+    QgsOgrProviderUtils::invalidateCachedDatasets( QString::fromUtf8( GDALGetDescription( hDS ) ) );
+    CSLDestroy( options );
+    if ( !hLayer )
+    {
+      errCause = QObject::tr( "Unable to save layer style. It's not possible to create the destination table on the database." );
+      return false;
+    }
+    bool ok = true;
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "f_table_catalog", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 256 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "f_table_schema", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 256 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "f_table_name", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 256 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "f_geometry_column", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 256 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "styleName", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 30 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "styleQML", OFTString ) );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "styleSLD", OFTString ) );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "useAsDefault", OFTInteger ) );
+      OGR_Fld_SetSubType( fld.get(), OFSTBoolean );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "description", OFTString ) );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "owner", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 30 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "ui", OFTString ) );
+      OGR_Fld_SetWidth( fld.get(), 30 );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    {
+      gdal::ogr_field_def_unique_ptr fld( OGR_Fld_Create( "update_time", OFTDateTime ) );
+      OGR_Fld_SetDefault( fld.get(), "CURRENT_TIMESTAMP" );
+      ok &= OGR_L_CreateField( hLayer, fld.get(), true ) == OGRERR_NONE;
+    }
+    if ( !ok )
+    {
+      errCause = QObject::tr( "Unable to save layer style. It's not possible to create the destination table on the database." );
+      return false;
+    }
+  }
+
+  QString realStyleName =
+    styleName.isEmpty() ? layerName : styleName;
+
+  OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn( hLayer );
+
+  if ( useAsDefault )
+  {
+    QString oldDefaultQuery = QStringLiteral( "useAsDefault = 1 AND f_table_schema=''"
+                              " AND f_table_name=%1"
+                              " AND f_geometry_column=%2" )
+                              .arg( QgsOgrProviderUtils::quotedValue( layerName ) )
+                              .arg( QgsOgrProviderUtils::quotedValue( geometryColumn ) );
+    OGR_L_SetAttributeFilter( hLayer, oldDefaultQuery.toUtf8().constData() );
+    gdal::ogr_feature_unique_ptr hFeature( OGR_L_GetNextFeature( hLayer ) );
+    if ( hFeature )
+    {
+      OGR_F_SetFieldInteger( hFeature.get(),
+                             OGR_FD_GetFieldIndex( hLayerDefn, "useAsDefault" ),
+                             0 );
+      bool ok = OGR_L_SetFeature( hLayer, hFeature.get() ) == 0;
+      if ( !ok )
+      {
+        QgsDebugMsg( QStringLiteral( "Could not unset previous useAsDefault style" ) );
+      }
+    }
+  }
+
+  QString checkQuery = QStringLiteral( "f_table_schema=''"
+                                       " AND f_table_name=%1"
+                                       " AND f_geometry_column=%2"
+                                       " AND styleName=%3" )
+                       .arg( QgsOgrProviderUtils::quotedValue( layerName ) )
+                       .arg( QgsOgrProviderUtils::quotedValue( geometryColumn ) )
+                       .arg( QgsOgrProviderUtils::quotedValue( realStyleName ) );
+  OGR_L_SetAttributeFilter( hLayer, checkQuery.toUtf8().constData() );
+  OGR_L_ResetReading( hLayer );
+  gdal::ogr_feature_unique_ptr hFeature( OGR_L_GetNextFeature( hLayer ) );
+  OGR_L_ResetReading( hLayer );
+  bool bNew = true;
+
+  if ( hFeature )
+  {
+    bNew = false;
+  }
+  else
+  {
+    hFeature.reset( OGR_F_Create( hLayerDefn ) );
+    OGR_F_SetFieldString( hFeature.get(),
+                          OGR_FD_GetFieldIndex( hLayerDefn, "f_table_catalog" ),
+                          "" );
+    OGR_F_SetFieldString( hFeature.get(),
+                          OGR_FD_GetFieldIndex( hLayerDefn, "f_table_schema" ),
+                          "" );
+    OGR_F_SetFieldString( hFeature.get(),
+                          OGR_FD_GetFieldIndex( hLayerDefn, "f_table_name" ), layerName.toLocal8Bit().constData() );
+    OGR_F_SetFieldString( hFeature.get(),
+                          OGR_FD_GetFieldIndex( hLayerDefn, "f_geometry_column" ), geometryColumn.toLocal8Bit().constData() );
+    OGR_F_SetFieldString( hFeature.get(),
+                          OGR_FD_GetFieldIndex( hLayerDefn, "styleName" ),
+                          realStyleName.toUtf8().constData() );
+    if ( !uiFileContent.isEmpty() )
+    {
+      OGR_F_SetFieldString( hFeature.get(),
+                            OGR_FD_GetFieldIndex( hLayerDefn, "ui" ),
+                            uiFileContent.toUtf8().constData() );
+    }
+  }
+  OGR_F_SetFieldString( hFeature.get(),
+                        OGR_FD_GetFieldIndex( hLayerDefn, "styleQML" ),
+                        qmlStyle.toUtf8().constData() );
+  OGR_F_SetFieldString( hFeature.get(),
+                        OGR_FD_GetFieldIndex( hLayerDefn, "styleSLD" ),
+                        sldStyle.toUtf8().constData() );
+  OGR_F_SetFieldInteger( hFeature.get(),
+                         OGR_FD_GetFieldIndex( hLayerDefn, "useAsDefault" ),
+                         useAsDefault ? 1 : 0 );
+  OGR_F_SetFieldString( hFeature.get(),
+                        OGR_FD_GetFieldIndex( hLayerDefn, "description" ),
+                        ( styleDescription.isEmpty() ? QDateTime::currentDateTime().toString() : styleDescription ).toUtf8().constData() );
+  OGR_F_SetFieldString( hFeature.get(),
+                        OGR_FD_GetFieldIndex( hLayerDefn, "owner" ),
+                        "" );
+
+  bool bFeatureOK;
+  if ( bNew )
+    bFeatureOK = OGR_L_CreateFeature( hLayer, hFeature.get() ) == OGRERR_NONE;
+  else
+    bFeatureOK = OGR_L_SetFeature( hLayer, hFeature.get() ) == OGRERR_NONE;
+
+  if ( !bFeatureOK )
+  {
+    QgsMessageLog::logMessage( QObject::tr( "Error updating style" ) );
+    errCause = QObject::tr( "Error looking for style. The query was logged" );
+    return false;
+  }
+
+  return true;
+}

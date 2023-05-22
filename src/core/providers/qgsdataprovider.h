@@ -612,6 +612,12 @@ class CORE_EXPORT QgsDataProvider : public QObject
      */
     static QString sublayerSeparator();
 
+    /**
+     * It returns FALSE by default.
+     * Must be implemented by providers that support saving and loading styles to db returning TRUE
+     */
+    virtual bool isSaveAndLoadStyleToDatabaseSupported() const;
+
   signals:
 
     /**

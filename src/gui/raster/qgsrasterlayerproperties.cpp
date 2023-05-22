@@ -36,6 +36,7 @@
 #include "qgsprovidersourcewidgetproviderregistry.h"
 #include "qgsprovidersourcewidget.h"
 #include "qgsproject.h"
+#include "qgsproviderregistry.h"
 #include "qgsrastercontourrendererwidget.h"
 #include "qgsrasterdataprovider.h"
 #include "qgsrasterhistogramwidget.h"
@@ -1631,7 +1632,56 @@ void QgsRasterLayerProperties::loadDefaultStyle()
 void QgsRasterLayerProperties::saveDefaultStyle()
 {
 
+  //todo: unify with QgsVectorLayerProperties::saveDefaultStyle()
+
+  //todo: ask user if save to source DB or userDB. Call QgsRasterLayer::saveStyleToDatabase if source DB (similar to qgsvectorlayerproperties.cpp:1084)
+
   apply(); // make sure the style to save is up-to-date
+  QString errorMsg;
+
+  if( mRasterLayer->dataProvider() && mRasterLayer->dataProvider()->isSaveAndLoadStyleToDatabaseSupported() )
+  {
+      //ask if save to source database
+      QMessageBox askToUser;
+      askToUser.setText( tr( "Save default style to: " ) );
+      askToUser.setIcon( QMessageBox::Question );
+      askToUser.addButton( tr( "Cancel" ), QMessageBox::RejectRole );
+      askToUser.addButton( tr( "Local Database" ), QMessageBox::NoRole );
+      askToUser.addButton( tr( "Datasource Database" ), QMessageBox::YesRole );
+      switch ( askToUser.exec() )
+      {
+        case 0:
+          return;
+        case 2:
+        {
+          QString errorMessage;
+          if ( QgsProviderRegistry::instance()->styleExists( mRasterLayer->providerType(), mRasterLayer->source(), QString(), errorMessage ) )
+          {
+            if ( QMessageBox::question( nullptr, QObject::tr( "Save style in database" ),
+                                        QObject::tr( "A matching style already exists in the database for this layer. Do you want to overwrite it?" ),
+                                        QMessageBox::Yes | QMessageBox::No ) == QMessageBox::No )
+            {
+              return;
+            }
+          }
+          else if ( !errorMessage.isEmpty() )
+          {
+            QMessageBox::warning( nullptr, QObject::tr( "Save style in database" ),
+                                  errorMessage );
+            return;
+          }
+
+          mRasterLayer->saveStyleToDatabase( QString(), QString(), true, QString(), errorMsg );
+          if ( errorMsg.isNull() )
+          {
+            return;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    }
 
   // a flag passed by reference
   bool defaultSavedFlag = false;

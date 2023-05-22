@@ -21,6 +21,7 @@
 #include "qgis_core.h"
 #include "qgsfeature.h"
 #include "qgsvectordataprovider.h"
+#include "qgsogrproviderutils.h"
 
 #include <ogr_api.h>
 #include <gdal.h>
@@ -481,6 +482,14 @@ class CORE_EXPORT QgsOgrUtils
     static gdal::relationship_unique_ptr convertRelationship( const QgsWeakRelation &relation, QString &error );
 #endif
 #endif
+
+    //Methods for reading/writing DB styles
+
+    static QgsOgrLayerUniquePtr LoadDataSourceAndLayer( const QString &uri, QString &errCause );
+
+    static bool saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle,
+                           const QString &styleName, const QString &styleDescription,
+                           const QString &uiFileContent, bool useAsDefault, QString &errCause );
 
 };
 

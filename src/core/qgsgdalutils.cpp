@@ -734,4 +734,5 @@ bool QgsGdalUtils::vrtMatchesLayerType( const QString &vrtPath, Qgis::LayerType 
   CPLPopErrorHandler();
   return static_cast< bool >( hDriver );
 }
+
 #endif
