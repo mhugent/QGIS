@@ -77,6 +77,8 @@ namespace QgsWms
     double mLabelDistance = 2; //label distance from feature in mm
     QString mHali; //horizontal alignment
     QString mVali; //vertical alignment
+    double mLabelXOffset = 0;
+    double mLabelYOffset = 0;
   };
 
   struct QgsWmsParametersComposerMap
@@ -170,6 +172,8 @@ namespace QgsWms
         HIGHLIGHT_LABEL_DISTANCE,
         HIGHLIGHT_LABEL_HORIZONTAL_ALIGNMENT,
         HIGHLIGHT_LABEL_VERTICAL_ALIGNMENT,
+        HIGHLIGHT_LABEL_X_OFFSET,
+        HIGHLIGHT_LABEL_Y_OFFSET,
         WMS_PRECISION,
         TRANSPARENT,
         BGCOLOR,
@@ -1217,6 +1221,16 @@ namespace QgsWms
        * \returns highlight label vertical alignment strings
        */
       QStringList highlightLabelVerticalAlignment() const;
+
+      /**
+       * \returns label offset in x-direction
+       */
+      QList<double> highlightLabelXOffset() const;
+
+      /**
+       * \returns label offset in y-direction
+       */
+      QList<double> highlightLabelYOffset() const;
 
       /**
        * Returns WMS_PRECISION parameter or an empty string if not defined.

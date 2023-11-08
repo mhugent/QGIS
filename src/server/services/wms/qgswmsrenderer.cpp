@@ -3085,15 +3085,13 @@ namespace QgsWms
               placement = Qgis::LabelPlacement::AroundPoint;
               palSettings.lineSettings().setPlacementFlags( Qgis::LabelLinePlacementFlags() );
             }
-            else //set label directly on point if there is hali/vali
+            else //set label directly on point + offset if there is hali/vali
             {
               QgsPointXY pt = param.mGeom.asPoint();
               QgsPalLayerSettings::Property pX = QgsPalLayerSettings::PositionX;
-              QVariant x( pt.x() );
-              palSettings.dataDefinedProperties().setProperty( pX, x );
+              palSettings.dataDefinedProperties().setProperty( pX, pt.x() + param.mLabelXOffset );
               QgsPalLayerSettings::Property pY = QgsPalLayerSettings::PositionY;
-              QVariant y( pt.y() );
-              palSettings.dataDefinedProperties().setProperty( pY, y );
+              palSettings.dataDefinedProperties().setProperty( pY, pt.y() + param.mLabelYOffset );
               QgsPalLayerSettings::Property pHali = QgsPalLayerSettings::Hali;
               palSettings.dataDefinedProperties().setProperty( pHali, param.mHali );
               QgsPalLayerSettings::Property pVali = QgsPalLayerSettings::Vali;

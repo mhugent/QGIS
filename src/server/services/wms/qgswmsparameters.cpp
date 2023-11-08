@@ -338,6 +338,12 @@ namespace QgsWms
     const QgsWmsParameter pLabelVali( QgsWmsParameter::HIGHLIGHT_LABEL_VERTICAL_ALIGNMENT );
     save( pLabelVali );
 
+    const QgsWmsParameter pLabelXOffset( QgsWmsParameter::HIGHLIGHT_LABEL_X_OFFSET );
+    save( pLabelXOffset );
+
+    const QgsWmsParameter pLabelYOffset( QgsWmsParameter::HIGHLIGHT_LABEL_Y_OFFSET );
+    save( pLabelYOffset );
+
     const QgsWmsParameter pCRS( QgsWmsParameter::CRS );
     save( pCRS );
 
@@ -1443,6 +1449,16 @@ namespace QgsWms
     return mWmsParameters.value( QgsWmsParameter::HIGHLIGHT_LABEL_VERTICAL_ALIGNMENT ).toStringList( ';' );
   }
 
+  QList<double> QgsWmsParameters::highlightLabelXOffset() const
+  {
+    return mWmsParameters.value( QgsWmsParameter::HIGHLIGHT_LABEL_X_OFFSET ).toDoubleList( ';' );
+  }
+
+  QList<double> QgsWmsParameters::highlightLabelYOffset() const
+  {
+    return mWmsParameters.value( QgsWmsParameter::HIGHLIGHT_LABEL_Y_OFFSET ).toDoubleList( ';' );
+  }
+
   QString QgsWmsParameters::wmsPrecision() const
   {
     return mWmsParameters.value( QgsWmsParameter::WMS_PRECISION ).toString();
@@ -1706,6 +1722,8 @@ namespace QgsWms
     const QList<double> distance = highlightLabelDistance();
     const QStringList hali = highlightLabelHorizontalAlignment();
     const QStringList vali = highlightLabelVerticalAlignment();
+    const QList<double> labelXOffset = highlightLabelXOffset();
+    const QList<double> labelYOffset = highlightLabelYOffset();
 
     int nLayers = std::min( geoms.size(), slds.size() );
     for ( int i = 0; i < nLayers; i++ )
@@ -1748,7 +1766,11 @@ namespace QgsWms
       if ( i < vali.count() )
         param.mVali = vali[i];
 
+      if ( i < labelXOffset.count() )
+        param.mLabelXOffset = labelXOffset[i];
 
+      if ( i < labelYOffset.count() )
+        param.mLabelYOffset = labelYOffset[i];
 
       params.append( param );
     }
@@ -1978,6 +2000,20 @@ namespace QgsWms
     if ( wmsParam.isValid() )
     {
       valis = wmsParam.toStringList();
+    }
+
+    QList<double> labelOffsetX;
+    wmsParam = idParameter( QgsWmsParameter::HIGHLIGHT_LABEL_X_OFFSET, mapId );
+    if ( wmsParam.isValid() )
+    {
+      labelOffsetX = wmsParam.toDoubleList( ';' );
+    }
+
+    QList<double> labelOffsetY;
+    wmsParam = idParameter( QgsWmsParameter::HIGHLIGHT_LABEL_Y_OFFSET, mapId );
+    if ( wmsParam.isValid() )
+    {
+      labelOffsetY = wmsParam.toDoubleList( ';' );
     }
 
     int nHLayers = std::min( geoms.size(), slds.size() );
