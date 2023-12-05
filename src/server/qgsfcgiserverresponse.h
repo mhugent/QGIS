@@ -26,7 +26,6 @@
 #include "qgsserverresponse.h"
 
 #include <QBuffer>
-<<<<<<< HEAD
 #include <QThread>
 
 /**
