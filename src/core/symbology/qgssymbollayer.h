@@ -1001,12 +1001,27 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
     virtual double dxfAngle( QgsSymbolRenderContext &context ) const override;
 
     /**
+     * Returns the marker offset for the dxf export (in map units)
+     * \param context the symbol render context
+     * \return the dxf marker offset
+     */
+    virtual QPointF dxfMarkerOffset( const QgsSymbolRenderContext &context ) const;
+
+    /**
      * Returns the approximate bounding box of the marker symbol layer, taking into account
      * any data defined overrides and offsets which are set for the marker layer.
      * \returns approximate symbol bounds, in painter units
      * \since QGIS 2.14
      */
     virtual QRectF bounds( QPointF point, QgsSymbolRenderContext &context ) = 0;
+
+    /**
+     * Adjusts a marker offset to account for rotation.
+     * \param offset offset prior to rotation
+     * \param angle rotation angle in degrees clockwise from north
+     * \returns adjusted offset
+     */
+    static QPointF _rotatedOffset( QPointF offset, double angle );
 
   protected:
 
@@ -1042,14 +1057,6 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
                        Qgis::RenderUnit widthUnit, Qgis::RenderUnit heightUnit,
                        double &offsetX, double &offsetY,
                        const QgsMapUnitScale &widthMapUnitScale, const QgsMapUnitScale &heightMapUnitScale ) const SIP_PYNAME( markerOffset2 );
-
-    /**
-     * Adjusts a marker offset to account for rotation.
-     * \param offset offset prior to rotation
-     * \param angle rotation angle in degrees clockwise from north
-     * \returns adjusted offset
-     */
-    static QPointF _rotatedOffset( QPointF offset, double angle );
 
     //! Marker rotation angle, in degrees clockwise from north
     double mAngle = 0;

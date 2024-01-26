@@ -952,6 +952,23 @@ double QgsMarkerSymbolLayer::dxfAngle( QgsSymbolRenderContext &context ) const
   return angle;
 }
 
+QPointF QgsMarkerSymbolLayer::dxfMarkerOffset( const QgsSymbolRenderContext &context ) const
+{
+  QPointF offset = mOffset;
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyOffset ) )
+  {
+    QList<QVariant> offsetVar = mDataDefinedProperties.value( QgsSymbolLayer::PropertyOffset, context.renderContext().expressionContext(), mOffset ).toList();
+    if ( offsetVar.length() > 1 )
+    {
+      offset.setX( offsetVar.at( 0 ).toDouble() );
+      offset.setY( offsetVar.at( 1 ).toDouble() );
+    }
+  }
+  offset.setX( context.renderContext().convertToMapUnits( offset.x(), mOffsetUnit, mOffsetMapUnitScale ) );
+  offset.setY( context.renderContext().convertToMapUnits( offset.y(), mOffsetUnit, mOffsetMapUnitScale ) );
+  return offset;
+}
+
 void QgsSymbolLayer::prepareMasks( const QgsSymbolRenderContext &context )
 {
   mClipPath.clear();

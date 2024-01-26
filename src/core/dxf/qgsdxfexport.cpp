@@ -651,6 +651,7 @@ void QgsDxfExport::writeBlocks()
     mPointSymbolBlocks.insert( ml, block );
     mPointSymbolBlockSizes.insert( ml, ml->dxfSize( *this, ctx ) );
     mPointSymbolBlockAngles.insert( ml, ml->dxfAngle( ctx ) );
+    mPointSymbolBlockOffsets.insert( ml, ml->offset() );
   }
   endSection();
 }
@@ -938,12 +939,13 @@ void QgsDxfExport::writePoint( const QgsPoint &pt, const QString &layer, const Q
   }
 #endif // 0
 
+  const QgsMarkerSymbolLayer *msl = dynamic_cast< const QgsMarkerSymbolLayer * >( symbolLayer );
+
   // insert block or write point directly?
   QHash< const QgsSymbolLayer *, QString >::const_iterator blockIt = mPointSymbolBlocks.constFind( symbolLayer );
   if ( !symbolLayer || blockIt == mPointSymbolBlocks.constEnd() )
   {
     // write symbol directly here
-    const QgsMarkerSymbolLayer *msl = dynamic_cast< const QgsMarkerSymbolLayer * >( symbolLayer );
     if ( msl && symbol )
     {
       if ( msl->writeDxf( *this, mapUnitScaleFactor( mSymbologyScale, msl->sizeUnit(), mMapUnits, ctx.renderContext().mapToPixel().mapUnitsPerPixel() ), layer, ctx, QPointF( pt.x(), pt.y() ) ) )
@@ -970,7 +972,23 @@ void QgsDxfExport::writePoint( const QgsPoint &pt, const QString &layer, const Q
       writeGroup( 41, scale );
       writeGroup( 42, scale );
     }
-    writeGroup( 0, pt );  // Insertion point (in OCS)
+
+    QgsPoint dxfPoint = pt;
+    if ( msl && msl->dataDefinedProperties().hasProperty( QgsSymbolLayer::PropertyOffset ) )
+    {
+      QPointF offset = msl->dxfMarkerOffset( ctx );
+      QPointF rotatedOffset = QgsMarkerSymbolLayer::_rotatedOffset( offset, angle );
+      QPointF origOffset = mPointSymbolBlockOffsets.value( symbolLayer );
+      double origOffsetMapUnitsX = ctx.renderContext().convertToMapUnits( origOffset.x(), msl->offsetUnit(), msl->offsetMapUnitScale() );
+      double origOffsetMapUnitsY = ctx.renderContext().convertToMapUnits( origOffset.y(), msl->offsetUnit(), msl->offsetMapUnitScale() );
+      QPointF blockOffset = QgsMarkerSymbolLayer::_rotatedOffset( QPointF( origOffsetMapUnitsX, origOffsetMapUnitsY ), angle );
+      double diffX = rotatedOffset.x() - blockOffset.x();
+      double diffY = rotatedOffset.y() - blockOffset.y();
+      dxfPoint.setX( pt.x() + diffX );
+      dxfPoint.setY( pt.y() - diffY );
+    }
+
+    writeGroup( 0, dxfPoint );  // Insertion point (in OCS)
   }
 }
 
@@ -2082,6 +2100,7 @@ bool QgsDxfExport::hasBlockBreakingDataDefinedProperties( const QgsSymbolLayer *
     // Remove data defined properties handled through DXF property codes
     properties.remove( QgsSymbolLayer::PropertySize );
     properties.remove( QgsSymbolLayer::PropertyAngle );
+    properties.remove( QgsSymbolLayer::PropertyOffset );
     blockBreak = !properties.isEmpty();
   }
 

@@ -554,6 +554,7 @@ class CORE_EXPORT QgsDxfExport : public QgsLabelSink
     QHash< const QgsSymbolLayer *, QString > mPointSymbolBlocks; //reference to point symbol blocks
     QHash< const QgsSymbolLayer *, double > mPointSymbolBlockSizes; //reference to point symbol size used to create its block
     QHash< const QgsSymbolLayer *, double > mPointSymbolBlockAngles; //reference to point symbol size used to create its block
+    QHash< const QgsSymbolLayer *, QPointF > mPointSymbolBlockOffsets; //reference to point symbol offset used to create its block
 
     //AC1009
     void writeHeader( const QString &codepage );
