@@ -23,9 +23,10 @@ email                : matthias@opengis.ch
 
 #include "qgsfeature.h"
 #include "qgsgeometrycheckcontext.h"
+#include "qgsmaplayer.h"
 
 class QgsProject;
-class QgsMapLayer;
+//class QgsMapLayer;
 class QgsVectorLayer;
 class QgsGeometryCheck;
 class QgsSingleGeometryCheck;

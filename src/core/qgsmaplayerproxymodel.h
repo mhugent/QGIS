@@ -23,8 +23,10 @@
 #include "qgis_sip.h"
 #include "qgis.h"
 
+#include "qgsmaplayer.h"
+
 class QgsMapLayerModel;
-class QgsMapLayer;
+//class QgsMapLayer;
 class QgsProject;
 
 /**

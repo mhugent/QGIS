@@ -19,6 +19,7 @@
 #include "qgswkbtypes.h"
 #include "qgsmaptool.h"
 #include "qgis_gui.h"
+#include "qgsmaplayer.h"
 
 class QgsRubberBand;
 class QgsGeometryRubberBand;

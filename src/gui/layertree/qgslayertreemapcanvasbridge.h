@@ -21,9 +21,10 @@
 
 #include "qgscoordinatereferencesystem.h"
 #include "qgis_gui.h"
+#include "qgsmaplayer.h"
 
 class QgsMapCanvas;
-class QgsMapLayer;
+//class QgsMapLayer;
 class QgsMapOverviewCanvas;
 class QgsLayerTreeGroup;
 class QgsLayerTreeNode;

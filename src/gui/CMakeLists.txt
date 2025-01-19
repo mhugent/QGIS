@@ -1680,7 +1680,7 @@ add_library(qgis_gui ${LIBRARY_TYPE}
 target_compile_features(qgis_gui PRIVATE cxx_std_17)
 
 if (USE_PRECOMPILED_HEADERS)
-  target_precompile_headers(qgis_gui PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/src/core/qgis.h>)
+#  target_precompile_headers(qgis_gui PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/src/core/qgis.h>)
 endif()
 
 set_target_properties(qgis_gui PROPERTIES UNITY_BUILD ${ENABLE_UNITY_BUILDS})

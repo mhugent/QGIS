@@ -23,6 +23,7 @@
 #include "qgis_sip.h"
 #include "qgis_gui.h"
 #include "qgis.h"
+#include "qgsmaplayer.h"
 
 class QEvent;
 

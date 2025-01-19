@@ -20,6 +20,7 @@
 #include "qgssymbollayerreference.h"
 #include <QList>
 #include <QSet>
+#include "qgsmaplayer.h"
 
 /**
  * \ingroup core

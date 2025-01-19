@@ -21,6 +21,7 @@
 #include "qgsconfig.h"
 #include "qgslayertreemodel.h"
 #include "qgis_gui.h"
+#include "qgsmaplayer.h"
 
 #include <QSortFilterProxyModel>
 #include <QTreeView>
@@ -31,7 +32,7 @@
 class QgsLayerTree;
 class QgsElevationProfileLayerTreeModel;
 class QgsElevationProfileLayerTreeProxyModel;
-class QgsMapLayer;
+//class QgsMapLayer;
 
 
 /**

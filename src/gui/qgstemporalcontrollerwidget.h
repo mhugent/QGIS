@@ -23,8 +23,9 @@
 #include "qgis_gui.h"
 #include "qgsrange.h"
 #include "qgstemporalnavigationobject.h"
+#include "qgsmaplayer.h"
 
-class QgsMapLayer;
+//class QgsMapLayer;
 class QgsMapLayerModel;
 class QgsTemporalNavigationObject;
 class QgsTemporalController;

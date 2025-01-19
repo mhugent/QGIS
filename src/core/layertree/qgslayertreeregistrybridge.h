@@ -22,10 +22,11 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgis.h"
+#include "qgsmaplayer.h"
 
 class QgsLayerTreeGroup;
 class QgsLayerTreeNode;
-class QgsMapLayer;
+//class QgsMapLayer;
 class QgsProject;
 
 

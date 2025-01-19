@@ -57,6 +57,8 @@
 
 #include "qgsrelationmanager.h"
 #include "qgsmapthemecollection.h"
+#include "qgsmaplayer.h"
+#include "qgsvectorlayer.h"
 
 class QFileInfo;
 class QDomDocument;

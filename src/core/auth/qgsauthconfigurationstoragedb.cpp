@@ -164,6 +164,8 @@ bool QgsAuthConfigurationStorageDb::authDbOpen() const
 
 bool QgsAuthConfigurationStorageDb::authDbQuery( QSqlQuery *query, const QString &sql ) const
 {
+  return false;
+/* //compiles only with Qt >= 6.6
   QMutexLocker locker( &mMutex );
   query->setForwardOnly( true );
   const bool result { sql.isEmpty() ? query->exec() : query->exec( sql ) };
@@ -208,7 +210,7 @@ bool QgsAuthConfigurationStorageDb::authDbQuery( QSqlQuery *query, const QString
       return false;
     }
   }
-  return true;
+  return true; */
 }
 
 

@@ -20,6 +20,7 @@
 #include <QObject>
 #include "qgis_gui.h"
 #include "qgis_sip.h"
+#include "qgsmaplayer.h"
 
 #include "qgsproviderregistry.h"
 

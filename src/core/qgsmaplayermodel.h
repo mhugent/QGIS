@@ -24,7 +24,8 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 
-class QgsMapLayer;
+#include "qgsmaplayer.h"
+//class QgsMapLayer;
 class QgsProject;
 
 /**

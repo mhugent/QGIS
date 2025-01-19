@@ -21,6 +21,7 @@
 
 #include "ui_qgssymbolselectordialogbase.h"
 
+#include "qgsmaplayer.h"
 #include "qgspanelwidget.h"
 #include "qgssymbolwidgetcontext.h"
 #include "qgsproperty.h"

@@ -23,6 +23,7 @@
 #include <QMap>
 #include <QStringList>
 #include <QObject>
+#include "qgsmaplayer.h"
 
 
 class QDomElement;
